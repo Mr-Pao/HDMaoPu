@@ -26,3 +26,4 @@ _git/
 
 # 项目本地数据（WorkBuddy 会话与记忆）
 .workbuddy/
+test-artifacts/
