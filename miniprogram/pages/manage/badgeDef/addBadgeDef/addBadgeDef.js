@@ -33,10 +33,6 @@ Page({
     const { result: badgeDef } = await app.mpServerless.db.collection('badge_def').findOne({
       _id: id,
     });
-    if (!badgeDef) {
-      // id 无效（如以 ?id=undefined 打开）时直接返回，避免读取 img 崩溃
-      return;
-    }
     if (badgeDef.img) {
       badgeDef.img = await signCosUrl(badgeDef.img);
     }
@@ -72,21 +68,6 @@ Page({
   },
   // 提交
   async clickUpload() {
-    try {
-      await this._doUpload();
-    } catch (err) {
-      // 把真实错误显示出来，方便排查
-      console.error('[徽章上传失败]', err);
-      const errText = (err && (err.message || err.errMsg)) ? (err.message || err.errMsg) : JSON.stringify(err);
-      wx.showModal({
-        title: '上传失败（把本页截图发我）',
-        content: String(errText).slice(0, 300),
-        showCancel: false,
-      });
-    }
-  },
-
-  async _doUpload() {
     let { badgeDef } = this.data;
     // 检查
     const checkList = {
@@ -105,10 +86,8 @@ Page({
       }
     }
 
-    wx.showLoading({ title: '上传中...', mask: true });
     // 上传图片到云
     const cloudUrl = await this.uploadAvatar(badgeDef.img);
-    console.log('[徽章] 图片已上传:', cloudUrl);
 
     // 准备上传的结构
     const uploadItem = {
@@ -139,16 +118,13 @@ Page({
       })
     }
 
-    wx.hideLoading();
     wx.showToast({
       title: '上传成功',
     })
   },
 
   async uploadAvatar(tempFilePath) {
-    // 本地临时文件才需要上传；已经是云地址则直接用
-    const isLocal = tempFilePath.includes("://tmp") || tempFilePath.startsWith("wxfile://");
-    if (!isLocal) {
+    if (!tempFilePath.includes("://tmp")) {
       return tempFilePath;
     }
 

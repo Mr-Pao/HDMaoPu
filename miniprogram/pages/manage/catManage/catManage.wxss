@@ -47,7 +47,7 @@
   transform: translateX(-50%);
   display: flex;
   background-color: #fff;
-  border-radius: 999rpx;
+  border-radius: 50rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.15);
   z-index: 100;
@@ -126,7 +126,7 @@
   height: 120rpx;
   border-radius: 60rpx;
   margin-right: 20rpx;
-  background-color: var(--color-gray-normal);
+  background-color: var(--color-gray-light);
   flex-shrink: 0;
 }
 
@@ -205,7 +205,7 @@
   background-color: #fff;
   border-radius: 20rpx;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
-  max-height: 620rpx;
+  max-height: 600rpx;
   overflow-y: auto;
   z-index: 1000;
 }
@@ -246,7 +246,7 @@
   height: 80rpx;
   border-radius: 40rpx;
   margin-right: 20rpx;
-  background-color: var(--color-gray-normal);
+  background-color: var(--color-gray-light);
 }
 
 .search-cat-info {
@@ -350,54 +350,3 @@
   color: var(--color-black-light);
   font-size: 36rpx;
 } 
-/* 常出没地点管理 */
-.haunt-panel {
-  padding: 30rpx;
-}
-
-.haunt-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 8rpx;
-}
-
-.haunt-tip {
-  font-size: 24rpx;
-  color: #999;
-  margin-bottom: 24rpx;
-}
-
-.haunt-empty {
-  font-size: 28rpx;
-  color: #999;
-  text-align: center;
-  padding: 60rpx 0;
-}
-
-.haunt-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--color-gray-light);
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 16rpx;
-}
-
-.haunt-name {
-  font-size: 30rpx;
-  color: #333;
-}
-
-.haunt-coord {
-  font-size: 22rpx;
-  color: #999;
-  margin-top: 6rpx;
-}
-
-.haunt-del {
-  font-size: 26rpx;
-  color: #e64545;
-  padding: 10rpx 20rpx;
-}

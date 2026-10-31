@@ -10,13 +10,14 @@ import {
   getVisitedDate
 } from "../../utils/cat";
 import {
-  getCatCommentCount
+  getCatCommentCount,
+  getCatCommentCountMulti
 } from "../../utils/comment";
 import { getUserInfo } from "../../utils/user";
 import cache from "../../utils/cache";
 import config from "../../config";
 import { loadFilter, getGlobalSettings, showTab } from "../../utils/page";
-import { isManagerAsync, checkCanShowNews, checkCanUpload, checkCanComment } from "../../utils/user";
+import { isManagerAsync, checkCanShowNews } from "../../utils/user";
 import { signCosUrl } from "../../utils/common";
 
 const default_png = undefined;
@@ -45,17 +46,9 @@ Page({
     newsList: [],
     newsImage: "",
     text_cfg: config.text,
-    // 新增：数据加载完成标志
     dataReady: false,
-    // 卡片展开：当前展开的卡片索引，-1 表示无；展开后加 wide 样式、滚动到顶部、显示动作按钮
-    expandedCatIndex: -1,
-    // scroll-view 的 scroll-top，展开时计算带余量的目标值平滑滚动，避免顶部被遮挡
-    targetScrollTop: 0,
-    // 是否管理员（控制展开卡片右上角"管理"按钮显示）
-    isManager: false,
-    // 功能开关：是否可上传照片 / 是否可使用便利贴墙（由 pageSettings 决定）
-    canUpload: true,
-    canComment: true
+    // 新增：下拉刷新状态
+    refreshing: false
   },
 
   jsData: {
@@ -79,67 +72,49 @@ Page({
       };
     }
     
-    // 保存scene参数，但不立即处理
     if (options.scene) {
       const scene = decodeURIComponent(options.scene);
-      console.log("scene:", scene);
       if (scene.startsWith('toC=')) {
         this.jsData.pendingScene = scene;
       }
     }
 
-    // 从缓存里读取options
     var fcampus = options.fcampus;
     if (!fcampus) {
       fcampus = this.getFCampusCache();
     }
     
-    // 从分享点进来，到跳转到其他页面
     if (options.toPath) {
       wx.navigateTo({
         url: decodeURIComponent(options.toPath),
       });
+      return;
     }
 
-    // 开始加载页面，获取设置
-    var settings = null, retrySettings = 3;
-    while (retrySettings > 0) {
+    let settings = null;
+    for (let retry = 0; retry < 3; retry++) {
       try {
         settings = await getGlobalSettings('genealogy', { nocache: true });
         break;
       } catch {
-        console.error("get settings error 'genealogy'");
-        retrySettings--;
-        if (retrySettings <= 0) {
-          break;
-        }
-        await sleep(1000);
+        if (retry < 2) await sleep(500);
       }
     }
 
     if (!settings) {
-      console.log("no setting");
       wx.showModal({
         title: '网络小故障',
         content: '请重新进入小程序',
         showCancel: false,
         success() {
-          wx.reLaunch({
-            url: '/pages/genealogy/genealogy'
-          });
+          const path = getCurrentPath(getCurrentPages());
+          wx.restartMiniProgram({ path });
         }
       })
-      return
+      return;
     }
     
-    // 先把设置拿到
     this.jsData.catsStep = settings['catsStep'] || 1;
-    
-    // 启动加载
-    await Promise.all([
-      this.loadRecognize(),
-      this.loadFilters(fcampus),
-    ]);
 
     this.setData({
       main_lower_threshold: settings['main_lower_threshold'],
@@ -147,41 +122,49 @@ Page({
       photoPopWeight: settings['photoPopWeight'] || 10
     });
 
-    // 载入公告信息
     this.newsModal = this.selectComponent("#newsModal");
-    await this.loadNews();
 
-    // 设置广告ID
-    const ads = await getGlobalSettings('ads') || {};
-    this.setData({
-      ad: {
-        banner: ads.genealogy_banner
-      },
-    })
+    await Promise.all([
+      this.loadRecognize(),
+      this.loadFilters(fcampus),
+      this.loadNews(),
+      this.loadTips(),
+      getGlobalSettings('ads')
+    ]).then(results => {
+      const ads = results[3] || {};
+      this.setData({
+        ad: { banner: ads.genealogy_banner }
+      });
+    });
 
-    // 添加事件监听
-    app.globalData.eventBus.$on('photoProcessed', this.handlePhotoProcessed);
-
-    // 检查管理员身份（控制展开卡片"管理"按钮显示）
-    // 同时检查上传照片和便利贴墙功能是否对当前用户开放
-    try {
-      const [isManager, canUpload, canComment] = await Promise.all([
-        isManagerAsync(),
-        checkCanUpload(),
-        checkCanComment(),
-      ]);
-      this.setData({ isManager: !!isManager, canUpload: !!canUpload, canComment: !!canComment });
-    } catch (e) {
-      console.warn('检查用户权限失败:', e.message);
-    }
-
-    // 标记数据加载完成
+    // 绑定事件监听，使用稳定的引用
+    this.photoProcessedHandler = this.handlePhotoProcessed.bind(this);
+    app.globalData.eventBus.$on('photoProcessed', this.photoProcessedHandler);
     this.setData({ dataReady: true });
     
-    // 处理待处理的scene参数
     if (this.jsData.pendingScene) {
       this.handlePendingScene();
     }
+  },
+
+  loadTips: async function() {
+    try {
+      const tipsList = await app.mpServerless.db.collection('tips').find();
+      this.setData({
+        tipsList: this.shuffleArray(tipsList.result || [])
+      });
+    } catch (e) {
+      console.error('loadTips error:', e);
+    }
+  },
+
+  shuffleArray: function(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
   },
   
   // 新增：处理待处理的scene参数
@@ -189,7 +172,8 @@ Page({
     const scene = this.jsData.pendingScene;
     if (scene.startsWith('toC=')) {
       const cat_No = scene.substr(4);
-      const { result: cat_res } = await app.mpServerless.db.collection('cat').find({ _no: cat_No, deleted: { $ne: 1 } }, { projection: { _id: 1 } });
+      // 使用正确的字段名 'no' 而不是 '_no'
+      const { result: cat_res } = await app.mpServerless.db.collection('cat').find({ no: cat_No }, { projection: { _id: 1 } });
       
       if (!cat_res.length) {
         wx.showToast({
@@ -205,7 +189,11 @@ Page({
   },
 
   onUnload: function () {
-    app.globalData.eventBus.$off('photoProcessed', this.handlePhotoProcessed);
+    // 使用绑定的引用进行清理，确保正确解除监听
+    if (this.photoProcessedHandler) {
+      app.globalData.eventBus.$off('photoProcessed', this.photoProcessedHandler);
+      this.photoProcessedHandler = null;
+    }
   },
 
   handlePhotoProcessed: function (data) {
@@ -221,20 +209,17 @@ Page({
     if (index === -1) return;
     
     const { result: [updatedCat] } = await app.mpServerless.db.collection('cat').find({ 
-      _id: catId, 
-      deleted: { $ne: 1 } 
+      _id: catId 
     });
     
     if (updatedCat) {
-      // 清除该猫的图片尺寸缓存，使 bindImageLoaded 重新计算 panDistance
-      if (this.jsData.imageSizeMap) delete this.jsData.imageSizeMap[catId];
       this.setData({ [`cats[${index}]`]: updatedCat });
       this.loadCatPhoto(updatedCat, index);
     }
   },
 
   loadCatPhoto: async function (cat, index) {
-    const photo = await getAvatar(cat._id, { bestOnly: true });
+    const photo = await getAvatar(cat._id, cat.photo_count_best);
     if (!photo) return;
     
     if (!photo.userInfo) {
@@ -254,9 +239,11 @@ Page({
   },
 
   loadRecognize: async function () {
-    const settings = await getGlobalSettings('recognize');
-    const showRecognize = settings && settings.showRecognizeBtn === true;
-    this.setData({ showRecognize: !!showRecognize });
+    const env = __wxConfig.envVersion === 'release' ? 'recognize' : 'recognize_test';
+    const settings = await getGlobalSettings(env);
+    this.setData({
+      showRecognize: settings.interfaceURL && !settings.interfaceURL.includes("https://your.domain.com")
+    });
   },
 
   loadFilters: async function (fcampus) {
@@ -325,41 +312,22 @@ Page({
     };
     filters.push(colour_item);
     
-    // advance版状态过滤器
-    const status_item = {
-      key: 'status',
-      name: '状态',
-      category: [
-        { name: '全部状态', items: [], all_active: true },
-        {
-          name: '领养状态',
-          items: [
-            { name: "未知", value: null },
-            ...config.cat_status_adopt.map((name, i) => ({ name: name, value: i }))
-          ],
-          all_active: false
-        },
-        {
-          name: '绝育状态',
-          items: [
-            { name: '待绝育', value: false },
-            { name: '已绝育', value: true }
-          ],
-          all_active: false
-        },
-        {
-          name: '其他',
-          items: [
-            { name: '未失踪', value: { field: 'missing', condition: false } },
-            { name: '已失踪', value: { field: 'missing', condition: true } },
-            { name: '去往喵星', value: { field: 'to_star', condition: true } }
-          ],
-          all_active: false
-        }
-      ],
-      active: false
+    // 领养状态过滤器
+    const adopt_status = [{ name: "未知", value: null }];
+    config.cat_status_adopt.forEach((name, i) => {
+      adopt_status.push({ name, value: i });
+    });
+    
+    const adopt_item = {
+      key: 'adopt',
+      name: '领养',
+      category: [{
+        name: '全部状态',
+        items: adopt_status,
+        all_active: true
+      }]
     };
-    filters.push(status_item);
+    filters.push(adopt_item);
     
     // 设置默认激活的过滤器
     filters[0].active = true;
@@ -375,7 +343,21 @@ Page({
     this.getHeights();
   },
 
+  onPullDownRefresh: async function () {
+    if (this.data.refreshing) return;
+    
+    await this.setData({ refreshing: true });
+    
+    try {
+      await this.reloadCats();
+    } finally {
+      await this.setData({ refreshing: false });
+      wx.stopPullDownRefresh();
+    }
+  },
+
   onReachBottom: async function () {
+    if (this.data.refreshing) return;
     await this.loadMoreCats();
   },
 
@@ -418,13 +400,8 @@ Page({
     
     if (this.jsData.loadingLock !== nowLoadingLock) return false;
     
-    // 重置图片尺寸缓存，避免同尺寸图片被防重入跳过导致 panDistance 不重新计算
-    this.jsData.imageSizeMap = {};
-
     this.setData({
       cats: [],
-      expandedCatIndex: -1,
-      targetScrollTop: 0,
       catsMax: cat_count,
       loadnomore: false,
       filters_empty: Object.keys(query).length === 0,
@@ -484,7 +461,7 @@ Page({
       loading: false,
       loadnomore: updatedCats.length === this.data.catsMax
     });
-
+    
     await this.loadCatsPhoto();
   },
 
@@ -497,7 +474,7 @@ Page({
     
     await Promise.all(cats.map(async cat => {
       if (cat.photo === default_png) {
-        const photo = await getAvatar(cat._id, { bestOnly: true });
+        const photo = await getAvatar(cat._id, cat.photo_count_best);
         if (photo) {
           if (!photo.userInfo) {
             try {
@@ -515,58 +492,27 @@ Page({
     
     if (this.jsData.loadingLock !== nowLoadingLock) return false;
     
-    // 路径式更新：只更新有新照片的猫项，避免全量 setData 触发整个 wx:for 重 diff，
-    // 否则现有猫 image 的 class/style 会被重新应用，CSS animation 重启导致照片闪动
-    const updates = {};
-    let hasUpdate = false;
-    cats.forEach((c, i) => {
+    const updatedCats = cats.map(c => {
       if (cat2photos[c._id]) {
-        updates[`cats[${i}].photo`] = cat2photos[c._id];
-        updates[`cats[${i}].comment_count`] = cat2commentCount[c._id];
-        hasUpdate = true;
+        return {
+          _id: c._id,
+          ...c,
+          photo: cat2photos[c._id],
+          comment_count: cat2commentCount[c._id]
+        };
       }
+      return {
+        _id: c._id,
+        ...c
+      };
     });
-    if (hasUpdate) {
-      this.setData(updates);
-    }
+    
+    this.setData({ cats: updatedCats });
   },
 
   bindImageLoaded(e) {
     const idx = e.currentTarget.dataset.index;
-    const detail = e && e.detail;
-    const cat = this.data.cats[idx];
-
-    // 防重入：同一只猫、同一尺寸的图片已处理过则跳过，
-    // 避免下拉加载时 image 重新触发 bindload 导致重复 setData，CSS animation 重启闪动
-    if (cat && detail && detail.width && detail.height) {
-      if (!this.jsData.imageSizeMap) this.jsData.imageSizeMap = {};
-      const last = this.jsData.imageSizeMap[cat._id];
-      if (last && last.w === detail.width && last.h === detail.height) {
-        return;
-      }
-      this.jsData.imageSizeMap[cat._id] = { w: detail.width, h: detail.height };
-    }
-
-    const update = { [`cats[${idx}].imageLoaded`]: true };
-    if (detail && detail.width && detail.height) {
-      try {
-        const sysInfo = wx.getWindowInfo();
-        const rpxToPx = sysInfo.windowWidth / 750;
-        // 滚动仅作用于展开（wide）卡片：宽 700rpx、图高 500rpx；
-        // widthFix 模式下图片按 700rpx 宽等比缩放，超出 500rpx 的部分即需移动距离
-        const containerWidthPx = 700 * rpxToPx;
-        const containerHeightPx = 500 * rpxToPx;
-        const scaledHeight = detail.height * (containerWidthPx / detail.width);
-        const distance = Math.max(0, scaledHeight - containerHeightPx);
-        update[`cats[${idx}].panDistance`] = Math.round(distance);
-        if (distance > 0) {
-          update[`cats[${idx}].panDuration`] = Math.min(12, Math.max(3, Math.round(distance / 30)));
-        }
-      } catch (err) {
-        console.warn('计算卡片照片移动距离失败:', err.message);
-      }
-    }
-    this.setData(update);
+    this.setData({ [`cats[${idx}].imageLoaded`]: true });
   },
 
   clickRecognize(e) {
@@ -575,93 +521,20 @@ Page({
 
   clickCatCard(e, isCatId) {
     const cat_id = isCatId ? e : e.currentTarget.dataset.cat_id;
-    const index = this.data.cats.findIndex(cat => cat._id == cat_id);
-
-    // scene 深链（isCatId=true）直接跳详情，不走展开（无列表数据，不带首屏缓存）
-    if (isCatId) {
-      this.toDetailPage(cat_id);
+    
+    if (!cat_id) {
+      console.error("cat_id is undefined");
       return;
     }
-
-    if (index === -1) return;
-    this.toggleExpand(index);
-  },
-
-  // 展开/收起卡片：展开时加 wide 样式 + 平滑滚动到顶部 + 显示动作按钮；再次点击进入详情相册
-  toggleExpand(index) {
-    if (this.data.expandedCatIndex === index) {
-      // 再次点击同一张展开卡片 → 进入详情相册（带列表数据做首屏秒开）
-      const cat = this.data.cats[index];
-      if (cat) {
-        this.toDetailPage(cat._id, cat);
-      }
-      return;
-    }
-    // 展开新卡片（自动收起旧的）
-    this.setData({ expandedCatIndex: index });
-
-    // 计算带余量的 scrollTop：用 selectorQuery 获取 card 相对 scroll-view 的位置，
-    // 减去顶部余量（40rpx），避免 card 顶部贴 scroll-view 顶部过近被上方 #search 阴影遮挡
-    wx.nextTick(() => {
-      const query = wx.createSelectorQuery();
-      query.select('#card-' + index).boundingClientRect();
-      query.select('.cards').scrollOffset();
-      query.select('.cards').boundingClientRect();
-      query.exec(res => {
-        if (!res || !res[0] || !res[1] || !res[2]) return;
-        const cardRect = res[0];        // card 相对视口的位置
-        const scrollInfo = res[1];      // scroll-view 当前 scrollTop
-        const svRect = res[2];          // scroll-view 相对视口的位置
-        // card 在 scroll-view 内容流中的偏移
-        const cardOffsetTop = cardRect.top - svRect.top + scrollInfo.scrollTop;
-        // 顶部余量 40rpx 转 px
-        const rpxToPx = wx.getWindowInfo().windowWidth / 750;
-        const offset = 40 * rpxToPx;
-        const targetScrollTop = Math.max(0, cardOffsetTop - offset);
-        this.setData({ targetScrollTop });
-      });
-    });
-  },
-
-  // 跳转详情页：cat 存在时先写入 globalData，详情页 onLoad 同步读取、立即渲染首屏，
-  // 再由 loadCat 从数据库拉全量数据刷新；写操作很小，不影响跳转动画
-  toDetailPage(cat_id, cat) {
-    app.globalData.pendingCatDetail = cat ? { cat, ts: Date.now() } : null;
-    wx.navigateTo({ url: `/pages/genealogy/detailCat/detailCat?cat_id=${cat_id}` });
-  },
-
-  // 展开卡片"猫猫详情"按钮
-  clickDetailBtn(e) {
-    const cat_id = e.currentTarget.dataset.cat_id;
-    if (!cat_id) return;
-    // 点击"猫猫详情"后才消除"新图"标签；卡片保持展开，返回时无需重新点开
+    
     const index = this.data.cats.findIndex(cat => cat._id == cat_id);
     if (index !== -1) {
       this.setData({ [`cats[${index}].mphoto_new`]: false });
     }
-    this.toDetailPage(cat_id, this.data.cats[index]);
-  },
-
-  // 展开卡片"上传喵照"按钮（卡片保持展开）
-  clickUploadBtn(e) {
-    const cat_id = e.currentTarget.dataset.cat_id;
-    if (!cat_id) return;
-    wx.navigateTo({ url: `/pages/genealogy/addPhoto/addPhoto?cat_id=${cat_id}` });
-  },
-
-  // 展开卡片"便利贴墙"按钮（卡片保持展开）
-  clickCommentBtn(e) {
-    const cat_id = e.currentTarget.dataset.cat_id;
-    if (!cat_id) return;
-    wx.navigateTo({ url: `/pages/genealogy/commentBoard/commentBoard?cat_id=${cat_id}` });
-  },
-
-  // 展开卡片"管理"按钮（右上角，仅管理员可见；卡片保持展开）
-  async clickManageBtn(e) {
-    const cat_id = e.currentTarget.dataset.cat_id;
-    if (!cat_id) return;
-    if (!(await isManagerAsync())) return;
-    wx.navigateTo({ url: `/pages/manage/catManage/catManage?cat_id=${cat_id}&activeTab=info` });
+    
+    wx.navigateTo({
+      url: `/pages/genealogy/detailCat/detailCat?cat_id=${cat_id}`,
+    });
   },
 
   getHeights() {
@@ -777,76 +650,6 @@ Page({
     }
     return true;
   },
-
-  // advance版状态过滤器，临时添加，期待完全重构。（TODO）
-  // 获取某个状态子分类被选择的值
-  selectStatusValues: function (subCategory) {
-    if (!subCategory || !Array.isArray(subCategory.items)) return [];
-    if (subCategory.all_active) return subCategory.items.map(it => it.value);
-    const values = [];
-    for (const it of subCategory.items) {
-      if (it.active) values.push(it.value);
-    }
-    return values;
-  },
-
-  // 状态处理条件构建
-  buildStatusConditions: function (mainF) {
-    const conditions = [];
-    if (!mainF || !Array.isArray(mainF.category)) return conditions;
-    // 全部状态被激活则无需添加条件
-    if (mainF.category[0] && mainF.category[0].all_active) return conditions;
-
-    const adoptCategory = mainF.category.find(c => c.name === '领养状态');
-    const sterilCategory = mainF.category.find(c => c.name === '绝育状态');
-    const otherCategory  = mainF.category.find(c => c.name === '其他');
-
-    // 领养状态支持数值 in 与 null不存在，null算是脏数据了
-    const adoptVals = this.selectStatusValues(adoptCategory);
-    if (adoptVals.length) {
-      const or = [];
-      const numeric = adoptVals.filter(v => v !== null);
-      if (numeric.length) or.push({ adopt: { $in: numeric } });
-      if (adoptVals.includes(null)) or.push({ adopt: { $exists: false } });
-      if (or.length === 1) conditions.push(or[0]);
-      else if (or.length > 0) conditions.push({ $or: or });
-    }
-
-    // 绝育状态同时选中true/false忽略该条件
-    const sterilVals = this.selectStatusValues(sterilCategory);
-    if (sterilVals.length) {
-      const hasT = sterilVals.includes(true);
-      const hasF = sterilVals.includes(false);
-      if (!(hasT && hasF)) {
-        if (hasF) {
-          conditions.push({ $or: [ { sterilized: false }, { sterilized: { $exists: false } } ] });
-        } else if (hasT) {
-          conditions.push({ sterilized: true });
-        }
-      }
-    }
-
-    // 其他，missing 与 to_star……
-    const otherVals = this.selectStatusValues(otherCategory);
-    if (otherVals.length) {
-      const otherConds = [];
-      for (const val of otherVals) {
-        if (!val || !val.field) continue;
-        if (val.field === 'missing') {
-          if (val.condition === true) {
-            otherConds.push({ missing: true });
-          } else {
-            otherConds.push({ $or: [ { missing: false }, { missing: { $exists: false } } ] });
-          }
-        } else if (val.field === 'to_star' && val.condition === true) {
-          otherConds.push({ to_star: true });
-        }
-      }
-      if (otherConds.length) conditions.push({ $or: otherConds });
-    }
-
-    return conditions;
-  },
   
   fGet: async function() {
     const filters = this.data.filters;
@@ -854,15 +657,6 @@ Page({
     
     // 处理选择的过滤器
     filters.forEach(mainF => {
-      const key = mainF.key;
-      // 状态过滤
-      if (key === 'status') {
-        const statusConds = this.buildStatusConditions(mainF);
-        if (statusConds.length) conditions.push(...statusConds);
-        return;
-      }
-      
-      // 处理其他过滤器 (area, colour)
       if (mainF.category[0].all_active) return;
       
       const selected = [];
@@ -875,16 +669,12 @@ Page({
         category.items.forEach(item => {
           if (category.all_active || item.active) {
             let choice = item.name;
-            if (item.value !== undefined) {
-              choice = item.value;
-            }
-            if (item.value === null) {
-              choice = { $exists: false };
-            }
+            if (item.value === null) choice = { $type: "missing" };
+            else if (item.value !== undefined) choice = item.value;
             
             selected.push(choice);
             
-            if (cateFilter && !cateKeyPushed && category.name) {
+            if (cateFilter && !cateKeyPushed) {
               cateSelected.push(category.name);
               cateKeyPushed = true;
             }
@@ -893,23 +683,7 @@ Page({
       });
       
       if (selected.length > 0) {
-        let hasNull = selected.some(val => typeof val === 'object' && val !== null && val.$exists === false);
-        let nonNullSelected = selected.filter(val => !(typeof val === 'object' && val !== null && val.$exists === false));
-        
-        let fieldCondition = [];
-        if (nonNullSelected.length > 0) {
-          fieldCondition.push({ [key]: { $in: nonNullSelected } });
-        }
-        if (hasNull) {
-          fieldCondition.push({ [key]: { $exists: false } });
-        }
-        
-        if (fieldCondition.length > 1) {
-          conditions.push({ $or: fieldCondition });
-        } else if (fieldCondition.length === 1) {
-          conditions.push(fieldCondition[0]);
-        }
-        
+        conditions.push({ [mainF.key]: { $in: selected } });
         if (cateFilter && cateSelected.length > 0) {
           conditions.push({ [mainF.cateKey]: { $in: cateSelected } });
         }
@@ -930,30 +704,8 @@ Page({
       });
     }
     
-    // 检查是否有用户定义的过滤条件
-    const hasUserFilters = conditions.length > 0;
-    this.setData({ 
-      filters_active: hasUserFilters,
-      filters_empty: !hasUserFilters
-    });
-    
-    // 添加软删除过滤条件
-    conditions.push({ deleted: { $ne: 1 } });
-    // EMAS 兼容：find 对 $and 包装的查询会返回空结果（count 正常），
-    // 单键条件直接拍平合并，尽量不产生 $and
-    const merged = {};
-    const rest = [];
-    for (const cond of conditions) {
-      const keys = Object.keys(cond);
-      if (keys.length === 1 && !keys[0].startsWith('$') && !(keys[0] in merged)) {
-        merged[keys[0]] = cond[keys[0]];
-      } else {
-        rest.push(cond);
-      }
-    }
-    if (rest.length === 0) return merged;
-    if (Object.keys(merged).length === 0 && rest.length === 1) return rest[0];
-    return { $and: rest.concat([merged]) };
+    this.setData({ filters_active: conditions.length > 0 });
+    return conditions.length > 0 ? { $and: conditions } : {};
   },
   
   fComfirm: function() {
@@ -1031,7 +783,7 @@ Page({
   async countWaitingAdopt() {
     const target = config.cat_status_adopt_target;
     const value = config.cat_status_adopt.indexOf(target);
-    const { result: adopt_count } = await app.mpServerless.db.collection('cat').count({ adopt: value, deleted: { $ne: 1 } });
+    const { result: adopt_count } = await app.mpServerless.db.collection('cat').count({ adopt: value });
     this.setData({ adopt_count });
   },
 
@@ -1040,54 +792,24 @@ Page({
     this.lockBtn();
     
     const filters = [...this.data.filters];
-    // 查找 status 过滤器的索引
-    const status_filter_index = filters.findIndex(f => f.key === "status");
-    if (status_filter_index === -1) {
-      this.unlockBtn();
-      return false;
-    }
-    
-    // 查找领养状态子类别的索引
-    const adopt_category_index = filters[status_filter_index].category.findIndex(
-      category => category.name === "领养状态"
-    );
-    if (adopt_category_index === -1) {
+    const filters_sub = filters.findIndex(f => f.key === "adopt");
+    if (filters_sub === -1) {
       this.unlockBtn();
       return false;
     }
     
     const target_status = config.cat_status_adopt_target;
-    const adoptCategory = filters[status_filter_index].category[adopt_category_index];
+    const category = filters[filters_sub].category[0];
+    const index = category.items.findIndex(item => item.name === target_status);
     
-    // 查找目标状态在子类别中的索引
-    const target_index = adoptCategory.items.findIndex(item => item.name === target_status);
-    
-    if (target_index === -1) {
-      console.log("[点击领养按钮] 找不到目标领养状态");
+    if (index === -1 || category.items[index].active) {
       this.unlockBtn();
       return false;
     }
     
-    if (adoptCategory.items[target_index].active) {
-      // 已经激活了
-      this.unlockBtn();
-      return false;
-    }
-    
-    // 重置所有状态选项
-    for (let i = 0; i < filters[status_filter_index].category.length; i++) {
-      const category = filters[status_filter_index].category[i];
-      category.all_active = false; // 全部设为false，包括全部状态
-      
-      if (category.items) {
-        for (let j = 0; j < category.items.length; j++) {
-          category.items[j].active = false;
-        }
-      }
-    }
-    
-    // 激活目标领养状态
-    adoptCategory.items[target_index].active = true;
+    category.items[index].active = true;
+    category.all_active = false;
+    filters[filters_sub].category[0].all_active = false;
     
     this.setData({
       filters,

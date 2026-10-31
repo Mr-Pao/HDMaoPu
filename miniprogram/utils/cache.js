@@ -1,41 +1,54 @@
-// 缓存相关
+const memoryCache = new Map();
+const MEMORY_TTL = 60000;
 
 function getCacheItem(key, options) {
   options = options || {};
   if (options.nocache) {
-    console.log("nocache=true")
     return undefined;
   }
 
-  var data = wx.getStorageSync(key);
+  const memoryData = memoryCache.get(key);
+  if (memoryData && Date.now() < memoryData.expire) {
+    return memoryData.item;
+  }
+
+  const data = wx.getStorageSync(key);
   if (!data) {
     return undefined;
   }
 
-  // 过期了
   if (new Date() > new Date(data.expire_date)) {
-    console.log(`${key} expired.`);
+    wx.removeStorageSync(key);
     return undefined;
   }
+
+  memoryCache.set(key, {
+    item: data.item,
+    expire: Date.now() + MEMORY_TTL
+  });
 
   return data.item;
 }
 
 function setCacheItem(key, item, expire_hours, expire_minutes) {
-  var expire_date = new Date();
-  expire_minutes = (expire_minutes || 0) + parseInt(expire_hours * 60);
-  // expire_date.setHours(expire_date.getHours() + expire_hours);
-  expire_date.setMinutes(expire_date.getMinutes() + (expire_minutes || 0));
-  var data = {
+  const expireDate = new Date();
+  const expireMinutes = (expire_minutes || 0) + parseInt(expire_hours * 60);
+  expireDate.setMinutes(expireDate.getMinutes() + expireMinutes);
+  const data = {
     item: item,
-    expire_date: expire_date
+    expire_date: expireDate
   };
 
   wx.setStorageSync(key, data);
+
+  memoryCache.set(key, {
+    item: item,
+    expire: Date.now() + MEMORY_TTL
+  });
 }
 
 function getCacheDate(key) {
-  var date = wx.getStorageSync(key);
+  const date = wx.getStorageSync(key);
   if (!date) {
     return undefined;
   }
@@ -49,22 +62,17 @@ function setCacheDate(key, date) {
   wx.setStorageSync(key, date);
 }
 
-// 移除缓存项 for userInfoUpdated event
-function removeCacheItem(key) {
-  wx.removeStorageSync(key);
-}
-
 // 缓存时长设置（单位默认为hours）
-// TODO(zing): 缓存图片链接会导致cos签名过期
+// 注意：缓存图片链接会导致cos签名过期，应避免缓存已签名的URL
 const cacheTime = {
-  catAvatar: 0.1,  // 首页封面图
-  catItem: 0.1,  // 猫猫信息
-  commentCount: 0,  // 便利贴数量
-  likeItem: 72,  // 点赞行为
-  pageSetting: 24*7,  // 页面设置
-  genealogyFCampus: 24*7*31,  // 首页校区过滤选项
-  checkPhotoCampus: 24*7*31,  // 最后一次审核照片的校区
-  genealogyNews: 0, // 首页的news弹窗
+  catAvatar: 0.1,              // 首页封面图 (6分钟)
+  catItem: 0.1,                // 猫猫信息 (6分钟)
+  commentCount: 0.08,          // 便利贴数量 (5分钟) - 之前为0，改为合理值避免频繁查询
+  likeItem: 72,                // 点赞行为 (3天)
+  pageSetting: 24 * 7,         // 页面设置 (7天)
+  genealogyFCampus: 24 * 7 * 31, // 首页校区过滤选项 (31天)
+  checkPhotoCampus: 24 * 7 * 31, // 最后一次审核照片的校区 (31天)
+  genealogyNews: 0,            // 首页的news弹窗 (不缓存)
 }
 
 module.exports = {
@@ -72,6 +80,5 @@ module.exports = {
   setCacheDate,
   getCacheItem,
   setCacheItem,
-  cacheTime,
-  removeCacheItem
+  cacheTime
 }

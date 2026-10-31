@@ -52,20 +52,6 @@ swiper-item image {
   height: 450rpx;
   border-radius: 15rpx;
 }
-/* 缺少封面图，显示占位图 */
-.cover-default {
-  background-color: var(--color-gray-normal);
-  background-image: var(--img-default);
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-size: 50% 50%;
-}
-/* 占位容器尺寸对齐真实图片 */
-.best-photo .cover-default {
-  width: 600rpx;
-  height: 450rpx;
-  border-radius: 15rpx;
-}
 
 .info {
   width: 750rpx;
@@ -143,7 +129,7 @@ swiper-item image {
 .tags {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .tags .tag {
@@ -314,11 +300,6 @@ swiper-item image {
 .sort-button .picker {
   display: flex;
   align-items: center;
-  line-height: 28rpx;
-  font-size: 28rpx;
-}
-.sort-button .picker .iconfont {
-  margin: 0 5rpx;
 }
 
 /* 下面开始相册 */
@@ -359,7 +340,7 @@ swiper-item image {
   grid-column: 1 / -1; /* 让header横跨所有列 */
 }
 
-.album-block .header .icon-clock {
+.album-block .header .icon-clock-o {
   font-size: 35rpx;
   margin-right: 10rpx;
   color: var(--color-primary);
@@ -840,7 +821,7 @@ swiper-item image {
   align-items: center;
 }
 
-.latest-vaccine .icon-check {
+.latest-vaccine .icon-success {
   margin-right: 10rpx;
 }
 
@@ -918,12 +899,12 @@ swiper-item image {
   background-color: var(--color-gray);
 }
 
-.icon-check {
+.icon-success {
   font-size: 40rpx;
   color: var(--color-vaccine);
 }
 
-.icon-bulb {
+.icon-bulb-o {
   color: var(--color-red-dark); /* 过期图标颜色 */
   font-size: 40rpx;
 }
@@ -998,19 +979,4 @@ swiper-item image {
 .timeline-info {
   word-break: break-all;
   margin-bottom: 8rpx;
-}
-
-/* 领养提示：单行小字 */
-.adopt-banner {
-  background: linear-gradient(90deg, #fff7e6, #ffe7ba);
-  border-radius: 12rpx;
-  padding: 10rpx 24rpx;
-  margin: 16rpx 30rpx 0;
-  font-size: 24rpx;
-  line-height: 1.6;
-  color: #d46b08;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }

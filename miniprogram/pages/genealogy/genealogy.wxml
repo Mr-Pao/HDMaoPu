@@ -2,18 +2,15 @@
 
 <view id='search' class='{{filters_show_shadow? "shadow": ""}}' style='height: {{heights.filters}}px'>
   <view class='input-block'>
-    <view class='input-icon iconfont icon-search gray'></view>
+    <view class='input-icon'>
+      <image mode='aspectFit' src="/pages/public/images/filter/search.png"></image>
+    </view>
     <input class='name' placeholder='{{text_cfg.genealogy.search_tip}}' placeholder-class='searchPlaceholderStyle' value='{{filters_input}}' maxlength='20' confirm-type='search' bindinput='fSearchInput' bindconfirm='fSearch'></input>
   </view>
-
-  <view class='filter-btn' bind:tap='clickRecognize' wx:if="{{showRecognize}}">
-    <view class='iconfont icon-camera gray'></view>
-    <view>识别</view>
-  </view>
   
-  <view class='filter-btn' bind:tap='fToggle'>
-    <view class='iconfont icon-filtering {{filters_active? "primary": "gray"}}'></view>
-    <view>筛选</view>
+  <view class='filter-btn' bindtap='fToggle'>
+    <image wx:if='{{filters_active}}' mode='aspectFit' src="/pages/public/images/filter/filter_y.png"></image>
+    <image wx:else mode='aspectFit' src="/pages/public/images/filter/filter.png"></image>
   </view>
 </view>
 
@@ -25,7 +22,10 @@
       <view class='padding-block'></view>
       <view class='item {{item.active? "active": ""}}' wx:for='{{filters}}' wx:key='name' bindtap='fClickMain' data-index='{{index}}'>
         <text>{{item.name}}</text>
-        <view class='right-arrow iconfont icon-chevrons-right' wx:if='{{item.active}}'></view>
+
+        <view class='right-arrow' wx:if='{{item.active}}'>
+          <image mode='aspectFill' src="/pages/public/images/filter/right.png"></image> 
+        </view>
       </view>
     </scroll-view>
     <scroll-view class='f-column f-column-3' scroll-y='1'>
@@ -47,7 +47,7 @@
   </view>
 </view>
 
-<scroll-view enable-flex='1' class='cards' style='height: {{heights.windowHeight - heights.filters}}px;' scroll-y='true' enable-back-to-top='true' bindscrolltolower='onReachBottom' bindscroll='fScroll' lower-threshold='{{main_lower_threshold}}' scroll-top='{{targetScrollTop}}' scroll-with-animation='true'>
+<scroll-view enable-flex='1' class='cards' style='height: {{heights.windowHeight - heights.filters}}px;' scroll-y='true' enable-back-to-top='true' bindscrolltolower='onReachBottom' bindscroll='fScroll' lower-threshold='{{main_lower_threshold}}' refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="onPullDownRefresh">
   <!-- 校区外显筛选 -->
   <scroll-view class="h-filter-list" scroll-x="1" wx:if="{{filters[0].category.length > 1}}">
     <view class='h-filter-item {{item.all_active? "active": ""}}'  bindtap='fClickCampus' data-index='{{index}}' data-filters_sub="0"
@@ -59,21 +59,12 @@
   </scroll-view>
 
   <block wx:for='{{cats}}' wx:key="_id">
-    <view class='card {{expandedCatIndex === index ? "wide" : ""}}' id="card-{{index}}" bindtap='clickCatCard' bindlongpress='bindManageCat' data-cat_id='{{item._id}}' data-index='{{index}}'>
+    <view class='card' bindtap='clickCatCard' bindlongpress='bindManageCat' data-cat_id='{{item._id}}' data-index='{{index}}'>
       <view class='label' wx:if="{{item.mphoto_new}}">{{text_cfg.genealogy.new_photo_tip}}</view>
-      <!-- 展开时右上角"管理"按钮（仅管理员） -->
-      <view wx:if="{{expandedCatIndex === index && isManager}}" class="card-manage-btn" catchtap='clickManageBtn' data-cat_id='{{item._id}}'>管理</view>
       <view class='image {{item.to_star? "to_star": ""}}'>
-        <image
-          bindload="bindImageLoaded"
-          mode='{{expandedCatIndex === index && item.panDistance > 0 ? "widthFix" : "aspectFill"}}'
-          src='{{item.photo.photo_compressed || item.photo.photo_id}}'
-          data-index="{{index}}"
-          class="{{expandedCatIndex === index && item.panDistance > 0 ? 'pan-animate' : 'mode-fill'}}"
-          style="--pan-distance: {{item.panDistance || 0}}px; --pan-duration: {{item.panDuration || 6}}s;"
-        ></image>
+        <image bindload="bindImageLoaded" mode='aspectFill' src='{{item.photo.photo_compressed || item.photo.photo_id}}' data-index="{{index}}"></image>
         <view class='image-title' wx:if='{{!item.photo_count_best || item.photo_count_best === 0}}'>{{text_cfg.genealogy.no_photo_tip}}</view>
-        <view class='image-title' wx:else>{{item.photo.photo_id? (text_cfg.genealogy.photo_by_tip + (item.photo.photographer ||(item.photo.userInfo? item.photo.userInfo.nickName: text_cfg.genealogy.photo_by_unknow_tip))): text_cfg.genealogy.photo_loading_tip}}</view>
+        <view class='image-title' wx:else>{{item.photo.photo_id? (text_cfg.genealogy.photo_by_tip + (item.photo.photographer ||(item.photo.userInfo? item.photo.userInfo.nickName: text_cfg.genealogy.photo_by_unknow))): text_cfg.genealogy.photo_loading_tip}}</view>
       </view>
       <view class='info' hover-class="hoverInfo">
         <view class='line'>
@@ -85,16 +76,17 @@
           <view wx:if='{{item.adopt}}' class='adopt'>{{adopt_desc[item.adopt]}}</view>
           <view wx:if='{{item.to_star}}' class='to_star'>{{text_cfg.genealogy.to_star_tip}}</view>
           <view class='popularity'>
-            <view class='iconfont icon-fire primary'></view>
+            <image src='/pages/public/images/card/card/pop.png'></image>
             <text> {{item.popularity + (item.photo_count_total? item.photo_count_total * photoPopWeight: 0) }}</text>
           </view>
           <view class='comment' wx:if="{{item.comment_count}}">
-            <view class='iconfont icon-chat primary'></view>
+            <image src='/pages/public/images/card/card/comment.png'></image>
             <text> {{item.comment_count}}</text>
           </view>
         </view>
 
         <view class='line' wx:if="{{item.rating}}">
+          <image mode='aspectFit' class='icon' src='/pages/public/images/card/card/star.png'></image>
           <view class="stars">
             <view class="one-star {{item.rating.avgScore >= j+1 ? '' : 'gray'}}"  wx:for="*****" wx:key="*this" wx:for-item="y" wx:for-index="j">
               <image src="/pages/public/images/button/rating_star.svg" mode="aspectFill"/>
@@ -103,35 +95,36 @@
           </view>
         </view>
         <view class='line' wx:if="{{item.birthday}}">
-          <view class='iconfont icon-clock gray'></view>
+          <image mode='aspectFit' class='icon' src='/pages/public/images/card/card/birth.png'></image>
           <text>{{item.birthday}}</text>
         </view>
         <view class='line'>
-          <view class='iconfont icon-relation gray'></view>
+          <image mode='aspectFit' class='icon' src='/pages/public/images/card/card/cat.png'></image>
           <text class="characteristics">{{item.characteristics_string}}</text>
         </view>
         <view class='line' wx:if="{{item.habit}}">
-          <view class='iconfont icon-heart gray'></view>
+          <image mode='aspectFit' class='icon' src='/pages/public/images/card/card/heart.png'></image>
           <text class="habit">{{item.habit}}</text>
         </view>
         <view class='line'>
-          <view class='iconfont icon-map-pin gray'></view>
+          <image mode='aspectFit' class='icon' src='/pages/public/images/card/card/pos.png'></image>
           <text>{{(item.campus + item.area) || '-'}}</text>
           <view class='index'><text decode='true'>&lt; {{index+1}}/{{catsMax}} &gt;</text></view>
         </view>
 
-        <!-- 展开时底部动作按钮：上传喵照（可选）/ 便利贴墙（可选）/ 详情相册（始终显示） -->
-        <view wx:if="{{expandedCatIndex === index}}" class="card-action-row">
-          <view wx:if="{{canUpload}}" class="card-action-btn btn-upload" catchtap='clickUploadBtn' data-cat_id='{{item._id}}'>上传喵照</view>
-          <view wx:if="{{canComment}}" class="card-action-btn btn-comment" catchtap='clickCommentBtn' data-cat_id='{{item._id}}'>便利贴墙</view>
-          <view class="card-action-btn btn-detail" catchtap='clickDetailBtn' data-cat_id='{{item._id}}'>详情相册</view>
-        </view>
       </view>
     </view>
-    <view wx:if="{{adStep && (index+1)%adStep===0}}" class="card-ad {{ad_show['ad-'+(index+1)]? '': 'hidden'}}">
-      <ad unit-id="{{ad.banner}}" ad-intervals="120"
-      bindload="adLoad" binderror="adError" bindclose="adClose" data-ad_id='ad-{{(index+1)}}'></ad>
+
+     <!-- 广告 -->
+
+<!--     <view wx:if="{{adStep && (index+1)%adStep===0 && tipsList[(index+1)/adStep-1].tip.length>0}}">
+      <text  class="tips">{{tipsList[(index+1)/adStep-1].tip}}</text>
+    </view> -->
+    
+    <view wx:if="{{adStep && (index+1)%adStep===0 && tipsList[(index+1)/adStep-1].tip.length>0}}">
+      <text  class="tips">{{tipsList[(index+1)/adStep-1].tip}}</text>
     </view>
+
   </block>
 
   <view class='loading' wx:if='{{!loadnomore}}'>

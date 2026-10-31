@@ -7,7 +7,7 @@
   </view>
   <view style='flex-basis:100%;'>
     <view class='buttons'>
-      <button bindtap='toMyFeedback' style='flex-basis:100%;'>我的反馈</button>
+      <button bindtap='toMyFeedback' style='flex-basis:100%;color:black;'>我的反馈</button>
       <button class="primary" bindtap='toFeedback' style='flex-basis:100%;'>点击反馈</button>
     </view>
   </view>

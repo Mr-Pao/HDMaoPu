@@ -32,7 +32,14 @@
         <view wx:for="{{columns}}" wx:key="null" class="column" wx:for-index="col">
           <view wx:for="{{item}}" wx:key="pic" class="column_item" wx:for-item="pics">
             <view class="column_pic" bindtap="clickPhoto" data-url="{{pics.pic_prev}}">
-              <image src="{{pics.pic}}" mode="widthFix" />
+              <!-- 修改 image 组件 -->
+              <image 
+                src="{{pics.pic}}" 
+                mode="widthFix" 
+                binderror="handleImageError" 
+                data-col="{{col}}" 
+                data-index="{{index}}"
+              />
               <!-- <view class="dark_mask"></view> -->
               <view class="location">{{pics.cat.campus}}</view>
             </view>
@@ -73,13 +80,6 @@
       <photoRank id="photo-rank"></photoRank>
     </scroll-view>
   </swiper-item><!-- 拍照月榜 end -->
-
-  <!-- 成就榜 -->
-  <swiper-item>
-    <scroll-view scroll-y="1" style="height: 100%;">
-      <achievementRank id="achievement-rank"></achievementRank>
-    </scroll-view>
-  </swiper-item><!-- 成就榜 end -->
 
 </swiper>
 

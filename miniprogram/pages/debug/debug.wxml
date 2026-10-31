@@ -1,3 +1,2 @@
-<view style='width: 750rpx;'>{{res}}</view>
-
-<heart bindclickbtn="click_like"></heart>
+<!--pages/debug/debug.wxml-->
+<text>pages/debug/debug.wxml</text>

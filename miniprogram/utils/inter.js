@@ -1,6 +1,5 @@
 import { getUser, setUserRole } from "./user";
 import { getCacheItem, setCacheItem, cacheTime } from "./cache";
-import { trackLike } from "./achievement";
 import api from "./cloudApi";
 const app = getApp();
 
@@ -15,7 +14,7 @@ async function ensureUser() {
 }
 
 // 定义数据库常量：
-const TYPE_LIKE = 10000;    // 点赞
+const TYPE_LIKE = 10000;
 
 // 获取缓存key
 function _getLikeCacheKey(item_id) {
@@ -115,9 +114,6 @@ async function likeAdd(item_id, item_type) {
   await likeCheck([item_id], {
     nocache: true
   });
-
-  // 成就：点赞
-  trackLike();
 
   // 特邀用户
   likeToInvite();

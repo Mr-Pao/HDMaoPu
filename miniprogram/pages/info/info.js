@@ -15,37 +15,30 @@ Page({
   data: {
     logo_img,
     friendApps: [],
-    friendLinkImgLoaded: false,
+    friendLinkImgLoaded:false,
     text_cfg: text_cfg,
 
     // 卡片，不需要设计绘制卡片图，只需用放图标即可
     cards: [
       {
-        icon: "/pages/public/images/info/btn/user.svg",
-        label: "个人主页",
-        path: "/pages/info/userInfo/userInfo",
-      }, {
-        icon: "/pages/public/images/info/btn/dashboard.svg",
-        label: "数据看板",
-        path: "/pages/info/dashboard/dashboard"
-      }, {
-        icon: "/pages/public/images/info/btn/badge.svg",
-        label: "徽章口袋",
-        path: "/pages/packageA/pages/info/badge/badge",
-      }, {
-        icon: "/pages/public/images/info/btn/achievement.svg",
-        label: "我的成就",
-        path: "/pages/info/myAchievement/myAchievement",
-      }, {
-        icon: "/pages/public/images/info/btn/team.svg",
-        label: "开发团队",
-        path: "/pages/info/devTeam/devTeam",
-      }, {
-        icon: "/pages/public/images/info/btn/reward.svg",
-        label: "投喂罐头",
-        path: "/pages/info/reward/reward",
+        icon:"/pages/public/images/info/btn/user.svg", // 一个示例
+        label:"个人主页",
+        path:"/pages/info/userInfo/userInfo",
+      },{
+        icon:"/pages/public/images/info/btn/badge.svg",
+        label:"徽章口袋",
+        path:"/pages/packageA/pages/info/badge/badge",
+      },{
+        icon:"/pages/public/images/info/btn/reward.svg",
+        label:"投喂罐头",
+        path:"/pages/info/reward/reward",
+      },{
+        icon:"/pages/public/images/info/btn/team.svg",
+        label:"程序开发",
+        path:"/pages/info/devTeam/devTeam",
       }
     ],
+
 
     nums: {},  // 菜单栏的各个数量
     // 菜单栏是否显示的条件
@@ -57,54 +50,7 @@ Page({
     // 菜单列表
     menuList: [
       {
-        title: "开发者工具（手机端不显示）",
-        show: "dev",
-        items: [
-          {
-            name: "部署指引",
-            path: "/pages/debug/deployTip/deployTip",
-            icon: "icon-bulb"
-          }
-        ],
-      }, {
-        title: "管理审核",
-        type: "管理后台",
-        show: "manager",
-        items: [
-          {
-            name: "照片审核",
-            path: "/pages/manage/checkPhotos/checkPhotos",
-            num: "numChkPhotos",
-            icon: "icon-photo-search"
-          },
-          {
-            name: "领养审核",
-            path: "/pages/manage/checkAdoption/checkAdoption",
-            num: "numChkAdoptions",
-            icon: "icon-user-share"
-          },
-          {
-            name: "便利贴审核",
-            path: "/pages/manage/checkComment/checkComment",
-            num: "numChkComments",
-            icon: "icon-checklist"
-          },
-          {
-            name: "反馈处理",
-            path: "/pages/manage/checkFeedbacks/checkFeedbacks",
-            num: "numFeedbacks",
-            icon: "icon-mail"
-          },
-          {
-            name: "人员管理",
-            path: "/pages/manage/managers/managers",
-            num: "numMapAccessApps",
-            icon: "icon-user-check"
-          },
-        ]
-      }, {
-        title: "小程序配置",
-        type: "管理后台",
+        title: "管理后台",
         show: "manager",
         items: [
           {
@@ -114,44 +60,76 @@ Page({
             dot: "true"
           },
           {
+            name: "数据看板",
+            path: "/pages/manage/dashboard/dashboard",
+            icon: "icon-bar-chart-o"
+          },
+          {
+            name: "照片审核",
+            path: "/pages/manage/checkPhotos/checkPhotos",
+            num: "numChkPhotos",
+            icon: "icon-photo-o"
+          },
+          {
+            name: "便利贴审核",
+            path: "/pages/manage/checkComment/checkComment",
+            num: "numChkComments",
+            icon: "icon-smile-comment-o"
+          },
+          {
+            name: "反馈处理",
+            path: "/pages/manage/checkFeedbacks/checkFeedbacks",
+            num: "numFeedbacks",
+            icon: "icon-envelop-o"
+          },
+          {
             name: "猫抓板公告",
             path: "/pages/news/createNews/createNews",
-            icon: "icon-license"
+            icon: "icon-edit"
           },
           {
             name: "校区/区域/花色",
             path: "/pages/manage/filters/filters",
-            icon: "icon-current-location"
+            icon: "icon-location-o"
           },
           {
             name: "猫猫管理",
             path: "/pages/manage/catManage/catManage",
-            icon: "icon-sitemap"
+            icon: "icon-cluster-o"
+          },
+          {
+            name: "人员管理",
+            path: "/pages/manage/managers/managers",
+            icon: "icon-manager-o"
+          },
+          {
+            name: "特邀用户",
+            path: "/pages/tools/inviteUser/inviteUser",
+            icon: "icon-star-o"
           },
           {
             name: "徽章管理",
             path: "/pages/manage/badgeDef/badgeDef",
-            icon: "icon-diamond"
+            icon: "icon-medel-o"
           },
           {
             name: "页面配置",
             path: "/pages/manage/pageSettings/pageSettings",
-            icon: "icon-adjust-horizontal"
+            icon: "icon-newspaper-o"
           },
           {
             name: "投喂记录",
             path: "/pages/manage/rewards/rewards",
-            icon: "icon-redpacket"
+            icon: "icon-balance-o"
           },
           {
             name: "照片处理",
             path: "/pages/manage/imProcess/imProcess",
             num: "numImProcess",
-            icon: "icon-file-zip"
+            icon: "icon-todo-list-o"
           }
         ]
       }
-
     ],
 
   },
@@ -177,7 +155,7 @@ Page({
     });
 
     // 设置为特邀用户
-    const { query } = wx.getLaunchOptionsSync();
+    const {query} = wx.getLaunchOptionsSync();
     console.log("query", query);
     if (query.inviteRole) {
       this.doInviteRole(options);
@@ -194,31 +172,73 @@ Page({
       version: getApp().globalData.version
     });
 
-    // 获取普通用户也能看的数据
-    // 所有猫猫数量
-    const allCatQf = { deleted: { $ne: 1 } };
-    // 所有照片数量
-    const allPhotoQf = { verified: true };
-    // 所有便利贴数量
-    const allCommentQf = { deleted: { $ne: true }, needVerify: { $ne: true } };
-    // 所有领养
-    const adoptQf = { adopt: 1, deleted: { $ne: 1 } };
-    // 所有绝育量
-    const sterilizedQf = { sterilized: true, deleted: { $ne: 1 } };
-    // 去除已领养、失踪、去喵星的猫猫
-    const currentCatsQf = {
-      adopt: { $ne: 1 },
-      to_star: { $ne: true },
-      missing: { $ne: true },
-      deleted: { $ne: 1 }
-    };
+    // 首次加载或超过5分钟才刷新数据
+    const lastRefresh = wx.getStorageSync('infoPageLastRefresh') || 0;
+    const now = Date.now();
+    
+    if (now - lastRefresh < 5 * 60 * 1000 && this.data.numAllCats) {
+      // 5分钟内已刷新过，使用缓存数据
+      return;
+    }
 
-    const { result: numAllCats } = await app.mpServerless.db.collection('cat').count(allCatQf);
-    const { result: numAllPhotos } = await app.mpServerless.db.collection('photo').count(allPhotoQf);
-    const { result: numAllComments } = await app.mpServerless.db.collection('comment').count(allCommentQf);
-    const { result: numSterilized } = await app.mpServerless.db.collection('cat').count(sterilizedQf);
-    const { result: numAdoptQf } = await app.mpServerless.db.collection('cat').count(adoptQf);
-    const { result: numCurrentCats } = await app.mpServerless.db.collection('cat').count(currentCatsQf);
+    let numAllCats, numAllPhotos, numAllComments, numSterilized, numAdoptQf, numCurrentCats;
+
+    // 尝试使用预加载数据
+    const preloadedData = wx.getStorageSync('infoPagePreload');
+    if (preloadedData && preloadedData.timestamp && now - preloadedData.timestamp < 5 * 60 * 1000) {
+      console.log('[INFO] 使用预加载数据');
+      numAllCats = preloadedData.numAllCats;
+      numAllPhotos = preloadedData.numAllPhotos;
+      numAllComments = preloadedData.numAllComments;
+      numSterilized = preloadedData.numSterilized;
+      numAdoptQf = preloadedData.numAdoptQf;
+      numCurrentCats = preloadedData.numCurrentCats;
+    } else {
+      // 获取普通用户也能看的数据
+      // 所有猫猫数量
+      const allCatQf = {};
+      // 所有照片数量
+      const allPhotoQf = { verified: true };
+      // 所有便利贴数量
+      const allCommentQf = { deleted: { $ne: true }, needVerify: { $ne: true } };
+      // 所有领养
+      const adoptQf = { adopt: 1 };
+      // 所有绝育量
+      const sterilizedQf = { sterilized: true };
+      // 去除已领养、失踪、去喵星的猫猫
+      const currentCatsQf = {
+        adopt: { $ne: 1 },
+        to_star: { $ne: true },
+        missing: { $ne: true }
+      };
+
+      // 并行执行数据库查询
+      const [
+        { result: nc },
+        { result: np },
+        { result: ncmt },
+        { result: ns },
+        { result: na },
+        { result: ncc }
+      ] = await Promise.all([
+        app.mpServerless.db.collection('cat').count(allCatQf),
+        app.mpServerless.db.collection('photo').count(allPhotoQf),
+        app.mpServerless.db.collection('comment').count(allCommentQf),
+        app.mpServerless.db.collection('cat').count(sterilizedQf),
+        app.mpServerless.db.collection('cat').count(adoptQf),
+        app.mpServerless.db.collection('cat').count(currentCatsQf)
+      ]);
+      
+      numAllCats = nc;
+      numAllPhotos = np;
+      numAllComments = ncmt;
+      numSterilized = ns;
+      numAdoptQf = na;
+      numCurrentCats = ncc;
+    }
+
+    // 更新刷新时间
+    wx.setStorageSync('infoPageLastRefresh', now);
 
     // 计算绝育率
     const adoptRate = (numAdoptQf / numAllCats * 100).toFixed(1);
@@ -236,28 +256,18 @@ Page({
     if (!await isManagerAsync()) {
       return;
     }
+
     // 待处理照片
     const imProcessQf = { photo_compressed: { $in: [undefined, ''] }, verified: true };
     const { result: numChkPhotos } = await app.mpServerless.db.collection('photo').count({ verified: false });
     const { result: numChkComments } = await app.mpServerless.db.collection('comment').count({ needVerify: true });
     const { result: numFeedbacks } = await app.mpServerless.db.collection('feedback').count({ dealed: false });
     const { result: numImProcess } = await app.mpServerless.db.collection('photo').count(imProcessQf);
-    const { result: numMapAccessApps } = await app.mpServerless.db.collection('user').count({ 'mapAccess.status': 'pending' });
-    // 待审核领养申请（集合可能尚未创建，容错处理）
-    let numChkAdoptions = 0;
-    try {
-      const { result } = await app.mpServerless.db.collection('adoption').count({ status: 'pending' });
-      numChkAdoptions = result;
-    } catch (err) {
-      console.log('[onShow] - adoption集合尚未创建');
-    }
     this.setData({
       "nums.numChkPhotos": numChkPhotos,
       "nums.numChkComments": numChkComments,
       "nums.numFeedbacks": numFeedbacks,
       "nums.numImProcess": numImProcess,
-      "nums.numMapAccessApps": numMapAccessApps,
-      "nums.numChkAdoptions": numChkAdoptions,
       "showCond.manager": true,
     });
   },
@@ -271,7 +281,7 @@ Page({
     }
   },
 
-  onShareTimeline: function () {
+  onShareTimeline:function () {
     return {
       title: share_text,
     }
@@ -318,7 +328,7 @@ Page({
       fail: function (e) {
         console.error(e)
       }
-    })
+    }) 
   },
 
   // 打开管理员手册tx文档
@@ -328,16 +338,5 @@ Page({
       content: 'laf版文档链接也在仓库md文件中',
       showCancel: true,
     })
-    // wx.openEmbeddedMiniProgram({
-    //   appId: 'wxd45c635d754dbf59',
-    //   path: 'pages/detail/detail?url=https%3A%2F%2Fdocs.qq.com%2Fdoc%2FDSEl0aENOSEx5cmtE',// 此处链接需删除tx文档所复制路径中的.html
-    //   envVersion: 'release',
-    //   success(res) {
-    //     // 打开成功
-    //   },
-    //   fail: function (e) {
-    //     console.log(e)
-    //   }
-    // })
-  },
-})
+        }
+    })

@@ -1,79 +1,63 @@
-# :pencil:中大猫谱（笃行猫谱）
-
+# :pencil:火大猫谱
 *——拍照记录校园内猫猫的成长轨迹* :cat::smiley_cat::heart_eyes_cat:
-
 ## 主要功能
 **猫猫档案**：创建校园猫猫资料档案，猫猫相册，精选瀑布流。
 
-<img src="https://user-images.githubusercontent.com/8966971/212461452-8a99397b-4e0e-4f0c-bdeb-64b0f7170c53.jpg" height = "200"/>
-
 **用户交互**：用户可以上传照片，发表留言，点赞照片或反馈信息。
-
-<img src="https://user-images.githubusercontent.com/8966971/212461438-f93a6740-c574-44ae-a2bf-b490ffa6dcfe.jpg" height = "200"/>
 
 **丰富功能**：包括拍照识猫，查看科普信息、公告文章等丰富功能。
 
-<img src="https://user-images.githubusercontent.com/8966971/212461458-ffda9eb6-5862-4846-bd57-09102ec0c84a.jpg" height = "200"/>
-
 **管理后台**：部署完成后，资料管理、照片审核等操作均在小程序端完成。
 
-<img src="https://user-images.githubusercontent.com/8966971/212461459-d9600a11-f01c-4837-81af-47794c39dd62.jpg" height = "200"/>
-
 ## 体验一下
-打开微信，扫码或搜索“笃行猫谱”（原名中大猫谱，23年底更名）。
+打开微信，扫码体验：
 
-<img src="./readme/maopu_duxing.png" height = "150" alt="笃行猫谱菊花码" />
+<img src="./readme/qrcode1.png" height = "150" alt="火大猫谱二维码" />
 
-### 朋友们的小程序
-
-|小程序|高校|二维码|小程序|高校|二维码|
-|:----:|:----:|:----:|:----:|:----:|:----:|
-|CQGCZY小猫之家|重庆工程职业技术学院|<img src="./readme/maopu_cqgc.jpg" height = "100" />|莲峰猫谱|电子科技大学中山学院|<img src="./readme/maopu_lianfeng.png" height = "100" />|
-|昆院猫谱|昆明学院KMU|<img src="./readme/maopu_kunyuan.jpg" height = "100" />|猫猫家谱|暨南大学|<img src="./readme/maopu_jiapu.jpg" height = "100" />|
-|火大猫谱|火箭军工程大学|<img src="./readme/maopu_huoda.png" height = "100" />|CW猫咪图鉴|重庆外语外事学院|<img src="./readme/maopu_cw.jpg" height = "100" />|
-|龙井是公猫|广东药科大学|<img src="./readme/maopu_longjing.png" height = "100" />|技大喵喵屋|深圳技术大学|<img src="./readme/maopu_jida.jpg" height = "100" />|
-|招财喵谱|上海财经大学|<img src="./readme/maopu_zhaocai.jpg" height = "100" />|崴喵猫谱|山东大学（威海）|<img src="./readme/maopu_weimao.png" height = "100" />|
-|可每猫咪|河海大学|<img src="./readme/maopu_kemei.jpg" height = "100" />|喵汪图鉴|湖南大学|<img src="./readme/maopu_miaowang.jpeg" height = "100" />|
-|青猫图鉴|青岛大学|<img src="./readme/maopu_qingmao.png" height = "100" />|小理猫谱|广州理工学院|<img src="./readme/maopu_xiaoli.jpg" height = "100" />|
-|一喵九鼎图鉴|河南科技大学|<img src="./readme/maopu_jiuding.jpg" height = "100" />|财猫之家|浙江财经大学|<img src="./readme/maopu_caimao.png" height = "100" />|
-
-
-如果，你所在校园（/社团/小区...）的猫猫:smile_cat:也盼望拥有一份属于自己的猫猫档案，请你跟随下一章节的指引，为它们部署、发布一份独特的猫谱小程序。
-
-部署完成后，可以邀请你的朋友帮忙管理猫猫信息。我们为此准备了【猫谱-管理员手册】，信息管理无需接触代码。
 
 部署过程中遇到任何问题，可以：
 * 加入猫谱技术交流QQ群：956808218
 * 在GitHub页面提issue
-
+## 项目结构
+```
+├── miniprogram/           # 小程序前端代码
+│   ├── pages/            # 页面目录
+│   │   ├── genealogy/    # 猫谱主页面
+│   │   ├── info/         # 个人中心
+│   │   ├── news/         # 新闻科普
+│   │   ├── leaderboard/  # 排行榜
+│   │   ├── followFeed/   # 关注动态
+│   │   ├── manage/       # 管理后台
+│   │   └── tools/        # 工具页面
+│   ├── components/       # 自定义组件
+│   ├── packages/         # 第三方包
+│   └── custom-tab-bar/   # 自定义底部导航
+├── functionsEMAS/        # EMAS云函数
+│   ├── unionOp/          # 通用操作函数
+│   ├── timeTrigger/      # 定时任务
+│   └── temp/             # 临时迁移脚本
+└── package.json          # 项目配置
+```
+## 技术栈
+- **前端框架**: 微信小程序原生开发
+- **云服务**: 阿里云 EMAS 云开发
+- **数据库**: MongoDB
+- **云存储**: 阿里云 OSS
+## 部署说明
+本项目已迁移至阿里云 EMAS 云开发平台。部署前请确保已完成：
+1. 注册阿里云 EMAS 账号
+2. 创建小程序云开发环境
+3. 配置数据库和存储资源
 ## 资料整理
 |资料名|类型|链接|
 |:----:|:----:|:----:|
-|猫谱-部署文档|文档|https://docs.qq.com/doc/DSE1vd0p3RERvWXJS|
+|猫谱-部署文档|文档|https://docs.qq.com/doc/DSGFvWGF4UnVrQ3VN|
 |猫谱-管理员手册|文档|https://docs.qq.com/doc/DSEl0aENOSEx5cmtE|
-
-# :scroll:部署
-
-:smirk_cat:*无需从零开始，只要一些耐心。*
-
-EMAS版暂时没有录制部署视频，部署流程请参考：[猫谱EMAS版文档](https://docs.qq.com/doc/DSE1vd0p3RERvWXJS)
-
-注：考虑到Laf平台不再维护，迁移到阿里云的EMAS Serverless平台，比较稳定。费用每个月：EMAS后端5元左右，腾讯云COS存照片约5元左右。
-
-# :dancers:开发团队
-
+## 开发团队
 本项目的开发工作100%用爱发电，特别感谢每一位为此付出的小伙伴。
-
-:computer:代码开发：[Zing22](https://github.com/Zing22)、[Jazon](https://github.com/jxzhn)、[Junius](https://github.com/JunDeer)、[yw](https://github.com/WondrousWisdomcard)、[Lauzeyu](https://github.com/parsifal486)、[Smileye-v](https://github.com/Smileye-v)、[xuannfx](https://github.com/xuannfx)、[LightHouse-1024](https://github.com/LightHouse-1024)、[wloop98](https://github.com/wloop98)
-
-:black_nib:UI设计：蓝卷、[Junius](https://github.com/JunDeer)、[yw](https://github.com/WondrousWisdomcard)、[xuannfx](https://github.com/xuannfx)
-
+:computer:代码开发：[Zing22](https://github.com/Zing22)、[Jazon](https://github.com/jxzhn)、[Junius](https://github.com/JunDeer)、[yw](https://github.com/WondrousWisdomcard)、[Lauzeyu](https://github.com/parsifal486)
+:black_nib:UI设计：蓝卷、[Junius](https://github.com/JunDeer)、[yw](https://github.com/WondrousWisdomcard)
 :notebook:资料整理：笃行志愿服务队及各校区小伙伴
-
 如果你有新的想法或建议，非常欢迎你在QQ群/issue板块发起讨论，或者提交代码PR。
-
-代码迁移过程非常感谢[maopu-EMAS项目](https://github.com/Smileye-v/maopu-EMAS)。
-
-# :ferris_wheel:开源协议
-
+## 开源协议
 本项目遵循MPL-2.0开源协议。在此基础上，如果你发布了一份新的猫谱，我们希望你能保留中大猫谱的友情链接。待你的线上版本稳定使用一段时间后，请留言告诉我们将你的友链加到中大猫谱小程序中。

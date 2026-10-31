@@ -2,9 +2,8 @@
 import { randomInt } from './utils';
 import { getGlobalSettings } from "./page";
 import { getCacheItem, setCacheItem } from "./cache";
-import { signCosUrl } from "./common";
+import { getCurrentUserOpenid, signCosUrl } from "./common";
 import config from "../config";
-import api from "./cloudApi";
 
 const app = getApp();
 
@@ -34,13 +33,11 @@ async function getUser(options) {
   }
 
   // 直接调用云函数，不再通过 api 对象
-  const openid = await api.getCurrentUserOpenid();
-  console.log(openid);
-  userRes = await api.userOp({
+  const openid = await getCurrentUserOpenid();
+  userRes = (await app.mpServerless.function.invoke('userOp', {
     op: 'get',
-    openid: openid,
-    unionAction: 'userOp'
-  });
+    openid: openid
+  })).result;
   if (userRes && userRes.userInfo) {
     userRes.userInfo.avatarUrl = await signCosUrl(userRes.userInfo.avatarUrl);
   }
@@ -110,7 +107,6 @@ async function getUserInfoMulti(openids, cacheOptions, retMap) {
 async function _checkFuncEnable(funcName) {
   // 对特定人群、特地版本进行控制
   let accessCtrl = await getGlobalSettings("accessCtrl");
-  if (!accessCtrl) return true; // Demo/离线模式：默认开启所有功能
   let { ctrlUser, ctrlVersion, disabledFunc, limitedFunc } = accessCtrl;
 
   // 完全禁用，不需要判断人群/版本
@@ -170,14 +166,6 @@ async function checkCanShowNews() {
   return tabBarOrder.includes("news");
 }
 
-// 能否使用喵地图（按用户权限，默认关闭）
-async function checkCanUseMap() {
-  const app = getApp();
-  if (app.globalData && app.globalData.demoMode) return true;
-  const user = await getUser({ nocache: true });
-  return !!(user.mapAccess && user.mapAccess.status === 'approved');
-}
-
 // 设置页面上的userInfo
 async function getPageUserInfo(page) {
   // 检查用户信息有没有拿到，如果有就更新this.data
@@ -228,16 +216,15 @@ function toSetUserInfo() {
 // 设置用户等级
 async function setUserRole(openid, role) {
   // 直接调用云函数，不再通过 api 对象
-  const currentOpenid = await api.getCurrentUserOpenid();
-  return await api.userOp({
+  const currentOpenid = await getCurrentUserOpenid();
+  return (await app.mpServerless.function.invoke('userOp', {
     "op": "updateRole",
     "user": {
       openid: openid,
       role: role
     },
-    openid: currentOpenid,
-    unionAction: "userOp"
-  })
+    openid: currentOpenid
+  })).result;
 }
 
 // 填充userInfo
@@ -281,7 +268,6 @@ module.exports = {
   checkCanFeedback,
   checkCanFullTabBar,
   checkCanShowNews,
-  checkCanUseMap,
   isManagerAsync,
   checkAuth,
   toSetUserInfo,

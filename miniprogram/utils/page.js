@@ -54,15 +54,22 @@ function showTab(page) {
     return;
   }
   const path = getCurrentPath();
-  console.log("current path:", path);
-  page.getTabBar().setData({
-    activePath: path,
-  });
+  
+  // 避免不必要的 setData 调用
+  const tabBar = page.getTabBar();
+  if (tabBar.data && tabBar.data.activePath !== path) {
+    tabBar.setData({
+      activePath: path,
+    });
+  }
 
+  // 只有在 tabBarHeight 变化时才更新
   var tabBarHeight = wx.getStorageSync('tabBarHeight') || 80;
-  page.setData({
-    tabBarHeight: tabBarHeight
-  })
+  if (page.data && page.data.tabBarHeight !== tabBarHeight) {
+    page.setData({
+      tabBarHeight: tabBarHeight
+    })
+  }
 }
 
 // 跳转到设置页，并发起提示

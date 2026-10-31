@@ -12,8 +12,6 @@ import {
 } from "../../../../utils/page";
 
 import drawUtils from "../../../../utils/draw";
-import { signPhotoUrls } from  "../../../../utils/cat";
-import api from "../../../../utils/cloudApi";
 
 const share_text = text_cfg.app_name + ' - ' + text_cfg.recognize.share_tip;
 const app = getApp();
@@ -47,7 +45,8 @@ Page({
   },
 
   jsData: {
-    // 接口秘钥，onShow中从数据库拉取。
+    // 接口设置，onLoad中从数据库拉取。
+    interfaceURL: null,
     secretKey: null,
     canvasSideLen: 500,
     // 图片长宽比，在compresPhoto函数中记录。用于重新映射后端返回的catBox位置信息。
@@ -76,8 +75,10 @@ Page({
   },
 
   async onShow() {
-    if (!this.jsData.secretKey) {
-      var settings = await getGlobalSettings('recognize');
+    if (!this.jsData.interfaceURL || !this.jsData.secretKey) {
+      console.log('__wxConfig.envVersion: ', __wxConfig.envVersion);
+      var settings = await getGlobalSettings(__wxConfig.envVersion === 'release' ? 'recognize' : 'recognize_test');
+      this.jsData.interfaceURL = settings.interfaceURL;
       this.jsData.secretKey = settings.secretKey;
       await this.recognizeChatImage();
     } else { // 没杀后台回到聊天重新识别的情况
@@ -148,12 +149,12 @@ Page({
 
   async recognizePhoto() {
     // 检查接口设置
-    if (!this.jsData.secretKey) {
+    if (!this.jsData.interfaceURL || !this.jsData.secretKey) {
       wx.showToast({
         icon: 'error',
         title: '出错了'
       });
-      console.log("no secretKey");
+      console.log("no interfaceURL || secretKey");
       return;
     }
     wx.showLoading({
@@ -171,35 +172,54 @@ Page({
 
     // 计算签名
     const photoBase64 = wx.getFileSystemManager().readFileSync(compressPhotoPath, 'base64');
-    console.log(photoBase64);
     const timestamp = Math.round(new Date().getTime() / 1000);
     const signature = hex_sha256(photoBase64 + timestamp + this.jsData.secretKey);
-    // 调用云函数 catFace 进行识别
-    const params = {
-      photoBase64: photoBase64,
-      signature: signature,
+    // 调用服务端接口进行识别
+    const that = this;
+    const formData = {
       timestamp: timestamp,
+      signature: signature,
     };
     if (this.data.catIdx !== null) {
-      params.catIdx = this.data.catIdx; // 保留 tapCatBox 重新识别某只猫的能力
+      formData.catIdx = this.data.catIdx;
     }
-    console.log(params);
-    try {
-      const res = await api.catFace(params);
-      if (res && res.ok === true) {
-        await this.loadRecognizeResult(res.data);
-      } else {
-        throw res;
+    wx.uploadFile({
+      filePath: compressPhotoPath,
+      name: 'photo',
+      url: this.jsData.interfaceURL,
+      formData: formData,
+      timeout: 10 * 1000, // 10s超时
+      async success(resp) {
+        try {
+          if (resp.statusCode != 200) {
+            throw resp.data;
+          }
+          const res = JSON.parse(resp.data); // 这里也可能抛出异常
+          if (res.ok === true) {
+            await that.loadRecognizeResult(res.data);
+          } else {
+            throw res;
+          }
+        } catch (err) {
+          console.log('get error from interface:', err);
+          wx.hideLoading();
+          wx.showToast({
+            icon: 'error',
+            title: '出错了'
+          });
+          wx.reportMonitor('recognizeCatPhotoError', 1);
+        }
+      },
+      fail(err) {
+        console.log(err);
+        wx.hideLoading();
+        wx.showToast({
+          icon: 'error',
+          title: '出错了'
+        });
+        wx.reportMonitor('recognizeCatPhotoError', 1);
       }
-    } catch (err) {
-      console.log('get error from catFace:', err);
-      wx.hideLoading();
-      wx.showToast({
-        icon: 'error',
-        title: '出错了'
-      });
-      wx.reportMonitor('recognizeCatPhotoError', 1);
-    }
+    });
   },
 
   async compressPhoto() {
@@ -354,13 +374,11 @@ Page({
 
   // 根据模型输出的得分（即每个对象的score属性）计算softmax概率，并将结果放到原对象的prob属性上
   calculateSoftmaxProb(catList) {
-    // const scores = catList.map(item => item.score);
-    // const maxScore = scores.reduce((prev, cur) => Math.max(prev, cur));
-    // const expScoreSum = scores.reduce((prev, cur) => prev + Math.exp(cur - maxScore), 0);
+    const scores = catList.map(item => item.score);
+    const maxScore = scores.reduce((prev, cur) => Math.max(prev, cur));
+    const expScoreSum = scores.reduce((prev, cur) => prev + Math.exp(cur - maxScore), 0);
     catList.forEach(item => {
-      // 目前的 yolo 识猫模型，会直接输出概率，不需要再次 softmax
-      item.prob = item.score;
-      // item.prob = Math.exp(item.score - maxScore) / expScoreSum;
+      item.prob = Math.exp(item.score - maxScore) / expScoreSum;
     });
   },
 
@@ -380,8 +398,7 @@ Page({
     var total = catInfo.photo_count_best;
     var index = randomInt(0, total);
     var { result: photoURL } = await app.mpServerless.db.collection('photo').findOne(query, { skip: index });
-    const signedPhotoURL = await signPhotoUrls(photoURL);
-    return signedPhotoURL;
+    return photoURL;
   },
 
   async choosePhoto() {

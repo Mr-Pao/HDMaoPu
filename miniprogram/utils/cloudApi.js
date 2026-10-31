@@ -1,62 +1,83 @@
-// 存放所有需要调用云函数的接口
 import config from "../config";
+import { getCurrentUserOpenid } from "./common";
+const app = getApp();
+
+const requestCache = new Map();
+const CACHE_TTL = 10000;
 
 function getDate(date) {
   date = date ? new Date(date) : new Date();
   return new Date()
 }
 
-
-// 获取当前用户的openid
-async function getCurrentUserOpenid() {
-  try {
-    const app = getApp();
-    const res = await app.mpServerless.user.getInfo({
-      authProvider: 'wechat_openapi'
-    });
-    if (res.success) {
-      return res.result.user.oAuthUserId;
+async function callUnionOp(action, options = {}, cacheKey = null) {
+  if (cacheKey) {
+    const cached = requestCache.get(cacheKey);
+    if (cached && Date.now() < cached.expire) {
+      return cached.data;
     }
-    return null;
-  } catch (error) {
-    console.log("getCurrentUserOpenid error:", error);
-    return null;
   }
+
+  const params = {
+    unionAction: action,
+    ...options
+  };
+
+  let result;
+  for (let retry = 0; retry < 2; retry++) {
+    try {
+      const response = await app.mpServerless.function.invoke('unionOp', params);
+      result = response.result;
+      break;
+    } catch (error) {
+      if (retry === 0) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  if (cacheKey) {
+    requestCache.set(cacheKey, {
+      data: result,
+      expire: Date.now() + CACHE_TTL
+    });
+  }
+
+  return result;
 }
 
 async function curdOp(options) {
-  const app = getApp();
   const openid = await getCurrentUserOpenid();
-  return (await app.mpServerless.function.invoke('unionOp', {
+  return await callUnionOp('curdOp', {
     ...options,
     openid: openid,
-    unionAction: "curdOp",
-  })).result;
+  });
 }
 
 async function userOp(options) {
-  const app = getApp();
-  var openid = await getCurrentUserOpenid();
-  return (await app.mpServerless.function.invoke('unionOp', {
+  var openid
+  const res = await app.mpServerless.user.getInfo({
+    authProvider: 'wechat_openapi'
+  });
+  if (res.success) {
+    openid = res.result.user.oAuthUserId;
+  } else {
+    return {};
+  }
+  return await callUnionOp('userOp', {
     ...options,
     openid: openid,
-    op: options.op,
-    unionAction: "userOp",
-  })).result;
+    op: options.op
+  });
 }
-// 发送消息
 
 async function sendMsgV2(options) {
-  const app = getApp();
-  return (await app.mpServerless.function.invoke('unionOp', {
-    ...options,
-    unionAction: "sendMsgV2",
-  })).result;
+  return await callUnionOp('sendMsgV2', options);
 }
 
-// 生成小程序码
 async function getMpCode(options) {
-  const app = getApp();
   const params = {
     _id: options._id,
     scene: options.scene,
@@ -64,43 +85,30 @@ async function getMpCode(options) {
     width: 500,
     use_private_tencent_cos: config.use_private_tencent_cos
   }
-  return (await app.mpServerless.function.invoke('unionOp', {
-    ...params,
-    unionAction: "getMpCode",
-  })).result;
+  return await callUnionOp('getMpCode', params);
 }
 
 async function managePhoto(options) {
-  const app = getApp();
   const openid = await getCurrentUserOpenid();
-  return (await app.mpServerless.function.invoke('unionOp', {
+  return await callUnionOp('managePhoto', {
     ...options,
-    openid: openid,
-    unionAction: "managePhoto",
-  })).result
+    openid: openid
+  });
 }
 
 async function getAllSci(options) {
-  const app = getApp();
-  return (await app.mpServerless.function.invoke('unionOp', {
-    ...options,
-    unionAction: "getAllSci",
-  })).result;
+  return await callUnionOp('getAllSci', options);
 }
 
 async function updateCat(options) {
-  const app = getApp();
   const openid = await getCurrentUserOpenid();
-  return (await app.mpServerless.function.invoke('unionOp', {
+  return await callUnionOp('updateCat', {
     ...options,
-    openid: openid,
-    unionAction: "updateCat",
-  })).result
+    openid: openid
+  });
 }
 
-// 内容安全检查
 async function contentSafeCheck(content, nickname) {
-  const app = getApp();
   const openid = await getCurrentUserOpenid();
   const label_type = {
     100: "正常",
@@ -114,9 +122,7 @@ async function contentSafeCheck(content, nickname) {
     20013: "版权",
     21000: "其他",
   }
-  // 违规检测并提交
-  var res = (await app.mpServerless.function.invoke('unionOp', { openid: openid, content: content, nickname: nickname, unionAction: "commentCheck" })).result;
-  // 检测接口的返回
+  var res = await callUnionOp('commentCheck', { openid: openid, content: content, nickname: nickname });
   console.log("contentSafeCheck", res);
   if (res.errCode != 0 && res.errcode != 0) {
     return {
@@ -137,209 +143,93 @@ async function contentSafeCheck(content, nickname) {
   }
   return;
 }
-// 获取用户的徽章
+
 async function getBadge(options) {
-  const app = getApp();
   const openid = await getCurrentUserOpenid();
-  return (await app.mpServerless.function.invoke('unionOp', {
+  return await callUnionOp('getBadge', {
     ...options,
-    openid: openid,
-    unionAction: "getBadge",
-  })).result
+    openid: openid
+  });
 }
-// 添加app实例获取
+
 async function giveBadge(options) {
-  const app = getApp();
   const openid = await getCurrentUserOpenid();
-  return (await app.mpServerless.function.invoke('unionOp', {
+  return await callUnionOp('giveBadge', {
     ...options,
-    openid: openid,
-    unionAction: "giveBadge",
-  })).result
+    openid: openid
+  });
 }
-// 生成徽章二维码
+
 async function genBadgeCode(options) {
-  const app = getApp();
   const openid = await getCurrentUserOpenid();
-  return (await app.mpServerless.function.invoke('unionOp', {
+  return await callUnionOp('genBadgeCode', {
     ...options,
-    openid: openid,
-    unionAction: "genBadgeCode",
-  })).result
+    openid: openid
+  });
 }
-// 加载徽章码
+
 async function loadBadgeCode(options) {
-  const app = getApp();
   const openid = await getCurrentUserOpenid();
-  return (await app.mpServerless.function.invoke('unionOp', {
+  return await callUnionOp('curdOp', {
     ...options,
     openid: openid,
-    unionAction: "curdOp",
     operation: "read",
     collection: "badge_code",
     where: options.where,
     skip: options.skip,
     limit: options.limit
-  })).result
+  });
 }
 
-// 添加app实例获取
-// 查询用户个人数据接口
 async function getUserStats(options) {
-  const app = getApp();
   const openid = await getCurrentUserOpenid();
   console.log("openid", openid);
-  return (await app.mpServerless.function.invoke('unionOp', {
+  return await callUnionOp('getUserStats', {
     ...options,
-    openid: openid,
-    unionAction: "getUserStats",
-  })).result
+    openid: openid
+  });
 }
 
-// 更新一只猫的评分
 async function updateCatRating(options) {
-  const app = getApp();
-  return (await app.mpServerless.function.invoke('unionOp', {
-    ...options,
-    unionAction: "updateCatRating",
-  })).result
+  return await callUnionOp('updateCatRating', options);
 }
 
-// 添加app实例获取
 async function getCatStats(options) {
-  const app = getApp();
-  return (await app.mpServerless.function.invoke('unionOp', {
-    ...options,
-    unionAction: "getCatStats",
-  })).result
+  return await callUnionOp('getCatStats', options);
 }
 
-// 更新关注列表
-// 添加app实例获取
 async function updateFollowCats(options) {
-  const app = getApp();
   const openid = await getCurrentUserOpenid();
-  return (await app.mpServerless.function.invoke('unionOp', {
+  return await callUnionOp('updateFollowCats', {
     ...options,
-    openid: openid,
-    unionAction: "updateFollowCats",
-  })).result
+    openid: openid
+  });
 }
 
-// 更新一只猫的疫苗接种记录
 async function vaccineOp(options) {
-  const app = getApp();
   const openid = await getCurrentUserOpenid();
-  return (await app.mpServerless.function.invoke('unionOp', {
+  return await callUnionOp('vaccineOp', {
     ...options,
-    openid: openid,
-    unionAction: "vaccineOp",
-  })).result
+    openid: openid
+  });
 }
 
-// 领养流程相关操作
-async function adoptionOp(options) {
-  const app = getApp();
-  const openid = await getCurrentUserOpenid();
-  return (await app.mpServerless.function.invoke('unionOp', {
-    ...options,
-    openid: openid,
-    unionAction: "adoptionOp",
-  })).result
-}
-
-// 医疗记录相关操作
-async function medicalOp(options) {
-  const app = getApp();
-  const openid = await getCurrentUserOpenid();
-  return (await app.mpServerless.function.invoke('unionOp', {
-    ...options,
-    openid: openid,
-    unionAction: "medicalOp",
-  })).result
-}
-
-// 成就数量排行榜
-async function getAchievementRank(options) {
-  const app = getApp();
-  return (await app.mpServerless.function.invoke('unionOp', {
-    ...options,
-    unionAction: "getAchievementRank",
-  })).result
-}
-
-// 更新猫的关系
+// 新增：关系操作接口
 async function catRelationOp(options) {
-  const app = getApp();
   const openid = await getCurrentUserOpenid();
-  return (await app.mpServerless.function.invoke('unionOp', {
+  return await callUnionOp('catRelationOp', {
     ...options,
-    openid: openid,
-    unionAction: "catRelationOp",
-  })).result;
+    openid: openid
+  });
 }
 
-// 管理关系规则
 async function manageRelationRules(options) {
-  const app = getApp();
   const openid = await getCurrentUserOpenid();
-  return (await app.mpServerless.function.invoke('unionOp', {
+  return await callUnionOp('manageRelationRules', {
     ...options,
-    openid: openid,
-    unionAction: "manageRelationRules",
-  })).result;
+    openid: openid
+  });
 }
-
-// 初始化疫苗类型
-async function initVaccineTypes(options) {
-  const app = getApp();
-  const openid = await getCurrentUserOpenid();
-  return (await app.mpServerless.function.invoke('unionOp', {
-    ...options,
-    openid: openid,
-    unionAction: "initVaccineTypes",
-  })).result;
-}
-
-// 获取URL
-async function getURL(options) {
-  const app = getApp();
-  const openid = await getCurrentUserOpenid();
-  return (await app.mpServerless.function.invoke('unionOp', {
-    ...options,
-    openid: openid,
-    unionAction: "getURL",
-  })).result;
-}
-
-async function getTempCOS(options) {
-  const app = getApp();
-  console.log("getTempCOS", options, app);
-  return (await app.mpServerless.function.invoke('unionOp', {
-    ...options,
-    unionAction: "getTempCOS",
-  })).result;
-}
-
-// 识别猫脸
-// 图片识别是耗时操作，SDK transport 默认 timeout 仅 5s 不够用，
-// 这里临时调大到 30s，调用结束恢复原值，避免影响其他云函数调用。
-async function catFace(options) {
-  const app = getApp();
-  const openid = await getCurrentUserOpenid();
-  const transport = app.mpServerless.transport;
-  const oldTimeout = transport.timeoutOption;
-  transport.setTimeout(30000);
-  try {
-    return (await app.mpServerless.function.invoke('catFace', {
-      ...options,
-      openid: openid,
-    })).result;
-  } finally {
-    transport.setTimeout(oldTimeout);
-  }
-}
-
 
 module.exports = {
   curdOp,
@@ -360,14 +250,7 @@ module.exports = {
   getCatStats,
   updateFollowCats,
   vaccineOp,
-  adoptionOp,
-  medicalOp,
-  getAchievementRank,
+  // 新增接口
   catRelationOp,
   manageRelationRules,
-  initVaccineTypes,
-  getURL,
-  getTempCOS,
-  catFace,
-  getCurrentUserOpenid
 };

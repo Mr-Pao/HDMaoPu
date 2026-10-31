@@ -31,21 +31,21 @@ Page({
     ],
     tempPics: [],
     loadnomore: false,
-    threads: ["徽章收集", "照片点赞", "拍照月榜", "成就榜"],
+    threads: ["徽章收集", "照片点赞", "拍照月榜"],
     threadsActive: 1,
     filters: [{
       name: "周精选",
       hours: 24 * 7,
     }, {
       name: "月精选",
-      hours: 24 * 31,
-      active: true,
+      hours: 24 * 31
     }, {
       name: "年精选",
       hours: 24 * 365
     }, {
       name: "总精选",
-      hours: 24 * 365 * 30
+      hours: 24 * 365 * 30,
+      active: true,
     },]
   },
   onShow: function () {
@@ -182,7 +182,8 @@ Page({
     for (let i = 0; i < photos.length; i++) {
       var p = photos[i];
       p.pic = await signCosUrl(p.photo_compressed || p.photo_id);
-      p.pic_prev = await signCosUrl(p.photo_watermark || p.photo_id);
+      // p.pic_prev = await signCosUrl(p.photo_watermark || p.photo_id);
+      p.pic_prev = await signCosUrl(p.photo_id);
       p.cat = cat_res[i];
       p.liked = like_res[i];
       p.mdate_str = formatDate(p.mdate, "yyyy/MM/dd")
@@ -320,9 +321,6 @@ Page({
     }
     if (index == 2) {
       this.selectComponent('#photo-rank').reloadData();
-    }
-    if (index == 3) {
-      this.selectComponent('#achievement-rank').reloadData();
     }
   },
 

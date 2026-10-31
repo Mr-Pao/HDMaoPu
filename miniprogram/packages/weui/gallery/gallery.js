@@ -110,7 +110,8 @@ Component({
                     return (photo.photo_compressed || photo.photo_watermark || photo.photo_id);
                 });
                 var imgUrls = newVal.map((photo) => {
-                    return (photo.photo_watermark || photo.photo_id);
+                    // return (photo.photo_watermark || photo.photo_id);
+                    return (photo.photo_id);
                 });
                 this.setData({
                     photos: newVal,

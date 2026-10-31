@@ -1,4 +1,5 @@
 import { getAvatar } from "../../utils/cat";
+import { getUser } from "../../utils/user";
 import api from "../../utils/cloudApi";
 const app = getApp();
 // 日期格式化函数
@@ -157,13 +158,8 @@ Component({
         }
 
         console.log("未找到疫苗类型，初始化并使用默认值");
-        // const user = await getUser();
-        // app.mpServerless.function.invoke('initVaccineTypes', { openid: user.openid }).catch(err => console.error("初始化疫苗类型失败:", err));
-        try {
-          await api.initVaccineTypes();
-        } catch (error) {
-          console.error("初始化疫苗类型失败:", error);
-        }
+        const user = await getUser();
+        app.mpServerless.function.invoke('initVaccineTypes', { openid: user.openid }).catch(err => console.error("初始化疫苗类型失败:", err));
         console.log("使用默认值");
         globalVaccineTypes = DEFAULT_VACCINE_TYPES;
         this.setData({ vaccineTypes: globalVaccineTypes });
@@ -725,9 +721,7 @@ Component({
     // 显示已接种疫苗的猫咪列表
     async showVaccinatedCats() {
       try {
-        // 先打开弹窗，再异步获取数据
-        this.setData({ showVaccinatedCatsModal: true, isLoading: true, vaccinatedCats: [] });
-        wx.showToast({ title: '加载中', icon: 'loading', mask: true, duration: 10000 });
+        this.setData({ isLoading: true });
 
         // 确保已加载疫苗类型
         await this.ensureVaccineTypes();
@@ -739,15 +733,16 @@ Component({
         });
 
         if (result?.result === true && Array.isArray(result.data)) {
-          // 先展示基础列表，再异步填充头像
-          this.setData({ vaccinatedCats: result.data });
-          const ids = result.data.map(cat => cat._id);
-          const avatars = await getAvatar(ids);
-          const catsWithAvatars = result.data.map((cat, i) => ({
-            ...cat,
-            avatar: avatars[i]
+          // 处理猫咪头像
+          const catsWithAvatars = await Promise.all(result.data.map(async (cat) => {
+            // 直接使用猫咪自带的照片数量
+            cat.avatar = await getAvatar(cat._id, cat.photo_count_best);
+            return cat;
           }));
-          this.setData({ vaccinatedCats: catsWithAvatars });
+          this.setData({
+            vaccinatedCats: catsWithAvatars,
+            showVaccinatedCatsModal: true
+          });
         } else {
           console.error('获取已接种猫咪列表失败', result);
           wx.showToast({
@@ -763,7 +758,6 @@ Component({
         });
       } finally {
         this.setData({ isLoading: false });
-        wx.hideToast();
       }
     },
     // 关闭已接种猫咪列表弹窗

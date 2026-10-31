@@ -23,14 +23,6 @@ async function getCurrentUserOpenid() {
 }
 
 async function downloadFile(filePath) {
-  // Demo 模式或本地/相对路径：跳过网络下载，直接返回
-  if (!filePath || filePath.startsWith('/') || !filePath.startsWith('http')) {
-    return { tempFilePath: filePath, statusCode: 200 };
-  }
-  const app = getApp();
-  if (app && app.globalData && app.globalData.demoMode) {
-    return { tempFilePath: filePath, statusCode: 200 };
-  }
   return new Promise(function (resolve, reject) {
     wx.downloadFile({
       url: filePath,
@@ -56,9 +48,8 @@ async function uploadFile(options) {
     })
   }
 
-  const data = (await app.mpServerless.function.invoke('unionOp', {
-    fileName: fileName,
-    unionAction: 'getURL'
+  const data = (await app.mpServerless.function.invoke('getURL', {
+    fileName: fileName
   })).result
 
   const formData = data.formData;
@@ -99,7 +90,7 @@ async function ensureCos() {
       const app = getApp();
       if (!cosTemp || (new Date() > new Date(cosTemp.Expiration))) {
         console.log("开始获取 cosTemp");
-        cosTemp = (await app.mpServerless.function.invoke('unionOp', { unionAction: 'getTempCOS' })).result
+        cosTemp = (await app.mpServerless.function.invoke('getTempCOS')).result
         wx.setStorageSync('cosTemp', cosTemp);
       }
       if (!cosTemp || !cosTemp.Credentials) {
@@ -127,20 +118,12 @@ async function signCosUrl(inputUrl) {
   let url = inputUrl;
   // console.log("[signCosUrl]", url);
   const app = getApp();
-  // Demo 模式或无 COS SDK：返回本地占位图，避免 403 / downloadFile 报错
-  if (!app || (app.globalData && app.globalData.demoMode) || !app.cos || !use_private_tencent_cos) {
-    if (url && url.includes('myqcloud.com')) {
-      return '/pages/public/images/system/user.png';
-    }
-    return url;
-  }
   // 不是腾讯云COS的不加密
-  if (!url || !url.includes("myqcloud.com")) {
+  if (!url || !url.includes("myqcloud.com") || !app.cos || !use_private_tencent_cos) {
     return url;
   }
 
-  // _needResign 是异步，await
-  if (!(await _needResign(url))) {
+  if (!_needResign(url)) {
     return url;
   }
 
@@ -205,6 +188,46 @@ async function _doCosSign(url) {
 }
 
 
+/**
+ * 将图片URL转换为WebP格式（如果支持的话）
+ * @param {string} url - 原始图片URL
+ * @returns {string} - WebP格式的图片URL
+ */
+function convertToWebP(url) {
+  if (!url) return url;
+  
+  // 已经是webp格式，直接返回
+  if (url.toLowerCase().endsWith('.webp')) {
+    return url;
+  }
+  
+  // 替换常见图片格式为webp
+  const extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp'];
+  for (const ext of extensions) {
+    if (url.toLowerCase().endsWith(ext)) {
+      return url.slice(0, -ext.length) + '.webp';
+    }
+  }
+  
+  return url;
+}
+
+/**
+ * 获取支持的图片格式URL（优先WebP）
+ * @param {string} url - 原始图片URL
+ * @param {boolean} [preferWebP=true] - 是否优先使用WebP
+ * @returns {string} - 优化后的图片URL
+ */
+function getOptimizedImageUrl(url, preferWebP = true) {
+  if (!url) return url;
+  
+  if (preferWebP) {
+    return convertToWebP(url);
+  }
+  
+  return url;
+}
+
 // 提取COS的region和bucket字段
 function _getRegionBucketPath(url) {
   // 返回：{region: 'ap-guangzhou', bucket: 'bucket-name', filePath: "xxx/xxx.xxx"}
@@ -230,15 +253,38 @@ function _splitOnce(str, sep) {
   return [str.slice(0, idx), str.slice(idx + 1)];
 }
 
-// 格式化时间为 "YYYY-MM-DD HH:mm:ss" 格式
-function formatTime(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  const h = String(date.getHours()).padStart(2, '0');
-  const min = String(date.getMinutes()).padStart(2, '0');
-  const s = String(date.getSeconds()).padStart(2, '0');
-  return `${y}-${m}-${d} ${h}:${min}:${s}`;
+/**
+ * 批量签名照片URL
+ * @param {Object|Array} photos - 照片对象或照片数组
+ * @param {string[]} [urlFields] - 需要签名的字段名数组，默认为 ['photo_id', 'photo_compressed', 'photo_watermark']
+ * @returns {Promise<Object|Array>} - 签名后的照片对象或数组
+ */
+async function signPhotoUrls(photos, urlFields = ['photo_id', 'photo_compressed', 'photo_watermark']) {
+  // 处理数组情况
+  if (Array.isArray(photos)) {
+    const signedPhotos = await Promise.all(
+      photos.map(photo => _signSinglePhoto(photo, urlFields))
+    );
+    return signedPhotos;
+  }
+  
+  // 处理单个对象情况
+  return _signSinglePhoto(photos, urlFields);
+}
+
+/**
+ * 签名单个照片对象的URL
+ */
+async function _signSinglePhoto(photo, urlFields) {
+  if (!photo) return photo;
+  
+  const signedPhoto = { ...photo };
+  for (const field of urlFields) {
+    if (signedPhoto[field]) {
+      signedPhoto[field] = await signCosUrl(signedPhoto[field]);
+    }
+  }
+  return signedPhoto;
 }
 
 module.exports = {
@@ -247,5 +293,7 @@ module.exports = {
   uploadFile,
   ensureCos,
   signCosUrl,
-  formatTime,
+  signPhotoUrls,
+  convertToWebP,
+  getOptimizedImageUrl
 }

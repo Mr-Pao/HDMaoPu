@@ -18,13 +18,13 @@
   font-size: 28rpx;
   font-weight: 500;
   background-color: var(--color-primary);
-  color: var(--color-text-onPrimary);
   display: inline-block;
   padding: 10rpx;
   box-shadow: 0 0 10rpx var(--color-gray-max);
   position: absolute;
   top: -20rpx;
   left: -15rpx;
+  color: var(--color-white-dark);
 }
 
 .block .desc {
@@ -53,11 +53,11 @@ button {
   padding: 16rpx 30rpx;
   border: 1rpx solid var(--color-gray-max);
   border-radius: 25rpx;
+  color: var(--color-white-dark);
 }
 
 button.primary {
   background-color: var(--color-primary);
-  color: var(--color-text-onPrimary);
 }
 
 /* 最后的小tip */

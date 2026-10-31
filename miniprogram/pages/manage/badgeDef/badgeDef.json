@@ -1,6 +1,4 @@
 {
-  "usingComponents": {
-    "no-auth": "/components/noAuth/noAuth"
-  },
+  "usingComponents": {},
   "navigationBarTitleText": "徽章管理"
 }

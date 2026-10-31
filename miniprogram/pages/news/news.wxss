@@ -1,4 +1,9 @@
 /* pages/news/news.wxss */
+page {
+  height: 100%;
+  background-color: var(--color-gray-light);
+}
+
 .news-box {
   box-sizing: border-box;
   padding: 25rpx 25rpx 25rpx 30rpx;
@@ -120,7 +125,7 @@
   height: 130rpx;
 }
 
-/* 按钮未选中 */
+/* 鎸夐挳鏈€変腑 */
 .normal_button {
   display: flex;
   justify-content: center;
@@ -137,7 +142,7 @@
               font-weight 500ms ease;
 }
 
-/* 按钮选中 */
+/* 鎸夐挳閫変腑 */
 .checked_button {
   border-color: var(--color-primary-dark);
   color: var(--color-primary-dark);

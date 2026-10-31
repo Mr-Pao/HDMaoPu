@@ -3,5 +3,5 @@
     "modifyUserInfo": "/components/modifyUserInfo/modifyUserInfo"
   },
   "navigationBarTitleText": "个人主页",
-  "disableScroll": false
+  "disableScroll": true
 }

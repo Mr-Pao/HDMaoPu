@@ -47,7 +47,19 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: async function (options) {
-    var { result } = await app.mpServerless.db.collection('news').find({}, { sort: { date: -1 } });
+    let result = [];
+    const now = Date.now();
+    
+    // 尝试使用预加载数据
+    const preloadedData = wx.getStorageSync('newsPagePreload');
+    if (preloadedData && preloadedData.timestamp && now - preloadedData.timestamp < 5 * 60 * 1000) {
+      console.log('[NEWS] 使用预加载数据');
+      result = preloadedData.newsList || [];
+    } else {
+      // 从数据库查询
+      var queryResult = await app.mpServerless.db.collection('news').find({}, { sort: { date: -1 } });
+      result = queryResult.result || [];
+    }
 
     // 签名 coverPath 字段
     for (let i = 0; i < result.length; i++) {
@@ -193,7 +205,7 @@ Page({
 
   async setSciImgs() {
     const sciImgList = await Promise.all(science_imgs.map(val => signCosUrl(val)));;
-    const cacheKey = 'sciImgStorage_v2';  // v2: 旧缓存为占位图，弃用
+    const cacheKey = 'sciImgStorage';
     const dataKey = 'images';
 
     const fileSystem = wx.getFileSystemManager();
@@ -220,10 +232,6 @@ Page({
   },
 
   async downloadFile(fileID) {
-    // Demo 模式或本地路径直接返回
-    if (!fileID || fileID.startsWith('/')) {
-      return { tempFilePath: fileID, statusCode: 200 };
-    }
     return new Promise(function (resolve, reject) {
       wx.downloadFile({
         url: fileID,
@@ -237,30 +245,19 @@ Page({
 
   async cacheCloudImg(cacheKey, imgUrlList) { // 下载并缓存封面
     const fileSystem = wx.getFileSystemManager();
+    var promiseAll = [];
     var cachePathList = [];
 
     for (let i = 0; i < imgUrlList.length; i++) {
-      const url = imgUrlList[i];
-      // 本地包路径或空值：直接使用
-      if (!url || url.startsWith('/')) {
-        cachePathList.push(url);
-        continue;
-      }
-      // 远程地址：尝试下载转存本地缓存；任何异常都回退为直接用远程地址
-      // （<image> 可直接加载 https，缓存只是加速优化，没有也能正常显示）
-      try {
-        const res = await this.downloadFile(url);
-        const tempPath = res.tempFilePath;
-        // 只有真正的本地临时文件才能转存；http(s) 开头说明下载异常，直接用原地址
-        if (tempPath && !tempPath.startsWith('http')) {
-          cachePathList.push(fileSystem.saveFileSync(tempPath));
-        } else {
-          cachePathList.push(url);
-        }
-      } catch (e) {
-        console.warn('[cacheCloudImg] 缓存失败，改用远程地址:', url, e);
-        cachePathList.push(url);
-      }
+      promiseAll.push(this.downloadFile(imgUrlList[i]));
+    }
+
+    var res = await Promise.all(promiseAll);
+
+    console.log("[cacheCloudImg] -", res);
+    for (let i = 0; i < res.length; i++) {
+      var savedFilePath = fileSystem.saveFileSync(res[i].tempFilePath);
+      cachePathList.push(savedFilePath);
     }
     wx.setStorage({
       key: cacheKey,

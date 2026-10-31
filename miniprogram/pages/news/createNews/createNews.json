@@ -1,6 +1,4 @@
 {
-  "usingComponents": {
-    "no-auth": "/components/noAuth/noAuth"
-  },
+  "usingComponents": {},
   "navigationBarTitleText": "创建新公告"
 }

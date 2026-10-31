@@ -3,7 +3,6 @@ import {
   checkAuth
 } from "../../../utils/user";
 import api from "../../../utils/cloudApi";
-import { signCosUrl } from "../../../utils/common";
 const app = getApp();
 Page({
 
@@ -74,12 +73,6 @@ Page({
       _id: this.data.news_id
     })
     console.log("[loadNews] - NewsDetail:", result);
-
-    if (result.coverPath) {
-      result.coverPath = await signCosUrl(result.coverPath);
-    }
-    const signedPhotosPath = await Promise.all((result.photosPath || []).map(val => signCosUrl(val)));
-
     for (var i = 0; i < that.data.buttons.length; i++) {
       if (that.data.buttons[i].name == result.class) {
         that.data.buttons[i].checked = true;
@@ -107,7 +100,7 @@ Page({
     }
     that.setData({
       news: result,
-      photos_path: signedPhotosPath,
+      photos_path: result.photosPath,
       titlelength: result.title.length,
       length: result.mainContent.length,
       buttons: that.data.buttons,

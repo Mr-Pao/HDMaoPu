@@ -32,7 +32,6 @@ button {
 
 button.primary {
   background-color: var(--color-primary);
-  color: var(--color-text-onPrimary);
 }
 
 button.long {

@@ -1,18 +1,21 @@
 <view class='block'>
-  <view class='title'>开发团队</view>
+  <view class='title'>本校开发</view>
   <view class='desc'>
+    <text>一只狍 </text>
+    <text bindtap='copyWechat'>Pao_Leo \n</text>
     <text>{{text_cfg.dev_team.team}}</text>
   </view>
 </view>
 
 <view class='block'>
-  <view class='title'>开源代码</view>
+  <view class='title'>开源代码团队</view>
   <view class='desc'>
-    <text selectable='true'>小程序代码开源啦！配备部署教程~\n{{github_link}}</text>
-    <button class="primary" bindtap='copyOpenSourceLink'>点击复制到剪切板</button>
+    <text>程序开发：渔政、蓝卷、XD、zJ、ArcherJo、yw\n</text>
+    <text selectable='true'>开源代码（点击复制）\n</text>
+    <text selectable='true' bindtap='copyOpenSourceLink'>{{github_link}}</text>
+    <!-- <button class="primary" bindtap='copyOpenSourceLink'>点击复制到剪切板</button> -->
   </view>
 </view>
-
 <view class='block'>
   <view class='title'>更新日志</view>
   <view class='desc'>

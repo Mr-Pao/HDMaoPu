@@ -70,12 +70,6 @@
   background-color: var(--color-gray-light);
 }
 
-.form-item input {
-  height: 80rpx;
-  line-height: 80rpx;
-  padding: 0 20rpx;
-}
-
 .form-item textarea {
   min-height: 150rpx;
 }
@@ -272,8 +266,8 @@
 }
 
 .danger-button {
-  background-color: var(--color-red);
-  color: var(--color-gray-light);
+  background-color: var(--color-gray-light);
+  color: var(--color-gray-max);
 }
 
 /* 加载更多部分 */

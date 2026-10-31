@@ -5,9 +5,10 @@ module.exports = async (ctx) => {
     throw new Error('缺少 AppID 或 AppSecret 配置');
   }
 
-  // 读取 token 缓存
-  // 注意：app_secret 只保留这一个文档，缓存写进同一文档的 cache 字段；客户端读不到，缓存过期会自动重建，无需迁移数据。
-  const record = app_secret.cache?.accessToken;
+  // 读取数据库中的 token
+  const { result: record } = await ctx.mpserverless.db.collection('setting').findOne({
+    _id: "accessToken"
+  });
 
   // 检查 token 是否有效（提前5分钟刷新）
   if (record && Math.floor(Date.now() / 1000) < record.expiredAt - 300) {
@@ -52,12 +53,12 @@ module.exports = async (ctx) => {
       lastUpdate: new Date()
     };
 
-    await ctx.mpserverless.db.collection('app_secret').findOneAndUpdate({
-      _id: app_secret._id
+    await ctx.mpserverless.db.collection('setting').findOneAndUpdate({
+      _id: "accessToken"
     }, {
-      $set: {
-        'cache.accessToken': data
-      }
+      $set: data
+    }, {
+      upsert: true  // 如果不存在则创建
     });
 
     console.log("获取新 token 成功");

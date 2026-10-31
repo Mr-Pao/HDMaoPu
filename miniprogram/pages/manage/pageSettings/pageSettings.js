@@ -39,7 +39,7 @@ Page({
         if (defaultValue == undefined) {
           continue;
         }
-        if (typeof defaultValue === "string" && defaultValue.startsWith("#copy")) {
+        if (defaultValue.startsWith("#copy")) {
           var [_, ci, cj] = defaultValue.split("-");
           defaultValue = settings[ci][cj];
         }
@@ -130,15 +130,6 @@ Page({
     });
   },
 
-  // 获取switch输入
-  switchChange(e) {
-    var { i, j } = e.currentTarget.dataset;
-    var { value } = e.detail;
-    this.setData({
-      [`settings.${i}.${j}`]: value
-    });
-  },
-
   // 检查设置类型有效
   checkAvaliable() {
     var { settings, desc } = this.data;
@@ -157,21 +148,6 @@ Page({
             return false;
           }
           settings[i][j] = parseFloat(value);
-        }
-        if (type == "bool") {
-          // 规范化为布尔值，兼容历史数据中可能存的字符串 "true"/"false"
-          settings[i][j] = (value === true || value === "true");
-        }
-        // 不允许关闭info Tabbar，以防不能再调回去
-        if (i == "tabBarCtrl") {
-          if ((j == "ctrlTab" && value.includes("info")) || (j == "fullTab" && !value.includes("info"))) {
-            wx.showModal({
-              title: '提示',
-              content: `不可隐藏关于页`,
-              showCancel: false
-            });
-            return false;
-          }
         }
       }
     }

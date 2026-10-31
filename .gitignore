@@ -15,13 +15,11 @@ node_modules/
 miniprogram_npm/
 cloudfunctions/package-lock.json
 project.private.config.json
+laf.json
 miniprogram/appSecret.js
 .secret.yaml
 miniprogram/signKey.js
 .app.yaml
 
-# Others
-.trae
-.workbuddy
-*.bak
-functionsEMAS/*.zip
+# 旧 .git 副本（历史误提交）
+_git/

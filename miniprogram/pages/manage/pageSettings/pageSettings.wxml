@@ -29,7 +29,6 @@ module.exports.indexOf = indexOf;
         </view>
         <view class="form-input-tip">储存值: "{{settings[i][j]}}"</view>
       </checkbox-group>
-      <switch wx:elif="{{desc[i][j].type=='bool'}}" checked="{{settings[i][j]}}" disabled="{{desc[i][j].disabled}}" bindchange="switchChange" data-i="{{i}}" data-j="{{j}}"/>
       <input wx:else class="form-input" type="{{desc[i][j].type}}" disabled="{{desc[i][j].disabled}}" value="{{settings[i][j]}}" bindinput="inputChange" data-i="{{i}}" data-j="{{j}}"/>
     </view>
   </view>
@@ -37,6 +36,7 @@ module.exports.indexOf = indexOf;
     <button class="primary long" bindtap="uploadSetting">提交</button>
   </view>
 </block>
-
-<!-- 未授权提示 -->
-<no-auth wx:else tip-text="{{tipText}}"></no-auth>
+<view wx:else class='unAuth'>
+  <text>{{tipText}}</text>
+  <button bindtap='goBack' wx:if='{{tipBtn}}'>打扰了</button>
+</view>

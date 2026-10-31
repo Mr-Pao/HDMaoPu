@@ -1,7 +1,4 @@
 {
-  "usingComponents": {
-    "no-auth": "/components/noAuth/noAuth",
-    "search-cat": "/components/searchCat/searchCat"
-  },
+  "usingComponents": {},
   "navigationBarTitleText": "管理审核"
 }
