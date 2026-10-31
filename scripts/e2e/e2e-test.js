@@ -14,6 +14,7 @@ const ART = path.join(ROOT, 'test-artifacts');
 
 function readJson(p) { return JSON.parse(fs.readFileSync(p, 'utf8')); }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+process.on('unhandledRejection', (e) => console.log('[未处理拒绝]', (e && e.message) || e));
 
 async function main() {
   const appJson = readJson(path.join(ROOT, 'miniprogram/app.json'));
@@ -44,7 +45,33 @@ async function main() {
 
   // 先手动开启自动化端口：
   // "C:\Users\yzx49\Program\微信web开发者工具\cli.bat" auto --project <项目根> --auto-port 9420
-  const program = await automator.connect({ wsEndpoint: 'ws://localhost:9420' });
+  // cli auto 返回后项目窗口仍需编译启动，这里带重试连接
+  let program = null;
+  for (let i = 1; i <= 12; i++) {
+    try {
+      program = await automator.connect({ wsEndpoint: 'ws://localhost:9420' });
+      console.log(`已连接自动化端口（第 ${i} 次尝试）`);
+      break;
+    } catch (e) {
+      console.log(`连接失败（第 ${i}/12 次）：${e.message.slice(0, 60)}，5 秒后重试...`);
+      await sleep(5000);
+    }
+  }
+  if (!program) throw new Error('无法连接自动化端口 ws://localhost:9420');
+  // 探测项目就绪：轻量命令轮询直到有响应（IDE 冷启动可能要 1-2 分钟）
+  for (let i = 1; i <= 24; i++) {
+    try {
+      await program.systemInfo();
+      console.log(`项目就绪（第 ${i} 次探测）`);
+      break;
+    } catch (e) {
+      console.log(`未就绪（第 ${i}/24 次探测），5 秒后重试...`);
+      if (i === 24) throw new Error('项目长时间未就绪');
+      await sleep(5000);
+      // 超时后可能需要重新连接
+      try { program = await automator.connect({ wsEndpoint: 'ws://localhost:9420' }); } catch (e2) {}
+    }
+  }
 
   const consoleLogs = [];
   program.on('console', (msg) => {
