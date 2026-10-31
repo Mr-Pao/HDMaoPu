@@ -983,3 +983,126 @@ swiper-item image {
   word-break: break-all;
   margin-bottom: 8rpx;
 }
+
+/* ================= v4.2 详情页重构：沉浸大图 + 上浮信息卡 ================= */
+#bg-yellow {
+  height: 640rpx;
+  background-color: var(--color-primary);
+  background-image: linear-gradient(180deg, #0C5F03 0%, #0A4A02 100%);
+}
+#bg-big-circle {
+  height: 600rpx;
+  background-color: var(--color-bg);
+}
+#big-circle {
+  width: 1400rpx;
+  height: 1400rpx;
+  border-radius: 1400rpx;
+  left: -325rpx;
+  top: -980rpx;
+  background-color: var(--color-primary);
+  box-shadow: 0 30rpx 90rpx rgba(12, 95, 3, 0.35);
+}
+swiper {
+  height: 640rpx;
+  margin-top: 0;
+}
+swiper-item image {
+  width: 620rpx;
+  height: 520rpx;
+  border-radius: 40rpx;
+  box-shadow: 0 24rpx 60rpx rgba(0, 0, 0, 0.3);
+}
+.best-photo .like-count {
+  left: auto;
+  right: 84rpx;
+  top: 76rpx;
+  bottom: auto;
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  background-color: rgba(0, 0, 0, 0.35);
+  color: var(--color-surface);
+  font-size: 24rpx;
+}
+.info {
+  margin-top: -124rpx;
+  padding: 46rpx 32rpx 26rpx;
+  border-radius: 46rpx 46rpx 0 0;
+  background-color: var(--color-bg);
+  background-image: none;
+  box-shadow: 0 -12rpx 36rpx rgba(12, 95, 3, 0.12);
+  position: relative;
+  z-index: 3;
+}
+.info .identity {
+  align-items: center;
+  margin-bottom: 26rpx;
+}
+.info .name {
+  height: auto;
+  font-size: 58rpx;
+  line-height: 64rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+  margin-left: 0;
+  padding-bottom: 0;
+  color: var(--color-text);
+}
+.info image.gender {
+  height: 30rpx;
+  width: 30rpx;
+  padding-bottom: 0;
+  margin-left: 14rpx;
+}
+.identity .count {
+  flex-direction: row;
+  align-items: center;
+  margin-left: 14rpx;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background-color: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 22rpx;
+  font-weight: 600;
+  letter-spacing: 0;
+  box-shadow: 0 2rpx 8rpx rgba(12, 95, 3, 0.07);
+}
+.identity .count.first {
+  margin-left: auto;
+}
+.identity .count .iconfont {
+  font-size: 24rpx;
+  margin-right: 4rpx;
+  color: var(--color-primary-bright);
+}
+.tags {
+  justify-content: flex-start;
+  padding: 0 4rpx;
+}
+.tags .tag {
+  font-size: 22rpx;
+  height: 52rpx;
+  line-height: 40rpx;
+  padding: 6rpx 22rpx;
+  margin-right: 14rpx;
+}
+.details {
+  margin-top: 30rpx;
+}
+.details .card {
+  border-radius: 28rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 18rpx rgba(12, 95, 3, 0.05);
+}
+.details .card-header,
+.card-header {
+  padding: 24rpx 30rpx;
+  border-bottom: 1rpx solid var(--color-border);
+}
+.card-title {
+  font-size: 30rpx;
+  letter-spacing: 1rpx;
+}
+.details .item {
+  padding: 28rpx 30rpx;
+}
