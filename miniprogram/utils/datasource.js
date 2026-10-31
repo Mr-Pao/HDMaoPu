@@ -713,6 +713,252 @@ function createJsonServerless(options) {
     return { ok: false, errMsg: 'unk operation ' + operation };
   }
 
+  // 对应 userOp：get / update / updateRole
+  // 原云函数在用户不存在时会新建，本地照做；不补这一步首屏永远拿不到用户信息
+  async function _userOp(params) {
+    const args = params || {};
+    const op = args.op;
+    const openid = args.openid || _getOrCreateOpenid();
+
+    async function findUser(oid) {
+      const items = await _load('user');
+      return items.filter(u => u && u.openid === oid)[0] || null;
+    }
+
+    if (op === 'get') {
+      const existing = await findUser(openid);
+      if (existing) return existing;
+
+      // 第一个用户自动拿到 manager = 99，与 functionsEMAS/unionOp/userOp.js 一致
+      const all = await _load('user');
+      const newUser = { openid: openid };
+      if (all.length === 0) newUser.manager = 99;
+      const res = await _insertOne('user', newUser);
+      console.log('[datasource] 新建用户 ' + openid + (newUser.manager ? '（首个用户，超级管理员）' : ''));
+      return Object.assign({ _id: res.result._id }, newUser);
+    }
+
+    if (op === 'update') {
+      const self = await findUser(openid);
+      if (!self) return 'Err, user not found.';
+      const patch = Object.assign({}, args.user || {});
+      delete patch._id;
+      delete patch.openid;
+      delete patch.manager;   // 不允许自己提权，与云函数一致
+      await _updateOne('user', { openid: openid }, patch);
+      return await findUser(openid);
+    }
+
+    if (op === 'updateRole') {
+      // 云函数原实现拿调用者 openid 当条件（会改错人），这里按 user.openid 指向的目标改
+      const target = (args.user && args.user.openid) || openid;
+      const patch = Object.assign({}, args.user || {});
+      delete patch._id;
+      await _updateOne('user', { openid: target }, patch);
+      return await findUser(target);
+    }
+
+    return 'unknown op: ' + op;
+  }
+
+  // 对应 unionOp/getCatStats：数据看板统计
+  // 原云函数对每个指标单独 count，静态数据源一次 _load 全量载入内存算，
+  // 省掉十几次往返；口径与 functionsEMAS/unionOp/getCatStats.js 保持一致
+  async function _getCatStats() {
+    const cats = await _load('cat');
+    const settings = await _load('setting');
+
+    const filterSetting = settings.filter(s => s && s._id === 'filter')[0] || {};
+    const campuses = filterSetting.campuses || [];
+    const colours = filterSetting.colour || [];
+    const areaDefs = filterSetting.area || [];
+
+    const alive = cats.filter(c => c && c.deleted !== 1);
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthTs = monthStart.getTime();
+
+    const pct = (n, d) => (d > 0 ? parseFloat((n / d * 100).toFixed(1)) : 0);
+    const isCurrent = c => c.adopt !== 1 && !c.missing && !c.to_star;
+    const inMonth = t => t && new Date(t).getTime() >= monthTs;
+
+    const total = alive.length;
+    const sterilized = alive.filter(c => c.sterilized === true).length;
+    const adopted = alive.filter(c => c.adopt === 1).length;
+    const missing = alive.filter(c => c.missing === true).length;
+    const deceased = alive.filter(c => c.to_star === true).length;
+    const currentList = alive.filter(isCurrent);
+    const current = currentList.length;
+    const currentSterilized = currentList.filter(c => c.sterilized === true).length;
+
+    const male = alive.filter(c => c.gender === '公').length;
+    const female = alive.filter(c => c.gender === '母').length;
+    const unknownList = alive.filter(c => c.gender !== '公' && c.gender !== '母');
+    const genderTotal = male + female + unknownList.length;
+
+    const campus = campuses.map(name => {
+      const inCampus = alive.filter(c => c.campus === name);
+      const campusSterilized = inCampus.filter(c => c.sterilized === true).length;
+      const areas = areaDefs.filter(a => a.campus === name).map(def => {
+        const list = alive.filter(c => c.campus === name && c.area === def.name);
+        const sterList = list.filter(c => c.sterilized === true);
+        const tnr = _tnrIndex(list, sterList, monthTs);
+        return {
+          area: def.name,
+          count: list.length,
+          gender: {
+            male: list.filter(c => c.gender === '公').length,
+            female: list.filter(c => c.gender === '母').length,
+            unknown: list.filter(c => c.gender === '未知').length,
+          },
+          sterilized: sterList.length,
+          sterilizationRate: pct(sterList.length, list.length),
+          tnrIndex: tnr.index,
+          tnrDetail: tnr.detail,
+        };
+      });
+      return {
+        campus: name,
+        count: inCampus.length,
+        sterilized: campusSterilized,
+        sterilizationRate: pct(campusSterilized, inCampus.length),
+        areas: areas,
+      };
+    });
+
+    const colourStats = colours.map(name => ({
+      colour: name,
+      count: alive.filter(c => c.colour === name).length,
+    }));
+
+    // 本月事件：新猫 / 绝育 / 领养 / 失踪 / 喵星
+    const eventTypes = [
+      ['新猫', 'create_time', c => true, 'newCats'],
+      ['绝育', 'sterilized_time', c => c.sterilized === true, 'sterilized'],
+      ['领养', 'adopt_time', c => c.adopt === 1, 'adopted'],
+      ['失踪', 'missing_time', c => c.missing === true, 'missing'],
+      ['喵星', 'deceased_time', c => c.to_star === true, 'deceased'],
+    ];
+    const month = { newCats: 0, sterilized: 0, adopted: 0, missing: 0, deceased: 0 };
+    let events = [];
+
+    eventTypes.forEach(function (def) {
+      const type = def[0], field = def[1], cond = def[2], key = def[3];
+      const hit = alive.filter(c => cond(c) && inMonth(c[field]));
+      month[key] = hit.length;
+      hit.forEach(c => events.push({
+        type: type,
+        date: _relativeDate(c[field]),
+        timestamp: c[field],
+        name: c.name,
+        id: c._id,
+      }));
+    });
+    events = events.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    return {
+      success: true,
+      data: {
+        basic: {
+          total: total,
+          sterilized: sterilized,
+          missing: missing,
+          adopted: adopted,
+          deceased: deceased,
+          current: current,
+          currentSterilized: currentSterilized,
+        },
+        rates: {
+          sterilization: pct(sterilized, total),
+          currentSterilization: pct(currentSterilized, current),
+          adoption: pct(adopted, total),
+        },
+        gender: {
+          male: { count: male, rate: pct(male, genderTotal) },
+          female: { count: female, rate: pct(female, genderTotal) },
+          unknown: {
+            count: unknownList.length,
+            rate: pct(unknownList.length, genderTotal),
+            cats: unknownList.map(c => c.name || '未命名'),
+          },
+        },
+        month: month,
+        campus: campus,
+        colour: colourStats,
+        events: events,
+      },
+    };
+  }
+
+  // TNR 指数，算法逐项照搬云函数，只把 monthStart 换成毫秒时间戳
+  function _tnrIndex(allCats, sterilizedCats, monthTs) {
+    const W = { BASE: 0.4, GROWTH: 0.4, ADOPTION: 0.3, SURVIVAL: 0.2, REG: 0.1 };
+    const pct = (n, d) => (d > 0 ? parseFloat((n / d * 100).toFixed(1)) : 0);
+
+    const aliveSter = sterilizedCats.filter(c => c.adopt !== 1 && !c.missing && !c.to_star);
+    const aliveNonAdopted = allCats.filter(c => c.adopt !== 1 && !c.missing && !c.to_star);
+    const N = allCats.filter(c => c.create_time && new Date(c.create_time).getTime() >= monthTs).length;
+
+    let D = 0, M = 0, totalD = 0, totalM = 0;
+    const nonAdopted = allCats.filter(c => c.adopt !== 1);
+    nonAdopted.forEach(c => {
+      if (c.to_star === true) {
+        totalD++;
+        if (c.deceased_time && new Date(c.deceased_time).getTime() >= monthTs) D++;
+      } else if (c.missing === true) {
+        totalM++;
+        if (c.missing_time && new Date(c.missing_time).getTime() >= monthTs) M++;
+      }
+    });
+
+    const totalCats = Math.max(allCats.length, 1);
+    const totalNonAdopted = Math.max(nonAdopted.length, 1);
+
+    const sterilizationRate = pct(sterilizedCats.length, totalCats);
+    const netSterilizationRate = aliveNonAdopted.length > 0 ? pct(aliveSter.length, aliveNonAdopted.length) : 100;
+    const initialCats = nonAdopted.length - N;
+    const growthRate = initialCats > 0 ? pct(N - (D + M), initialCats) : 0;
+    const survivalRate = 100 - pct(totalD, totalNonAdopted);
+    const registrationRate = totalNonAdopted - totalD > 0 ? 100 - pct(totalM, totalNonAdopted - totalD) : 0;
+    const adoptionRate = 100 - pct(nonAdopted.length, totalCats);
+
+    const baseScore = adoptionRate === 100 ? 100 * W.BASE : netSterilizationRate * W.BASE;
+    const qualityScore = (
+      Math.max(0, 100 - growthRate) * W.GROWTH +
+      adoptionRate * W.ADOPTION +
+      survivalRate * W.SURVIVAL +
+      registrationRate * W.REG
+    ) * (1 - W.BASE);
+
+    return {
+      index: Math.min(Math.round(baseScore + qualityScore), 100),
+      detail: {
+        sterilization_rate: sterilizationRate.toFixed(1),
+        net_sterilization_rate: netSterilizationRate.toFixed(1),
+        growth_rate: growthRate.toFixed(1),
+        adoption_rate: adoptionRate.toFixed(1),
+        survival_rate: survivalRate.toFixed(1),
+        registration_rate: registrationRate.toFixed(1),
+        base_score: baseScore.toFixed(1),
+        quality_score: qualityScore.toFixed(1),
+      },
+    };
+  }
+
+  function _relativeDate(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return '';
+    const diffMs = Date.now() - date.getTime();
+    const mins = Math.floor(diffMs / 60000);
+    const hours = Math.floor(diffMs / 3600000);
+    const days = Math.floor(diffMs / 86400000);
+    if (mins < 60) return mins + '分钟前';
+    if (hours < 24) return hours + '小时前';
+    if (days < 7) return days + '天前';
+    return (date.getMonth() + 1) + '月' + date.getDate() + '日';
+  }
+
   // ---------- 链式查询（.where(...) 后面跟 .get()/.find()） ----------
 
   function _chain(name) {
@@ -819,11 +1065,21 @@ function createJsonServerless(options) {
       async invoke(name, params) {
         const action = (params && (params.unionAction || params.action)) || '(unknown)';
 
+        if (name === 'userOp') {
+          try {
+            return { result: await _userOp(params) };
+          } catch (e) {
+            console.warn('[datasource] userOp 失败，返回 null', e && e.message);
+            return { result: null };
+          }
+        }
+
         if (name === 'unionOp' && params) {
           try {
             if (action === 'curdOp') return { result: await _curdOp(params) };
             if (action === 'getCatLocations') return { result: await _getCatLocations() };
             if (action === 'getCatTrajectory') return { result: await _getCatTrajectory(params.cat_id) };
+            if (action === 'getCatStats') return { result: await _getCatStats() };
           } catch (e) {
             console.warn('[datasource] 本地模拟 ' + action + ' 失败，返回空结果', e && e.message);
             return { result: { ok: false, success: false, data: null } };
