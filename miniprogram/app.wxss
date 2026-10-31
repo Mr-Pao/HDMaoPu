@@ -257,3 +257,28 @@ page {
   border: 1rpx solid var(--dk-line);
   border-radius: var(--dk-radius);
 }
+
+
+/* ================= 浅色沉浸式主题（v4.5） ================= */
+page {
+  --dk-bg: #F7F9F7;
+  --dk-bg-2: #FFFFFF;
+  --dk-card: #FFFFFF;
+  --dk-card-2: rgba(12, 95, 3, 0.06);
+  --dk-line: rgba(12, 95, 3, 0.10);
+  --dk-text: #0F1A10;
+  --dk-text-2: rgba(15, 26, 16, 0.55);
+  --dk-text-3: rgba(15, 26, 16, 0.34);
+  --dk-accent: #0C5F03;
+  --dk-accent-soft: rgba(12, 95, 3, 0.08);
+  --dk-radius: 32rpx;
+  background-color: #F7F9F7;
+  color: #0F1A10;
+}
+
+.dk-card {
+  background-color: #FFFFFF;
+  border: 1rpx solid rgba(12, 95, 3, 0.08);
+  border-radius: var(--dk-radius);
+  box-shadow: 0 8rpx 24rpx rgba(12, 95, 3, 0.06);
+}

@@ -1570,3 +1570,184 @@ page {
   color: #080B09;
   font-weight: 700;
 }
+
+
+/* ================= v4.5 首页：浅色沉浸（白底玻璃卡） ================= */
+page {
+  background-color: #F7F9F7;
+}
+.cards {
+  background-color: #F7F9F7;
+}
+
+/* 品牌头 */
+.hero-kicker {
+  color: rgba(12, 95, 3, 0.55);
+}
+.hero-title {
+  color: #0F1A10;
+}
+.hero-num {
+  color: #0C5F03;
+}
+.hero-num-dk {
+  color: rgba(15, 26, 16, 0.38);
+}
+.hero-stat {
+  border-top: 1rpx solid rgba(12, 95, 3, 0.10);
+}
+.hs {
+  border-right: 1rpx solid rgba(12, 95, 3, 0.08);
+}
+.hs-v {
+  color: #0F1A10;
+}
+.hs-k {
+  color: rgba(15, 26, 16, 0.38);
+}
+
+/* 搜索栏 */
+#search {
+  background-color: #F7F9F7;
+}
+#search.shadow {
+  box-shadow: 0 4rpx 16rpx rgba(12, 95, 3, 0.06);
+}
+#search .input-block {
+  background-color: #FFFFFF;
+  border: 1rpx solid rgba(12, 95, 3, 0.10);
+  box-shadow: 0 4rpx 16rpx rgba(12, 95, 3, 0.05);
+}
+#search input.name {
+  color: #0F1A10;
+}
+.searchPlaceholderStyle {
+  color: rgba(15, 26, 16, 0.28);
+}
+#search .input-icon image {
+  filter: none;
+  opacity: 0.4;
+}
+#search .filter-btn image {
+  filter: none;
+  opacity: 0.75;
+}
+
+/* 校区胶囊 */
+.h-filter-item {
+  color: rgba(15, 26, 16, 0.55);
+  background-color: #FFFFFF;
+  border: 1rpx solid rgba(12, 95, 3, 0.10);
+}
+.h-filter-item.active {
+  color: #FFFFFF;
+  background-color: #0C5F03;
+  border-color: #0C5F03;
+}
+.h-filter-item .location-logo {
+  filter: none;
+  opacity: 0.35;
+}
+.h-filter-item.active .location-logo {
+  filter: brightness(0) invert(1);
+  opacity: 1;
+}
+
+/* 卡片：白玻璃 */
+.card {
+  background-color: #FFFFFF;
+  border: 1rpx solid rgba(12, 95, 3, 0.08);
+  box-shadow: 0 8rpx 24rpx rgba(12, 95, 3, 0.06);
+}
+.card-body {
+  background-color: #FFFFFF;
+}
+.card-data {
+  padding-top: 2rpx;
+}
+.dv {
+  color: #0F1A10;
+}
+.dk {
+  color: rgba(15, 26, 16, 0.34);
+}
+.datum {
+  border-right: 1rpx solid rgba(12, 95, 3, 0.08);
+}
+.datum--last {
+  border-right: none;
+}
+
+/* 图上元素：保留深色蒙版 + 白字（沉浸感来源） */
+.veil {
+  background-image: linear-gradient(to top, rgba(4, 12, 4, 0.86) 0%, rgba(4, 12, 4, 0.48) 44%, rgba(4, 12, 4, 0) 100%);
+}
+.serial {
+  color: #FFFFFF;
+  background-color: rgba(0, 0, 0, 0.34);
+}
+.shot-flag {
+  color: #FFFFFF;
+  background-color: #0C5F03;
+}
+.shot-flag--empty {
+  background-color: rgba(0, 0, 0, 0.32);
+  color: rgba(255, 255, 255, 0.94);
+}
+.badge-adopt {
+  color: #FFFFFF;
+  background-color: rgba(12, 95, 3, 0.62);
+  border: 1rpx solid rgba(255, 255, 255, 0.34);
+}
+.stamp {
+  color: rgba(255, 255, 255, 0.86);
+  border: 1rpx solid rgba(255, 255, 255, 0.42);
+  background-color: rgba(0, 0, 0, 0.22);
+}
+.card-title {
+  color: #FFFFFF;
+}
+.shot-where {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* 提示 / 加载 */
+.tips {
+  color: rgba(15, 26, 16, 0.32);
+}
+.loading image, .loadnomore image {
+  filter: none;
+  opacity: 0.32;
+}
+
+/* 筛选面板 */
+#filter-block {
+  background-color: rgba(10, 24, 10, 0.32);
+}
+.filters {
+  background-color: #FFFFFF;
+  border-bottom: 1rpx solid rgba(12, 95, 3, 0.08);
+}
+.f-column .item {
+  color: rgba(15, 26, 16, 0.58);
+}
+.f-column .item.active {
+  color: #0C5F03;
+  font-weight: 700;
+}
+#filter-block .divider {
+  border-color: rgba(12, 95, 3, 0.08);
+}
+#filter-block .buttons {
+  background-color: #FFFFFF;
+}
+#filter-block .btn {
+  border: 1rpx solid rgba(12, 95, 3, 0.14);
+  color: rgba(15, 26, 16, 0.55);
+}
+#filter-block .btn.active {
+  background-color: #0C5F03;
+  border-color: #0C5F03;
+  color: #FFFFFF;
+  font-weight: 700;
+}

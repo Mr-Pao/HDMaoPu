@@ -617,3 +617,58 @@ page {
   box-shadow: none;
   margin: 0 26rpx;
 }
+
+
+/* ================= v4.5 我的页：浅色沉浸 ================= */
+page {
+  background-color: #F7F9F7;
+  color: #0F1A10;
+}
+.mina-info {
+  background-color: transparent;
+  background-image: none;
+}
+.mina-info image {
+  border: 1rpx solid rgba(12, 95, 3, 0.10);
+  box-shadow: 0 10rpx 28rpx rgba(12, 95, 3, 0.12);
+}
+.mina-info .title {
+  color: #0F1A10;
+}
+.mina-info .dev {
+  color: rgba(15, 26, 16, 0.38);
+}
+.num-info {
+  border-top: 1rpx solid rgba(12, 95, 3, 0.10);
+}
+.num-title {
+  color: #0F1A10;
+}
+.small-title {
+  color: rgba(15, 26, 16, 0.38);
+}
+.card {
+  background-color: #FFFFFF;
+  border: 1rpx solid rgba(12, 95, 3, 0.08);
+  box-shadow: 0 6rpx 20rpx rgba(12, 95, 3, 0.05);
+}
+.card .card-text {
+  color: #0F1A10;
+}
+.card .icon {
+  filter: none;
+  opacity: 1;
+}
+.tool {
+  background-color: #FFFFFF;
+  border: 1rpx solid rgba(12, 95, 3, 0.08);
+  box-shadow: 0 6rpx 20rpx rgba(12, 95, 3, 0.05);
+}
+.block-name {
+  color: rgba(15, 26, 16, 0.45);
+}
+.block {
+  background-color: #FFFFFF;
+  border: 1rpx solid rgba(12, 95, 3, 0.08);
+  box-shadow: 0 6rpx 20rpx rgba(12, 95, 3, 0.05);
+}
