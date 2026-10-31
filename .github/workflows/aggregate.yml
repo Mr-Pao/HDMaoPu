@@ -1,0 +1,49 @@
+name: aggregate
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '只打印，不创建 Issue'
+        type: boolean
+        default: false
+      max_issues:
+        description: '本轮最多建单数'
+        type: string
+        default: '10'
+
+concurrency:
+  group: aggregate
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 安装依赖
+        working-directory: scripts
+        run: npm install --no-audit --no-fund --registry=https://registry.npmmirror.com
+
+      - name: 扫描 pending 并建单
+        working-directory: scripts
+        env:
+          COS_SECRET_ID: ${{ secrets.COS_SECRET_ID }}
+          COS_SECRET_KEY: ${{ secrets.COS_SECRET_KEY }}
+          COS_BUCKET: ${{ secrets.COS_BUCKET }}
+          COS_REGION: ${{ secrets.COS_REGION }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run == true && '1' || '0' }}
+          MAX_ISSUES: ${{ inputs.max_issues || '10' }}
+        run: node aggregate.js
