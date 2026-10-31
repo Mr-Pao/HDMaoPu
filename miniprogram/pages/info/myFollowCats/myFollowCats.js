@@ -40,7 +40,8 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow() {
-
+    // 关注列表可能在 detailCat / followFeed 等页面发生变化，每次显示时重新加载
+    this.loadFollowCats();
   },
 
   /**
@@ -104,11 +105,11 @@ Page({
     const { result: followCats } = await app.mpServerless.db.collection('cat').find({ _id: { $in: followCatIds } })
     console.log(followCats);
 
-    for (let i = 0; i < followCats.length; i++) {
-      var p = followCats[i];
+    // 并行加载头像，避免串行等待导致列表卡顿
+    await Promise.all(followCats.map(async p => {
       p.unfollowed = false;
       p.avatar = await getAvatar(p._id, p.photo_count_best)
-    }
+    }));
     this.setData({
       followCats,
       followCount: followCats.length,

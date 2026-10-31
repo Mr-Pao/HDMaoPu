@@ -320,6 +320,16 @@ Page({
       cat_id: this.jsData.cat_id
     })).result;
     console.log("updateCat res:", res);
+    // cos 静态数据源下 updateCat 是 no-op（data 为 null），明确提示而不是假成功
+    if (!res || res.data === null || res.ok === false) {
+      wx.hideLoading();
+      wx.showModal({
+        title: '提示',
+        content: '此功能需服务端支持，暂未开放',
+        showCancel: false,
+      });
+      return false;
+    }
     if (res.id) {
       this.jsData.cat_id = res.id;
     }
@@ -360,10 +370,19 @@ Page({
     }
 
     console.log('开始删除');
-    await api.managePhoto({
+    const delRes = await api.managePhoto({
       type: "delete",
       photo: photo
     });
+    // cos 静态数据源下 managePhoto 是 no-op，明确提示而不是假成功
+    if (!delRes || delRes.data === null || delRes.ok === false) {
+      wx.showModal({
+        title: '提示',
+        content: '此功能需服务端支持，暂未开放',
+        showCancel: false,
+      });
+      return;
+    }
 
     console.log("删除照片记录：" + photo._id);
     wx.showToast({
@@ -378,11 +397,20 @@ Page({
     const photo = e.currentTarget.dataset.photo;
     const index = e.currentTarget.dataset.index;
     const set_best = !photo.best;
-    await api.managePhoto({
+    const bestRes = await api.managePhoto({
       type: "setBest",
       photo: photo,
       best: set_best
     });
+    // cos 静态数据源下 managePhoto 是 no-op，明确提示而不是假成功
+    if (!bestRes || bestRes.data === null || bestRes.ok === false) {
+      wx.showModal({
+        title: '提示',
+        content: '此功能需服务端支持，暂未开放',
+        showCancel: false,
+      });
+      return;
+    }
 
     await wx.showModal({
       title: '完成',
@@ -404,11 +432,21 @@ Page({
     const index = e.currentTarget.dataset.index;
     const pid = photo._id;
     const photographer = this.jsData.phers[pid];
-    await api.managePhoto({
+    const pherRes = await api.managePhoto({
       type: "setPher",
       photo: photo,
       photographer: photographer
     });
+    // cos 静态数据源下 managePhoto 是 no-op，明确提示而不是假成功
+    if (!pherRes || pherRes.data === null || pherRes.ok === false) {
+      wx.showModal({
+        title: '提示',
+        content: '此功能需服务端支持，暂未开放',
+        showCancel: false,
+      });
+      return;
+    }
+
     await wx.showModal({
       title: '完成',
       content: '设置成功',

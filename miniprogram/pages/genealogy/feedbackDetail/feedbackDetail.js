@@ -1,6 +1,7 @@
 import { getCurrentPath, shareTo } from "../../../utils/utils";
 import { getPageUserInfo, checkCanFeedback } from "../../../utils/user";
 import { requestNotice, sendNotifyChkFeeedback } from "../../../utils/msg";
+import { putInbox } from "../../../utils/writeback";
 import { text as text_cfg } from "../../../config";
 import api from "../../../utils/cloudApi";
 const app = getApp();
@@ -125,6 +126,16 @@ Page({
       console.log('repliable record fail:\n');
       return;
     }
+
+    // 同步到 COS inbox，由 Action 聚合进审核队列（kind 复用 comment，带 type 标记；
+    // handleComment 要求 cat_id 非空，无关联猫猫时用占位标记，审核页可见即可）
+    putInbox('comment', {
+      cat_id: data.cat_id || '(feedback)',
+      content: data.feedbackInfo + (data.contactInfo ? `\n联系方式: ${data.contactInfo}` : ''),
+      nickname: (this.data.user && this.data.user.userInfo && this.data.user.userInfo.nickName) || '匿名猫友',
+      type: 'feedback',
+    });
+
     this.setData({
       feedbackId: res.insertedId
     });

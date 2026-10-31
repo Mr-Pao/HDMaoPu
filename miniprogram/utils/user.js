@@ -170,7 +170,7 @@ async function checkCanShowNews() {
 async function getPageUserInfo(page) {
   // 检查用户信息有没有拿到，如果有就更新this.data
   const userRes = await getUser();
-  if (!userRes.userInfo || !userRes.userInfo == {}) {
+  if (!userRes.userInfo || !Object.keys(userRes.userInfo).length) {
     console.log('无用户信息');
     return false;
   }

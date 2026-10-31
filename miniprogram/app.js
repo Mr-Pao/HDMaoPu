@@ -29,6 +29,16 @@ if (demo_mode === true) {
 const launchStartTime = Date.now();
 
 App({
+  // globalData 先给初始值（含 version），页面 onShow 等早于 onLaunch 完成的读取不会拿到 undefined
+  globalData: {
+    version: app_version,
+    eventBus: eventBus,
+    demoMode: demoMode,
+    dataMode: dataMode,
+    isReady: false,
+    tabDataPreloaded: false
+  },
+
   async onLaunch() {
     this.launchStartTime = launchStartTime;
 

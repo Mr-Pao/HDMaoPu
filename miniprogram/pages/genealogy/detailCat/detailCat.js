@@ -221,7 +221,7 @@ Page({
 
   swiperLast(e) {
     const current = e.detail.current;
-    if (current === this.data.cat.photo.length - 1) {
+    if (current === ((this.data.cat.photo || []).length - 1)) {
       this.loadMorePhotos(this.data.cat._id);
     }
   },
@@ -230,8 +230,16 @@ Page({
     const { result: cat } = await app.mpServerless.db.collection('cat').findOne({
       _id: this.jsData.cat_id
     });
+    if (!cat) {
+      console.warn("[loadCat] 猫猫不存在", this.jsData.cat_id);
+      wx.showToast({ title: "猫猫不存在或已离开", icon: "none" });
+      setTimeout(() => {
+        wx.navigateBack();
+      }, 1500);
+      return;
+    }
     cat.photo = [];
-    if (cat.characteristics.length) {
+    if ((cat.characteristics || []).length) {
       cat.characteristics_string = cat.characteristics + '\n';
     } else {
       cat.characteristics_string = '';
@@ -337,42 +345,46 @@ Page({
   },
 
   async loadMorePhotos() {
-    var cat = this.data.cat;
-    // 给这个参数是防止异步
-    if (this.data.cat.photo.length >= this.jsData.photoMax) {
+    // 在途锁：防止滑动 swiper 时重复触发并发加载
+    if (this.jsData.loadingPhotos) {
       return false;
     }
-    const qf = {
-      cat_id: this.jsData.cat_id,
-      verified: true,
-      best: true,
-      hidden: { $ne: true } // 管理后台下架的照片不展示
-    };
-    const step = this.jsData.page_settings.photoStep;
-    const now = cat.photo.length;
-
-    // wx.showLoading({
-    //   title: '加载中...',
-    //   mask: true
-    // })
-
-    let { result: res } = await app.mpServerless.db.collection('photo').find(
-      qf,
-      { skip: now, limit: step }
-    )
-    console.log("[loadMorePhotos] -", res);
-    const offset = cat.photo.length;
-    
-    // 使用统一的批量签名函数
-    res = await signPhotoUrls(res);
-    
-    for (let i = 0; i < res.length; ++i) {
-      res[i].index = offset + i; // 把index加上，gallery预览要用到
+    var cat = this.data.cat;
+    // 给这个参数是防止异步
+    if ((cat.photo || []).length >= this.jsData.photoMax) {
+      return false;
     }
-    cat.photo = cat.photo.concat(res);
-    this.setData({
-      cat: cat
-    });
+    this.jsData.loadingPhotos = true;
+    try {
+      const qf = {
+        cat_id: this.jsData.cat_id,
+        verified: true,
+        best: true,
+        hidden: { $ne: true } // 管理后台下架的照片不展示
+      };
+      const step = this.jsData.page_settings.photoStep;
+      const now = (cat.photo || []).length;
+
+      let { result: res } = await app.mpServerless.db.collection('photo').find(
+        qf,
+        { skip: now, limit: step }
+      )
+      console.log("[loadMorePhotos] -", res);
+      const offset = (cat.photo || []).length;
+
+      // 使用统一的批量签名函数
+      res = await signPhotoUrls(res);
+
+      for (let i = 0; i < res.length; ++i) {
+        res[i].index = offset + i; // 把index加上，gallery预览要用到
+      }
+      cat.photo = (cat.photo || []).concat(res);
+      this.setData({
+        cat: cat
+      });
+    } finally {
+      this.jsData.loadingPhotos = false;
+    }
   },
 
   bindTapFeedback() {
@@ -865,9 +877,11 @@ Page({
       return;
     }
 
-    // 如果关注过多，禁止再继续新增关注
-    let { followCats } = this.data.user;
-    if (followCats && followCats.length > max_follow_cats) {
+    // 如果关注过多，禁止再继续新增关注。
+    // 以本地维护的 followedCatIds 为准（user.followCats 来自云端，静态数据源下拿不到真实数据）
+    let { followedCat } = this.data;
+    const curFollowedIds = wx.getStorageSync('followedCatIds') || [];
+    if (!followedCat && curFollowedIds.length > max_follow_cats) {
       wx.showModal({
         title: '关注已满',
         content: `最多关注${max_follow_cats}只猫猫，请到关于页-个人中心管理已关注的猫猫。`,
@@ -877,39 +891,35 @@ Page({
 
     this.jsData.updatingFollowCats = true;
 
-    let { followedCat } = this.data;
-    let res = await api.updateFollowCats({
-      updateCmd: followedCat ? "del" : "add",
-      catId: this.data.cat._id,
-    })
+    // 先更新本地 storage，再刷新用户信息，保证 UI 状态不滞后（否则无法取关）
+    let followedIds = wx.getStorageSync('followedCatIds') || [];
+    if (!followedCat) {
+      if (!followedIds.includes(this.data.cat._id)) {
+        followedIds.push(this.data.cat._id);
+      }
+    } else {
+      followedIds = followedIds.filter(id => id !== this.data.cat._id);
+    }
+    wx.setStorageSync('followedCatIds', followedIds);
 
-    await Promise.all([
-      await this.loadUser(),
-      await this.loadFollowCount(),
-    ]);
+    // UI 乐观更新
+    this.setData({ followedCat: !followedCat });
 
     // 同步到 COS inbox，由 Action 聚合。followedCat 是操作前的状态，取反即新状态
-    if (res) {
-      putInbox('follow', {
-        cat_id: this.data.cat._id,
-        follow: !followedCat,
-      });
+    putInbox('follow', {
+      cat_id: this.data.cat._id,
+      follow: !followedCat,
+    });
 
-      // 本地维护关注列表，供 myFollowCats / followFeed 等页面读取
-      let followedIds = wx.getStorageSync('followedCatIds') || [];
-      if (!followedCat) {
-        if (!followedIds.includes(this.data.cat._id)) {
-          followedIds.push(this.data.cat._id);
-        }
-      } else {
-        followedIds = followedIds.filter(id => id !== this.data.cat._id);
-      }
-      wx.setStorageSync('followedCatIds', followedIds);
-    }
+    await Promise.all([
+      this.loadUser(),
+      this.loadFollowCount(),
+    ]);
 
+    // 本地 storage 已真实更新，按本地结果提示（updateFollowCats 是 no-op，不能作为依据）
     wx.showToast({
-      title: `${followedCat ? "取关" : "关注"}${res ? "成功" : "失败"}`,
-      icon: res ? "success" : "error"
+      title: `${followedCat ? "取关" : "关注"}成功`,
+      icon: "success"
     });
     this.jsData.updatingFollowCats = false;
   },

@@ -66,6 +66,16 @@ Page({
     // 有效性检查放到后端来检查
     const res = await api.genBadgeCode(this.data.input);
 
+    // cos 静态数据源下 genBadgeCode 是 no-op（返回 {ok:true, data:null}），不能当生成成功
+    if (res && res.ok === true && res.data === null) {
+      wx.showModal({
+        title: '提示',
+        content: '此功能需服务端支持，暂未开放',
+        showCancel: false,
+      })
+      return;
+    }
+
     if (res.ok) {
       wx.showModal({
         title: '生成成功',

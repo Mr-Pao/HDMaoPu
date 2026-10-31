@@ -248,7 +248,16 @@ Page({
       this.addNotice(photo, (photo.mark != "delete"));
     }
     // 阻塞一下
-    await Promise.all(all_queries);
+    const checkResults = await Promise.all(all_queries);
+    // cos 静态数据源下 managePhoto 是 no-op，明确提示而不是假成功
+    if (checkResults.length && checkResults.every(r => !r || r.data === null || r.ok === false)) {
+      wx.showModal({
+        title: '提示',
+        content: '此功能需服务端支持，暂未开放',
+        showCancel: false,
+      });
+      return;
+    }
     this.setData({
       [`campus_list.${active_campus}`]: new_photos,
     });

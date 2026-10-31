@@ -1,6 +1,6 @@
 // miniprogram/pages/imProcess/imProcess.js
 import { generateUUID } from "../../../utils/utils";
-import { text as text_cfg } from "../../../config";
+import { use_private_tencent_cos, text as text_cfg } from "../../../config";
 import { checkAuth, fillUserInfo } from "../../../utils/user";
 import api from "../../../utils/cloudApi";
 import { uploadFile, signCosUrl } from "../../../utils/common"
@@ -188,7 +188,13 @@ Page({
       const initCanvas = await drawUtils.initCanvas('#bigPhoto');
       this.jsData.gCtx = initCanvas.ctx;
       this.jsData.gCanvas = initCanvas.canvas;
-      await this.processOne(photos[0], isTesting);
+      try {
+        await this.processOne(photos[0], isTesting);
+      } catch (e) {
+        // 上传等环节失败（如 getURL no-op）时停止处理，避免死循环；loading 在循环外统一关闭
+        console.error("[imProcess] processOne 失败，停止处理", e);
+        break;
+      }
       this.setData({
         now: this.data.now + 1
       });
@@ -344,6 +350,21 @@ Page({
 
   // 上传图片
   uploadImage: async function (filePath, cloudPath) {
+    // 私有 COS 模式下 getURL 需要服务端签发；静态数据源下它是 no-op（返回 {ok:true, data:null}），
+    // 继续走会在 common.uploadFile 里读 data.formData 时 TypeError，这里提前检测并提示
+    if (use_private_tencent_cos) {
+      const { result: urlRes } = await app.mpServerless.function.invoke('getURL', {
+        fileName: cloudPath
+      });
+      if (!urlRes || urlRes.data === null || urlRes.data === undefined || !urlRes.formData) {
+        wx.showModal({
+          title: '提示',
+          content: '此功能需服务端支持，暂未开放',
+          showCancel: false,
+        });
+        throw new Error('getURL no-op：上传功能未开放');
+      }
+    }
     const res = await uploadFile({
       filePath: filePath,
       cloudPath: cloudPath,
@@ -353,7 +374,7 @@ Page({
 
   // 更新数据库
   updataDatabase: async function (oriPhoto, compressFile, watermarkCloud) {
-    await api.managePhoto({
+    const res = await api.managePhoto({
       photo: oriPhoto,
       type: 'setProcess',
       compressed: compressFile.fileUrl,
@@ -361,6 +382,16 @@ Page({
       watermark: watermarkCloud.fileUrl,
       watermarkId: watermarkCloud.fileId,
     });
+
+    // cos 静态数据源下 managePhoto 是 no-op，明确提示而不是假成功
+    if (!res || res.data === null || res.ok === false) {
+      wx.showModal({
+        title: '提示',
+        content: '此功能需服务端支持，暂未开放',
+        showCancel: false,
+      });
+      return;
+    }
 
     // 触发图片处理完成事件
     app.globalData.eventBus.$emit('photoProcessed', {

@@ -676,7 +676,17 @@ Page({
         type: type,
         ...extraParams
       });
-      
+
+      // cos 静态数据源下 managePhoto 是 no-op（data 为 null），明确提示而不是假成功
+      if (!result || result.data === null || result.ok === false) {
+        wx.showModal({
+          title: '提示',
+          content: '此功能需服务端支持，暂未开放',
+          showCancel: false,
+        });
+        throw new Error('managePhoto no-op：功能未开放');
+      }
+
       return result;
     } catch (error) {
       console.error(`调用云函数 photoManager 失败 (type: ${type}):`, error);

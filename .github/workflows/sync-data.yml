@@ -19,7 +19,8 @@ on:
 
 concurrency:
   group: sync-data
-  cancel-in-progress: true
+  # 不能取消进行中的 run：上传中途被杀会留下传了一半的数据
+  cancel-in-progress: false
 
 jobs:
   upload:

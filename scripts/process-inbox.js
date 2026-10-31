@@ -44,6 +44,10 @@ const MAX_PER_OPENID = 200;
 const REVIEW_KEEP = 200;
 // 批量删除单次上限
 const DELETE_BATCH = 1000;
+// 同一 inbox 对象连续处理失败的重试上限，超过后记日志并删除，防止死循环
+const MAX_KEY_FAILURES = 3;
+// pop 跨运行限频：同一 openid+cat 12 小时内只记一次人气
+const POP_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 
 const VALID_KINDS = ['like', 'follow', 'pop', 'rating', 'comment', 'decision', 'manage'];
 
@@ -90,7 +94,11 @@ function flushData() {
     const obj = store[name];
     if (!obj) continue;
     obj.version = 'v' + Date.now();
-    fs.writeFileSync(dataFile(name), JSON.stringify(obj, null, 2) + '\n', 'utf8');
+    // 先写临时文件再 rename，避免写一半崩溃留下损坏的 JSON
+    const finalPath = dataFile(name);
+    const tmpPath = finalPath + '.tmp';
+    fs.writeFileSync(tmpPath, JSON.stringify(obj, null, 2) + '\n', 'utf8');
+    fs.renameSync(tmpPath, finalPath);
     written.push(name);
   }
   return written;
@@ -99,6 +107,11 @@ function flushData() {
 function findItem(name, id) {
   const data = loadData(name);
   return data.items.find(it => it && it._id === id);
+}
+
+// id 生成：时间戳 + 更长的随机后缀，降低碰撞概率（原 4 位随机太短）
+function genId(prefix, ts) {
+  return `${prefix}-${ts}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -130,9 +143,9 @@ function tokenOk(token) {
   const expect = REVIEW_PASSCODE || '';
   if (!expect) return false;
   if (typeof token !== 'string') return false;
-  const a = Buffer.from(token);
-  const b = Buffer.from(expect);
-  if (a.length !== b.length) return false;
+  // 先各自做 sha256 摘要再 timingSafeEqual：摘要定长，消除长度侧信道
+  const a = crypto.createHash('sha256').update(token, 'utf8').digest();
+  const b = crypto.createHash('sha256').update(expect, 'utf8').digest();
   return crypto.timingSafeEqual(a, b);
 }
 
@@ -172,6 +185,16 @@ function writeLog(kind, openid, target, state, ts) {
   if (pos >= 0) data.items[pos] = rec;
   else data.items.push(rec);
   markTouched('inbox_log');
+}
+
+// 记录单个 inbox 对象的处理失败次数（按 key 存在 inbox_log，kind=keyfail），
+// 连续超过 MAX_KEY_FAILURES 次后放弃重试并删除，防止坏对象死循环占用。
+function recordKeyFailure(key, ts) {
+  const prev = readLog('keyfail', '', key);
+  const count = (prev && Number(prev.state)) || 0;
+  const next = count + 1;
+  writeLog('keyfail', '', key, next, ts || Date.now());
+  return next;
 }
 
 // ---------------------------------------------------------------------------
@@ -232,12 +255,20 @@ function handleFollow(p) {
 }
 
 function handlePop(p) {
+  const openid = p.openid;
   const catId = p.data.cat_id;
   if (!catId) return 'drop:no-cat-id';
   const cat = findItem('cat', catId);
   if (!cat) return 'drop:cat-not-found';
+  const ts = Number(p.ts) || Date.now();
+  // 跨运行限频：同一 openid+cat 在 12 小时内只记一次人气（记在 inbox_log）
+  const prev = readLog('pop', openid, catId);
+  if (prev && Number(prev.state) && ts - Number(prev.state) < POP_COOLDOWN_MS) {
+    return 'drop:pop-cooldown';
+  }
   bumpCounter(cat, 'popularity', 1);
   markTouched('cat');
+  writeLog('pop', openid, catId, ts, ts);
   return 'ok';
 }
 
@@ -290,7 +321,7 @@ function handleComment(p) {
   const { openid, data, ts } = p;
   if (!data.cat_id) return 'drop:no-cat-id';
   const queue = loadData('review_queue');
-  const id = 'rv-' + ts + '-' + Math.random().toString(36).slice(2, 6);
+  const id = genId('rv', ts);
   queue.items.push({
     _id: id,
     kind: 'comment',
@@ -328,7 +359,7 @@ function handleDecision(p) {
     if (item.kind === 'comment') {
       const comments = loadData('comment');
       comments.items.unshift({
-        _id: 'cm-' + item.ts + '-' + Math.random().toString(36).slice(2, 6),
+        _id: genId('cm', item.ts),
         cat_id: item.data.cat_id,
         content: item.data.content,
         nickname: item.data.nickname,
@@ -351,9 +382,14 @@ function handleDecision(p) {
 function trimQueue() {
   const queue = loadData('review_queue');
   if (queue.items.length <= REVIEW_KEEP) return 0;
-  queue.items.sort((a, b) => Number(b.ts || 0) - Number(a.ts || 0));
-  const removed = queue.items.length - REVIEW_KEEP;
-  queue.items = queue.items.slice(0, REVIEW_KEEP);
+  // 只裁剪已决定（status !== 'pending'）的旧记录，保留最新 REVIEW_KEEP 条；
+  // pending 记录不参与裁剪，避免把还没审核的内容裁掉。
+  const pending = queue.items.filter(it => it && it.status === 'pending');
+  const decided = queue.items.filter(it => it && it.status !== 'pending');
+  if (decided.length <= REVIEW_KEEP) return 0;
+  const removed = decided.length - REVIEW_KEEP;
+  decided.sort((a, b) => Number(b.ts || 0) - Number(a.ts || 0));
+  queue.items = pending.concat(decided.slice(0, REVIEW_KEEP));
   markTouched('review_queue');
   return removed;
 }
@@ -382,6 +418,39 @@ const MANAGE_CAT_PATCH_FIELDS = [
   'deceased_time',
 ];
 
+// 每个字段的类型约束（与 data/cat.json 实际值类型对齐）。
+// missing_time / deceased_time 在数据里可为 null（表示未走失/未离世），
+// 所以这两个字段额外允许 null。
+const MANAGE_CAT_PATCH_TYPES = {
+  name: 'string',
+  nickname: 'string',
+  gender: 'string',
+  campus: 'string',
+  area: 'string',
+  colour: 'string',
+  birthday: 'string',
+  characteristics: 'string',
+  habit: 'string',
+  tutorial: 'string',
+  sterilized: 'boolean',
+  sterilized_time: 'string',
+  adopt: 'number',
+  adopt_time: 'string',
+  missing: 'boolean',
+  missing_time: 'string',
+  to_star: 'boolean',
+  deceased_time: 'string',
+};
+
+function patchValueOk(field, value) {
+  const type = MANAGE_CAT_PATCH_TYPES[field];
+  if (!type) return false;
+  if (value === null && (field === 'missing_time' || field === 'deceased_time')) return true;
+  if (type === 'string') return typeof value === 'string' && value.length <= 500;
+  if (type === 'number') return typeof value === 'number' && Number.isFinite(value);
+  return typeof value === type;
+}
+
 function handleManage(p) {
   const { data } = p;
   if (!tokenOk(data.token)) return 'drop:bad-token';
@@ -401,6 +470,9 @@ function manageUpdateCat(data) {
   if (!keys.length) return 'drop:no-patch';
   for (const k of keys) {
     if (!MANAGE_CAT_PATCH_FIELDS.includes(k)) return 'drop:bad-patch-field';
+  }
+  for (const k of keys) {
+    if (!patchValueOk(k, patch[k])) return 'drop:bad-patch-type';
   }
 
   const cat = findItem('cat', catId);
@@ -458,9 +530,8 @@ function processObjects(objects, stats) {
       doneKeys.push(obj.key);
       continue;
     }
-    perOpenid.set(p.openid, used + 1);
 
-    // pop 只在单次运行内按 openid+cat 去重，不做跨天日志
+    // pop 运行内按 openid+cat 去重；跨运行的 12 小时限频在 handlePop 里查 inbox_log
     if (p.kind === 'pop') {
       const k = p.openid + '|' + p.data.cat_id;
       if (stats.__popSeen.has(k)) {
@@ -478,25 +549,41 @@ function processObjects(objects, stats) {
       result = 'error:' + (err && err.message ? err.message : String(err));
     }
 
-    if (result.startsWith('ok')) stats.applied++;
-    else if (result.startsWith('skip')) stats.skipped++;
-    else {
+    stats.byKind[p.kind] = stats.byKind[p.kind] || { applied: 0, skipped: 0 };
+
+    if (result.startsWith('ok')) {
+      stats.applied++;
+      stats.byKind[p.kind].applied++;
+      // 配额只统计真正生效的条目；skip/drop 不占配额
+      if (p.kind !== 'decision') perOpenid.set(p.openid, used + 1);
+      doneKeys.push(obj.key);
+    } else if (result.startsWith('skip')) {
+      stats.skipped++;
+      stats.byKind[p.kind].skipped++;
+      doneKeys.push(obj.key);
+    } else if (result.startsWith('error')) {
+      // handler 异常：不算处理成功，key 保留在桶里下轮重试（有上限防死循环）
+      const fails = recordKeyFailure(obj.key, p.ts);
+      if (fails > MAX_KEY_FAILURES) {
+        stats.dropped['retry-limit'] = (stats.dropped['retry-limit'] || 0) + 1;
+        console.error(`  [retry-limit] ${obj.key} 连续失败 ${fails} 次，放弃并删除`);
+        doneKeys.push(obj.key);
+      } else {
+        stats.retried = (stats.retried || 0) + 1;
+        console.error(`  [retry] ${obj.key} 处理失败（第 ${fails} 次），保留待下轮重试`);
+      }
+    } else {
       const reason = result.split(':')[1] || 'unknown';
       stats.dropped[reason] = (stats.dropped[reason] || 0) + 1;
+      doneKeys.push(obj.key);
     }
-
-    stats.byKind[p.kind] = stats.byKind[p.kind] || { applied: 0, skipped: 0 };
-    if (result.startsWith('ok')) stats.byKind[p.kind].applied++;
-    else if (result.startsWith('skip')) stats.byKind[p.kind].skipped++;
-
-    doneKeys.push(obj.key);
   }
 
   return doneKeys;
 }
 
 function newStats() {
-  return { read: 0, applied: 0, skipped: 0, dropped: {}, byKind: {}, __popSeen: new Set() };
+  return { read: 0, applied: 0, skipped: 0, retried: 0, dropped: {}, byKind: {}, __popSeen: new Set() };
 }
 
 // ---------------------------------------------------------------------------
@@ -527,9 +614,11 @@ function listInbox(cos) {
             if (!c.Key) continue;
             if (c.Key.startsWith(SELFTEST_PREFIX)) continue;
             if (c.Key.endsWith('/')) continue;
-            keys.push(c.Key);
+            // Size 单位字节，list 阶段就能拿到，用于大对象前置过滤
+            keys.push({ key: c.Key, size: Number(c.Size || 0) });
           }
-          if (data && data.IsTruncated === 'true' && data.NextMarker) {
+          // IsTruncated 可能是 boolean 或字符串，统一转字符串比较
+          if (data && String(data.IsTruncated) === 'true' && data.NextMarker) {
             loop(data.NextMarker);
           } else {
             resolve(keys);
@@ -655,7 +744,7 @@ async function main() {
     console.log('----------------------------------------');
     printStats(stats);
     console.log('----------------------------------------');
-    console.log('入站对象（处理完应被删除）：' + keys.length + ' 个');
+    console.log('处理成功/确定可删的对象（应被删除）：' + keys.length + ' 个');
     console.log('内存中标记为已改动的文件：' + Array.from(touched).join(', '));
     console.log('DRY_RUN 结束，未写入任何文件。');
     return;
@@ -675,34 +764,61 @@ async function main() {
   }
 
   const cos = cosClient();
-  const keys = await listInbox(cos);
-  console.log(`inbox/ 下待处理对象：${keys.length} 个`);
+  const listed = await listInbox(cos);
+  console.log(`inbox/ 下待处理对象：${listed.length} 个`);
 
-  if (!keys.length) {
+  if (!listed.length) {
     console.log('没有待处理内容，结束。');
     return;
   }
 
+  // 大对象在 list 阶段直接进删除名单，不下载不解析（只删不读）
+  const toDelete = [];
   const objects = [];
-  for (const key of keys) {
+  for (const item of listed) {
+    if (item.size > MAX_OBJECT_BYTES) {
+      console.log(`过大对象（${item.size} 字节 > ${MAX_OBJECT_BYTES}），不读取直接删除：${item.key}`);
+      stats.dropped['too-large'] = (stats.dropped['too-large'] || 0) + 1;
+      toDelete.push(item.key);
+      continue;
+    }
     try {
-      objects.push({ key, body: await getObject(cos, key) });
+      objects.push({ key: item.key, body: await getObject(cos, item.key) });
     } catch (err) {
-      console.error(`读取失败 ${key}：${err.message || err}`);
+      console.error(`读取失败 ${item.key}：${err.message || err}`);
+      const fails = recordKeyFailure(item.key);
+      if (fails > MAX_KEY_FAILURES) {
+        console.error(`  连续失败 ${fails} 次，放弃重试并删除：${item.key}`);
+        stats.dropped['retry-limit'] = (stats.dropped['retry-limit'] || 0) + 1;
+        toDelete.push(item.key);
+      }
     }
   }
 
-  processObjects(objects, stats);
+  // doneKeys 只包含已成功处理（含确定性 drop/skip）的 key；
+  // 处理出错的对象不删，留在桶里下轮重试
+  const doneKeys = processObjects(objects, stats);
   const trimmed = trimQueue();
   const written = flushData();
 
+  // flush 成功后输出标记：workflow 的 commit step 据此判断可以提交。
+  // 注意：删除 inbox 失败不影响此标记（data/ 已写好，应该照常提交）。
+  if (process.env.GITHUB_OUTPUT) {
+    fs.appendFileSync(process.env.GITHUB_OUTPUT, 'flush_ok=1\n');
+  }
+
   printStats(stats);
-  if (trimmed) console.log(`审核队列裁剪：移除 ${trimmed} 条超出上限的旧记录`);
+  if (trimmed) console.log(`审核队列裁剪：移除 ${trimmed} 条超出上限的已决定旧记录`);
   console.log('写入文件：' + (written.length ? written.join(', ') : '（无变化）'));
 
+  const deleteList = toDelete.concat(doneKeys);
+  if (!deleteList.length) {
+    console.log('没有可删除的 inbox 对象。');
+    return;
+  }
   try {
-    await deleteKeys(cos, keys);
-    console.log(`已从 inbox/ 删除 ${keys.length} 个对象`);
+    await deleteKeys(cos, deleteList);
+    console.log(`已从 inbox/ 删除 ${deleteList.length} 个对象`);
   } catch (err) {
     console.error('删除 inbox 对象失败（下次运行会重复处理，去重日志会自动拦住）：' + (err.message || err));
     process.exitCode = 1;
@@ -712,6 +828,9 @@ async function main() {
 function printStats(stats) {
   console.log('统计：');
   console.log(`  读取 ${stats.read} 条，生效 ${stats.applied} 条，跳过（重复）${stats.skipped} 条`);
+  if (stats.retried) {
+    console.log(`  处理失败待重试（保留在桶里）：${stats.retried} 条`);
+  }
   const dropKeys = Object.keys(stats.dropped);
   if (dropKeys.length) {
     console.log('  丢弃：' + dropKeys.map(k => `${k} ${stats.dropped[k]}`).join('，'));

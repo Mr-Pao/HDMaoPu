@@ -233,6 +233,17 @@ Page({
       badgeCode: options.badgeCode
     });
 
+    // cos 静态数据源下 getBadge 是 no-op（返回 {ok:true, data:null}），徽章功能依赖服务端
+    if (!res || res.data === null) {
+      wx.showModal({
+        title: '提示',
+        content: '徽章功能暂未开放',
+        showCancel: false,
+      });
+      this.jsData.badgeGetting = false;
+      return;
+    }
+
     if (!res.ok) {
       wx.showModal({
         title: '抽取失败',

@@ -121,6 +121,8 @@ Page({
 
     if (!user.userInfo.nickName) {
       // 防止机器人刷评分
+      wx.hideLoading();
+      this.jsData.submitting = false;
       wx.showToast({
         title: '请先设置用户昵称',
         icon: 'none'
@@ -132,6 +134,8 @@ Page({
     };
     for (const r of myRatings) {
       if (!r.score) {
+        wx.hideLoading();
+        this.jsData.submitting = false;
         wx.showToast({
           title: '评分不能为0',
           icon: 'none'

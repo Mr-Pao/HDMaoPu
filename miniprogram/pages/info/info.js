@@ -57,7 +57,7 @@ Page({
             name: "操作手册",
             path: "guide",
             icon: "icon-description",
-            dot: "true"
+            dot: true
           },
           {
             name: "审核队列",
@@ -155,8 +155,10 @@ Page({
     });
 
     const { result: friendLinkRes } = await app.mpServerless.db.collection('setting').findOne({ _id: 'friendLink' });
-    
-    let { apps } = friendLinkRes;
+
+    // 找不到配置（或没有 apps 字段）时兜底为空数组，避免解包报错
+    let { apps } = friendLinkRes || {};
+    apps = apps || [];
     for (let i = 0; i < apps.length; i++) {
       apps[i].logo = await signCosUrl(apps[i].logo);
     }

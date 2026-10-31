@@ -92,6 +92,10 @@ function _matchValue(value, cond) {
     && Object.keys(cond).some(k => k.charAt(0) === '$');
 
   if (!isOperatorObject) {
+    // 数组字段 vs 标量条件：语义为"数组包含该值"（对应 MongoDB 的 {tags: 'x'} 查询）
+    if (Array.isArray(value) && !Array.isArray(cond)) {
+      return value.indexOf(cond) !== -1;
+    }
     // 普通对象 / 数组 / 标量：按等值处理
     if (cond !== null && typeof cond === 'object') {
       return JSON.stringify(value) === JSON.stringify(cond);
@@ -702,7 +706,7 @@ function createJsonServerless(options) {
 
     if (operation === 'read') {
       const items = await _load(name);
-      return _applyQuery(items, {}, {
+      return _applyQuery(items, params.where || null, {
         sort: { genTime: -1 },   // 与原云函数一致
         skip: params.skip,
         limit: params.limit,
@@ -729,10 +733,14 @@ function createJsonServerless(options) {
       const existing = await findUser(openid);
       if (existing) return existing;
 
-      // 第一个用户自动拿到 manager = 99，与 functionsEMAS/unionOp/userOp.js 一致
+      // 第一个用户自动拿到 manager = 99，与 functionsEMAS/unionOp/userOp.js 一致。
+      // 仅在远程确认返回空数组（拉取成功且为空表）时才置 99；
+      // 拉取异常/无数据时不能凭空给管理员角色，按默认 0 处理。
       const all = await _load('user');
-      const newUser = { openid: openid };
-      if (all.length === 0) newUser.manager = 99;
+      const userSt = _state('user');
+      const remoteConfirmedEmpty = all.length === 0 && !!userSt.fetchedAt;
+      const newUser = { openid: openid, manager: 0 };
+      if (remoteConfirmedEmpty) newUser.manager = 99;
       const res = await _insertOne('user', newUser);
       console.log('[datasource] 新建用户 ' + openid + (newUser.manager ? '（首个用户，超级管理员）' : ''));
       return Object.assign({ _id: res.result._id }, newUser);
@@ -876,7 +884,12 @@ function createJsonServerless(options) {
         id: c._id,
       }));
     });
-    events = events.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    // Invalid Date（如 timestamp 为非法字符串）按 0 处理，避免 NaN 让排序结果不确定
+    const tsOf = t => {
+      const d = new Date(t);
+      return isNaN(d.getTime()) ? 0 : d.getTime();
+    };
+    events = events.sort((a, b) => tsOf(b.timestamp) - tsOf(a.timestamp));
 
     return {
       success: true,
@@ -1016,6 +1029,12 @@ function createJsonServerless(options) {
   function _collection(name) {
     return {
       where(filter) { return _chain(name).where(filter); },
+
+      // 全量查询，等价 find({})。调用方（admin/review 等）按 EMAS 风格读 res.result.data
+      async get() {
+        const items = await _load(name);
+        return { result: { data: _applyQuery(items, null, {}) } };
+      },
 
       async find(filter, opts) {
         const items = await _load(name);

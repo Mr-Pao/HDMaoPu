@@ -33,6 +33,10 @@ const CACHE_CONTROL = 'max-age=300';
 // 小程序是匿名 GET，只能靠对象级 ACL：不传 ACL 就是 403，整站数据拉不到。
 const OBJECT_ACL = 'public-read';
 
+// 禁止公网上传的文件：上传对象全部是 public-read，这两份文件
+// 含用户 openid（inbox_log）和未审核内容（review_queue），不能公开。
+const UPLOAD_DENYLIST = new Set(['inbox_log.json', 'review_queue.json']);
+
 function assertEnv() {
   const missing = [];
   if (!COS_SECRET_ID) missing.push('COS_SECRET_ID');
@@ -58,9 +62,15 @@ function collectFiles() {
     process.exit(1);
   }
 
-  const names = fs.readdirSync(DATA_DIR)
+  const all = fs.readdirSync(DATA_DIR)
     .filter(name => name.endsWith('.json'))
     .sort();
+
+  const blocked = all.filter(name => UPLOAD_DENYLIST.has(name));
+  if (blocked.length) {
+    console.log('跳过禁止公开的文件：' + blocked.join(', '));
+  }
+  const names = all.filter(name => !UPLOAD_DENYLIST.has(name));
 
   if (!names.length) {
     console.error('data/ 下没有任何 json 文件');

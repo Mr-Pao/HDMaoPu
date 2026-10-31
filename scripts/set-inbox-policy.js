@@ -173,6 +173,14 @@ function deleteObject(cos, key) {  return new Promise(resolve => {
   });
 }
 
+// 稳定化 JSON（key 排序），用于判断两份策略内容是否等价
+function stableStringify(value) {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return '[' + value.map(stableStringify).join(',') + ']';
+  const keys = Object.keys(value).sort();
+  return '{' + keys.map(k => JSON.stringify(k) + ':' + stableStringify(value[k])).join(',') + '}';
+}
+
 async function main() {
   const policy = buildPolicy();
 
@@ -189,11 +197,28 @@ async function main() {
   assertEnv();
   const cos = createClient();
 
+  // putBucketPolicy 会整体覆盖，先拉取现有策略完整打印并提示差异
   const before = await getPolicy(cos);
+  let identical = false;
   if (before.ok) {
-    console.log('现有策略：' + String(before.policy).slice(0, 300));
+    console.log('现有桶策略（完整）：');
+    try {
+      const parsed = JSON.parse(before.policy);
+      console.log(JSON.stringify(parsed, null, 2));
+      identical = stableStringify(parsed) === stableStringify(policy);
+    } catch (err) {
+      // 现有策略不是合法 JSON（极少见），原样打印
+      console.log(String(before.policy));
+    }
   } else {
     console.log('读取现有策略失败（可能本来就没有策略）：' + before.err);
+  }
+  if (identical) {
+    console.log('提示：现有策略与将要设置的策略内容一致，覆盖无副作用。');
+  } else {
+    console.log('提示：上面是现有策略与将要设置策略的对照。putBucketPolicy 是整体覆盖，');
+    console.log('      如果现有策略里有其他前缀/操作的授权，本次覆盖会将其移除，请人工确认。');
+    console.log('      脚本不做自动合并。');
   }
   console.log('----------------------------------------');
 

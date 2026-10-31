@@ -18,6 +18,9 @@ import {
 import {
   requestNotice,
 } from "../../../utils/msg";
+import {
+  putInbox,
+} from "../../../utils/writeback";
 import api from "../../../utils/cloudApi";
 const app = getApp();
 Page({
@@ -283,6 +286,13 @@ Page({
       // 显示success toast
       wx.showToast({
         title: '张贴成功~',
+      });
+
+      // 同步到 COS inbox，由 Action 聚合进审核队列（字段约定见 process-inbox handleComment）
+      putInbox('comment', {
+        cat_id: item.cat_id,
+        content: item.content,
+        nickname: (user.userInfo && user.userInfo.nickName) || '匿名猫友',
       });
     } catch {
       wx.showModal({

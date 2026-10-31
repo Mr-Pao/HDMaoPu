@@ -16,8 +16,8 @@ import {
   showTab
 } from "../../utils/page";
 
-import api from "../../utils/cloudApi";
 import { signCosUrl } from "../../utils/common.js";
+import { putInbox } from "../../utils/writeback";
 
 const app = getApp();
 
@@ -776,9 +776,23 @@ Page({
     this.jsData.updatingFollowCats = true;
 
     let { unfollowed, catid } = e.currentTarget.dataset;
-    let res = await api.updateFollowCats({
-      updateCmd: unfollowed ? "add" : "del",
-      catId: catid,
+
+    // updateFollowCats 在静态数据源下是 no-op，改为本地维护 followedCatIds
+    // （与 detailCat.js 的 followCat 同 key 同格式：字符串数组），再同步到 COS inbox
+    let followedIds = wx.getStorageSync('followedCatIds') || [];
+    if (unfollowed) {
+      if (!followedIds.includes(catid)) {
+        followedIds.push(catid);
+      }
+    } else {
+      followedIds = followedIds.filter(id => id !== catid);
+    }
+    wx.setStorageSync('followedCatIds', followedIds);
+
+    // 同步到 COS inbox，由 Action 聚合（payload 格式与 detailCat.followCat 一致）
+    putInbox('follow', {
+      cat_id: catid,
+      follow: !!unfollowed,
     });
 
     // 更新取消关注/继续关注按钮的颜色，
@@ -799,9 +813,10 @@ Page({
       // currentCatId: newUnfollowedStatus ? null : catid,
     });
 
+    // 本地 storage 已真实更新，按本地结果提示（不再依赖 no-op 的远程返回值）
     wx.showToast({
-      title: `${unfollowed ? "关注" : "取关"}${res ? "成功" : "失败"}`,
-      icon: res ? "success" : "error"
+      title: `${unfollowed ? "关注" : "取关"}成功`,
+      icon: "success"
     });
 
     // 如果当前是该猫动态，取关后关闭

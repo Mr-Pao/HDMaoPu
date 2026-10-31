@@ -6,8 +6,7 @@ const requestCache = new Map();
 const CACHE_TTL = 10000;
 
 function getDate(date) {
-  date = date ? new Date(date) : new Date();
-  return new Date()
+  return date ? new Date(date) : new Date();
 }
 
 async function callUnionOp(action, options = {}, cacheKey = null) {
@@ -124,6 +123,10 @@ async function contentSafeCheck(content, nickname) {
   }
   var res = await callUnionOp('commentCheck', { openid: openid, content: content, nickname: nickname });
   console.log("contentSafeCheck", res);
+  // cos 静态数据源下 commentCheck 是 no-op（data 为 null），直接放行，不能误判为检测失败
+  if (!res || res.data === null || res.data === undefined) {
+    return;
+  }
   if (res.errCode != 0 && res.errcode != 0) {
     return {
       title: "内容检测未通过",
