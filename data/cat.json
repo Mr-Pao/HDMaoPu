@@ -1,5 +1,5 @@
 {
-  "version": "v1793468935459",
+  "version": "v1793479324952",
   "items": [
     {
       "_id": "demo-cat-1",
@@ -162,7 +162,7 @@
       "characteristics": "胆小",
       "habit": "晚上出没",
       "tutorial": "",
-      "popularity": 71,
+      "popularity": 72,
       "sterilized": true,
       "sterilized_time": "2026-08-09T00:00:00.000Z",
       "adopt": 0,

@@ -1,5 +1,5 @@
 {
-  "version": "v1793468935458",
+  "version": "v1793479324952",
   "items": [
     {
       "_id": "follow|guest_2b62ccfb|demo-cat-3",
@@ -63,6 +63,15 @@
       "target": "demo-cat-10",
       "state": 1793464390636,
       "ts": 1793464390636
+    },
+    {
+      "_id": "pop|guest_b528a275|demo-cat-3",
+      "k": "pop|guest_b528a275|demo-cat-3",
+      "kind": "pop",
+      "openid": "guest_b528a275",
+      "target": "demo-cat-3",
+      "state": 1793469208183,
+      "ts": 1793469208183
     }
   ]
 }
