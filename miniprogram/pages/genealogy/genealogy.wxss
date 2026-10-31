@@ -759,3 +759,229 @@ scroll-view {
   font-size: 20rpx;
   color: var(--color-text-secondary);
 }
+
+
+/* ================= v4.3 首页：沉浸式一屏一卡 ================= */
+page {
+  background-color: #0A2A06;
+}
+.cards {
+  display: block;
+  padding: 0 20rpx;
+}
+.cards > .h-filter-list {
+  width: auto;
+  margin: 6rpx 12rpx 14rpx 12rpx;
+  padding: 8rpx 6rpx;
+  border-radius: var(--radius-pill);
+  background-color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.18);
+  box-sizing: border-box;
+}
+
+.card {
+  position: relative;
+  width: 710rpx;
+  height: calc(100vh - 250rpx);
+  margin: 0 0 20rpx 0;
+  border-radius: 44rpx;
+  background-color: #123A0C;
+  box-shadow: 0 18rpx 46rpx rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  font-size: 22rpx;
+  line-height: 22rpx;
+}
+
+.shot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: auto;
+  background-color: #123A0C;
+}
+.shot image {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  background-image: var(--img-default);
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: 34% 34%;
+}
+.shot.to_star image { filter: grayscale(100%); }
+
+.veil {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 500rpx;
+  background: linear-gradient(
+    to top,
+    rgba(6, 26, 4, 0.94) 0%,
+    rgba(6, 26, 4, 0.80) 26%,
+    rgba(6, 26, 4, 0.42) 58%,
+    rgba(6, 26, 4, 0) 100%
+  );
+  pointer-events: none;
+}
+
+.serial {
+  position: absolute;
+  top: 30rpx;
+  right: 34rpx;
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.45);
+}
+
+.card .shot-flag {
+  position: absolute;
+  top: 26rpx;
+  left: 30rpx;
+  padding: 0 18rpx;
+  height: 42rpx;
+  line-height: 42rpx;
+  font-size: 20rpx;
+  letter-spacing: 1rpx;
+  color: var(--color-surface);
+  background-color: var(--color-primary-bright);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 4rpx 14rpx rgba(0, 0, 0, 0.3);
+}
+.card .shot-flag--empty { background-color: rgba(31, 36, 33, 0.62); }
+
+.float {
+  position: absolute;
+  left: 40rpx;
+  right: 40rpx;
+  bottom: 40rpx;
+}
+.row-name {
+  display: flex;
+  align-items: center;
+}
+.card .info .name,
+.float .name {
+  font-size: 66rpx;
+  line-height: 76rpx;
+  font-weight: 700;
+  letter-spacing: 3rpx;
+  color: var(--color-surface);
+  max-width: 500rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-shadow: 0 4rpx 18rpx rgba(0, 0, 0, 0.5);
+}
+.row-name .gender {
+  width: 34rpx;
+  height: 34rpx;
+  margin-left: 14rpx;
+  padding: 6rpx;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.92);
+  box-sizing: border-box;
+}
+
+.float .row-rating {
+  display: flex;
+  align-items: center;
+  margin-top: 16rpx;
+}
+.float .one-star {
+  width: 30rpx;
+  height: 30rpx;
+  margin-right: 5rpx;
+}
+.float .one-star image {
+  width: 30rpx;
+  height: 30rpx;
+  display: block;
+}
+.float .one-star.gray image { opacity: 0.3; }
+.float .score {
+  margin-left: 14rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #FFD24A;
+  text-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.45);
+}
+
+.float .row-meta {
+  display: flex;
+  align-items: center;
+  margin-top: 14rpx;
+}
+.float .where,
+.float .cmt {
+  font-size: 24rpx;
+  letter-spacing: 1rpx;
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.5);
+}
+.float .cmt { margin-left: auto; }
+.float .where {
+  max-width: 380rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.float .chips {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 18rpx;
+}
+.float .chip {
+  height: 44rpx;
+  line-height: 44rpx;
+  padding: 0 22rpx;
+  border-radius: var(--radius-pill);
+  font-size: 21rpx;
+  letter-spacing: 1rpx;
+  margin-right: 12rpx;
+}
+.float .chip--adopt {
+  color: #0C3B05;
+  background-color: #A8E063;
+}
+.float .chip--star {
+  color: var(--color-surface);
+  background-color: rgba(255, 255, 255, 0.24);
+}
+
+/* v4.3 搜索栏改为深色半透明浮在沉浸页上 */
+#search {
+  background-color: #0A2A06;
+}
+#search.shadow {
+  box-shadow: none;
+}
+#search .input-block {
+  width: 84%;
+  margin-left: 24rpx;
+  border-radius: 999rpx;
+  background-color: rgba(255, 255, 255, 0.14);
+  box-shadow: none;
+  border: 1rpx solid rgba(255, 255, 255, 0.18);
+}
+#search input.name {
+  color: var(--color-surface);
+}
+#search .input-icon image {
+  opacity: 0.55;
+}
+.searchPlaceholderStyle {
+  color: rgba(255, 255, 255, 0.42);
+}
+#search .filter-btn image {
+  filter: brightness(0) invert(1);
+  opacity: 0.8;
+}
+#big-circle, #bg-yellow {
+  display: none;
+}

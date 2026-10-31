@@ -48,14 +48,6 @@
 </view>
 
 <scroll-view enable-flex='1' class='cards' style='height: {{heights.windowHeight - heights.filters}}px;' scroll-y='true' enable-back-to-top='true' bindscrolltolower='onReachBottom' bindscroll='fScroll' lower-threshold='{{main_lower_threshold}}' refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="onPullDownRefresh">
-  <view class='hero'>
-    <view class='hero-line'>
-      <text class='hero-title'>火大猫谱</text>
-      <text class='hero-count'>共 {{catsMax}} 只猫</text>
-    </view>
-    <view class='hero-sub'>校园猫咪图鉴 · 每一只都有名字</view>
-  </view>
-
   <!-- 校区外显筛选 -->
   <scroll-view class="h-filter-list" scroll-x="1" wx:if="{{filters[0].category.length > 1}}">
     <view class='h-filter-item {{item.all_active? "active": ""}}'  bindtap='fClickCampus' data-index='{{index}}' data-filters_sub="0"
@@ -70,21 +62,18 @@
     <view class='card' bindtap='clickCatCard' bindlongpress='bindManageCat' data-cat_id='{{item._id}}' data-index='{{index}}'>
       <view class='shot {{item.to_star? "to_star": ""}}'>
         <image bindload="bindImageLoaded" mode='aspectFill' src='{{item.photo.photo_compressed || item.photo.photo_id}}' data-index="{{index}}" lazy-load="{{true}}"></image>
-        <view class='shot-flag' wx:if="{{item.mphoto_new}}">{{text_cfg.genealogy.new_photo_tip}}</view>
-        <view class='shot-flag shot-flag--empty' wx:elif='{{!item.photo_count_best || item.photo_count_best === 0}}'>{{text_cfg.genealogy.no_photo_tip}}</view>
-        <view class='shot-credit' wx:if='{{item.photo_count_best > 0}}'>{{item.photo.photo_id? (item.photo.photographer ||(item.photo.userInfo? item.photo.userInfo.nickName: text_cfg.genealogy.photo_by_unknow)): text_cfg.genealogy.photo_loading_tip}}</view>
       </view>
-      <view class='info' hover-class="hoverInfo">
+      <view class='veil'></view>
+      <view class='serial'>{{index+1}} / {{catsMax}}</view>
+      <view class='shot-flag' wx:if="{{item.mphoto_new}}">{{text_cfg.genealogy.new_photo_tip}}</view>
+      <view class='shot-flag shot-flag--empty' wx:elif='{{!item.photo_count_best || item.photo_count_best === 0}}'>{{text_cfg.genealogy.no_photo_tip}}</view>
+      <view class='float'>
         <view class='row-name'>
           <text class='name'>{{item.name}}</text>
           <block wx:if='{{item.gender}}'>
             <image mode='aspectFill' class='gender' wx:if='{{item.gender === "公"}}' src="/pages/public/images/card/card/male.png"></image>
             <image mode='aspectFill' class='gender' wx:if='{{item.gender === "母"}}' src="/pages/public/images/card/card/female.png"></image>
           </block>
-        </view>
-        <view class='chips' wx:if='{{item.adopt || item.to_star}}'>
-          <view wx:if='{{item.adopt}}' class='chip chip--adopt'>{{adopt_desc[item.adopt]}}</view>
-          <view wx:if='{{item.to_star}}' class='chip chip--star'>{{text_cfg.genealogy.to_star_tip}}</view>
         </view>
         <view class='row-rating' wx:if="{{item.rating}}">
           <view class="stars">
@@ -97,6 +86,10 @@
         <view class='row-meta'>
           <text class='where'>{{(item.campus + item.area) || '-'}}</text>
           <text class='cmt' wx:if="{{item.comment_count}}">{{item.comment_count}} 留言</text>
+        </view>
+        <view class='chips' wx:if='{{item.adopt || item.to_star}}'>
+          <view wx:if='{{item.adopt}}' class='chip chip--adopt'>{{adopt_desc[item.adopt]}}</view>
+          <view wx:if='{{item.to_star}}' class='chip chip--star'>{{text_cfg.genealogy.to_star_tip}}</view>
         </view>
       </view>
     </view>
