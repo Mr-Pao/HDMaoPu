@@ -52,7 +52,7 @@ Page({
   },
 
   jsData: {
-    catsStep: 1,
+    catsStep: 12,
     loadingLock: 0,
     pageLoadingLock: false,
     // 新增：待处理的scene参数
@@ -65,7 +65,7 @@ Page({
   onLoad: async function (options) {
     if (!this.jsData) {
       this.jsData = {
-        catsStep: 1,
+        catsStep: 12,
         loadingLock: 0,
         pageLoadingLock: false,
         pendingScene: null
@@ -114,7 +114,7 @@ Page({
       return;
     }
     
-    this.jsData.catsStep = settings['catsStep'] || 1;
+    this.jsData.catsStep = settings['catsStep'] || 12;
 
     this.setData({
       main_lower_threshold: settings['main_lower_threshold'] || 50,
