@@ -180,3 +180,74 @@ heart {
 .h-filter-item.long {
   margin: 20rpx 20rpx 20rpx 20rpx;
 }
+
+/* ================= v4.2 榜单重构 ================= */
+page {
+  background: var(--color-bg);
+}
+.thread-list {
+  padding: 8rpx 40rpx 0 40rpx;
+  background-color: transparent;
+  box-shadow: none;
+  align-items: flex-start;
+}
+.thread-item {
+  padding: 6rpx 32rpx;
+  border-radius: var(--radius-pill);
+  margin: 0 6rpx;
+  transition: background-color 0.2s ease;
+}
+.thread-item.active {
+  background-color: var(--color-primary-soft);
+}
+.thread-item-bar {
+  display: none;
+}
+.thread-item-name {
+  font-size: 28rpx;
+  color: var(--color-text-secondary);
+}
+.thread-item.active .thread-item-name {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.column_item {
+  width: 342rpx;
+  border-radius: 24rpx;
+  margin: 0 auto 18rpx auto;
+  box-shadow: 0 4rpx 16rpx rgba(12, 95, 3, 0.07);
+}
+.location {
+  top: 16rpx;
+  right: 16rpx;
+  font-size: 19rpx;
+  padding: 6rpx 14rpx;
+  border-radius: var(--radius-pill);
+  background-color: rgba(31, 36, 33, 0.55);
+  color: var(--color-surface);
+}
+.info {
+  width: 342rpx;
+  padding: 16rpx 4rpx 16rpx 18rpx;
+}
+.names {
+  width: 290rpx;
+  max-width: 290rpx;
+}
+.cat-name {
+  font-size: 29rpx;
+  letter-spacing: 1rpx;
+  color: var(--color-text);
+}
+.pher-name, .photo-date {
+  font-size: 21rpx;
+  color: var(--color-text-tertiary);
+}
+.like-num {
+  font-size: 19rpx;
+  color: var(--color-text-tertiary);
+}
+.h-filter-list {
+  justify-content: flex-start;
+  padding: 0 22rpx;
+}

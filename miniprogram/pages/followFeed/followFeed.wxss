@@ -352,3 +352,73 @@ image{height:auto}
     transform: rotate(90deg);
   }
 }
+
+/* ================= v4.2 喵友圈重构 ================= */
+page {
+  background-color: var(--color-bg);
+}
+.photo-block, .comment-block {
+  border-top: none;
+  padding: 28rpx 24rpx 24rpx 24rpx;
+}
+.cat-info {
+  height: 76rpx;
+}
+.cat-info .cat-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  box-shadow: 0 2rpx 8rpx rgba(12, 95, 3, 0.12);
+}
+.cat-info .cat-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+  color: var(--color-text);
+}
+.cat-info .cat-campus {
+  font-size: 19rpx;
+  color: var(--color-text-tertiary);
+}
+.photo-container {
+  gap: 12rpx;
+  padding: 18rpx 0 8rpx 0;
+}
+.photo-img {
+  border-radius: 22rpx;
+}
+.photo-block .datetime {
+  font-size: 22rpx;
+  color: var(--color-text-tertiary);
+}
+.photo-block .username {
+  font-size: 23rpx;
+  color: var(--color-text-secondary);
+}
+.story-container {
+  margin: 24rpx 12rpx 0 12rpx;
+}
+.story-item .cat-avatar-wrapper {
+  width: 156rpx;
+  height: 156rpx;
+}
+.story-item .cat-avatar {
+  width: 134rpx;
+  height: 134rpx;
+}
+.story-item .cat-name {
+  font-size: 23rpx;
+  color: var(--color-text-secondary);
+}
+.selected-cat {
+  margin: 12rpx 24rpx 0 24rpx;
+  width: auto;
+  padding: 12rpx 24rpx;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-primary-soft);
+}
+.selected-cat .cat-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--color-primary);
+}
