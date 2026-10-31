@@ -1,5 +1,5 @@
 {
-  "version": "v1793428992225",
+  "version": "v1793452617965",
   "items": [
     {
       "_id": "demo-cat-1",
@@ -14,7 +14,7 @@
       "characteristics": "亲人",
       "habit": "喜欢晒太阳",
       "tutorial": "",
-      "popularity": 100,
+      "popularity": 102,
       "sterilized": true,
       "sterilized_time": "2026-06-25T00:00:00.000Z",
       "adopt": 1,
@@ -120,7 +120,7 @@
       "characteristics": "胆小",
       "habit": "晚上出没",
       "tutorial": "",
-      "popularity": 70,
+      "popularity": 71,
       "sterilized": true,
       "sterilized_time": "2026-08-09T00:00:00.000Z",
       "adopt": 0,
@@ -152,7 +152,7 @@
       "photo_count_best": 1,
       "photo_count_total": 1,
       "comment_count": 0,
-      "follow_count": 0,
+      "follow_count": 1,
       "latitude": 23.099602,
       "longitude": 113.299638,
       "mphoto": 1778666400000,
