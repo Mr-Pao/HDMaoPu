@@ -255,7 +255,11 @@ Page({
     cat.avatar = await getAvatar(cat._id, cat.photo_count_best);
 
     if (cat.rating) {
-      cat.rating.catRatings = convertRatingList(cat.rating.scores);
+      // 「各项评分」读的是 dimAvg（每维平均分）。
+      // 不能用 scores：scores.rN 是「综合分 = N 的得票数」，当成分数渲染会显示成
+      // 「猫德 3.0」实际却有 3 人打了那个分，是两回事。
+      // 没有 dimAvg 时给空数组，模板由 wx:for 自然不渲染，而不是显示一串错数字。
+      cat.rating.catRatings = convertRatingList(cat.rating.dimAvg || {});
     }
     this.setData({
       cat: cat
@@ -888,6 +892,19 @@ Page({
     if (posterComponent) {
       posterComponent.startDrawing();
     }
+  },
+
+  // 从详情页进入领养申请。app.json 里已经注册了 applyAdoption，
+  // 之前没有入口，所以页面存在但永远打不开。
+  bindApplyAdoption() {
+    const catId = this.data.cat && this.data.cat._id;
+    if (!catId) {
+      wx.showToast({ title: '缺少猫咪信息', icon: 'none' });
+      return;
+    }
+    wx.navigateTo({
+      url: '/pages/adoption/applyAdoption/applyAdoption?cat_id=' + catId,
+    });
   },
 
   async followCat() {

@@ -285,6 +285,11 @@
         <image class="icon {{followedCat ? 'gray' : ''}}" src='/pages/public/images/button/follow.svg'></image>
         <view class="button-text">{{followedCat ? "取消关注" : "关注动态"}}</view>
       </view>
+      <!-- 只有「待领养」的猫（adopt == 1）才显示申请入口 -->
+      <view class="button" bindtap='bindApplyAdoption' wx:if="{{cat.adopt == 1}}">
+        <image class="icon" src='/pages/public/images/button/heart.png'></image>
+        <view class="button-text">申请领养</view>
+      </view>
       <view class="button" bindtap='bindTapFeedback'>
         <image class="icon" src='/pages/public/images/button/flag.svg'></image>
         <view class="button-text">{{text_cfg.detail_cat.button_feedback}}</view>

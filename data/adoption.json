@@ -1,4 +1,148 @@
 {
-  "version": "1793459326505",
-  "items": []
+  "version": "1793462026810",
+  "items": [
+    {
+      "_id": "demo-adoption-1",
+      "_openid": "demo-openid-1",
+      "openid": "demo-openid-1",
+      "cat_id": "demo-cat-1",
+      "cat_name": "大橘",
+      "cat_avatar": "",
+      "applicant_name": "王晓明",
+      "contact": "138****6621",
+      "reason": "家里已有养猫经验，独居有稳定作息，想给大橘一个安静的家。",
+      "status": "pending",
+      "apply_time": "2026-10-30T07:00:00.000Z",
+      "mdate": "2026-10-30T07:00:00.000Z",
+      "reviewer": "",
+      "review_time": "",
+      "review_note": "",
+      "timeline": [
+        {
+          "status": "pending",
+          "time": "2026-10-30T07:00:00.000Z",
+          "note": "提交申请",
+          "by": "demo-openid-1"
+        }
+      ]
+    },
+    {
+      "_id": "demo-adoption-2",
+      "_openid": "demo-openid-2",
+      "openid": "demo-openid-2",
+      "cat_id": "demo-cat-1",
+      "cat_name": "大橘",
+      "cat_avatar": "",
+      "applicant_name": "李文静",
+      "contact": "139****3087",
+      "reason": "住校内教工宿舍带阳台，之前养过一只橘猫，希望领养大橘。",
+      "status": "pending",
+      "apply_time": "2026-10-29T07:00:00.000Z",
+      "mdate": "2026-10-29T07:00:00.000Z",
+      "reviewer": "",
+      "review_time": "",
+      "review_note": "",
+      "timeline": [
+        {
+          "status": "pending",
+          "time": "2026-10-29T07:00:00.000Z",
+          "note": "提交申请",
+          "by": "demo-openid-2"
+        }
+      ]
+    },
+    {
+      "_id": "demo-adoption-3",
+      "_openid": "demo-openid-3",
+      "openid": "demo-openid-3",
+      "cat_id": "demo-cat-7",
+      "cat_name": "年糕",
+      "cat_avatar": "",
+      "applicant_name": "张浩然",
+      "contact": "137****4415",
+      "reason": "已和室友商量好共同照顾，愿意承担全部医疗费用。",
+      "status": "reviewing",
+      "apply_time": "2026-10-27T07:00:00.000Z",
+      "mdate": "2026-10-28T03:00:00.000Z",
+      "reviewer": "demo-openid-admin",
+      "review_time": "2026-10-28T03:00:00.000Z",
+      "review_note": "已电话沟通，约本周家访",
+      "timeline": [
+        {
+          "status": "pending",
+          "time": "2026-10-27T07:00:00.000Z",
+          "note": "提交申请",
+          "by": "demo-openid-3"
+        },
+        {
+          "status": "reviewing",
+          "time": "2026-10-28T03:00:00.000Z",
+          "note": "已电话沟通，约本周家访",
+          "by": "demo-openid-admin"
+        }
+      ]
+    },
+    {
+      "_id": "demo-adoption-4",
+      "_openid": "demo-openid-4",
+      "openid": "demo-openid-4",
+      "cat_id": "demo-cat-4",
+      "cat_name": "小白",
+      "cat_avatar": "",
+      "applicant_name": "赵敏",
+      "contact": "135****9920",
+      "reason": "家里有封闭阳台，无其他宠物，希望领养小白。",
+      "status": "approved",
+      "apply_time": "2026-10-15T07:00:00.000Z",
+      "mdate": "2026-10-18T08:00:00.000Z",
+      "reviewer": "demo-openid-admin",
+      "review_time": "2026-10-18T08:00:00.000Z",
+      "review_note": "家访通过，已签署领养协议",
+      "timeline": [
+        {
+          "status": "pending",
+          "time": "2026-10-15T07:00:00.000Z",
+          "note": "提交申请",
+          "by": "demo-openid-4"
+        },
+        {
+          "status": "approved",
+          "time": "2026-10-18T08:00:00.000Z",
+          "note": "家访通过，已签署领养协议",
+          "by": "demo-openid-admin"
+        }
+      ]
+    },
+    {
+      "_id": "demo-adoption-5",
+      "_openid": "demo-openid-5",
+      "openid": "demo-openid-5",
+      "cat_id": "demo-cat-10",
+      "cat_name": "汤圆",
+      "cat_avatar": "",
+      "applicant_name": "陈立",
+      "contact": "136****7743",
+      "reason": "想给汤圆一个家。",
+      "status": "rejected",
+      "apply_time": "2026-10-08T07:00:00.000Z",
+      "mdate": "2026-10-11T08:00:00.000Z",
+      "reviewer": "demo-openid-admin",
+      "review_time": "2026-10-11T08:00:00.000Z",
+      "review_note": "目前与他人合租，居住条件暂不适合养猫",
+      "timeline": [
+        {
+          "status": "pending",
+          "time": "2026-10-08T07:00:00.000Z",
+          "note": "提交申请",
+          "by": "demo-openid-5"
+        },
+        {
+          "status": "rejected",
+          "time": "2026-10-11T08:00:00.000Z",
+          "note": "目前与他人合租，居住条件暂不适合养猫",
+          "by": "demo-openid-admin"
+        }
+      ]
+    }
+  ]
 }

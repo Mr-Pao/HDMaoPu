@@ -234,6 +234,17 @@ async function manageRelationRules(options) {
   });
 }
 
+// 领养申请：apply / listMine / cancel / list / review / addNote
+// 后端实现在 utils/datasource.js 的 _adoptionOp（COS 静态源没有云函数，
+// unionOp 由 datasource 在本地重放）。
+async function adoptionOp(options) {
+  const openid = await getCurrentUserOpenid();
+  return await callUnionOp('adoptionOp', {
+    ...options,
+    openid: openid
+  });
+}
+
 module.exports = {
   curdOp,
   userOp,
@@ -256,4 +267,5 @@ module.exports = {
   // 新增接口
   catRelationOp,
   manageRelationRules,
+  adoptionOp,
 };

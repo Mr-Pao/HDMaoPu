@@ -150,6 +150,35 @@ async function main() {
       'rating 记录五维都在 1-5',
       ratio.result.every((r) => [r.r1, r.r2, r.r3, r.r4, r.r5].every((v) => v >= 1 && v <= 5))
     );
+
+    // 维度分必须来自 dimAvg（每维平均分），不能是 scores（综合分的得票计数）。
+    // 这里独立重算一遍，确保 data/cat.json 里的 dimAvg 与 rating 记录对得上。
+    const DIMS = ['r1', 'r2', 'r3', 'r4', 'r5'];
+    const dimAvg = cat.rating.dimAvg;
+    check('cat.rating.dimAvg 存在', !!dimAvg && typeof dimAvg === 'object');
+    const recomputed = {};
+    for (const k of DIMS) {
+      const vals = ratio.result.map((r) => r[k]);
+      recomputed[k] = vals.length
+        ? Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2))
+        : 0;
+    }
+    check(
+      'dimAvg 与 rating 记录重算结果一致',
+      DIMS.every((k) => Math.abs(Number(dimAvg[k]) - recomputed[k]) < 0.005),
+      JSON.stringify(dimAvg)
+    );
+    check(
+      'dimAvg 各维都在 1-5',
+      DIMS.every((k) => dimAvg[k] >= 1 && dimAvg[k] <= 5),
+      JSON.stringify(dimAvg)
+    );
+    // 关键区分：dimAvg 是分数，scores 是票数，两组数不应该碰巧相等
+    check(
+      'dimAvg 与 scores 是不同的量纲',
+      DIMS.some((k) => Number(dimAvg[k]) !== Number(scores[k])),
+      `dimAvg=${JSON.stringify(dimAvg)} scores=${JSON.stringify(scores)}`
+    );
   }
 
   console.log('\n【排行榜 / photo_rank + inter】');

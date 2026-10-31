@@ -781,6 +781,150 @@ function createJsonServerless(options) {
     return 'unknown op: ' + op;
   }
 
+  // 对应 unionOp/adoptionOp：领养申请的提交 / 查询 / 撤销 / 审核。
+  // 三个领养页面（applyAdoption / myAdoption / checkAdoption）调用的就是它，
+  // 之前 cloudApi 里既没定义也没导出，页面一进来就 TypeError。
+  // 注意：写操作只落本地覆盖层（和 curdOp 一样），所以别人提交的申请当前看不到 ——
+  // 这是 COS 静态源没有可写后端的既有约束，不是这里的 bug。
+  const ADOPTION_OPEN_STATUS = ['pending', 'reviewing', 'approved'];
+
+  function _adoptionKind(status) {
+    return ADOPTION_OPEN_STATUS.indexOf(status) >= 0 ? 'open' : 'closed';
+  }
+
+  const ADOPTION_OPS = ['apply', 'listMine', 'list', 'cancel', 'review', 'addNote'];
+
+  async function _adoptionOp(params) {
+    const op = params.operation;
+    // 先拦未知操作：否则会掉进下面「缺 adoption_id」的分支，
+    // 报一个和真正原因无关的错，排查时很容易被带偏。
+    if (ADOPTION_OPS.indexOf(op) < 0) return { result: false, msg: '未知操作：' + op };
+    const openid = params.openid || _getOrCreateOpenid();
+    const now = new Date().toISOString();
+    const timeOf = (it) => (it && (it.apply_time || it.create_date)) || '';
+
+    if (op === 'apply') {
+      const data = params.data || {};
+      const catId = data.cat_id;
+      if (!catId) return { result: false, msg: '缺少猫咪信息' };
+
+      const applicantName = String(data.applicant_name || '').trim();
+      const contact = String(data.contact || '').trim();
+      const reason = String(data.reason || '').trim();
+      if (!applicantName) return { result: false, msg: '请填写申请人姓名' };
+      if (!contact) return { result: false, msg: '请填写联系方式' };
+      if (!reason) return { result: false, msg: '请填写申请理由' };
+
+      // 同一只猫、同一个人，已有未结案的申请就不再收新的
+      const all = await _load('adoption');
+      const dup = all.filter(it => it && it.cat_id === catId
+        && (it._openid === openid || it.openid === openid)
+        && _adoptionKind(it.status) === 'open')[0];
+      if (dup) return { result: false, msg: '你已提交过这只猫的申请，请勿重复提交' };
+
+      const cats = await _load('cat');
+      const cat = cats.filter(c => c && c._id === catId)[0] || {};
+      const doc = {
+        _openid: openid,
+        openid,
+        cat_id: catId,
+        cat_name: cat.name || '',
+        cat_avatar: '',
+        applicant_name: applicantName,
+        contact,
+        reason,
+        status: 'pending',
+        apply_time: now,
+        mdate: now,
+        reviewer: '',
+        review_time: '',
+        review_note: '',
+        timeline: [{ status: 'pending', time: now, note: '提交申请', by: openid }],
+      };
+      const res = await _insertOne('adoption', doc);
+      return { result: true, msg: '申请已提交，请等待管理员审核', id: res.result._id };
+    }
+
+    if (op === 'listMine') {
+      const items = await _load('adoption');
+      const mine = items
+        .filter(it => it && (it._openid === openid || it.openid === openid))
+        .sort((a, b) => String(timeOf(b)).localeCompare(String(timeOf(a))));
+      return { result: true, data: mine };
+    }
+
+    if (op === 'list') {
+      const status = params.status;
+      const items = await _load('adoption');
+      const list = items
+        .filter(it => it && (!status || it.status === status))
+        .sort((a, b) => String(timeOf(b)).localeCompare(String(timeOf(a))));
+      return { result: true, data: list };
+    }
+
+    // 下面几个都要 adoption_id
+    const id = params.adoption_id || params.item_id;
+    if (!id) return { result: false, msg: '缺少申请编号' };
+    const items = await _load('adoption');
+    const target = items.filter(it => it && it._id === id)[0];
+    if (!target) return { result: false, msg: '申请不存在' };
+
+    const pushTimeline = (status, note, by) => {
+      const timeline = Array.isArray(target.timeline) ? target.timeline.slice() : [];
+      timeline.push({ status, time: now, note: note || '', by: by || openid });
+      return timeline;
+    };
+
+    if (op === 'cancel') {
+      if ((target._openid || target.openid) !== openid) {
+        return { result: false, msg: '只能撤销自己的申请' };
+      }
+      if (_adoptionKind(target.status) !== 'open') {
+        return { result: false, msg: '该申请已结案，不能撤销' };
+      }
+      await _updateOne('adoption', { _id: id }, {
+        status: 'cancelled',
+        mdate: now,
+        timeline: pushTimeline('cancelled', '申请人撤销', openid),
+      });
+      return { result: true, msg: '已撤销' };
+    }
+
+    if (op === 'addNote') {
+      const note = String(params.note || '').trim();
+      if (!note) return { result: false, msg: '请填写审核记录' };
+      await _updateOne('adoption', { _id: id }, {
+        status: target.status,
+        mdate: now,
+        timeline: pushTimeline(target.status, note, openid),
+      });
+      return { result: true, msg: '已记录' };
+    }
+
+    if (op === 'review') {
+      // 页面传的 action：processing（受理）/ approved / rejected
+      const action = params.action;
+      const next = action === 'processing' ? 'reviewing'
+        : action === 'approved' ? 'approved'
+          : action === 'rejected' ? 'rejected' : null;
+      if (!next) return { result: false, msg: '未知的审核动作：' + action };
+
+      const note = String(params.note || '').trim();
+      await _updateOne('adoption', { _id: id }, {
+        status: next,
+        reviewer: openid,
+        review_time: now,
+        review_note: note,
+        mdate: now,
+        timeline: pushTimeline(next, note, openid),
+      });
+      const desc = { reviewing: '已受理', approved: '已通过', rejected: '未通过' }[next];
+      return { result: true, msg: desc };
+    }
+
+    return { result: false, msg: '未知操作：' + op };
+  }
+
   // 对应 unionOp/getAllSci：科普页的问答列表（data/science.json）
   // 原云函数按 MAX_LIMIT 分页拉完整集合再拼接；静态源一次 _load 全量载入，
   // 沿用它的返回口径：直接给数组。页面（pages/news/sciDetail）拿到后原样 setData 成 qnas。
@@ -1136,6 +1280,7 @@ function createJsonServerless(options) {
             if (action === 'getCatTrajectory') return { result: await _getCatTrajectory(params.cat_id) };
             if (action === 'getCatStats') return { result: await _getCatStats() };
             if (action === 'getAllSci') return { result: await _getAllSci() };
+            if (action === 'adoptionOp') return { result: await _adoptionOp(params) };
           } catch (e) {
             console.warn('[datasource] 本地模拟 ' + action + ' 失败，返回空结果', e && e.message);
             return { result: { ok: false, success: false, data: null } };

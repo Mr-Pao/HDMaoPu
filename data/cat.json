@@ -41,7 +41,28 @@
           "r5": 0
         },
         "avgScore": 4,
-        "avgScoreDisp": "4.0"
+        "avgScoreDisp": "4.0",
+        "dimSums": {
+          "r1": 12,
+          "r2": 13,
+          "r3": 10,
+          "r4": 13,
+          "r5": 11
+        },
+        "dimCounts": {
+          "r1": 3,
+          "r2": 3,
+          "r3": 3,
+          "r4": 3,
+          "r5": 3
+        },
+        "dimAvg": {
+          "r1": 4,
+          "r2": 4.33,
+          "r3": 3.33,
+          "r4": 4.33,
+          "r5": 3.67
+        }
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
@@ -94,7 +115,28 @@
           "r5": 2
         },
         "avgScore": 4.5,
-        "avgScoreDisp": "4.5"
+        "avgScoreDisp": "4.5",
+        "dimSums": {
+          "r1": 19,
+          "r2": 18,
+          "r3": 16,
+          "r4": 19,
+          "r5": 18
+        },
+        "dimCounts": {
+          "r1": 4,
+          "r2": 4,
+          "r3": 4,
+          "r4": 4,
+          "r5": 4
+        },
+        "dimAvg": {
+          "r1": 4.75,
+          "r2": 4.5,
+          "r3": 4,
+          "r4": 4.75,
+          "r5": 4.5
+        }
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
@@ -147,7 +189,28 @@
           "r5": 3
         },
         "avgScore": 4.6,
-        "avgScoreDisp": "4.6"
+        "avgScoreDisp": "4.6",
+        "dimSums": {
+          "r1": 24,
+          "r2": 22,
+          "r3": 20,
+          "r4": 23,
+          "r5": 23
+        },
+        "dimCounts": {
+          "r1": 5,
+          "r2": 5,
+          "r3": 5,
+          "r4": 5,
+          "r5": 5
+        },
+        "dimAvg": {
+          "r1": 4.8,
+          "r2": 4.4,
+          "r3": 4,
+          "r4": 4.6,
+          "r5": 4.6
+        }
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
@@ -200,7 +263,28 @@
           "r5": 1
         },
         "avgScore": 4.166666666666667,
-        "avgScoreDisp": "4.2"
+        "avgScoreDisp": "4.2",
+        "dimSums": {
+          "r1": 27,
+          "r2": 28,
+          "r3": 19,
+          "r4": 27,
+          "r5": 24
+        },
+        "dimCounts": {
+          "r1": 6,
+          "r2": 6,
+          "r3": 6,
+          "r4": 6,
+          "r5": 6
+        },
+        "dimAvg": {
+          "r1": 4.5,
+          "r2": 4.67,
+          "r3": 3.17,
+          "r4": 4.5,
+          "r5": 4
+        }
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
@@ -253,7 +337,28 @@
           "r5": 1
         },
         "avgScore": 4.333333333333333,
-        "avgScoreDisp": "4.3"
+        "avgScoreDisp": "4.3",
+        "dimSums": {
+          "r1": 14,
+          "r2": 13,
+          "r3": 9,
+          "r4": 14,
+          "r5": 15
+        },
+        "dimCounts": {
+          "r1": 3,
+          "r2": 3,
+          "r3": 3,
+          "r4": 3,
+          "r5": 3
+        },
+        "dimAvg": {
+          "r1": 4.67,
+          "r2": 4.33,
+          "r3": 3,
+          "r4": 4.67,
+          "r5": 5
+        }
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
@@ -306,7 +411,28 @@
           "r5": 0
         },
         "avgScore": 4,
-        "avgScoreDisp": "4.0"
+        "avgScoreDisp": "4.0",
+        "dimSums": {
+          "r1": 18,
+          "r2": 18,
+          "r3": 12,
+          "r4": 17,
+          "r5": 18
+        },
+        "dimCounts": {
+          "r1": 4,
+          "r2": 4,
+          "r3": 4,
+          "r4": 4,
+          "r5": 4
+        },
+        "dimAvg": {
+          "r1": 4.5,
+          "r2": 4.5,
+          "r3": 3,
+          "r4": 4.25,
+          "r5": 4.5
+        }
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
@@ -359,7 +485,28 @@
           "r5": 0
         },
         "avgScore": 4,
-        "avgScoreDisp": "4.0"
+        "avgScoreDisp": "4.0",
+        "dimSums": {
+          "r1": 23,
+          "r2": 24,
+          "r3": 16,
+          "r4": 22,
+          "r5": 19
+        },
+        "dimCounts": {
+          "r1": 5,
+          "r2": 5,
+          "r3": 5,
+          "r4": 5,
+          "r5": 5
+        },
+        "dimAvg": {
+          "r1": 4.6,
+          "r2": 4.8,
+          "r3": 3.2,
+          "r4": 4.4,
+          "r5": 3.8
+        }
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
@@ -412,7 +559,28 @@
           "r5": 0
         },
         "avgScore": 4,
-        "avgScoreDisp": "4.0"
+        "avgScoreDisp": "4.0",
+        "dimSums": {
+          "r1": 28,
+          "r2": 26,
+          "r3": 16,
+          "r4": 27,
+          "r5": 23
+        },
+        "dimCounts": {
+          "r1": 6,
+          "r2": 6,
+          "r3": 6,
+          "r4": 6,
+          "r5": 6
+        },
+        "dimAvg": {
+          "r1": 4.67,
+          "r2": 4.33,
+          "r3": 2.67,
+          "r4": 4.5,
+          "r5": 3.83
+        }
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
@@ -465,7 +633,28 @@
           "r5": 1
         },
         "avgScore": 4.333333333333333,
-        "avgScoreDisp": "4.3"
+        "avgScoreDisp": "4.3",
+        "dimSums": {
+          "r1": 13,
+          "r2": 14,
+          "r3": 11,
+          "r4": 12,
+          "r5": 14
+        },
+        "dimCounts": {
+          "r1": 3,
+          "r2": 3,
+          "r3": 3,
+          "r4": 3,
+          "r5": 3
+        },
+        "dimAvg": {
+          "r1": 4.33,
+          "r2": 4.67,
+          "r3": 3.67,
+          "r4": 4,
+          "r5": 4.67
+        }
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
@@ -518,7 +707,28 @@
           "r5": 1
         },
         "avgScore": 4.25,
-        "avgScoreDisp": "4.3"
+        "avgScoreDisp": "4.3",
+        "dimSums": {
+          "r1": 19,
+          "r2": 19,
+          "r3": 13,
+          "r4": 18,
+          "r5": 16
+        },
+        "dimCounts": {
+          "r1": 4,
+          "r2": 4,
+          "r3": 4,
+          "r4": 4,
+          "r5": 4
+        },
+        "dimAvg": {
+          "r1": 4.75,
+          "r2": 4.75,
+          "r3": 3.25,
+          "r4": 4.5,
+          "r5": 4
+        }
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
@@ -571,7 +781,28 @@
           "r5": 0
         },
         "avgScore": 4,
-        "avgScoreDisp": "4.0"
+        "avgScoreDisp": "4.0",
+        "dimSums": {
+          "r1": 22,
+          "r2": 24,
+          "r3": 13,
+          "r4": 24,
+          "r5": 22
+        },
+        "dimCounts": {
+          "r1": 5,
+          "r2": 5,
+          "r3": 5,
+          "r4": 5,
+          "r5": 5
+        },
+        "dimAvg": {
+          "r1": 4.4,
+          "r2": 4.8,
+          "r3": 2.6,
+          "r4": 4.8,
+          "r5": 4.4
+        }
       },
       "photo_count_best": 1,
       "photo_count_total": 1,

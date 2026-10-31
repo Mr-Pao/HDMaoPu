@@ -33,6 +33,14 @@ Page({
         label:"投喂罐头",
         path:"/pages/info/reward/reward",
       },{
+        icon:"/pages/public/images/info/btn/cat_head.png",
+        label:"我的领养",
+        path:"/pages/info/myAdoption/myAdoption",
+      },{
+        icon:"/pages/public/images/info/btn/feedback.svg",
+        label:"我的反馈",
+        path:"/pages/info/feedback/myFeedback/myFeedback",
+      },{
         icon:"/pages/public/images/info/btn/team.svg",
         label:"程序开发",
         path:"/pages/info/devTeam/devTeam",
@@ -94,6 +102,11 @@ Page({
             name: "猫抓板公告",
             path: "/pages/news/createNews/createNews",
             icon: "icon-edit"
+          },
+          {
+            name: "领养审核",
+            path: "/pages/manage/checkAdoption/checkAdoption",
+            icon: "icon-friends-o"
           },
           {
             name: "校区/区域/花色",

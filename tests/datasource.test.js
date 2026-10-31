@@ -182,3 +182,116 @@ test('userOp：user 表出现真实用户后 → 新访客 manager=0（引导失
   const res = await ds.function.invoke('userOp', { op: 'get' });
   assert.strictEqual(res.result.manager, 0, '一旦有非 demo 用户，不应再自动提权');
 });
+
+// ---------- adoptionOp：领养申请 ----------
+// cloudApi.adoptionOp 之前根本不存在，三个领养页面一进来就是 TypeError。
+// 这里按 datasource 的 invoke('unionOp', {unionAction:'adoptionOp'}) 口径验证整条链路。
+
+function makeAdoptionDs(adoptionItems) {
+  const wx = makeWx();
+  global.wx = wx;
+  wx._setResponder((url) => {
+    if (url.indexOf('/data/adoption.json') >= 0) {
+      return { statusCode: 200, data: { version: 'v1', items: adoptionItems } };
+    }
+    if (url.indexOf('/data/cat.json') >= 0) {
+      return { statusCode: 200, data: { version: 'v1', items: [{ _id: 'demo-cat-1', name: '大橘' }] } };
+    }
+    return { statusCode: 200, data: { version: 'v1', items: [] } };
+  });
+  const ds = createJsonServerless({ baseUrl: 'https://example.com' });
+  const call = (params, openid) => ds.function.invoke('unionOp', Object.assign(
+    { unionAction: 'adoptionOp', openid: openid || 'openid-applicant' },
+    params
+  ));
+  return { ds, call };
+}
+
+test('adoptionOp：不存在的操作不会抛异常，返回结构化失败', async () => {
+  const { call } = makeAdoptionDs([]);
+  const res = await call({ operation: 'nope' });
+  assert.strictEqual(res.result.result, false);
+  assert.ok(/未知操作/.test(res.result.msg));
+});
+
+test('adoptionOp apply：缺字段要拦下来', async () => {
+  const { call } = makeAdoptionDs([]);
+  const noName = await call({ operation: 'apply', data: { cat_id: 'demo-cat-1', contact: 'x', reason: 'y' } });
+  assert.strictEqual(noName.result.result, false);
+
+  const noCat = await call({ operation: 'apply', data: { applicant_name: '张三', contact: 'x', reason: 'y' } });
+  assert.strictEqual(noCat.result.result, false);
+});
+
+test('adoptionOp：提交 → 我的列表能看到 → 撤销', async () => {
+  const { call } = makeAdoptionDs([]);
+
+  const applied = await call({
+    operation: 'apply',
+    data: { cat_id: 'demo-cat-1', applicant_name: '张三', contact: '13800000000', reason: '家里有院子' },
+  });
+  assert.strictEqual(applied.result.result, true, applied.result.msg);
+  assert.ok(applied.result.id, '应返回新建申请的 id');
+
+  const mine = await call({ operation: 'listMine' });
+  assert.strictEqual(mine.result.result, true);
+  assert.strictEqual(mine.result.data.length, 1);
+  const item = mine.result.data[0];
+  assert.strictEqual(item.status, 'pending');
+  assert.strictEqual(item.cat_name, '大橘');
+  assert.strictEqual(item.applicant_name, '张三');
+  assert.ok(Array.isArray(item.timeline) && item.timeline.length === 1);
+
+  const cancelled = await call({ operation: 'cancel', adoption_id: item._id });
+  assert.strictEqual(cancelled.result.result, true);
+
+  const after = await call({ operation: 'listMine' });
+  assert.strictEqual(after.result.data[0].status, 'cancelled');
+});
+
+test('adoptionOp apply：同一只猫重复提交被拒绝', async () => {
+  const { call } = makeAdoptionDs([]);
+  const payload = {
+    operation: 'apply',
+    data: { cat_id: 'demo-cat-1', applicant_name: '张三', contact: '138', reason: '想养' },
+  };
+  await call(payload);
+  const second = await call(payload);
+  assert.strictEqual(second.result.result, false);
+  assert.ok(/请勿重复提交/.test(second.result.msg));
+});
+
+test('adoptionOp cancel：不能撤销别人的申请', async () => {
+  const { call } = makeAdoptionDs([{
+    _id: 'a-1', _openid: 'openid-other', openid: 'openid-other',
+    cat_id: 'demo-cat-1', status: 'pending', apply_time: '2026-10-01T00:00:00.000Z', timeline: [],
+  }]);
+  const res = await call({ operation: 'cancel', adoption_id: 'a-1' });
+  assert.strictEqual(res.result.result, false);
+  assert.ok(/只能撤销自己的/.test(res.result.msg));
+});
+
+test('adoptionOp review：受理后进入 reviewing，并记下审核人', async () => {
+  const { call } = makeAdoptionDs([{
+    _id: 'a-2', _openid: 'openid-applicant', openid: 'openid-applicant',
+    cat_id: 'demo-cat-1', status: 'pending', apply_time: '2026-10-01T00:00:00.000Z', timeline: [],
+  }]);
+
+  const reviewing = await call({ operation: 'review', adoption_id: 'a-2', action: 'processing', note: '已联系' }, 'openid-admin');
+  assert.strictEqual(reviewing.result.result, true);
+
+  const list = await call({ operation: 'list', status: 'reviewing' });
+  assert.strictEqual(list.result.data.length, 1);
+  assert.strictEqual(list.result.data[0].status, 'reviewing');
+  assert.strictEqual(list.result.data[0].reviewer, 'openid-admin');
+  assert.strictEqual(list.result.data[0].review_note, '已联系');
+});
+
+test('adoptionOp review：未知 action 返回失败而不是静默成功', async () => {
+  const { call } = makeAdoptionDs([{
+    _id: 'a-3', _openid: 'openid-applicant', openid: 'openid-applicant',
+    cat_id: 'demo-cat-1', status: 'pending', apply_time: '2026-10-01T00:00:00.000Z', timeline: [],
+  }]);
+  const res = await call({ operation: 'review', adoption_id: 'a-3', action: 'whatever' });
+  assert.strictEqual(res.result.result, false);
+});

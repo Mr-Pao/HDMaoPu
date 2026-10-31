@@ -223,11 +223,14 @@ function readLog(kind, openid, target) {
   return getLogIndex().get(logKey(kind, openid, target)) || null;
 }
 
-function writeLog(kind, openid, target, state, ts) {
+function writeLog(kind, openid, target, state, ts, extra) {
   const idx = getLogIndex();
   const key = logKey(kind, openid, target);
   // _id 必须存在：upload-data.js 会校验每一条都有 _id，缺了会导致整批上传中止
   const rec = { _id: key, k: key, kind, openid, target, state, ts };
+  // 额外字段（目前只有 rating 的五维分）：随日志存下来，
+  // 同一人重复评分时才可能把旧的五维分精确撤回，否则 dimAvg 会越漂越偏。
+  if (extra && typeof extra === 'object') Object.assign(rec, extra);
   idx.set(key, rec);
   const data = loadData('inbox_log');
   const pos = data.items.findIndex(it => it && it.k === key);
@@ -321,6 +324,78 @@ function handlePop(p) {
   return 'ok';
 }
 
+const DIM_KEYS = ['r1', 'r2', 'r3', 'r4', 'r5'];
+
+// 五维分（猫德/颜值/社交/干饭/活力）规整。
+// 有任何一项缺失或越界就整票丢弃维度分，返回 null——宁可少算一票维度分，
+// 也不能把半截数据混进累加器（一旦混进去就没有办法再还原）。
+function normalizeDims(dims) {
+  if (!dims || typeof dims !== 'object') return null;
+  const out = {};
+  for (const k of DIM_KEYS) {
+    const v = Number(dims[k]);
+    if (!Number.isInteger(v) || v < 1 || v > 5) return null;
+    out[k] = v;
+  }
+  return out;
+}
+
+// 把「一票评分」落到 cat.rating 上（纯计算，不读写 inbox_log）。
+// prevState / prevDims 是该用户上一次的票，先撤回再记新票，所以重复评分不会让
+// count 和 dimAvg 虚高。抽成独立函数是为了能单测——这段算术出错不会有任何报错，
+// 只会让页面上的分数慢慢偏掉。
+function applyRatingToCat(r, prevState, prevDims, score, dims) {
+  if (!r.scores) r.scores = { r1: 0, r2: 0, r3: 0, r4: 0, r5: 0 };
+  // 五维累加器：dimSums = 各维分数之和，dimCounts = 各维参评人数，
+  // dimAvg = 对外暴露的每维平均分（页面「各项评分」读的就是它）。
+  if (!r.dimSums) r.dimSums = { r1: 0, r2: 0, r3: 0, r4: 0, r5: 0 };
+  if (!r.dimCounts) r.dimCounts = { r1: 0, r2: 0, r3: 0, r4: 0, r5: 0 };
+
+  // 同一人重复评分：先撤掉旧分，再记新分
+  if (prevState >= 1 && prevState <= 5) {
+    r.scores['r' + prevState] = Math.max(0, Number(r.scores['r' + prevState] || 0) - 1);
+    r.count = Math.max(0, Number(r.count || 0) - 1);
+  }
+  if (prevDims) {
+    for (const k of DIM_KEYS) {
+      r.dimSums[k] = Math.max(0, Number(r.dimSums[k] || 0) - prevDims[k]);
+      r.dimCounts[k] = Math.max(0, Number(r.dimCounts[k] || 0) - 1);
+    }
+  }
+
+  r.scores['r' + score] = Number(r.scores['r' + score] || 0) + 1;
+  r.count = Number(r.count || 0) + 1;
+
+  if (dims) {
+    for (const k of DIM_KEYS) {
+      r.dimSums[k] = Number(r.dimSums[k] || 0) + dims[k];
+      r.dimCounts[k] = Number(r.dimCounts[k] || 0) + 1;
+    }
+  }
+
+  // 重算综合均分
+  let sum = 0;
+  let cnt = 0;
+  for (let i = 1; i <= 5; i++) {
+    const c = Number(r.scores['r' + i] || 0);
+    sum += i * c;
+    cnt += c;
+  }
+  r.count = cnt;
+  r.avgScore = cnt ? sum / cnt : 0;
+  r.avgScoreDisp = r.avgScore.toFixed(1);
+
+  // 重算五维均分
+  const dimAvg = {};
+  for (const k of DIM_KEYS) {
+    const c = Number(r.dimCounts[k] || 0);
+    dimAvg[k] = c ? Number((Number(r.dimSums[k] || 0) / c).toFixed(2)) : 0;
+  }
+  r.dimAvg = dimAvg;
+
+  return r;
+}
+
 function handleRating(p) {
   const { openid, data, ts } = p;
   const catId = data.cat_id;
@@ -334,34 +409,25 @@ function handleRating(p) {
   if (!cat.rating || typeof cat.rating !== 'object') {
     cat.rating = { count: 0, scores: { r1: 0, r2: 0, r3: 0, r4: 0, r5: 0 }, avgScore: 0, avgScoreDisp: '0.0' };
   }
-  const r = cat.rating;
-  if (!r.scores) r.scores = { r1: 0, r2: 0, r3: 0, r4: 0, r5: 0 };
 
+  const dims = normalizeDims(data.dims);
   const prev = readLog('rating', openid, catId);
-  if (prev && prev.state === score) return 'skip:duplicate';
-
-  // 同一人重复评分：先撤掉旧分，再记新分
-  if (prev && prev.state >= 1 && prev.state <= 5) {
-    r.scores['r' + prev.state] = Math.max(0, Number(r.scores['r' + prev.state] || 0) - 1);
-    r.count = Math.max(0, Number(r.count || 0) - 1);
+  const prevDims = prev && normalizeDims(prev.dims);
+  if (prev && prev.state === score) {
+    // 分数没变、维度分也没变，才是真重复，直接跳过。
+    if (!dims && !prevDims) return 'skip:duplicate';
+    if (dims && prevDims && DIM_KEYS.every(k => prevDims[k] === dims[k])) return 'skip:duplicate';
   }
 
-  r.scores['r' + score] = Number(r.scores['r' + score] || 0) + 1;
-  r.count = Number(r.count || 0) + 1;
+  applyRatingToCat(
+    cat.rating,
+    prev ? Number(prev.state) : 0,
+    prevDims,
+    score,
+    dims
+  );
 
-  // 重算均分
-  let sum = 0;
-  let cnt = 0;
-  for (let i = 1; i <= 5; i++) {
-    const c = Number(r.scores['r' + i] || 0);
-    sum += i * c;
-    cnt += c;
-  }
-  r.count = cnt;
-  r.avgScore = cnt ? sum / cnt : 0;
-  r.avgScoreDisp = r.avgScore.toFixed(1);
-
-  writeLog('rating', openid, catId, score, ts);
+  writeLog('rating', openid, catId, score, ts, dims ? { dims } : null);
   markTouched('cat');
   return 'ok';
 }
@@ -901,4 +967,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { validateInboxItem };
+module.exports = { validateInboxItem, applyRatingToCat, normalizeDims };

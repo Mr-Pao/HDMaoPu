@@ -90,8 +90,9 @@ Page({
       return;
     }
 
-    let { scores } = cat.rating;
-    let catRatings = convertRatingList(scores);
+    // 维度分用 dimAvg；scores 是「综合分 = N 的得票数」，不是分数。
+    let { dimAvg } = cat.rating;
+    let catRatings = convertRatingList(dimAvg || {});
 
     this.setData({
       cat,
@@ -162,11 +163,16 @@ Page({
 
     console.log(res);
 
-    // 同步到 COS inbox，由 Action 聚合回写 data/cat.json 的 rating.scores。
-    // 聚合脚本按 { cat_id, score: 1-5 } 记一票，这里把 5 个维度的评分取平均提交。
+    // 同步到 COS inbox，由 Action 聚合回写 data/cat.json 的 rating。
+    // score 是综合分（五维取整平均），决定 scores/avgScore；
+    // dims 是五维原始分，决定 dimAvg。两者都传，聚合端才知道「各项评分」该显示什么。
+    const dims = {};
+    for (const r of myRatings) {
+      dims[r.key] = r.score;
+    }
     const avg = myRatings.reduce((sum, r) => sum + r.score, 0) / myRatings.length;
     const score = Math.min(5, Math.max(1, Math.round(avg)));
-    putInbox('rating', { cat_id, score });
+    putInbox('rating', { cat_id, score, dims });
     await Promise.all([
       this.reloadMyRatings(),
       this.reloadCatRating()

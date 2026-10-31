@@ -193,21 +193,30 @@ function genRatings(users) {
 }
 
 /**
- * 由 rating 记录反推 cat.rating（得票计数形式），口径与 scripts/process-inbox.js 的 handleRating 一致：
- *   scores.rN = 打 N 分的人数
- *   count     = 总票数
- *   avgScore  = 加权平均
+ * 由 rating 记录反推 cat.rating，口径与 scripts/process-inbox.js 的 handleRating 一致：
+ *   scores.rN    = 打 N 分的人数（综合分的得票计数，不是维度分）
+ *   count        = 总票数
+ *   avgScore     = 加权平均
  *   avgScoreDisp = avgScore.toFixed(1)
+ *   dimSums / dimCounts = 五维累加器
+ *   dimAvg       = 每维平均分（页面「各项评分」显示的就是这个）
  */
 function applyCatRatings(catItems, ratingItems) {
+  const DIM_KEYS = ['r1', 'r2', 'r3', 'r4', 'r5'];
   for (const cat of catItems) {
     const rs = ratingItems.filter((r) => r.cat_id === cat._id);
     const scores = { r1: 0, r2: 0, r3: 0, r4: 0, r5: 0 };
+    const dimSums = { r1: 0, r2: 0, r3: 0, r4: 0, r5: 0 };
+    const dimCounts = { r1: 0, r2: 0, r3: 0, r4: 0, r5: 0 };
     for (const r of rs) {
-      // 五维取整平均，模拟 process-inbox 的「一票一分数」口径
+      // 五维取整平均，模拟 process-inbox 的「一票一综合分」口径
       const avg = (r.r1 + r.r2 + r.r3 + r.r4 + r.r5) / 5;
       const s = Math.min(5, Math.max(1, Math.round(avg)));
       scores['r' + s]++;
+      for (const k of DIM_KEYS) {
+        dimSums[k] += r[k];
+        dimCounts[k]++;
+      }
     }
     let sum = 0;
     let cnt = 0;
@@ -215,11 +224,18 @@ function applyCatRatings(catItems, ratingItems) {
       sum += i * scores['r' + i];
       cnt += scores['r' + i];
     }
+    const dimAvg = {};
+    for (const k of DIM_KEYS) {
+      dimAvg[k] = dimCounts[k] ? Number((dimSums[k] / dimCounts[k]).toFixed(2)) : 0;
+    }
     cat.rating = {
       count: cnt,
       scores,
       avgScore: cnt ? sum / cnt : 0,
       avgScoreDisp: (cnt ? sum / cnt : 0).toFixed(1),
+      dimSums,
+      dimCounts,
+      dimAvg,
     };
   }
 }
@@ -595,6 +611,62 @@ function genReviewQueue(users) {
   });
 }
 
+// ---------------------------------------------------------------- adoption（领养申请）
+
+/**
+ * 领养申请。字段口径对齐 miniprogram/utils/datasource.js 的 _adoptionOp，
+ * checkAdoption 页要读 cat_name / applicant_name / contact / reason /
+ * apply_time / status / review_time / review_note / timeline。
+ * 前三条是待处理（管理端有活干），后两条是历史结案（列表不空）。
+ */
+function genAdoption(users) {
+  const adminOpenid = 'demo-openid-admin';
+  const findCat = (name) => cats.find((c) => c.name === name);
+  const specs = [
+    { cat: '大橘', u: 0, status: 'pending', days: 1, real: '王晓明', phone: '138****6621', reason: '家里已有养猫经验，独居有稳定作息，想给大橘一个安静的家。' },
+    { cat: '大橘', u: 1, status: 'pending', days: 2, real: '李文静', phone: '139****3087', reason: '住校内教工宿舍带阳台，之前养过一只橘猫，希望领养大橘。' },
+    { cat: '年糕', u: 2, status: 'reviewing', days: 4, real: '张浩然', phone: '137****4415', reason: '已和室友商量好共同照顾，愿意承担全部医疗费用。', note: '已电话沟通，约本周家访' },
+    { cat: '小白', u: 3, status: 'approved', days: 16, real: '赵敏', phone: '135****9920', reason: '家里有封闭阳台，无其他宠物，希望领养小白。', note: '家访通过，已签署领养协议' },
+    { cat: '汤圆', u: 4, status: 'rejected', days: 23, real: '陈立', phone: '136****7743', reason: '想给汤圆一个家。', note: '目前与他人合租，居住条件暂不适合养猫' },
+  ];
+
+  return specs.map((s, i) => {
+    const cat = findCat(s.cat);
+    const u = users[s.u];
+    const applyTime = daysAgo(s.days, 15);
+    const timeline = [{ status: 'pending', time: applyTime, note: '提交申请', by: u.openid }];
+    let reviewer = '';
+    let reviewTime = '';
+    if (s.status === 'reviewing') {
+      reviewer = adminOpenid;
+      reviewTime = daysAgo(Math.max(0, s.days - 1), 11);
+      timeline.push({ status: 'reviewing', time: reviewTime, note: s.note, by: adminOpenid });
+    } else if (s.status === 'approved' || s.status === 'rejected') {
+      reviewer = adminOpenid;
+      reviewTime = daysAgo(Math.max(0, s.days - 3), 16);
+      timeline.push({ status: s.status, time: reviewTime, note: s.note, by: adminOpenid });
+    }
+    return {
+      _id: 'demo-adoption-' + (i + 1),
+      _openid: u.openid,
+      openid: u.openid,
+      cat_id: cat._id,
+      cat_name: cat.name,
+      cat_avatar: '',
+      applicant_name: s.real,
+      contact: s.phone,
+      reason: s.reason,
+      status: s.status,
+      apply_time: applyTime,
+      mdate: reviewTime || applyTime,
+      reviewer,
+      review_time: reviewTime,
+      review_note: s.note || '',
+      timeline,
+    };
+  });
+}
+
 // ---------------------------------------------------------------- 主流程
 
 function main() {
@@ -613,6 +685,7 @@ function main() {
   const reward = genReward();
   const achievement = genAchievement(users);
   const reviewQueue = genReviewQueue(users);
+  const adoption = genAdoption(users);
 
   // 派生统计
   applyCatRatings(cats, ratings);
@@ -647,6 +720,7 @@ function main() {
   writeJSON('reward', coll(reward));
   writeJSON('achievement', coll(achievement));
   writeJSON('review_queue', coll(reviewQueue));
+  writeJSON('adoption', coll(adoption));
   writeJSON('cat', coll(cats, readJSON('cat').version));
   writeJSON('photo', coll(photos, readJSON('photo').version));
 
@@ -694,6 +768,18 @@ function main() {
   reviewQueue.forEach((q) => {
     check(['pending', 'approved', 'rejected'].includes(q.status), `review_queue ${q._id} status 非法`);
   });
+  adoption.forEach((a) => {
+    check(catIdSet.has(a.cat_id), `adoption ${a._id} 的 cat_id 不存在: ${a.cat_id}`);
+    check(userOpenidSet.has(a.openid) && a._openid === a.openid, `adoption ${a._id} 的 openid/_openid 缺失或不一致`);
+    check(
+      ['pending', 'reviewing', 'approved', 'rejected', 'cancelled'].includes(a.status),
+      `adoption ${a._id} status 非法: ${a.status}`
+    );
+    check(!!a.applicant_name && !!a.contact && !!a.reason, `adoption ${a._id} 缺申请必填项`);
+    check(Array.isArray(a.timeline) && a.timeline.length > 0, `adoption ${a._id} 缺 timeline`);
+    check(a.timeline[a.timeline.length - 1].status === a.status, `adoption ${a._id} timeline 末项与 status 不一致`);
+  });
+  check(adoption.some((a) => a.status === 'pending'), 'adoption 没有待处理申请，管理端审核页会空');
 
   // cat 统计与派生数据一致性
   cats.forEach((c) => {
