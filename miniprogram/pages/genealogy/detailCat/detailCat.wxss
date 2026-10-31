@@ -1,4 +1,4 @@
-@import "../../../../packages/weui/weui-wxss/dist/style/weui.wxss";
+@import "../../../packages/weui/weui-wxss/dist/style/weui.wxss";
 
 page {
   height: 100%;
