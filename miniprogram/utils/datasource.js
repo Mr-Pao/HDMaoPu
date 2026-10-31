@@ -761,6 +761,14 @@ function createJsonServerless(options) {
     return 'unknown op: ' + op;
   }
 
+  // 对应 unionOp/getAllSci：科普页的问答列表（data/science.json）
+  // 原云函数按 MAX_LIMIT 分页拉完整集合再拼接；静态源一次 _load 全量载入，
+  // 沿用它的返回口径：直接给数组。页面（pages/news/sciDetail）拿到后原样 setData 成 qnas。
+  async function _getAllSci() {
+    const items = await _load('science');
+    return items.slice();
+  }
+
   // 对应 unionOp/getCatStats：数据看板统计
   // 原云函数对每个指标单独 count，静态数据源一次 _load 全量载入内存算，
   // 省掉十几次往返；口径与 functionsEMAS/unionOp/getCatStats.js 保持一致
@@ -1080,6 +1088,7 @@ function createJsonServerless(options) {
             if (action === 'getCatLocations') return { result: await _getCatLocations() };
             if (action === 'getCatTrajectory') return { result: await _getCatTrajectory(params.cat_id) };
             if (action === 'getCatStats') return { result: await _getCatStats() };
+            if (action === 'getAllSci') return { result: await _getAllSci() };
           } catch (e) {
             console.warn('[datasource] 本地模拟 ' + action + ' 失败，返回空结果', e && e.message);
             return { result: { ok: false, success: false, data: null } };

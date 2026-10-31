@@ -1,0 +1,44 @@
+name: sync-assets
+
+# initStorage/系统/ 是系统素材图（科普图、赞赏码、菊花码、榜单 logo）的唯一来源。
+# config.js 里直接写死了这些对象在 COS 上的地址，所以素材图必须带 public-read ACL，
+# 否则私有桶下小程序匿名 GET 全是 403（裂图）。
+
+on:
+  push:
+    branches:
+      - cos
+    paths:
+      - 'scripts/upload-assets.js'
+      - 'initStorage/**'
+  workflow_dispatch:
+
+concurrency:
+  group: sync-assets
+  cancel-in-progress: true
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 安装依赖
+        working-directory: scripts
+        run: npm install cos-nodejs-sdk-v5 --no-save --no-audit --no-fund --registry=https://registry.npmmirror.com
+
+      - name: 上传系统素材到 COS
+        working-directory: scripts
+        env:
+          COS_SECRET_ID: ${{ secrets.COS_SECRET_ID }}
+          COS_SECRET_KEY: ${{ secrets.COS_SECRET_KEY }}
+          COS_BUCKET: ${{ secrets.COS_BUCKET }}
+          COS_REGION: ${{ secrets.COS_REGION }}
+        run: node upload-assets.js
