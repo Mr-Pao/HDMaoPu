@@ -1,0 +1,75 @@
+name: process-inbox
+
+# 每 5 分钟聚合一次 COS inbox/ 里的写入请求。
+#
+# 为什么是每 5 分钟而不是每小时（守 5 元红线说明）：
+#   点赞、关注、人气这些操作，用户点完要能在几分钟内看到数字变化；
+#   等一天等于功能不存在，等一小时也偏慢。GitHub Actions 对公开仓库
+#   免费（2000 分钟/月额度，本项目实际几乎用不到），是唯一被允许的
+#   聚合算力——不引入任何常驻服务器 / SCF / Cloudflare。每 5 分钟跑一次
+#   约 30 秒，一个月约 4.3 小时 = 约 258 分钟，仍在免费额度内，零成本。
+#   若未来频次压力过大，可回调到每小时（"7 * * * *"）而不影响功能。
+#
+# 注意：这个 job 提交 data/ 之后会触发 sync-data.yml 上传 COS，
+# 这是设计意图（一处写文件，一处负责上传）。它自己只监听 schedule
+# 和 workflow_dispatch，不会被 push 触发，所以不会形成循环。
+
+on:
+  schedule:
+    # 每 5 分钟聚合一次（守 5 元红线：Actions 免费，不引入 SCF/服务器）
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: process-inbox
+  cancel-in-progress: false
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: cos
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install COS SDK
+        working-directory: scripts
+        run: npm install cos-nodejs-sdk-v5 --no-save --no-audit --no-fund --registry=https://registry.npmmirror.com
+
+      - name: Aggregate inbox
+        id: aggregate
+        working-directory: scripts
+        env:
+          COS_SECRET_ID: ${{ secrets.COS_SECRET_ID }}
+          COS_SECRET_KEY: ${{ secrets.COS_SECRET_KEY }}
+          COS_BUCKET: ${{ secrets.COS_BUCKET }}
+          COS_REGION: ${{ secrets.COS_REGION }}
+          REVIEW_PASSCODE: ${{ secrets.REVIEW_PASSCODE }}
+        run: node process-inbox.js
+
+      # 仅在脚本成功 flush data/ 之后才提交（脚本会写 flush_ok=1 到 GITHUB_OUTPUT）。
+      # 用 always() 是因为聚合脚本在「flush 成功但删除 inbox 失败」时会以退出码 1 结束，
+      # 此时 data/ 已经写好，删除失败不应阻止提交，否则本轮聚合结果会丢。
+      - name: Commit data changes
+        if: always() && steps.aggregate.outputs.flush_ok == '1'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --staged --quiet; then
+            echo "没有数据变化，跳过提交"
+            exit 0
+          fi
+          git commit -m "chore(data): 聚合 inbox 写入"
+          # 远端可能有上一轮触发的 sync-data 提交，先 rebase 再推；失败重试一次
+          git pull --rebase origin cos || { sleep 5; git pull --rebase origin cos; }
+          git push || { sleep 5; git pull --rebase origin cos; git push; }
