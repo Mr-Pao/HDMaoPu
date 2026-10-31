@@ -182,23 +182,11 @@
       },
       {
         "type": "folder",
-        "value": "pages/manage/checkAdoption"
-      },
-      {
-        "type": "folder",
         "value": "pages/info/myFootprint"
       },
       {
         "type": "folder",
-        "value": "pages/info/myAdoption"
-      },
-      {
-        "type": "folder",
         "value": "pages/info/myAchievement"
-      },
-      {
-        "type": "folder",
-        "value": "pages/adoption/applyAdoption"
       },
       {
         "type": "folder",
