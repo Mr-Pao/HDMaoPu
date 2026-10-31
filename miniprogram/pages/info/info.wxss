@@ -388,3 +388,131 @@ page {
   border-radius: 28rpx;
   box-shadow: 0 4rpx 18rpx rgba(12, 95, 3, 0.06);
 }
+
+
+/* ================= v4.3.0 我的页：杂志排版风 ================= */
+page {
+  background-color: #F2F0E9;
+}
+.mina-info {
+  margin: 0;
+  padding: 60rpx 40rpx 40rpx 40rpx;
+  background-color: #0C5F03;
+  background-image: none;
+  border-radius: 0;
+  box-shadow: none;
+  border-bottom: 2rpx solid #0C5F03;
+}
+.mina-info image {
+  width: 150rpx;
+  height: 150rpx;
+  border-radius: 2rpx;
+  border: 3rpx solid #FBFAF6;
+  box-shadow: none;
+}
+.mina-info .title {
+  font-size: 76rpx;
+  line-height: 82rpx;
+  font-weight: 900;
+  letter-spacing: -2rpx;
+  color: #FBFAF6;
+  margin-top: 24rpx;
+}
+.mina-info .dev {
+  font-size: 21rpx;
+  letter-spacing: 2rpx;
+  color: rgba(251, 250, 246, 0.62);
+  margin-top: 8rpx;
+  line-height: 32rpx;
+}
+.num-info {
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  margin-top: 32rpx;
+  padding: 0;
+  border-radius: 0;
+  background-color: transparent;
+  border-top: 2rpx solid rgba(251, 250, 246, 0.35);
+}
+.num {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 24rpx 0 0 0;
+}
+.num-title {
+  font-size: 52rpx;
+  line-height: 56rpx;
+  font-weight: 800;
+  letter-spacing: -1rpx;
+  color: #FBFAF6;
+}
+.small-title {
+  font-size: 19rpx;
+  letter-spacing: 2rpx;
+  color: rgba(251, 250, 246, 0.6);
+  margin-top: 6rpx;
+}
+
+.card-container {
+  row-gap: 20rpx;
+  margin: 24rpx 24rpx 0 24rpx;
+}
+.card {
+  height: 190rpx;
+  border-radius: 2rpx;
+  background-color: #FBFAF6;
+  border: 2rpx solid #0C5F03;
+  box-shadow: 6rpx 6rpx 0 #0C5F03;
+}
+.card:after {
+  display: none;
+}
+.card .card-text {
+  font-size: 28rpx;
+  letter-spacing: 2rpx;
+  font-weight: 700;
+  color: #12200C;
+  filter: none;
+}
+.card .icon {
+  width: 72rpx;
+  height: 72rpx;
+  margin-bottom: 12rpx;
+}
+.tool {
+  border-radius: 2rpx;
+  background-color: #FBFAF6;
+  border: 2rpx solid #0C5F03;
+  box-shadow: 5rpx 5rpx 0 #0C5F03;
+}
+.block-name {
+  position: relative;
+  padding-left: 24rpx;
+  font-size: 34rpx;
+  font-weight: 800;
+  letter-spacing: 2rpx;
+  color: #12200C;
+  margin: 46rpx 24rpx 14rpx 24rpx;
+  width: auto;
+}
+.block-name::before {
+  content: '';
+  position: absolute;
+  left: 6rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10rpx;
+  height: 30rpx;
+  border-radius: 0;
+  background-color: #0C5F03;
+}
+.block {
+  margin: 0 24rpx;
+  border-radius: 2rpx;
+  background-color: #FBFAF6;
+  border: 2rpx solid #0C5F03;
+  box-shadow: 6rpx 6rpx 0 #0C5F03;
+}

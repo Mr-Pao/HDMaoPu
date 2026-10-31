@@ -1106,3 +1106,162 @@ swiper-item image {
 .details .item {
   padding: 28rpx 30rpx;
 }
+
+
+/* ================= v4.3.0 详情页：杂志排版风 ================= */
+page {
+  background-color: #F2F0E9;
+  overflow: hidden;
+}
+#bg-yellow {
+  width: 750rpx;
+  height: 560rpx;
+  background-color: #0C5F03;
+  background-image: none;
+  position: fixed;
+  z-index: -1;
+}
+#bg-yellow.hide {
+  background-color: transparent;
+}
+#bg-big-circle {
+  display: none;
+}
+#big-circle {
+  display: none;
+}
+swiper {
+  width: 750rpx;
+  height: 560rpx;
+  margin-top: 0;
+}
+swiper-item image {
+  width: 640rpx;
+  height: 500rpx;
+  border-radius: 0;
+  box-shadow: none;
+  border: 3rpx solid #FBFAF6;
+}
+.best-photo .like-count {
+  left: auto;
+  right: 60rpx;
+  top: 40rpx;
+  bottom: auto;
+  padding: 0 18rpx;
+  height: 44rpx;
+  line-height: 44rpx;
+  border-radius: 2rpx;
+  background-color: #0C5F03;
+  color: #FBFAF6;
+  font-size: 22rpx;
+  letter-spacing: 1rpx;
+}
+.info {
+  margin-top: 0;
+  padding: 40rpx 30rpx 26rpx 30rpx;
+  border-radius: 0;
+  background-color: #F2F0E9;
+  background-image: none;
+  box-shadow: none;
+  position: relative;
+  z-index: 3;
+}
+.info .identity {
+  align-items: flex-end;
+  margin-bottom: 20rpx;
+}
+.info .name {
+  height: auto;
+  font-size: 92rpx;
+  line-height: 96rpx;
+  font-weight: 900;
+  letter-spacing: -3rpx;
+  color: #12200C;
+  margin-left: 0;
+  padding-bottom: 0;
+}
+.info image.gender {
+  height: 34rpx;
+  width: 34rpx;
+  padding-bottom: 16rpx;
+  margin-left: 14rpx;
+}
+.identity .count {
+  flex-direction: row;
+  align-items: center;
+  margin-left: 12rpx;
+  padding: 0 16rpx;
+  height: 46rpx;
+  border-radius: 2rpx;
+  background-color: transparent;
+  border: 2rpx solid #0C5F03;
+  color: #0C5F03;
+  font-size: 22rpx;
+  font-weight: 700;
+  box-shadow: none;
+}
+.identity .count.first {
+  margin-left: auto;
+}
+.identity .count .iconfont {
+  font-size: 22rpx;
+  margin-right: 6rpx;
+  color: #0C5F03;
+}
+.tags {
+  justify-content: flex-start;
+  padding: 0;
+  border-top: 2rpx solid #0C5F03;
+  padding-top: 24rpx;
+}
+.tags .tag {
+  font-size: 22rpx;
+  height: 46rpx;
+  line-height: 40rpx;
+  padding: 0 18rpx;
+  margin-right: 12rpx;
+  border-radius: 2rpx;
+  background-color: transparent;
+  border: 2rpx solid #0C5F03;
+  color: #0C5F03;
+  letter-spacing: 1rpx;
+}
+.tags .to_star {
+  background-color: #3A3A34;
+  border-color: #3A3A34;
+  color: #FBFAF6;
+}
+.details {
+  margin-top: 28rpx;
+}
+.details .card {
+  border-radius: 2rpx;
+  background-color: #FBFAF6;
+  border: 2rpx solid #0C5F03;
+  box-shadow: 6rpx 6rpx 0 #0C5F03;
+  margin-bottom: 26rpx;
+  overflow: hidden;
+}
+.details .card-header,
+.card-header {
+  padding: 22rpx 30rpx;
+  border-bottom: 2rpx solid #0C5F03;
+  display: flex;
+  align-items: center;
+}
+.card-title {
+  font-size: 32rpx;
+  font-weight: 800;
+  letter-spacing: 2rpx;
+  color: #12200C;
+  display: flex;
+  align-items: center;
+}
+.card-title .iconfont {
+  font-size: 34rpx;
+  color: #0C5F03;
+  margin-right: 10rpx;
+}
+.details .item {
+  padding: 26rpx 30rpx;
+}

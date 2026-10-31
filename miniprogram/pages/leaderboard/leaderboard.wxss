@@ -251,3 +251,78 @@ page {
   justify-content: flex-start;
   padding: 0 22rpx;
 }
+
+
+/* ================= v4.3.0 榜单：杂志排版风 ================= */
+page {
+  background: #F2F0E9;
+}
+.thread-list {
+  padding: 10rpx 24rpx 0 24rpx;
+  background-color: transparent;
+  box-shadow: none;
+  align-items: center;
+  justify-content: flex-start;
+}
+.thread-item {
+  padding: 8rpx 26rpx;
+  border-radius: 2rpx;
+  margin: 0 10rpx 0 0;
+  border: 2rpx solid transparent;
+}
+.thread-item.active {
+  background-color: #0C5F03;
+  border-color: #0C5F03;
+}
+.thread-item-bar {
+  display: none;
+}
+.thread-item-name {
+  font-size: 27rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+  color: #5A5648;
+}
+.thread-item.active .thread-item-name {
+  color: #FBFAF6;
+  font-weight: 800;
+}
+.column_item {
+  width: 342rpx;
+  border-radius: 2rpx;
+  margin: 0 auto 18rpx auto;
+  background-color: #FBFAF6;
+  border: 2rpx solid #0C5F03;
+  box-shadow: 6rpx 6rpx 0 #0C5F03;
+}
+.location {
+  top: 12rpx;
+  right: 12rpx;
+  font-size: 19rpx;
+  letter-spacing: 1rpx;
+  padding: 0 12rpx;
+  height: 38rpx;
+  line-height: 38rpx;
+  border-radius: 2rpx;
+  background-color: #0C5F03;
+  color: #FBFAF6;
+}
+.info {
+  width: 342rpx;
+  padding: 16rpx 4rpx 16rpx 16rpx;
+}
+.cat-name {
+  font-size: 32rpx;
+  font-weight: 900;
+  letter-spacing: 0;
+  color: #12200C;
+}
+.pher-name, .photo-date {
+  font-size: 20rpx;
+  letter-spacing: 1rpx;
+  color: #8A8578;
+}
+.like-num {
+  font-size: 19rpx;
+  color: #8A8578;
+}

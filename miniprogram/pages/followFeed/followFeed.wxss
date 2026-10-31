@@ -422,3 +422,78 @@ page {
   font-weight: 600;
   color: var(--color-primary);
 }
+
+
+/* ================= v4.3.0 喵友圈：杂志排版风 ================= */
+page {
+  background-color: #F2F0E9;
+}
+.photo-block, .comment-block {
+  border-top: none;
+  border-bottom: 2rpx solid #DDD9CC;
+  padding: 26rpx 24rpx 24rpx 24rpx;
+}
+.cat-info {
+  height: 74rpx;
+}
+.cat-info .cat-avatar {
+  width: 62rpx;
+  height: 62rpx;
+  border-radius: 2rpx;
+  box-shadow: none;
+  border: 2rpx solid #0C5F03;
+}
+.cat-info .cat-name {
+  font-size: 36rpx;
+  font-weight: 900;
+  letter-spacing: 0;
+  color: #12200C;
+}
+.cat-info .cat-campus {
+  font-size: 19rpx;
+  letter-spacing: 1rpx;
+  color: #8A8578;
+}
+.photo-container {
+  gap: 8rpx;
+  padding: 16rpx 0 6rpx 0;
+}
+.photo-img {
+  border-radius: 2rpx;
+}
+.photo-block .datetime,
+.photo-block .username {
+  font-size: 21rpx;
+  letter-spacing: 1rpx;
+  color: #8A8578;
+}
+.story-container {
+  margin: 22rpx 12rpx 0 12rpx;
+}
+.story-item .cat-avatar-wrapper {
+  width: 150rpx;
+  height: 150rpx;
+}
+.story-item .cat-avatar {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 2rpx;
+}
+.story-item .cat-name {
+  font-size: 22rpx;
+  letter-spacing: 1rpx;
+  color: #5A5648;
+}
+.selected-cat {
+  width: auto;
+  margin: 14rpx 24rpx 0 24rpx;
+  padding: 10rpx 20rpx;
+  border-radius: 2rpx;
+  background-color: #FBFAF6;
+  border: 2rpx solid #0C5F03;
+}
+.selected-cat .cat-name {
+  font-size: 26rpx;
+  font-weight: 800;
+  color: #0C5F03;
+}

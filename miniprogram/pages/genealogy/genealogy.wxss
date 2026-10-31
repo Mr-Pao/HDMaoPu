@@ -985,3 +985,233 @@ page {
 #big-circle, #bg-yellow {
   display: none;
 }
+
+
+/* ================= v4.3.0 首页：杂志排版风 ================= */
+page {
+  background-color: #F2F0E9;
+}
+.cards {
+  display: block;
+  padding: 0 20rpx;
+}
+.cards > .h-filter-list {
+  width: auto;
+  margin: 4rpx 8rpx 18rpx 8rpx;
+  padding: 0;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+/* ---- 卡片：硬边 + 硬投影 + 巨号背景数字 ---- */
+.card {
+  position: relative;
+  width: 710rpx;
+  margin: 0 0 34rpx 0;
+  padding: 0;
+  border-radius: 4rpx;
+  background-color: #FBFAF6;
+  border: 2rpx solid #0C5F03;
+  box-shadow: 10rpx 10rpx 0 #0C5F03;
+  overflow: hidden;
+  font-size: 22rpx;
+  line-height: 22rpx;
+}
+
+.card-no {
+  position: absolute;
+  top: -18rpx;
+  right: 6rpx;
+  font-size: 190rpx;
+  line-height: 190rpx;
+  font-weight: 900;
+  letter-spacing: -8rpx;
+  color: #0C5F03;
+  opacity: 0.07;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ---- 照片：直角、通栏 ---- */
+.shot {
+  position: relative;
+  height: 520rpx;
+  margin: 0;
+  border-radius: 0;
+  overflow: hidden;
+  background-color: #DEDBD1;
+  border-bottom: 2rpx solid #0C5F03;
+}
+.shot image {
+  width: 100%;
+  height: 520rpx;
+  border-radius: 0;
+  background-image: var(--img-default);
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: 34% 34%;
+}
+.shot.to_star image { filter: grayscale(100%); }
+
+.card .shot-flag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0 20rpx;
+  height: 46rpx;
+  line-height: 46rpx;
+  font-size: 20rpx;
+  letter-spacing: 3rpx;
+  color: #FBFAF6;
+  background-color: #0C5F03;
+  border-radius: 0;
+  z-index: 2;
+}
+.card .shot-flag--empty { background-color: #3A3A34; }
+
+/* ---- 正文 ---- */
+.card-body {
+  position: relative;
+  z-index: 1;
+  padding: 30rpx 34rpx 28rpx 34rpx;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+}
+
+.card .card-title {
+  font-size: 88rpx;
+  line-height: 92rpx;
+  font-weight: 900;
+  letter-spacing: -2rpx;
+  color: #12200C;
+  max-width: 460rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.card-head .gender {
+  width: 36rpx;
+  height: 36rpx;
+  margin-left: 16rpx;
+}
+
+.card-head .stamp {
+  margin-left: auto;
+  padding: 4rpx 16rpx;
+  font-size: 20rpx;
+  letter-spacing: 2rpx;
+  color: #0C5F03;
+  border: 2rpx solid #0C5F03;
+  border-radius: 2rpx;
+  transform: rotate(-6deg);
+}
+
+.card-rule {
+  height: 2rpx;
+  margin: 22rpx 0 24rpx 0;
+  background-color: #0C5F03;
+}
+
+/* ---- 数据横排 ---- */
+.card-data {
+  display: flex;
+  align-items: flex-end;
+}
+.datum {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1rpx solid #C9C5B8;
+  padding-right: 14rpx;
+  margin-right: 14rpx;
+}
+.datum--last {
+  border-right: none;
+  padding-right: 0;
+  margin-right: 0;
+}
+.dv {
+  font-size: 46rpx;
+  line-height: 50rpx;
+  font-weight: 800;
+  letter-spacing: -1rpx;
+  color: #0C5F03;
+}
+.dk {
+  margin-top: 4rpx;
+  font-size: 19rpx;
+  letter-spacing: 2rpx;
+  color: #8A8578;
+}
+
+/* ---- 页脚 ---- */
+.card-foot {
+  display: flex;
+  align-items: center;
+  margin-top: 24rpx;
+}
+.card-foot .campus {
+  font-size: 22rpx;
+  letter-spacing: 1rpx;
+  color: #5A5648;
+  max-width: 400rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.card-foot .status {
+  margin-left: auto;
+  padding: 0 18rpx;
+  height: 40rpx;
+  line-height: 40rpx;
+  font-size: 20rpx;
+  letter-spacing: 2rpx;
+  color: #FBFAF6;
+  background-color: #0C5F03;
+  border-radius: 2rpx;
+}
+
+.tips-wrap { padding: 4rpx 0 24rpx; text-align: center; }
+.tips-wrap .tips {
+  display: inline-block;
+  padding: 10rpx 24rpx;
+  font-size: 20rpx;
+  letter-spacing: 1rpx;
+  color: #5A5648;
+  background-color: #FBFAF6;
+  border: 2rpx solid #0C5F03;
+  border-radius: 2rpx;
+}
+
+/* v4.3.0 搜索栏：米白底黑绿硬边 */
+#search {
+  background-color: #F2F0E9;
+}
+#search.shadow {
+  box-shadow: none;
+}
+#search .input-block {
+  width: 84%;
+  margin-left: 24rpx;
+  border-radius: 2rpx;
+  background-color: #FBFAF6;
+  border: 2rpx solid #0C5F03;
+  box-shadow: 5rpx 5rpx 0 #0C5F03;
+}
+#search input.name {
+  color: #12200C;
+}
+#search .input-icon image {
+  opacity: 0.85;
+}
+.searchPlaceholderStyle {
+  color: #9A9585;
+}
+#search .filter-btn image {
+  filter: none;
+  opacity: 1;
+}

@@ -60,43 +60,50 @@
 
   <block wx:for='{{cats}}' wx:key="_id">
     <view class='card' bindtap='clickCatCard' bindlongpress='bindManageCat' data-cat_id='{{item._id}}' data-index='{{index}}'>
+      <view class='card-no'>{{index < 9 ? '0' : ''}}{{index+1}}</view>
       <view class='shot {{item.to_star? "to_star": ""}}'>
         <image bindload="bindImageLoaded" mode='aspectFill' src='{{item.photo.photo_compressed || item.photo.photo_id}}' data-index="{{index}}" lazy-load="{{true}}"></image>
+        <view class='shot-flag' wx:if="{{item.mphoto_new}}">{{text_cfg.genealogy.new_photo_tip}}</view>
+        <view class='shot-flag shot-flag--empty' wx:elif='{{!item.photo_count_best || item.photo_count_best === 0}}'>{{text_cfg.genealogy.no_photo_tip}}</view>
       </view>
-      <view class='veil'></view>
-      <view class='serial'>{{index+1}} / {{catsMax}}</view>
-      <view class='shot-flag' wx:if="{{item.mphoto_new}}">{{text_cfg.genealogy.new_photo_tip}}</view>
-      <view class='shot-flag shot-flag--empty' wx:elif='{{!item.photo_count_best || item.photo_count_best === 0}}'>{{text_cfg.genealogy.no_photo_tip}}</view>
-      <view class='float'>
-        <view class='row-name'>
-          <text class='name'>{{item.name}}</text>
+      <view class='card-body'>
+        <view class='card-head'>
+          <text class='card-title'>{{item.name}}</text>
           <block wx:if='{{item.gender}}'>
             <image mode='aspectFill' class='gender' wx:if='{{item.gender === "公"}}' src="/pages/public/images/card/card/male.png"></image>
             <image mode='aspectFill' class='gender' wx:if='{{item.gender === "母"}}' src="/pages/public/images/card/card/female.png"></image>
           </block>
+          <view class='stamp' wx:if='{{item.to_star}}'>{{text_cfg.genealogy.to_star_tip}}</view>
         </view>
-        <view class='row-rating' wx:if="{{item.rating}}">
-          <view class="stars">
-            <view class="one-star {{item.rating.avgScore >= j+1 ? '' : 'gray'}}"  wx:for="*****" wx:key="*this" wx:for-item="y" wx:for-index="j">
-              <image src="/pages/public/images/button/rating_star.svg" mode="aspectFill"/>
-            </view>
+        <view class='card-rule'></view>
+        <view class='card-data'>
+          <view class='datum'>
+            <text class='dv'>{{item.rating.avgScoreDisp || '0.0'}}</text>
+            <text class='dk'>评分</text>
           </view>
-          <text class="score">{{item.rating.avgScoreDisp || '0.0'}}</text>
+          <view class='datum'>
+            <text class='dv'>{{item.popularity + (item.photo_count_total? item.photo_count_total * photoPopWeight: 0)}}</text>
+            <text class='dk'>热度</text>
+          </view>
+          <view class='datum'>
+            <text class='dv'>{{item.comment_count || 0}}</text>
+            <text class='dk'>便利贴</text>
+          </view>
+          <view class='datum datum--last'>
+            <text class='dv'>{{item.photo_count_total || 0}}</text>
+            <text class='dk'>张照片</text>
+          </view>
         </view>
-        <view class='row-meta'>
-          <text class='where'>{{(item.campus + item.area) || '-'}}</text>
-          <text class='cmt' wx:if="{{item.comment_count}}">{{item.comment_count}} 留言</text>
-        </view>
-        <view class='chips' wx:if='{{item.adopt || item.to_star}}'>
-          <view wx:if='{{item.adopt}}' class='chip chip--adopt'>{{adopt_desc[item.adopt]}}</view>
-          <view wx:if='{{item.to_star}}' class='chip chip--star'>{{text_cfg.genealogy.to_star_tip}}</view>
+        <view class='card-foot'>
+          <text class='campus'>{{(item.campus + item.area) || '-'}}</text>
+          <text class='status' wx:if='{{item.adopt}}'>{{adopt_desc[item.adopt]}}</text>
         </view>
       </view>
     </view>
 
     <!-- 广告 -->
     <view wx:if="{{adStep && (index+1)%adStep===0 && tipsList[(index+1)/adStep-1].tip.length>0}}" class='tips-wrap'>
-      <text  class="tips">{{tipsList[(index+1)/adStep-1].tip}}</text>
+      <text class="tips">{{tipsList[(index+1)/adStep-1].tip}}</text>
     </view>
   </block>
 

@@ -1,16 +1,15 @@
 .tab-bar {
   position: fixed;
-  left: 24rpx;
-  right: 24rpx;
-  bottom: calc(14rpx + env(safe-area-inset-bottom));
-  height: 104rpx;
-  background: rgba(255, 255, 255, 0.97);
-  border-radius: 999rpx;
-  box-shadow: 0 10rpx 30rpx rgba(12, 95, 3, 0.16);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 110rpx;
+  background: #FBFAF6;
+  border-top: 2rpx solid #0C5F03;
   display: flex;
   align-items: center;
-  padding: 0 10rpx;
-  box-sizing: border-box;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-sizing: content-box;
   z-index: 100;
 }
 
@@ -24,32 +23,38 @@
 
 .tab-bar-item {
   flex: 1;
-  height: 84rpx;
-  margin: 0 4rpx;
-  border-radius: 999rpx;
+  height: 106rpx;
   text-align: center;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  transition: background-color 0.18s ease;
+  position: relative;
 }
 
-.tab-bar-item.active {
-  background-color: var(--color-primary-soft);
+.tab-bar-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 56rpx;
+  height: 6rpx;
+  background-color: #0C5F03;
 }
 
 .tab-bar-img {
-  width: 44rpx;
-  height: 44rpx;
+  width: 46rpx;
+  height: 46rpx;
 }
 
 .tab-bar-item.active .tab-bar-img {
-  transform: scale(1.06);
+  transform: scale(1.1);
 }
 
 .tab-bar-title {
-  font-size: 19rpx;
-  margin-top: 2rpx;
-  letter-spacing: 1rpx;
+  font-size: 20rpx;
+  margin-top: 4rpx;
+  letter-spacing: 2rpx;
+  font-weight: 600;
 }
