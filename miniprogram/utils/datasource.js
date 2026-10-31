@@ -739,10 +739,22 @@ function createJsonServerless(options) {
       const all = await _load('user');
       const userSt = _state('user');
       const remoteConfirmedEmpty = all.length === 0 && !!userSt.fetchedAt;
+
+      // 演示数据引导：data/user.json 里只有 demo 种子账号（_id 以 demo-user- 开头）时，
+      // 说明这是演示数据期——表里没有真人，新访客仍应拿到管理员。
+      // 否则填充演示数据后，清缓存/换设备的新访客会永远看不到管理入口。
+      // 一旦表里出现任意非 demo 用户，此分支自动失效，恢复原有语义。
+      const onlyDemoSeedUsers =
+        all.length > 0 &&
+        all.every(u => u && typeof u._id === 'string' && u._id.startsWith('demo-user-'));
+
       const newUser = { openid: openid, manager: 0 };
-      if (remoteConfirmedEmpty) newUser.manager = 99;
+      if (remoteConfirmedEmpty || onlyDemoSeedUsers) newUser.manager = 99;
       const res = await _insertOne('user', newUser);
-      console.log('[datasource] 新建用户 ' + openid + (newUser.manager ? '（首个用户，超级管理员）' : ''));
+      console.log(
+        '[datasource] 新建用户 ' + openid +
+        (newUser.manager ? (onlyDemoSeedUsers ? '（演示数据模式，授予管理员）' : '（首个用户，超级管理员）') : '')
+      );
       return Object.assign({ _id: res.result._id }, newUser);
     }
 

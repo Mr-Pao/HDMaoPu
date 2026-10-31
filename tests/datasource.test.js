@@ -136,3 +136,49 @@ test('并发去重：同一集合并发加载只发一次网络请求', async ()
   assert.deepStrictEqual(r2.result, [{ _id: 'a' }]);
   assert.strictEqual(wx._requestCount(), 1, '并发应去重为一次请求');
 });
+
+// ---- 演示数据模式下的管理员引导 ----
+// 背景：data/user.json 只有 demo 种子账号时，新访客仍应拿到 manager=99，
+// 否则填充演示数据后清缓存/换设备就再也看不到管理入口。
+
+test('userOp：user 表为空且已拉取成功 → 首个用户 manager=99', async () => {
+  const wx = makeWx();
+  global.wx = wx;
+  wx._setResponder(() => ({ statusCode: 200, data: { version: 'v1', items: [] } }));
+  const ds = createJsonServerless({ baseUrl: 'https://example.com' });
+
+  const res = await ds.function.invoke('userOp', { op: 'get' });
+  assert.strictEqual(res.result.manager, 99);
+});
+
+test('userOp：user 表只有 demo 种子账号 → 新访客仍为 manager=99', async () => {
+  const wx = makeWx();
+  global.wx = wx;
+  wx._setResponder(() => ({
+    statusCode: 200,
+    data: { version: 'v1', items: [{ _id: 'demo-user-1', openid: 'demo-openid-1', manager: 0 }] },
+  }));
+  const ds = createJsonServerless({ baseUrl: 'https://example.com' });
+
+  const res = await ds.function.invoke('userOp', { op: 'get' });
+  assert.strictEqual(res.result.manager, 99, '演示数据期新访客应拿到管理员');
+});
+
+test('userOp：user 表出现真实用户后 → 新访客 manager=0（引导失效）', async () => {
+  const wx = makeWx();
+  global.wx = wx;
+  wx._setResponder(() => ({
+    statusCode: 200,
+    data: {
+      version: 'v1',
+      items: [
+        { _id: 'demo-user-1', openid: 'demo-openid-1', manager: 0 },
+        { _id: 'local_real_1', openid: 'guest_real', manager: 0 },
+      ],
+    },
+  }));
+  const ds = createJsonServerless({ baseUrl: 'https://example.com' });
+
+  const res = await ds.function.invoke('userOp', { op: 'get' });
+  assert.strictEqual(res.result.manager, 0, '一旦有非 demo 用户，不应再自动提权');
+});
