@@ -27,6 +27,7 @@ import { convertRatingList, genDefaultRating } from "../../../utils/rating";
 import { showMpcode } from "../../../utils/mpcode";
 import { signCosUrl, signPhotoUrls } from "../../../utils/common";
 import api from "../../../utils/cloudApi";
+import { putInbox } from "../../../utils/writeback";
 
 const app = getApp();
 
@@ -130,6 +131,8 @@ Page({
         collection: "cat",
         item_id: this.jsData.cat_id
       });
+      // 同步到 COS inbox，由 Action 聚合（不 await，不阻塞进页面）
+      putInbox('pop', { cat_id: this.jsData.cat_id });
     }
 
     // 记录访问时间，消除"有新相片"
@@ -601,10 +604,30 @@ Page({
     const like_count = e.detail.like_count;
     if (this.jsData.whichGallery == "best") {
       console.log("[likeCountChanged] - update best photo", e.detail);
+      const bestList = this.data.cat.photo || [];
+      const before = bestList[current];
+      const oldCount = (before && before.like_count) || 0;
+      // 同步到 COS inbox，由 Action 聚合。旧值还没被 setData 覆盖，可以据此判断点赞还是取消
+      if (before && before._id) {
+        putInbox('like', {
+          photo_id: before._id,
+          cat_id: this.jsData.cat_id,
+          like: like_count > oldCount,
+        });
+      }
       this.setData({
         [`cat.photo[${current}].like_count`]: like_count,
       });
     } else if (this.jsData.whichGallery == "album") {
+      const before = this.jsData.album_raw[current];
+      const oldCount = (before && before.like_count) || 0;
+      if (before && before._id) {
+        putInbox('like', {
+          photo_id: before._id,
+          cat_id: this.jsData.cat_id,
+          like: like_count > oldCount,
+        });
+      }
       this.jsData.album_raw[current].like_count = like_count;
       this.updateAlbum();
     }
@@ -858,6 +881,14 @@ Page({
       await this.loadUser(),
       await this.loadFollowCount(),
     ]);
+
+    // 同步到 COS inbox，由 Action 聚合。followedCat 是操作前的状态，取反即新状态
+    if (res) {
+      putInbox('follow', {
+        cat_id: this.data.cat._id,
+        follow: !followedCat,
+      });
+    }
 
     wx.showToast({
       title: `${followedCat ? "取关" : "关注"}${res ? "成功" : "失败"}`,

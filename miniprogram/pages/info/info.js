@@ -60,6 +60,11 @@ Page({
             dot: "true"
           },
           {
+            name: "审核队列",
+            path: "/pages/manage/review/review",
+            icon: "icon-check-square-o"
+          },
+          {
             name: "数据看板",
             path: "/pages/manage/dashboard/dashboard",
             icon: "icon-bar-chart-o"

@@ -36,6 +36,7 @@
     "pages/manage/badgeCode/badgeCode",
     "pages/manage/badgeCode/addBadgeCode/addBadgeCode",
     "pages/manage/catManage/catManage",
+    "pages/manage/review/review",
     "pages/manage/dashboard/dashboard",
     "pages/manage/addCat/addCat",
     "pages/manage/addRelations/addRelations"

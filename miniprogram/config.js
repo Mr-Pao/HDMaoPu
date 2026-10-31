@@ -19,6 +19,14 @@ module.exports = {
   // 小程序会去 GET {data_base_url}/data/cat.json、data/photo.json ……
   // 留空则退回 demo_mode 的本地假数据
   data_base_url: "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com",
+  // 【inbox 写入通道开关】
+  // true  = 写操作（人气/关注/点赞/评分/审核决定）会 PUT 到 COS 的 inbox/ 前缀，
+  //         由 GitHub Actions 每小时聚合成 data/*.json（客户端不放密钥，桶只开放 inbox/* 匿名写）
+  // false = 一键关掉写通道，只保留本地覆盖层（离线可用，但换设备就丢）
+  writeback_enabled: true,
+  // 【审核口令】仅用于解锁小程序的「审核队列」页面（客户端校验只管 UX）
+  // 真正的校验在 GitHub Actions 端，口令不对的 decision 会被丢弃
+  review_passcode: "mszgmvukz3r8tc3nqs35",
   // 【照片上传开关】v4.0 暂时关闭
   // 原因：原来靠云函数 unionOp/getURL 签发 COS 临时密钥，现在没有云函数了，
   //       小程序端拿不到上传凭证，一点上传就报错。
