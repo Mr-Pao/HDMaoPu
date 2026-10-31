@@ -10,6 +10,21 @@
  *
  * 职责边界：本脚本只改本地 data/ 文件，不上传。上传交给 sync-data.yml。
  *
+ * 写通道防刷策略（守 5 元红线，零成本）：
+ *   1. COS 桶策略只允许匿名 PutObject 到 inbox/*，不能读/删/枚举/写其他前缀
+ *      （前缀收紧，已在桶策略侧确认）——这是第一道闸门，纯配置、零算力。
+ *   2. 本脚本在聚合入口做服务端校验（纯 Actions 算力，不引入服务器/SCF）：
+ *      - openid 格式校验（非空、长度 ≤64、字符集受限）
+ *      - kind 白名单（只接受现有合法值，拒绝未知 kind）
+ *      - body schema 基础校验（必须有 v/kind/openid/ts/data；data 为对象）
+ *      - 单对象体积上限 4096 字节前置拦截（list 阶段 + parse 阶段双重）
+ *      - 单 openid 运行内突发限频（MAX_PER_OPENID）+ 跨运行去重
+ *        （inbox_log 记录，跨天去重）+ pop 12 小时跨运行限频
+ *   3. 关于「COS 预签名 URL 方案」：本次【不落地】。原因——EMAS 空间已删，
+ *      原存于 EMAS app_secret 集合的 SecretId/SecretKey 已不可读，客户端无法
+ *      安全生成预签名 URL；改用「桶策略前缀收紧 + Actions 端校验」作为等效零成本
+ *      防刷。该决策记录在 .workbuddy/memory/2026-10-31.md。
+ *
  * 用法：
  *   COS_SECRET_ID=xx COS_SECRET_KEY=xx COS_BUCKET=xx COS_REGION=xx \
  *   REVIEW_PASSCODE=xx node scripts/process-inbox.js
@@ -36,9 +51,11 @@ const DATA_DIR = path.resolve(__dirname, '..', 'data');
 const INBOX_PREFIX = 'inbox/';
 const SELFTEST_PREFIX = 'inbox/_selftest/';
 
-// 单个对象的体积上限，超过直接丢弃（正常 payload 都在 500 字节内）
+// 单个对象的体积上限，超过直接丢弃（正常 payload 都在 500 字节内）。
+// 注意：这个 too-large 前置拦截保留——单对象大小上限是防止 inbox 被大文件灌爆的
+// 第一道闸门，list 阶段（main）和 parseObject 阶段双重检查。
 const MAX_OBJECT_BYTES = 4096;
-// 单次运行内，单个 openid 最多处理多少条
+// 单次运行内，单个 openid 最多处理多少条（运行内突发限频）
 const MAX_PER_OPENID = 200;
 // 审核队列保留条数
 const REVIEW_KEEP = 200;
@@ -50,6 +67,17 @@ const MAX_KEY_FAILURES = 3;
 const POP_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 
 const VALID_KINDS = ['like', 'follow', 'pop', 'rating', 'comment', 'decision', 'manage'];
+
+// ---- 写通道防刷增强（零成本，纯 Actions 脚本端校验，不引入任何服务器/SCF）----
+// openid 格式约束：微信 openid 形如 oXXXX，由字母数字组成；这里放宽允许 _ 和 -。
+// 用于防刷——拒绝超长/含奇怪字符的 openid，避免 data/inbox_log 被恶意撑爆，
+// 也避免把脏 openid 写进去污染计数维度。
+const OPENID_MAX_LEN = 64;
+const OPENID_RE = /^[A-Za-z0-9_\-]{1,64}$/;
+// ts 合理性窗口：拒绝明显伪造的时间戳，防重放/历史灌水。
+// 允许未来最多 5 分钟（机器时钟偏差）和过去最多 365 天（超过视为过期垃圾直接丢弃）。
+const TS_MAX_FUTURE_MS = 5 * 60 * 1000;
+const TS_MAX_AGE_MS = 365 * 24 * 60 * 60 * 1000;
 
 // ---------------------------------------------------------------------------
 // 数据读写
@@ -119,6 +147,7 @@ function genId(prefix, ts) {
 // ---------------------------------------------------------------------------
 
 function parseObject(key, body) {
+  // too-large 前置拦截：单对象体积上限（防大文件灌爆 inbox），保留不变
   if (Buffer.byteLength(body, 'utf8') > MAX_OBJECT_BYTES) {
     return { ok: false, reason: 'too-large' };
   }
@@ -128,15 +157,27 @@ function parseObject(key, body) {
   } catch (err) {
     return { ok: false, reason: 'bad-json' };
   }
-  if (!payload || payload.v !== 1) return { ok: false, reason: 'bad-version' };
-  if (!VALID_KINDS.includes(payload.kind)) return { ok: false, reason: 'bad-kind' };
-  if (typeof payload.openid !== 'string' || !payload.openid) {
-    return { ok: false, reason: 'no-openid' };
+  // body schema 基础校验：必须有 v/kind/openid/ts/data 且类型正确
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return { ok: false, reason: 'bad-shape' };
   }
-  if (!payload.data || typeof payload.data !== 'object') {
+  if (payload.v !== 1) return { ok: false, reason: 'bad-version' };
+  if (!VALID_KINDS.includes(payload.kind)) return { ok: false, reason: 'bad-kind' };
+  // openid 格式校验：非空、长度受控、字符集受限（防刷/防脏数据）
+  if (typeof payload.openid !== 'string' || !OPENID_RE.test(payload.openid)) {
+    return { ok: false, reason: 'bad-openid' };
+  }
+  // ts 必须存在且为合理范围内的数字（防重放/历史灌水）
+  const ts = Number(payload.ts);
+  if (!Number.isFinite(ts)) return { ok: false, reason: 'bad-ts' };
+  const now = Date.now();
+  if (ts > now + TS_MAX_FUTURE_MS) return { ok: false, reason: 'ts-future' };
+  if (ts < now - TS_MAX_AGE_MS) return { ok: false, reason: 'ts-expired' };
+  // data 必须是对象（且非数组/空）
+  if (!payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) {
     return { ok: false, reason: 'no-data' };
   }
-  return { ok: true, payload };
+  return { ok: true, payload, ts };
 }
 
 function tokenOk(token) {
