@@ -1,13 +1,13 @@
 name: sync-data
 
 # data/*.json 是「仓库当后台」的唯一数据源。
-# 每次改完 data/ 里的 json 推到 cos-version，这个 workflow 会把它上传到 COS，
+# 每次改完 data/ 里的 json 推到 cos，这个 workflow 会把它上传到 COS，
 # 小程序端 GET {baseUrl}/data/<collection>.json 就能读到新数据。
 
 on:
   push:
     branches:
-      - cos-version
+      - cos
     paths:
       - 'data/**'
   workflow_dispatch:
