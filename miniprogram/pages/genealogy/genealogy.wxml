@@ -48,6 +48,25 @@
 </view>
 
 <scroll-view enable-flex='1' class='cards' style='height: {{heights.windowHeight - heights.filters}}px;' scroll-y='true' enable-back-to-top='true' bindscrolltolower='onReachBottom' bindscroll='fScroll' lower-threshold='{{main_lower_threshold}}' refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="onPullDownRefresh">
+  <!-- 品牌头 -->
+  <view class='hero'>
+    <view class='hero-row'>
+      <view class='hero-left'>
+        <text class='hero-kicker'>MAOPU / CAT INDEX</text>
+        <text class='hero-title'>火大猫谱</text>
+      </view>
+      <view class='hero-right'>
+        <text class='hero-num'>{{catsMax || cats.length}}</text>
+        <text class='hero-num-dk'>只猫在册</text>
+      </view>
+    </view>
+    <view class='hero-stat'>
+      <view class='hs'><text class='hs-v'>{{cats.length}}</text><text class='hs-k'>当前结果</text></view>
+      <view class='hs'><text class='hs-v'>{{adopt_count || 0}}</text><text class='hs-k'>等待领养</text></view>
+      <view class='hs'><text class='hs-v'>{{catsMax || cats.length}}</text><text class='hs-k'>累计收录</text></view>
+    </view>
+  </view>
+
   <!-- 校区外显筛选 -->
   <scroll-view class="h-filter-list" scroll-x="1" wx:if="{{filters[0].category.length > 1}}">
     <view class='h-filter-item {{item.all_active? "active": ""}}'  bindtap='fClickCampus' data-index='{{index}}' data-filters_sub="0"
@@ -59,44 +78,40 @@
   </scroll-view>
 
   <block wx:for='{{cats}}' wx:key="_id">
-    <view class='card' bindtap='clickCatCard' bindlongpress='bindManageCat' data-cat_id='{{item._id}}' data-index='{{index}}'>
-      <view class='card-no'>{{index < 9 ? '0' : ''}}{{index+1}}</view>
-      <view class='shot {{item.to_star? "to_star": ""}}'>
+    <view class='card {{item.to_star? "card--star": ""}}' bindtap='clickCatCard' bindlongpress='bindManageCat' data-cat_id='{{item._id}}' data-index='{{index}}'>
+      <view class='shot'>
         <image bindload="bindImageLoaded" mode='aspectFill' src='{{item.photo.photo_compressed || item.photo.photo_id}}' data-index="{{index}}" lazy-load="{{true}}"></image>
+        <view class='veil'></view>
+        <view class='serial'>#{{index+1}}</view>
         <view class='shot-flag' wx:if="{{item.mphoto_new}}">{{text_cfg.genealogy.new_photo_tip}}</view>
         <view class='shot-flag shot-flag--empty' wx:elif='{{!item.photo_count_best || item.photo_count_best === 0}}'>{{text_cfg.genealogy.no_photo_tip}}</view>
+        <view class='badge-adopt' wx:if='{{item.adopt}}'>{{adopt_desc[item.adopt]}}</view>
+        <view class='stamp' wx:if='{{item.to_star}}'>{{text_cfg.genealogy.to_star_tip}}</view>
+        <view class='shot-name'>
+          <text class='card-title'>{{item.name}}</text>
+          <image mode='aspectFill' class='gender' wx:if='{{item.gender === "公"}}' src="/pages/public/images/card/card/male.png"></image>
+          <image mode='aspectFill' class='gender' wx:if='{{item.gender === "母"}}' src="/pages/public/images/card/card/female.png"></image>
+        </view>
+        <view class='shot-where'>{{(item.campus + item.area) || '-'}}</view>
       </view>
       <view class='card-body'>
-        <view class='card-head'>
-          <text class='card-title'>{{item.name}}</text>
-          <block wx:if='{{item.gender}}'>
-            <image mode='aspectFill' class='gender' wx:if='{{item.gender === "公"}}' src="/pages/public/images/card/card/male.png"></image>
-            <image mode='aspectFill' class='gender' wx:if='{{item.gender === "母"}}' src="/pages/public/images/card/card/female.png"></image>
-          </block>
-          <view class='stamp' wx:if='{{item.to_star}}'>{{text_cfg.genealogy.to_star_tip}}</view>
-        </view>
-        <view class='card-rule'></view>
         <view class='card-data'>
           <view class='datum'>
             <text class='dv'>{{item.rating.avgScoreDisp || '0.0'}}</text>
-            <text class='dk'>评分</text>
-          </view>
-          <view class='datum'>
-            <text class='dv'>{{item.popularity + (item.photo_count_total? item.photo_count_total * photoPopWeight: 0)}}</text>
-            <text class='dk'>热度</text>
+            <text class='dk'>猫德评分</text>
           </view>
           <view class='datum'>
             <text class='dv'>{{item.comment_count || 0}}</text>
             <text class='dk'>便利贴</text>
           </view>
-          <view class='datum datum--last'>
+          <view class='datum'>
             <text class='dv'>{{item.photo_count_total || 0}}</text>
             <text class='dk'>张照片</text>
           </view>
-        </view>
-        <view class='card-foot'>
-          <text class='campus'>{{(item.campus + item.area) || '-'}}</text>
-          <text class='status' wx:if='{{item.adopt}}'>{{adopt_desc[item.adopt]}}</text>
+          <view class='datum datum--last'>
+            <text class='dv'>{{item.popularity + (item.photo_count_total? item.photo_count_total * photoPopWeight: 0)}}</text>
+            <text class='dk'>热度</text>
+          </view>
         </view>
       </view>
     </view>

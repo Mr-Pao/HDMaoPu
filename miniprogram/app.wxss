@@ -233,3 +233,27 @@ page {
 }
 
 @import "./pages/public/wxss/iconfont.wxss"
+
+
+/* ================= 深色沉浸式主题（v4.4） ================= */
+page {
+  --dk-bg: #080B09;
+  --dk-bg-2: #0C100E;
+  --dk-card: rgba(255, 255, 255, 0.055);
+  --dk-card-2: rgba(255, 255, 255, 0.085);
+  --dk-line: rgba(255, 255, 255, 0.10);
+  --dk-text: #EDF2ED;
+  --dk-text-2: rgba(237, 242, 237, 0.62);
+  --dk-text-3: rgba(237, 242, 237, 0.38);
+  --dk-accent: #4ADE80;
+  --dk-accent-soft: rgba(74, 222, 128, 0.14);
+  --dk-radius: 32rpx;
+  background-color: #080B09;
+  color: #EDF2ED;
+}
+
+.dk-card {
+  background-color: var(--dk-card);
+  border: 1rpx solid var(--dk-line);
+  border-radius: var(--dk-radius);
+}

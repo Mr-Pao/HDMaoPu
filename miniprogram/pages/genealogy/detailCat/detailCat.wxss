@@ -1265,3 +1265,93 @@ swiper-item image {
 .details .item {
   padding: 26rpx 30rpx;
 }
+
+
+/* ================= v4.4 详情页：深色沉浸 ================= */
+page {
+  background-color: #080B09;
+  color: #EDF2ED;
+}
+#bg-yellow {
+  background-color: #0C100E;
+  background-image: none;
+}
+#bg-big-circle {
+  display: none;
+}
+swiper {
+  height: 620rpx;
+}
+swiper-item image {
+  width: 660rpx;
+  height: 540rpx;
+  border-radius: 32rpx;
+  border: none;
+  box-shadow: none;
+}
+.best-photo .like-count {
+  right: 56rpx;
+  top: 34rpx;
+  height: 46rpx;
+  line-height: 46rpx;
+  padding: 0 20rpx;
+  border-radius: 999rpx;
+  background-color: rgba(0, 0, 0, 0.45);
+  color: #FFFFFF;
+  font-size: 22rpx;
+  backdrop-filter: blur(8rpx);
+}
+.info {
+  background-color: #080B09;
+  padding: 40rpx 30rpx 20rpx 30rpx;
+  box-shadow: none;
+}
+.info .name {
+  color: #FFFFFF;
+  font-size: 78rpx;
+  line-height: 82rpx;
+  font-weight: 800;
+  letter-spacing: -1rpx;
+}
+.identity .count {
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1rpx solid rgba(255, 255, 255, 0.12);
+  border-radius: 999rpx;
+  color: rgba(237, 242, 237, 0.72);
+  font-weight: 600;
+}
+.identity .count .iconfont {
+  color: #4ADE80;
+}
+.tags {
+  border-top: none;
+  padding-top: 20rpx;
+}
+.tags .tag {
+  background-color: rgba(255, 255, 255, 0.055);
+  border: 1rpx solid rgba(255, 255, 255, 0.10);
+  border-radius: 999rpx;
+  color: rgba(237, 242, 237, 0.68);
+}
+.tags .to_star {
+  background-color: rgba(74, 222, 128, 0.16);
+  border-color: rgba(74, 222, 128, 0.42);
+  color: #4ADE80;
+}
+.details .card {
+  background-color: rgba(255, 255, 255, 0.045);
+  border: 1rpx solid rgba(255, 255, 255, 0.09);
+  border-radius: 28rpx;
+  box-shadow: none;
+}
+.details .card-header,
+.card-header {
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.08);
+}
+.card-title {
+  color: #EDF2ED;
+  font-weight: 700;
+}
+.card-title .iconfont {
+  color: #4ADE80;
+}
