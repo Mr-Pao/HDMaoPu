@@ -344,8 +344,8 @@ Page({
   },
 
   async deleteComment(e) {
-    const index = e.currentTarget.dataset.index;
-    const item = e.currentTarget.dataset.item;
+    const index = e.detail.index;
+    const item = e.detail.item;
     const comment_id = item._id;
     const username = item.userInfo?.nickName;
     // 弹窗提示一下

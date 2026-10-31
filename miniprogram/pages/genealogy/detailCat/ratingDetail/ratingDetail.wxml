@@ -4,9 +4,7 @@
   <view class="one-rating">
     <view class="title">综合：</view>
     <view class="stars">
-      <view class="one-star {{cat.rating.avgScore >= j+1 ? '' : 'gray'}}"  wx:for="*****" wx:key="*this" wx:for-index="j">
-        <image src="/pages/public/images/button/rating_star.svg" mode="aspectFill"/>
-      </view>
+      <star-rating value="{{cat.rating.avgScore}}" readonly />
     </view>
     <view class="score">{{cat.rating.avgScoreDisp}}</view>
   </view>
@@ -18,9 +16,7 @@
   <view class="one-rating" wx:for="{{catRatings}}" wx:key="name" wx:for-item="x"  wx:for-index="i">
     <view class="title">{{x.name}}：</view>
     <view class="stars">
-      <view class="one-star {{x.score >= j+1 ? '' : 'gray'}}"  wx:for="*****" wx:key="*this" wx:for-index="j">
-        <image src="/pages/public/images/button/rating_star.svg" mode="aspectFill"/>
-      </view>
+      <star-rating value="{{x.score}}" readonly />
     </view>
     <view class="score">{{x.scoreDisp}}</view>
   </view>

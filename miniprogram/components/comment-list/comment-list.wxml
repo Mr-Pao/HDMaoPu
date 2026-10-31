@@ -1,0 +1,28 @@
+<view class="comment {{comment.paper_color}} {{comment.needVerify ? 'need-verify' : ''}}" style="transform: rotate({{comment.rotate || 0}}deg);">
+  <view class="wavy-line"></view>
+  <view class="paper">
+    <view class="user-info">
+      <view class="user-avatar">
+        <image wx:if="{{!comment.needVerify && comment.userInfo}}" class="avatar" src="{{comment.userInfo.avatarUrl}}" mode="aspectFit" />
+        <image wx:else class="avatar" src="/pages/public/images/app_logo.png" mode="aspectFit" />
+      </view>
+      <view class="username">
+        <text wx:if="{{comment.needVerify}}">喵友</text>
+        <text wx:else>{{comment.userInfo.nickName || '-'}}</text>
+        <text>：</text>
+      </view>
+      <view wx:if="{{canDelete}}" class="delete" catchtap="onDelete">删除</view>
+    </view>
+    <view class="content">
+      <text wx:if="{{comment.needVerify}}">（内容审核中...）</text>
+      <text wx:else>{{comment.content}}</text>
+    </view>
+
+    <view class="datetime">{{comment.datetime}}</view>
+  </view>
+
+  <view class="tape" style="left: {{comment.tape_pos_left}}rpx; transform: rotate({{comment.tape_rotate}}deg);">
+    <view class="wavy-line"></view>
+    <view class="wavy-line bottom"></view>
+  </view>
+</view>

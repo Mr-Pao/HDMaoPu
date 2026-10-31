@@ -112,9 +112,7 @@
           <view class="one-rating {{showDetailRating ? 'detail': ''}}">
             <view class="title" wx:if="{{showDetailRating}}">综合：</view>
             <view class="stars" bind:tap="bindDetailRating">
-              <view class="one-star {{cat.rating.avgScore >= j+1 ? '' : 'gray'}}" wx:for="*****" wx:key="*this" wx:for-index="j">
-                <image src="/pages/public/images/button/rating_star.svg" mode="aspectFill" />
-              </view>
+              <star-rating value="{{cat.rating.avgScore}}" readonly />
               <view class="score">{{cat.rating.avgScoreDisp || '0.0'}}</view>
             </view>
           </view>
@@ -123,9 +121,7 @@
             <view class="one-rating" wx:for="{{cat.rating.catRatings}}" wx:key="name" wx:for-item="x" wx:for-index="i"  bind:tap="bindDetailRating">
               <view class="title">{{x.name}}：</view>
               <view class="stars">
-                <view class="one-star {{x.score >= j+1 ? '' : 'gray'}}" wx:for="*****" wx:key="*this" wx:for-index="j">
-                  <image src="/pages/public/images/button/rating_star.svg" mode="aspectFill" />
-                </view>
+                <star-rating value="{{x.score}}" readonly />
                 <view class="score">{{x.scoreDisp}}</view>
               </view>
             </view>
@@ -204,6 +200,18 @@
             <view class="relation-cat-name">添加关系</view>
           </view>
         </scroll-view>
+      </view>
+
+      <!-- 谱系树 -->
+      <view class="card" wx:if="{{is_manager || (cat.relations && cat.relations.length)}}">
+        <view class="card-header">
+          <view class="card-title">
+            <view class="iconfont icon-relation"></view>
+            猫际谱系
+          </view>
+          <view class="badge-all" bindtap="toggleGenealogyTree">{{showGenealogyTree ? '收起' : '展开谱系树'}}</view>
+        </view>
+        <genealogy-tree wx:if="{{showGenealogyTree}}" cat="{{cat}}" parents="{{parentCats}}" children="{{childCats}}" bind:tapnode="onGenealogyTap" />
       </view>
     </view>
   </view>

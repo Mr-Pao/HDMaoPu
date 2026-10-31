@@ -1,0 +1,9 @@
+<view class="star-rating">
+  <image
+    wx:for="{{stars}}"
+    wx:key="index"
+    class="star {{item.filled ? '' : 'gray'}}"
+    src="/pages/public/images/button/rating_star.svg"
+    mode="aspectFill"
+  />
+</view>

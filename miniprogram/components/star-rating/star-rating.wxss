@@ -1,0 +1,15 @@
+.star-rating {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.star-rating .star {
+  width: 50rpx;
+  height: 50rpx;
+}
+
+.star-rating .star.gray {
+  filter: grayscale(100%);
+  opacity: 0.3;
+}

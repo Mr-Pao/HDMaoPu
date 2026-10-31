@@ -1,0 +1,40 @@
+<view wx:if="{{hasData}}" class="genealogy-tree">
+  <view class="tree-level parents">
+    <view
+      wx:for="{{parents}}"
+      wx:key="_id"
+      class="tree-node"
+      data-id="{{item._id}}"
+      bindtap="onTapNode"
+    >
+      <image class="node-avatar" src="{{item.avatar.photo_compressed || item.avatar.photo_id || '/pages/public/images/info/default_avatar.png'}}" mode="aspectFill" />
+      <view class="node-name">{{item.name}}</view>
+      <view wx:if="{{item.relation}}" class="node-label">{{item.relation}}</view>
+    </view>
+  </view>
+
+  <view class="tree-bridge"></view>
+
+  <view class="tree-node center" data-id="{{cat._id}}" bindtap="onTapNode">
+    <image class="node-avatar" src="{{cover}}" mode="aspectFill" />
+    <view class="node-name">{{cat.name}}</view>
+    <view class="node-label center-label">当前</view>
+  </view>
+
+  <view class="tree-bridge"></view>
+
+  <view class="tree-level children">
+    <view
+      wx:for="{{children}}"
+      wx:key="_id"
+      class="tree-node"
+      data-id="{{item._id}}"
+      bindtap="onTapNode"
+    >
+      <image class="node-avatar" src="{{item.avatar.photo_compressed || item.avatar.photo_id || '/pages/public/images/info/default_avatar.png'}}" mode="aspectFill" />
+      <view class="node-name">{{item.name}}</view>
+      <view wx:if="{{item.relation}}" class="node-label">{{item.relation}}</view>
+    </view>
+  </view>
+</view>
+<view wx:else class="tree-empty">暂无谱系信息</view>

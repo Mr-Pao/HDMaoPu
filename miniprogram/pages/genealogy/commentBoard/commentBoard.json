@@ -1,5 +1,7 @@
 {
   "usingComponents": {
-    "heart": "/packages/heart-button/heart"
+    "heart": "/packages/heart-button/heart",
+    "comment-list": "/components/comment-list/comment-list",
+    "cat-card": "/components/cat-card/cat-card"
   }
 }

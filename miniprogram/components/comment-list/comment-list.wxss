@@ -1,0 +1,118 @@
+/* comment-list 组件样式（从 commentBoard 的 .comment 相关样式迁移，组件内样式隔离） */
+
+.comment {
+  width: 600rpx;
+  margin: 30rpx 10rpx;
+  box-sizing: border-box;
+  background:
+    -webkit-linear-gradient(top, white 38rpx, var(--color-gray) 40rpx);
+  background-size: 100% 40rpx;
+  position: relative;
+}
+
+.comment .tape {
+  width: 70rpx;
+  height: 200rpx;
+  background-color: var(--color-comment-tape);
+  opacity: 0.3;
+  position: absolute;
+  top: -70rpx;
+  left: 20rpx;
+  transform: rotate(45deg);
+}
+
+.comment .paper {
+  background-color: transparent;
+  padding: 34rpx 30rpx;
+}
+
+.wavy-line::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 20rpx;
+  display: block;
+  background: linear-gradient(-45deg, transparent 33.33%, var(--color-gray-light) 33.33%, var(--color-gray-light) 66.66%,
+      transparent 66.66%), linear-gradient(45deg, transparent 33.33%, var(--color-gray-light) 33.33%, var(--color-gray-light) 66.66%, transparent 66.66%);
+  background-size: 20rpx 40rpx;
+  transform: rotateX(180deg);
+}
+
+.wavy-line.bottom::before {
+  transform: rotateX(0deg);
+  transform: rotateY(180deg);
+  bottom: 0;
+}
+
+.user-info {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.user-avatar {
+  width: 50rpx;
+  height: 50rpx;
+  border-radius: 50rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.user-avatar .avatar {
+  width: 100%;
+  height: 100%;
+}
+
+.username {
+  margin: 0 10rpx;
+  font-size: 28rpx;
+  color: var(--color-black-light);
+  font-weight: 500;
+}
+
+.delete {
+  font-size: 22rpx;
+  color: var(--color-black-light);
+  font-weight: lighter;
+  margin-left: auto;
+}
+
+.datetime {
+  width: 100%;
+  text-align: right;
+  font-size: 20rpx;
+  color: var(--color-gray-max);
+}
+
+.content {
+  font-size: 28rpx;
+  color: var(--color-black-light);
+  text-indent: 25rpx;
+}
+
+/* 多种颜色的纸 */
+.comment.white {
+  background:
+    -webkit-linear-gradient(top, var(--color-comment-paper-white) 38rpx, var(--color-gray) 40rpx);
+  background-size: 100% 40rpx;
+}
+
+.comment.yellow {
+  background:
+    -webkit-linear-gradient(top, var(--color-comment-paper-yellow) 38rpx, var(--color-gray) 40rpx);
+  background-size: 100% 40rpx;
+}
+
+.comment.green {
+  background:
+    -webkit-linear-gradient(top, var(--color-comment-paper-green) 38rpx, var(--color-gray) 40rpx);
+  background-size: 100% 40rpx;
+}
+
+.comment.pink {
+  background:
+    -webkit-linear-gradient(top, var(--color-comment-paper-pink) 38rpx, var(--color-gray) 40rpx);
+  background-size: 100% 40rpx;
+}

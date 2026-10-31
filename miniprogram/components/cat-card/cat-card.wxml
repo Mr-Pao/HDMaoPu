@@ -1,0 +1,12 @@
+<view class="cat-card">
+  <image class="cat-avatar" src="{{cover}}" mode="aspectFill" />
+  <view class="cat-body">
+    <view class="cat-name">{{displayName}}</view>
+    <view wx:if="{{subtitle}}" class="cat-subtitle">{{subtitle}}</view>
+    <view wx:if="{{metaShow}}" class="cat-meta">
+      <text wx:if="{{cat.gender}}" class="cat-meta-item">{{cat.gender}}</text>
+      <text wx:if="{{cat.birthday}}" class="cat-meta-item">{{cat.birthday}}</text>
+      <star-rating wx:if="{{cat.rating}}" class="cat-meta-rating" value="{{cat.rating.avgScore}}" readonly />
+    </view>
+  </view>
+</view>

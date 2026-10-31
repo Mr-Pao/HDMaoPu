@@ -90,6 +90,11 @@ Page({
     // 疫苗记录相关
     showVaccineHistory: false,
     vaccineHistory: [],
+
+    // 谱系树相关
+    showGenealogyTree: false,
+    parentCats: [],
+    childCats: [],
   },
 
   jsData: {
@@ -292,8 +297,21 @@ Page({
 
     console.log("[loadRelations] - ", relations);
 
+    const parentCats = [];
+    const childCats = [];
+    for (var relation of relations) {
+      const label = relation.alias || relation.type || '';
+      if (/父|母|爸|妈/.test(label)) {
+        parentCats.push(Object.assign({}, relation.cat, { relation: label }));
+      } else if (/子|女|崽/.test(label)) {
+        childCats.push(Object.assign({}, relation.cat, { relation: label }));
+      }
+    }
+
     this.setData({
       "cat.relations": relations,
+      parentCats: parentCats,
+      childCats: childCats,
     });
   },
 
@@ -983,6 +1001,24 @@ Page({
   hideVaccineHistory() {
     this.setData({
       showVaccineHistory: false
+    });
+  },
+
+  // 展开/收起谱系树
+  toggleGenealogyTree() {
+    this.setData({
+      showGenealogyTree: !this.data.showGenealogyTree
+    });
+  },
+
+  // 点击谱系树节点，跳转对应猫猫详情
+  onGenealogyTap(e) {
+    const catId = e.detail.catId;
+    if (!catId) {
+      return;
+    }
+    wx.navigateTo({
+      url: `/pages/genealogy/detailCat/detailCat?cat_id=${catId}`,
     });
   },
 })

@@ -1,0 +1,57 @@
+.cat-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cat-avatar {
+  width: 70rpx;
+  height: 70rpx;
+  border-radius: 70rpx;
+  flex-shrink: 0;
+  margin-right: 20rpx;
+}
+
+.cat-body {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.cat-name {
+  height: 36rpx;
+  line-height: 36rpx;
+  font-size: 36rpx;
+  font-weight: 450;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cat-subtitle {
+  height: 28rpx;
+  line-height: 28rpx;
+  font-size: 28rpx;
+  color: var(--color-black-min);
+  font-weight: 400;
+  margin-top: 6rpx;
+}
+
+.cat-meta {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 8rpx;
+}
+
+.cat-meta-item {
+  font-size: 22rpx;
+  color: var(--color-gray-max);
+  margin-right: 16rpx;
+}
+
+.cat-meta-rating {
+  transform: scale(0.6);
+  transform-origin: left center;
+}
