@@ -1,4 +1,7 @@
-# :pencil:中大猫谱（笃行猫谱）
+# :pencil:火大猫谱
+
+> 本仓库 fork 自 [sysucats/zhongdamaopu](https://github.com/sysucats/zhongdamaopu)，改造为火箭军工程大学校园猫谱。
+> 原有功能、部署文档与开源协议沿用上游项目。
 
 *——拍照记录校园内猫猫的成长轨迹* :cat::smiley_cat::heart_eyes_cat:
 
@@ -20,17 +23,19 @@
 <img src="https://user-images.githubusercontent.com/8966971/212461459-d9600a11-f01c-4837-81af-47794c39dd62.jpg" height = "200"/>
 
 ## 体验一下
-打开微信，扫码或搜索“笃行猫谱”（原名中大猫谱，23年底更名）。
+打开微信，扫码或搜索「火大猫谱」。
 
-<img src="./readme/maopu_duxing.png" height = "150" alt="笃行猫谱菊花码" />
+<img src="./readme/maopu_huoda.png" height = "150" alt="火大猫谱小程序码" />
 
 ### 朋友们的小程序
+
+以下名单由上游项目维护，欢迎其他学校的猫谱加入。
 
 |小程序|高校|二维码|小程序|高校|二维码|
 |:----:|:----:|:----:|:----:|:----:|:----:|
 |CQGCZY小猫之家|重庆工程职业技术学院|<img src="./readme/maopu_cqgc.jpg" height = "100" />|莲峰猫谱|电子科技大学中山学院|<img src="./readme/maopu_lianfeng.png" height = "100" />|
 |昆院猫谱|昆明学院KMU|<img src="./readme/maopu_kunyuan.jpg" height = "100" />|猫猫家谱|暨南大学|<img src="./readme/maopu_jiapu.jpg" height = "100" />|
-|火大猫谱|火箭军工程大学|<img src="./readme/maopu_huoda.png" height = "100" />|CW猫咪图鉴|重庆外语外事学院|<img src="./readme/maopu_cw.jpg" height = "100" />|
+|笃行猫谱|中山大学|<img src="./readme/maopu_duxing.png" height = "100" />|CW猫咪图鉴|重庆外语外事学院|<img src="./readme/maopu_cw.jpg" height = "100" />|
 |龙井是公猫|广东药科大学|<img src="./readme/maopu_longjing.png" height = "100" />|技大喵喵屋|深圳技术大学|<img src="./readme/maopu_jida.jpg" height = "100" />|
 |招财喵谱|上海财经大学|<img src="./readme/maopu_zhaocai.jpg" height = "100" />|崴喵猫谱|山东大学（威海）|<img src="./readme/maopu_weimao.png" height = "100" />|
 |可每猫咪|河海大学|<img src="./readme/maopu_kemei.jpg" height = "100" />|喵汪图鉴|湖南大学|<img src="./readme/maopu_miaowang.jpeg" height = "100" />|
