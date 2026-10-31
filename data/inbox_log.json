@@ -1,5 +1,5 @@
 {
-  "version": "1793459326505",
+  "version": "v1793468935458",
   "items": [
     {
       "_id": "follow|guest_2b62ccfb|demo-cat-3",
@@ -36,6 +36,33 @@
       "target": "demo-cat-1",
       "state": 1793441745417,
       "ts": 1793441745417
+    },
+    {
+      "_id": "follow|guest_d9fe62ed|demo-cat-1",
+      "k": "follow|guest_d9fe62ed|demo-cat-1",
+      "kind": "follow",
+      "openid": "guest_d9fe62ed",
+      "target": "demo-cat-1",
+      "state": true,
+      "ts": 1793457058838
+    },
+    {
+      "_id": "pop|guest_071721b4|demo-cat-2",
+      "k": "pop|guest_071721b4|demo-cat-2",
+      "kind": "pop",
+      "openid": "guest_071721b4",
+      "target": "demo-cat-2",
+      "state": 1793461534317,
+      "ts": 1793461534317
+    },
+    {
+      "_id": "pop|guest_76d113e8|demo-cat-10",
+      "k": "pop|guest_76d113e8|demo-cat-10",
+      "kind": "pop",
+      "openid": "guest_76d113e8",
+      "target": "demo-cat-10",
+      "state": 1793464390636,
+      "ts": 1793464390636
     }
   ]
 }

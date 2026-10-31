@@ -1,5 +1,5 @@
 {
-  "version": "1793459326505",
+  "version": "v1793468935459",
   "items": [
     {
       "_id": "demo-cat-1",
@@ -67,7 +67,7 @@
       "photo_count_best": 1,
       "photo_count_total": 1,
       "comment_count": 3,
-      "follow_count": 3,
+      "follow_count": 4,
       "latitude": 23.102685,
       "longitude": 113.299872,
       "mphoto": 1778839200000,
@@ -88,7 +88,7 @@
       "characteristics": "文静",
       "habit": "喜欢躲在草丛",
       "tutorial": "",
-      "popularity": 85,
+      "popularity": 86,
       "sterilized": true,
       "sterilized_time": "2026-07-15T00:00:00.000Z",
       "adopt": 0,
@@ -680,7 +680,7 @@
       "characteristics": "害羞",
       "habit": "躲在角落",
       "tutorial": "",
-      "popularity": 75,
+      "popularity": 76,
       "sterilized": false,
       "sterilized_time": null,
       "adopt": 2,
