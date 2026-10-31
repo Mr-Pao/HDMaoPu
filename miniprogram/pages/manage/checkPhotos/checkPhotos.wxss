@@ -32,7 +32,7 @@ button.long {
   margin-bottom: 40rpx;
   box-shadow: 0rpx 0rpx 30rpx var(--color-gray);
   border-radius: 20rpx;
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -60,7 +60,7 @@ image {
   border: 1rpx solid var(--color-gray-dark);
   padding: 10rpx 30rpx;
   font-size: 30rpx;
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
   transition: background-color 500ms ease,
               border-color 500ms ease,
               color 500ms ease;
@@ -80,17 +80,17 @@ image {
 .button.delete.marked {
   border-color: var(--color-red-dark);
   background-color: var(--color-red);
-  color: white;
+  color: var(--color-surface);
 }
 .button.pass.marked {
   border-color: var(--color-green-dark);
   background-color: var(--color-green);
-  color: white;
+  color: var(--color-surface);
 }
 .button.best.marked {
   border-color: var(--color-primary-dark);
   background-color: var(--color-primary);
-  color: white;
+  color: var(--color-surface);
 }
 
 .label {
@@ -122,7 +122,7 @@ image {
   left: 0;
   padding: 16rpx 40rpx env(safe-area-inset-bottom) 40rpx; /*底部iOS小黑边safe-area*/
   border-top: 1rpx solid var(--color-gray);
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
   width: 100%;
   box-sizing: border-box;
 }

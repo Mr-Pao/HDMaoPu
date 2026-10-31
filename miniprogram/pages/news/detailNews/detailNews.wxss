@@ -6,7 +6,7 @@
   /* margin: 20rpx; */
   box-shadow: 0rpx 0rpx 30rpx var(--color-gray);
   border-radius: 20rpx;
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
 }
 
 button {
@@ -126,7 +126,7 @@ button+button {
   height: 207rpx;
   box-sizing: border-box;
   margin: 5rpx 5rpx;
-  background-color: white;
+  background-color: var(--color-surface);
 }
 
 .single-image {

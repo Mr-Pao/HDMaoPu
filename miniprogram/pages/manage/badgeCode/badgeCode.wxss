@@ -5,7 +5,7 @@
   width: 690rpx;
   margin: 30rpx;
   border-radius: 20rpx;
-  background-color: white;
+  background-color: var(--color-surface);
 }
 
 .code-info {

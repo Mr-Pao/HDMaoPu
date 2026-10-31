@@ -35,7 +35,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   background: var(--color-black-transparent);
-  color: #fff;
+  color: var(--color-surface);
   padding: 20rpx 40rpx;
   border-radius: 30rpx;
   font-size: 28rpx;
@@ -49,7 +49,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #fff;
+  background: var(--color-surface);
   padding: 60rpx 50rpx;
   border-radius: 20rpx;
   box-shadow: 0 0 20rpx var(--color-gray);
@@ -102,7 +102,7 @@
 }
 
 .campus-btn {
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 44rpx;
   padding: 14rpx 28rpx;
   display: flex;
@@ -114,12 +114,12 @@
 
 .campus-btn:active {
   opacity: 0.75;
-  background: var(--color-gray-light, #f7f7f7);
+  background: var(--color-gray-light);
 }
 
 .campus-btn-text {
   font-size: 26rpx;
-  color: #333;
+  color: var(--color-text);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -129,7 +129,7 @@
   width: 80rpx;
   height: 80rpx;
   border-radius: 50%;
-  background: #fff;
+  background: var(--color-surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -141,7 +141,7 @@
 
 .campus-toggle:active {
   transform: scale(0.9);
-  background: var(--color-gray-light, #f7f7f7);
+  background: var(--color-gray-light);
 }
 
 /* 底部详情卡片 */
@@ -176,7 +176,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 30rpx 30rpx 0 0;
   padding: 0 30rpx 40rpx;
   padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
@@ -265,7 +265,7 @@
   bottom: 12rpx;
   left: 12rpx;
   background: rgba(0, 0, 0, 0.55);
-  color: #fff;
+  color: var(--color-surface);
   padding: 6rpx 16rpx;
   border-radius: 20rpx;
   font-size: 22rpx;
@@ -361,7 +361,7 @@
 .detail-trajectory-btn:active {
   opacity: 0.75;
   background: var(--color-primary, #ffd101);
-  color: #fff;
+  color: var(--color-surface);
 }
 
 /* 查看详情按钮 - 并排时等宽 */
@@ -377,7 +377,7 @@
   right: 24rpx;
   z-index: 999;
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-surface);
   padding: 18rpx 32rpx;
   border-radius: 44rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.18);
@@ -418,7 +418,7 @@
 
 .total-cats-label {
   font-size: 24rpx;
-  color: var(--color-gray-max, #888);
+  color: var(--color-gray-max);
   line-height: 1;
 }
 
@@ -434,7 +434,7 @@
   display: flex;
   align-items: flex-start;
   padding: 16rpx 0;
-  border-bottom: 1rpx solid var(--color-gray-light, #f7f7f7);
+  border-bottom: 1rpx solid var(--color-gray-light);
 }
 
 .tl-item:last-child {
@@ -474,5 +474,5 @@
 /* 时间线坐标文字 */
 .tl-coord {
   font-size: 22rpx;
-  color: var(--color-gray-max, #888);
+  color: var(--color-gray-max);
 }

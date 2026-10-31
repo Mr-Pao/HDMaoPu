@@ -2,7 +2,7 @@ page {
   min-height: 100vh;
   padding: 30rpx;
   box-sizing: border-box;
-  background-color: #f7f7fa;
+  background-color: var(--color-gray-light);
 }
 
 .buttons {

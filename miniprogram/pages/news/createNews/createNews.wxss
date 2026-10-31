@@ -94,7 +94,7 @@ button {
   height: 220rpx;
   box-sizing: border-box;
   margin: 5rpx 5rpx;
-  background-color: white;
+  background-color: var(--color-surface);
 }
 
 .button_container {
@@ -106,14 +106,14 @@ button {
 /* 按钮未选中 */
 .normal_button {
   margin: 10rpx;
-  background-color: white;
+  background-color: var(--color-surface);
 }
 
 /* 按钮选中 */
 .checked_button {
   margin: 10rpx;
   background-color: var(--color-primary);
-  color: white
+  color: var(--color-surface)
 }
 
 .line {

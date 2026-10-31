@@ -17,7 +17,7 @@
   border: 0;
   box-shadow: 0rpx 10rpx 20rpx var(--color-ltblack-transparent);
   margin-bottom: 40rpx;
-  border: 12rpx solid white;
+  border: 12rpx solid var(--color-surface);
   position: relative;
 }
 .overlay {
@@ -27,7 +27,7 @@
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.35);
-  color: white;
+  color: var(--color-surface);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -42,7 +42,7 @@
   height: 250rpx;
   border-radius: 50%;
   margin-bottom: 20rpx;
-  background-color: white;
+  background-color: var(--color-surface);
   box-shadow: 0rpx 10rpx 20rpx var(--color-ltblack-transparent);
 }
 

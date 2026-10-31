@@ -112,7 +112,7 @@ page {
 .badge-list-inner {
   width: 690rpx;
   height: 480rpx;
-  background-color: white;
+  background-color: var(--color-surface);
   border-radius: 20rpx;
   overflow: hidden;
   box-sizing: border-box;
@@ -135,7 +135,7 @@ page {
 
 .badge-list-title {
   width: 100%;
-  color: #fafafa;
+  color: var(--color-white-dark);
   font-size: 32rpx;
   font-weight: bold;
   padding: 0 0 20rpx 20rpx;

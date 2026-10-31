@@ -7,7 +7,7 @@ page {
 .loading-box {
   text-align: center;
   padding: 100rpx 0;
-  color: var(--color-gray-max, #999);
+  color: var(--color-gray-max);
   font-size: 28rpx;
 }
 
@@ -47,14 +47,14 @@ page {
 
 .status-detail {
   font-size: 26rpx;
-  color: var(--color-black-min, #666);
+  color: var(--color-black-min);
   margin-top: 8rpx;
   line-height: 1.6;
 }
 
 .status-hint {
   font-size: 26rpx;
-  color: var(--color-black-min, #666);
+  color: var(--color-black-min);
   margin-top: 20rpx;
   line-height: 1.6;
 }
@@ -133,7 +133,7 @@ page {
 
 .auto-pass-desc {
   font-size: 26rpx;
-  color: var(--color-black-min, #666);
+  color: var(--color-black-min);
   margin-top: 8rpx;
   line-height: 1.6;
 }

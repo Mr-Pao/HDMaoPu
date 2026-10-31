@@ -18,7 +18,7 @@
   width: 100%;
   display: flex;
   align-items: center;
-  background-color: #fff;
+  background-color: var(--color-surface);
   border-radius: 50rpx;
   padding: 10rpx 30rpx;
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
@@ -46,7 +46,7 @@
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  background-color: #fff;
+  background-color: var(--color-surface);
   border-radius: 50rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.15);
@@ -202,7 +202,7 @@
   top: 120rpx;
   left: 30rpx;
   right: 30rpx;
-  background-color: #fff;
+  background-color: var(--color-surface);
   border-radius: 20rpx;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
   max-height: 600rpx;
@@ -327,7 +327,7 @@
 .vaccine-option {
   display: flex;
   align-items: center;
-  background: white;
+  background: var(--color-surface);
   padding: 10rpx 20rpx;
   border-radius: 50rpx;
   box-shadow: 0 4rpx 15rpx rgba(0, 0, 0, 0.1);

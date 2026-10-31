@@ -10,7 +10,7 @@ page {
   margin: 30rpx;
   box-shadow: 5rpx 5rpx 30rpx var(--color-gray-normal);
   border-radius: 20rpx;
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
 
   display: flex;
   justify-content: space-between;
@@ -133,7 +133,7 @@ page {
   flex-direction: column;
   width: 15%;
   border-bottom: 5rpx solid transparent;
-  background-color: white;
+  background-color: var(--color-surface);
   padding: 8rpx 5rpx;
   box-sizing: border-box;
   transition: background-color 500ms ease,
@@ -169,7 +169,7 @@ border-radius: 10rpx;
 }
 
 .checked_button.tab-text{
-  color: white;
+  color: var(--color-surface);
   font-weight: 500;
 }
 

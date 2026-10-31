@@ -20,22 +20,23 @@ scroll-view {
 }
 
 .card {
-  margin-bottom: 50rpx;
+  margin-bottom: 32rpx;
   font-size: 24rpx;
   line-height: 24rpx;
-  width: 635rpx;
-  border-radius: 15rpx;
+  width: 690rpx;
+  border-radius: var(--radius-lg);
 
   box-sizing: border-box;
-  background-color: white;
+  background-color: var(--color-surface);
 
-  box-shadow: 13rpx 13rpx 30rpx var(--color-gray);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
   position: relative;
 }
 
 .card view.image {
-  height:590rpx;
-  border-radius: 15rpx 15rpx 0 0;
+  height: 540rpx;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   position: relative;
   overflow: hidden;
 }
@@ -47,14 +48,14 @@ scroll-view {
   background-color: var(--color-black-light);
   opacity: .4;
   text-align: center;
-  color: white;
+  color: var(--color-surface);
   position: absolute;
   bottom: 0;
 }
 
 .card view.image image {
   width: 100%;
-  height: 590rpx;
+  height: 540rpx;
   background-color: var(--color-gray-light);
 	background-image: var(--img-default);
   background-position: center center;
@@ -68,12 +69,12 @@ scroll-view {
 }
 
 .card .info {
-  padding: 35rpx 35rpx 20rpx 35rpx;
+  padding: 32rpx 32rpx 24rpx 32rpx;
 }
 
 .card .hoverInfo{
-  background-color: var(--color-gray-light);
-  border-radius: 15rpx;
+  background-color: var(--color-primary-softer);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
 .card .info .name {
@@ -93,26 +94,27 @@ scroll-view {
 }
 
 .card .info .adopt {
-  padding: 0 10rpx;
-  height: 30rpx;
-  border-radius: 15rpx;
-  font-size: 18rpx;
-  line-height: 30rpx;
+  padding: 0 14rpx;
+  height: 34rpx;
+  border-radius: var(--radius-pill);
+  font-size: 19rpx;
+  line-height: 34rpx;
   text-align: center;
-  color: var(--color-gray-light);
-  background-color: var(--color-primary);
-  margin-left: 8rpx;
+  color: var(--color-surface);
+  background-color: var(--color-primary-bright);
+  margin-left: 10rpx;
 }
 
 .card .info .to_star {
-  height: 30rpx;
-  border-radius: 15rpx;
-  font-size: 18rpx;
-  line-height: 30rpx;
+  height: 34rpx;
+  border-radius: var(--radius-pill);
+  font-size: 19rpx;
+  line-height: 34rpx;
   text-align: center;
-  background-color: var(--color-gray-light);
-  
-  padding: 0 10rpx;
+  color: var(--color-primary);
+  background-color: var(--color-primary-soft);
+
+  padding: 0 14rpx;
   margin: 0 10rpx;
 }
 
@@ -231,7 +233,7 @@ scroll-view {
   margin-bottom: 50rpx;
   width: 635rpx;
   border-radius: 15rpx;
-  background-color: white;
+  background-color: var(--color-surface);
   box-shadow: 13rpx 13rpx 30rpx var(--color-gray);
   overflow: hidden;
 
@@ -275,7 +277,7 @@ scroll-view {
 #search .input-icon {
   width: 10%;
   height: 2.2rem;
-  background-color: white;
+  background-color: var(--color-surface);
   border-top-left-radius: 10rpx;
   border-bottom-left-radius: 10rpx;
   display: inline-block;
@@ -291,7 +293,7 @@ scroll-view {
   width: 90%;
   height: 2.2rem;
   line-height: 2.2rem;
-  background-color: white;
+  background-color: var(--color-surface);
   border-top-right-radius: 10rpx;
   border-bottom-right-radius: 10rpx;
   display: inline-block;
@@ -323,7 +325,7 @@ scroll-view {
 
 #filter-block .filters {
   width: 100%;
-  background-color: white;
+  background-color: var(--color-surface);
   display: flex;
   flex-wrap: nowrap;
 }
@@ -394,7 +396,7 @@ scroll-view {
   height: 80rpx;
   line-height: 80rpx;
   font-size: 30rpx;
-  background-color: white;
+  background-color: var(--color-surface);
   color: var(--color-gray-dark);
   text-align: center;
 }
@@ -476,7 +478,7 @@ scroll-view {
   font-size: 22rpx;
   padding: 10rpx;
   background-color: var(--color-black-transparent);
-  color: white;
+  color: var(--color-surface);
 
   border-radius: 10rpx;
   
@@ -598,7 +600,7 @@ scroll-view {
   padding: 20rpx;
   margin-bottom: 40rpx;
   border-radius: 15rpx;
-  background-color: white;
+  background-color: var(--color-surface);
   color: var(--color-primary);
   box-shadow: 13rpx 13rpx 30rpx var(--color-gray);
   display: flex;

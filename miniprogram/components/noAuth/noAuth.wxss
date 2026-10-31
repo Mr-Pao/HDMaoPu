@@ -30,7 +30,7 @@ button {
 }
 .no-auth-btn {
   background-color: var(--color-gray);
-  color: white;
+  color: var(--color-surface);
   margin-top: 20rpx;
   justify-content: center;
   align-items: center;

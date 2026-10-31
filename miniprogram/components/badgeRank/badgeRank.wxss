@@ -34,7 +34,7 @@
   width: 120rpx;
   height: 120rpx;
   border-radius: 20rpx;
-  /* background-color: white; */
+  /* background-color: var(--color-surface); */
 }
 
 .badge-info {
@@ -67,7 +67,7 @@
   border-top-left-radius: 50rpx;
   border-top-right-radius: 50rpx;
 
-  background: white;
+  background: var(--color-surface);
   background: linear-gradient(to bottom, var(--color-primary-light) 0%, rgba(255,255,255,1) 100%);
 }
 
@@ -75,7 +75,7 @@
   border-bottom-left-radius: 50rpx;
   border-bottom-right-radius: 50rpx;
   padding-bottom: 10rpx ;
-  background-color: white;
+  background-color: var(--color-surface);
 }
 
 .badge-cat {

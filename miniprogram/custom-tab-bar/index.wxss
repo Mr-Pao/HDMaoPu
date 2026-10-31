@@ -4,7 +4,8 @@
   left: 0;
   right: 0;
   height: 96rpx;
-  background: white;
+  background: var(--color-surface);
+  box-shadow: 0 -2rpx 12rpx rgba(12, 95, 3, 0.05);
   display: flex;
   padding-bottom: max(16rpx, env(safe-area-inset-bottom));
 }
@@ -14,7 +15,7 @@
 }
 
 .tab-bar-border {
-  background-color: white;
+  background-color: var(--color-border);
   position: absolute;
   left: 0;
   top: 0;
@@ -31,7 +32,7 @@
   align-items: center;
   flex-direction: column;
   height: 100rpx;
-  border-top: white;
+  border-top: var(--color-surface);
 }
 
 .tab-bar-img {

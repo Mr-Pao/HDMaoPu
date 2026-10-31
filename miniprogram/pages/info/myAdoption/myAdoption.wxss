@@ -1,7 +1,7 @@
 .page {
   padding: 30rpx;
   min-height: 100vh;
-  background: #f7f7f7;
+  background: var(--color-bg);
   box-sizing: border-box;
 }
 
@@ -12,18 +12,18 @@
 
 .empty-text {
   font-size: 32rpx;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .empty-tip {
   font-size: 24rpx;
-  color: #999;
+  color: var(--color-text-tertiary);
   margin-top: 16rpx;
 }
 
 .adoption-card {
-  background: #fff;
-  border-radius: 16rpx;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
   padding: 24rpx;
   margin-bottom: 24rpx;
 }
@@ -37,53 +37,53 @@
 .cat-name {
   font-size: 34rpx;
   font-weight: bold;
-  color: #333;
+  color: var(--color-text);
 }
 
 .status {
   font-size: 24rpx;
   padding: 6rpx 20rpx;
-  border-radius: 24rpx;
+  border-radius: var(--radius-pill);
 }
 
 .status-pending {
-  background: #fff7e6;
-  color: #fa8c16;
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
 }
 
 .status-approved {
-  background: #f6ffed;
-  color: #52c41a;
+  background: var(--color-success-soft);
+  color: var(--color-success);
 }
 
 .status-rejected {
-  background: #fff1f0;
-  color: #f5222d;
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
 }
 
 .status-cancelled {
-  background: #f5f5f5;
-  color: #999;
+  background: var(--color-bg);
+  color: var(--color-text-tertiary);
 }
 
 .apply-time {
   font-size: 24rpx;
-  color: #999;
+  color: var(--color-text-tertiary);
   margin-top: 12rpx;
 }
 
 .review-note {
   font-size: 26rpx;
-  color: #666;
-  background: #f7f7f7;
-  border-radius: 12rpx;
+  color: var(--color-text-secondary);
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
   padding: 16rpx;
   margin-top: 16rpx;
 }
 
 .timeline {
   margin-top: 24rpx;
-  border-top: 1rpx solid #f0f0f0;
+  border-top: 1rpx solid var(--color-border);
   padding-top: 24rpx;
 }
 
@@ -100,7 +100,7 @@
   top: 24rpx;
   bottom: 0;
   width: 2rpx;
-  background: #eee;
+  background: var(--color-border);
 }
 
 .timeline-item:last-child::before {
@@ -111,7 +111,7 @@
   width: 20rpx;
   height: 20rpx;
   border-radius: 50%;
-  background: #ddd;
+  background: var(--color-border);
   margin-right: 24rpx;
   flex-shrink: 0;
 }
@@ -126,19 +126,19 @@
 
 .step-status {
   font-size: 28rpx;
-  color: #333;
+  color: var(--color-text);
   font-weight: 500;
 }
 
 .step-note {
   font-size: 24rpx;
-  color: #666;
+  color: var(--color-text-secondary);
   margin-top: 6rpx;
 }
 
 .step-time {
   font-size: 22rpx;
-  color: #999;
+  color: var(--color-text-tertiary);
   margin-top: 6rpx;
 }
 
@@ -149,7 +149,7 @@
 }
 
 .btn-cancel {
-  color: #f5222d;
-  border: 1rpx solid #f5222d;
-  background: #fff;
+  color: var(--color-danger);
+  border: 1rpx solid var(--color-danger);
+  background: var(--color-surface);
 }

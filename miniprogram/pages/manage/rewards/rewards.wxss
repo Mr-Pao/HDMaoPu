@@ -48,7 +48,7 @@ button.bottom {
   margin-bottom: 50rpx;
   box-shadow: 0rpx 0rpx 30rpx var(--color-gray);
   border-radius: 20rpx;
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
 }
 
 .label {
@@ -72,7 +72,7 @@ button.bottom {
   padding: 30rpx 40rpx;
   margin-bottom: 50rpx;
   border-radius: 20rpx;
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
 }
 
 #container {
@@ -99,7 +99,7 @@ input, picker, textarea {
   left: 0;
   padding: 16rpx 40rpx env(safe-area-inset-bottom) 40rpx; /*底部iOS小黑边safe-area*/
   border-top: 1rpx solid var(--color-gray);
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
   width: 100%;
   box-sizing: border-box;
 }

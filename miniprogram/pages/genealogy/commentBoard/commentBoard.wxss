@@ -18,7 +18,7 @@ page {
   margin: 30rpx 10rpx;
   box-sizing: border-box;
   background:
-    -webkit-linear-gradient(top, white 38rpx, var(--color-gray) 40rpx);
+    -webkit-linear-gradient(top, var(--color-surface) 38rpx, var(--color-gray) 40rpx);
   background-size: 100% 40rpx;
   position: relative;
 }
@@ -107,7 +107,7 @@ page {
   flex-wrap: wrap;
   padding: 20rpx;
   /* padding-bottom: 20rpx; */
-  background-color: white;
+  background-color: var(--color-surface);
   box-sizing: border-box;
   border-top: 1rpx solid var(--color-gray-light);
 }
@@ -159,7 +159,7 @@ page {
 .input-color {
   width: 60rpx;
   height: 60rpx;
-  background-color: white;
+  background-color: var(--color-surface);
   border: 1rpx solid var(--color-gray-dark);
   box-sizing: border-box;
   margin: 10rpx;
@@ -187,7 +187,7 @@ page {
   font-size: 28rpx;
   font-weight: bold;
   background-color: var(--color-primary);
-  color: white;
+  color: var(--color-surface);
   border-radius: 50rpx;
 }
 

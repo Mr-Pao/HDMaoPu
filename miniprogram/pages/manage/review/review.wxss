@@ -2,7 +2,7 @@
 
 .container {
   padding: 30rpx;
-  background-color: var(--color-gray-light, #F7F7FA);
+  background-color: var(--color-gray-light);
   min-height: 100vh;
   box-sizing: border-box;
 }
@@ -29,7 +29,7 @@
 .gate-tip {
   margin-top: 12rpx;
   font-size: 26rpx;
-  color: var(--color-gray-max, #999);
+  color: var(--color-gray-max);
 }
 
 .gate-input {
@@ -37,7 +37,7 @@
   width: 520rpx;
   height: 88rpx;
   padding: 0 28rpx;
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 16rpx;
   font-size: 30rpx;
   text-align: center;
@@ -57,7 +57,7 @@
   line-height: 88rpx;
   border-radius: 44rpx;
   background: var(--color-primary, #0C5F03);
-  color: #fff;
+  color: var(--color-surface);
   font-size: 32rpx;
 }
 
@@ -76,20 +76,20 @@
 .head-title {
   font-size: 34rpx;
   font-weight: 600;
-  color: var(--color-primary-text, #333);
+  color: var(--color-primary-text);
 }
 
 .head-lock {
   font-size: 26rpx;
-  color: var(--color-gray-max, #999);
+  color: var(--color-gray-max);
   padding: 8rpx 20rpx;
-  border: 1rpx solid var(--color-gray-normal, #E5E5E5);
+  border: 1rpx solid var(--color-gray-normal);
   border-radius: 24rpx;
 }
 
 .head-tip {
   font-size: 24rpx;
-  color: var(--color-gray-max, #999);
+  color: var(--color-gray-max);
   margin-bottom: 26rpx;
 }
 
@@ -98,14 +98,14 @@
   text-align: center;
   padding: 80rpx 0;
   font-size: 26rpx;
-  color: var(--color-gray-max, #999);
+  color: var(--color-gray-max);
 }
 
 .empty {
   text-align: center;
   padding: 120rpx 0;
   font-size: 28rpx;
-  color: var(--color-gray-max, #999);
+  color: var(--color-gray-max);
 }
 
 .empty-icon {
@@ -121,7 +121,7 @@
 
 /* ==================== 卡片 ==================== */
 .card {
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 20rpx;
   padding: 26rpx;
   margin-bottom: 22rpx;
@@ -138,7 +138,7 @@
   font-size: 22rpx;
   padding: 4rpx 14rpx;
   border-radius: 8rpx;
-  color: #fff;
+  color: var(--color-surface);
   background: var(--color-primary, #0C5F03);
 }
 
@@ -150,13 +150,13 @@
 .cat {
   margin-left: 14rpx;
   font-size: 26rpx;
-  color: var(--color-primary-text, #333);
+  color: var(--color-primary-text);
   flex: 1;
 }
 
 .time {
   font-size: 22rpx;
-  color: var(--color-gray-max, #999);
+  color: var(--color-gray-max);
 }
 
 .photo {
@@ -164,20 +164,20 @@
   height: 380rpx;
   border-radius: 12rpx;
   margin-bottom: 16rpx;
-  background: var(--color-gray-light, #F7F7FA);
+  background: var(--color-gray-light);
 }
 
 .content {
   font-size: 28rpx;
   line-height: 1.6;
-  color: var(--color-primary-text, #333);
+  color: var(--color-primary-text);
   word-break: break-all;
 }
 
 .meta {
   margin-top: 14rpx;
   font-size: 22rpx;
-  color: var(--color-gray-max, #999);
+  color: var(--color-gray-max);
 }
 
 .actions {
@@ -201,6 +201,6 @@
 }
 
 .btn-approve {
-  color: #fff;
+  color: var(--color-surface);
   background: var(--color-primary, #0C5F03);
 }

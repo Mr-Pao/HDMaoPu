@@ -17,7 +17,7 @@
 
 /* 信息卡片 */
 .info-card {
-  background-color: #fff;
+  background-color: var(--color-surface);
   border-radius: 15rpx;
   margin-bottom: 30rpx;
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
@@ -164,7 +164,7 @@
 
 /* 卡片 */
 .photo-card {
-  background-color: #fff;
+  background-color: var(--color-surface);
   border-radius: 16rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
@@ -287,7 +287,7 @@
 }
 
 .load-more-button {
-  background-color: white;
+  background-color: var(--color-surface);
   color: var(--color-primary);
   font-size: 28rpx;
   font-weight: 500;

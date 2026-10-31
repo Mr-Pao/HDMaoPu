@@ -3,7 +3,7 @@
 page {
   height: 100%;
   overflow: hidden;
-  background-color: var(--color-gray-light);
+  background-color: var(--color-bg);
 }
 #bg-yellow {
   width: 750rpx;
@@ -23,7 +23,7 @@ page {
 #bg-big-circle {
   width: 750rpx;
   height: 470rpx;
-  background-color: var(--color-gray-light);
+  background-color: var(--color-bg);
   position: absolute;
 }
 #big-circle {
@@ -52,7 +52,8 @@ swiper {
 swiper-item image {
   width: 600rpx;
   height: 450rpx;
-  border-radius: 15rpx;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
 }
 
 .info {
@@ -63,8 +64,8 @@ swiper-item image {
   flex-direction: column;
   justify-content: center;
   align-content: center;
-  background-color: var(--color-gray-light);
-  background-image: radial-gradient(circle at left bottom, #f7f7fa 15rpx, transparent 16rpx), radial-gradient(circle at right bottom, #f7f7fa 15rpx, transparent 16rpx);
+  background-color: var(--color-bg);
+  background-image: radial-gradient(circle at left bottom, var(--color-gray-light) 15rpx, transparent 16rpx), radial-gradient(circle at right bottom, var(--color-gray-light) 15rpx, transparent 16rpx);
 }
 
 .info .identity {
@@ -135,20 +136,20 @@ swiper-item image {
 }
 
 .tags .tag {
-  font-size: 20rpx;
-  height: 40rpx;
+  font-size: 24rpx;
+  height: 46rpx;
   box-sizing: border-box;
-  border-radius: 20rpx;
-  background-color: var(--color-primary-light);
+  border-radius: 999rpx;
+  background-color: var(--color-primary-soft);
   color: var(--color-primary);
-  padding: 6rpx 15rpx 8rpx 15rpx;
+  padding: 6rpx 20rpx;
   margin-right: 20rpx;
 }
 
 
 .tags .to_star {
   background-color: var(--color-gray-max);
-  color: white;
+  color: var(--color-surface);
 }
 
 .tags .mpcode {
@@ -158,16 +159,16 @@ swiper-item image {
 }
 
 .fb-button, .badge-all {
-  font-size: 20rpx;
+  font-size: 24rpx;
   font-weight: 500;
-  height: 40rpx;
-  line-height: 40rpx;
-  padding: 0 20rpx;
+  height: 46rpx;
+  line-height: 46rpx;
+  padding: 0 24rpx;
   text-align: center;
   margin-left: auto;
-  background-color: var(--color-primary-light);
+  background-color: var(--color-primary-soft);
   color: var(--color-primary);
-  border-radius: 20rpx;
+  border-radius: 999rpx;
 }
 
 .badge-btn {
@@ -189,9 +190,9 @@ swiper-item image {
 /* 卡片布局 */
 .details .card {
   width: 100%;
-  background-color: #fff;
-  border-radius: 20rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   margin-bottom: 30rpx;
   overflow: hidden;
 }
@@ -312,7 +313,7 @@ swiper-item image {
   justify-content: flex-start;
   align-items: stretch;
   flex-direction: column;
-  background-color: #fff;
+  background-color: var(--color-surface);
 }
 
 .album-title {
@@ -329,7 +330,7 @@ swiper-item image {
   gap: 10rpx;
   justify-content: center;
   margin-bottom: 25rpx;
-  border-radius: 12rpx;
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -373,9 +374,9 @@ swiper-item image {
   width: 100%;
   aspect-ratio: 1/1;
   box-sizing: border-box;
-  background-color: var(--color-gray-light);
+  background-color: var(--color-bg);
   position: relative;
-  border-radius: 8rpx;
+  border-radius: 12rpx;
   overflow: hidden;
 }
 
@@ -388,7 +389,7 @@ swiper-item image {
 .album .loading {
   width: 100%;
   text-align: center;
-  background-color: #fff;
+  background-color: var(--color-surface);
   color: var(--color-gray);
   font-size: 28rpx;
   margin-top: 10rpx;
@@ -458,7 +459,7 @@ swiper-item image {
 
 /* 下面开始悬浮标题 */
 .big-header {
-  background-color: white;
+  background-color: var(--color-surface);
   display: flex;
   align-items: center;
   border:solid var(--color-gray-light);
@@ -553,7 +554,7 @@ swiper-item image {
   border-radius: 20rpx;
 }
 .relation-block.tap, .badge-item.tap {
-  background-color: var(--color-gray-light);
+  background-color: var(--color-bg);
 }
 .relation-cat-avatar {
   width: 100rpx;
@@ -615,7 +616,7 @@ swiper-item image {
 
   z-index: 999;
 
-  background-color: var(--color-gray-light);
+  background-color: var(--color-bg);
 
   filter: drop-shadow(0px 12rpx 12rpx rgba(0, 0, 0, 0.15));
 }
@@ -700,7 +701,7 @@ swiper-item image {
   line-height: 42rpx;
   font-size: 22rpx;
   text-align: center;
-  background-color: white;
+  background-color: var(--color-surface);
   border-radius: 10rpx;
   border: 1rpx solid var(--color-gray-normal);
 }
@@ -752,7 +753,7 @@ swiper-item image {
 
 .badge-item-count, .user-badge-item-count {
   font-size: 18rpx;
-  background-color: var(--color-gray-light);
+  background-color: var(--color-bg);
   opacity: 0.7;
   padding: 3rpx 6rpx;
 }
@@ -849,7 +850,7 @@ swiper-item image {
   justify-content: space-between;
   align-items: center;
   padding: 30rpx;
-  background-color: white;
+  background-color: var(--color-surface);
   font-size: 32rpx;
   font-weight: bold;
 }
@@ -924,7 +925,7 @@ swiper-item image {
 .timeline-content {
   flex: 1;
   margin-left: 30rpx;
-  background-color: white;
+  background-color: var(--color-surface);
   border-radius: 15rpx;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
   padding: 20rpx;
@@ -937,7 +938,7 @@ swiper-item image {
 
 /* 过期卡片样式 */
 .timeline-content.expired-card {
-  background-color: white;
+  background-color: var(--color-surface);
 }
 
 /* 过期卡片内所有文本颜色 */
@@ -959,7 +960,7 @@ swiper-item image {
 .timeline-title {
   font-size: 30rpx;
   font-weight: 500;
-  color: #333;
+  color: var(--color-text);
   flex: 1;
   min-width: 0;
   white-space: nowrap;

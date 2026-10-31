@@ -6,7 +6,7 @@ page {
 .bd-block {
   width: 690rpx;
   margin: 50rpx 30rpx;
-  background-color: white;
+  background-color: var(--color-surface);
   border-radius: 30rpx;
   overflow: hidden;
 }

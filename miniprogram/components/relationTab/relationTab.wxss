@@ -20,7 +20,7 @@
 .relation-item {
   margin-bottom: 30rpx;
   width: 100%;
-  background-color: white;
+  background-color: var(--color-surface);
   border-radius: 15rpx;
   overflow: hidden;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
@@ -161,7 +161,7 @@
 .empty-tip {
   text-align: center;
   padding: 60rpx 0;
-  color: #999;
+  color: var(--color-text-tertiary);
   font-size: 28rpx;
   display: flex;
   flex-direction: column;
@@ -170,7 +170,7 @@
 
 .empty-icon {
   font-size: 80rpx;
-  color: #ddd;
+  color: var(--color-border);
   margin-bottom: 20rpx;animation: bounceIn 0.6s ease;
 }
 
@@ -195,7 +195,7 @@
 #search .popup-container {
   width: 100%;
   max-height: 80vh;
-  background-color: white;
+  background-color: var(--color-surface);
   border-radius: 20rpx 20rpx 0 0;
   overflow: hidden;
   display: flex;
@@ -229,7 +229,7 @@
 .input-field {
   flex: 1;
   height: 72rpx;
-  background-color: white;
+  background-color: var(--color-surface);
   border-radius: 36rpx;
   padding: 0 20rpx;
   font-size: 26rpx;
@@ -289,5 +289,5 @@
 }
 
 .item-hover {
-  background-color: #f5f5f5;
+  background-color: var(--color-bg);
 }

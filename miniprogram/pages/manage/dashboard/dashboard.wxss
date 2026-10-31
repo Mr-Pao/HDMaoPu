@@ -51,7 +51,7 @@
 
 /* ==================== 3. 卡片通用样式 ==================== */
 .bento-card {
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   border-radius: 20rpx;
   padding: 30rpx;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
@@ -344,7 +344,7 @@
   font-size: 40rpx;
   font-weight: 600;
   background-color: #8e8e93;
-  color: white;
+  color: var(--color-surface);
 }
 
 /* 突出显示可点击的未知性别图标 */
@@ -713,7 +713,7 @@
   width: 560rpx;
   max-height: 80vh;
   box-sizing: border-box;
-  background-color: white;
+  background-color: var(--color-surface);
   border-radius: 40rpx;
   overflow: hidden;
   display: flex;

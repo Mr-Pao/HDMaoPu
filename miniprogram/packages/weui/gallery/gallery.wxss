@@ -2,7 +2,7 @@
 
 .weui-gallery__info {
     width: 750rpx;
-    color:#FFFFFF;
+    color:var(--color-surface);
     font-size: 28rpx;
     text-align:center;
     position: fixed;
@@ -11,7 +11,7 @@
 }
 
 .weui-gallery__origin{
-    color:#FFFFFF;
+    color:var(--color-surface);
     font-size: 28rpx;
     line-height:28rpx;
     min-height:28rpx;
@@ -35,7 +35,7 @@
 .weui-gallery__opr {
     width: 300rpx;
     background-color: #0d0d0d;
-    color: #FFFFFF;
+    color: var(--color-surface);
     line-height: 60px;
     min-height: 60px;
     padding-bottom: max(20rpx, constant(safe-area-inset-bottom));

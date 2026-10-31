@@ -64,7 +64,7 @@ page {
   height: var(--size);
   left: 0; top: 0;
   transform: translate(-50%, -50%);
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 50%;
   box-shadow: 0 6rpx 16rpx rgba(162, 130, 100, 0.15);
   display: flex;
@@ -98,7 +98,7 @@ page {
   top: 0;
   right: 0;
   background: #FF6B6B;
-  color: white;
+  color: var(--color-surface);
   font-size: 20rpx;
   min-width: 32rpx;
   height: 32rpx;
@@ -118,7 +118,7 @@ page {
   transform: translate(-50%, calc(var(--size) / 2 + var(--gap, 10rpx)));
   font-size: 22rpx;
   color: var(--text-main);
-  background: #fff;
+  background: var(--color-surface);
   padding: 4rpx 12rpx;
   border-radius: 10rpx;
   box-shadow: 0 2rpx 6rpx rgba(0,0,0,0.05);
@@ -133,7 +133,7 @@ page {
   font-size: 32rpx;
   color: var(--color-gray-max);
   font-weight: bold;
-  background: #F5F5F5;
+  background: var(--color-bg);
   width: 100%;
   height: 100%;
   border-radius: 50%;
@@ -164,7 +164,7 @@ page {
 }
 .label {
   font-size: 18rpx;
-  background: #fff;
+  background: var(--color-surface);
   padding: 2rpx 8rpx;
   border-radius: 8rpx;
   color: var(--text-sub);
@@ -220,7 +220,7 @@ page {
 .halo-ring {
   position: absolute;
   left: 50%; top: 50%;
-  border: 1rpx solid #fff;
+  border: 1rpx solid var(--color-surface);
   border-radius: 50%;
   opacity: 0;
   transform: translate(-50%, -50%) scale(1);
@@ -299,7 +299,7 @@ page {
 .sheet-card {
   flex: 0 0 calc(50% - 10rpx);
   margin: 0;
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 20rpx;
   box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.02);
   padding: 16rpx;

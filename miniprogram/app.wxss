@@ -1,43 +1,216 @@
 /**app.wxss**/
 page {
-  /* 定义一些颜色变量 */
+  /* ================= 品牌色（绿色主题，保持不变） ================= */
   --color-primary: #0C5F03;
   --color-primary-dark: #0C5F03;
   --color-primary-light:  #8FBC94;
 
+  /* 品牌色的可扩展梯度：深绿用于文字/描边，亮绿用于按钮底色，
+     浅绿用于标签底，最浅用于大面积点缀 */
+  --color-primary-bright: #17803C;
+  --color-primary-soft: #E8F3EA;
+  --color-primary-softer: #F3F8F4;
+
+  /* ================= 中性色（重排为语义化层级） ================= */
   --color-white-dark: #fafafa;
-  --color-white:#fafafa;
-  
-  --color-gray-light: #f7f7fa;
-  --color-gray-normal:#eeeeee;
+  --color-white: #fafafa;
+
+  --color-gray-light: #F5F7F5;
+  --color-gray-normal: #eeeeee;
   --color-gray: #dddddd;
   --color-gray-dark: #bbbbbb;
-  --color-gray-max: #888;
+  --color-gray-max: #888888;
 
-  --color-black-min:#414141;
+  --color-black-min: #414141;
   --color-black-light: #222222;
 
   --color-black-transparent: rgba(0,0,0,0.5);
   --color-ltblack-transparent: rgba(0,0,0,0.05);
 
+  /* 语义化文字/背景/描边 */
+  --color-text: #1F2421;
+  --color-text-secondary: #55605A;
+  --color-text-tertiary: #8A948E;
+  --color-text-placeholder: #B4BCB7;
+  --color-bg: #F5F7F5;
+  --color-surface: #FFFFFF;
+  --color-border: #ECEFEC;
+  /* 主色底上的文字色：此前被 10+ 个 wxss 引用但从未定义，导致主色按钮文字回退成继承色 */
+  --color-text-onPrimary: #FFFFFF;
+
+  /* ================= 状态色 ================= */
   --color-red: #dc3545;
   --color-red-dark: #8b0000;
 
   --color-green: #22ad6d;
   --color-green-dark: #015e32;
 
+  /* 业务状态色：底色/前景成对使用，避免各处散落的 Ant 色板 */
+  --color-warning: #C4761A;
+  --color-warning-soft: #FDF3E4;
+  --color-info: #1A6FC4;
+  --color-info-soft: #E9F2FB;
+  --color-success: #17803C;
+  --color-success-soft: #E8F3EA;
+  --color-danger: #D33A3A;
+  --color-danger-soft: #FCEDED;
+
   --color-badge-A: #ffa601;
   --color-badge-B: #004ad3;
   --color-badge-C: #258100;
 
+  /* ================= 便利贴配色 ================= */
   --color-comment-paper-white: #ffffff;
   --color-comment-paper-yellow: #fff7ee;
   --color-comment-paper-green: #ebffe9;
   --color-comment-paper-pink: #ffeffe;
   --color-comment-tape: thistle;
 
+  /* ================= 圆角 ================= */
+  --radius-sm: 10rpx;
+  --radius-md: 18rpx;
+  --radius-lg: 26rpx;
+  --radius-pill: 999rpx;
+
+  /* ================= 阴影 ================= */
+  --shadow-sm: 0 2rpx 8rpx rgba(12, 95, 3, 0.05);
+  --shadow-md: 0 6rpx 20rpx rgba(12, 95, 3, 0.07);
+  --shadow-lg: 0 12rpx 32rpx rgba(12, 95, 3, 0.10);
+
+  /* ================= 间距 ================= */
+  --space-xs: 8rpx;
+  --space-sm: 16rpx;
+  --space-md: 24rpx;
+  --space-lg: 32rpx;
+  --space-xl: 48rpx;
+
+  /* ================= 字号 ================= */
+  --font-xs: 22rpx;
+  --font-sm: 26rpx;
+  --font-md: 30rpx;
+  --font-lg: 34rpx;
+  --font-xl: 40rpx;
+
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--font-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+
   --img-default: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/PjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+PHN2ZyB0PSIxNTUzOTI5NDU5ODM3IiBjbGFzcz0iaWNvbiIgc3R5bGU9IiIgdmlld0JveD0iMCAwIDEyMTYgMTAyNCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHAtaWQ9IjIxMzYiIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB3aWR0aD0iMjM3LjUiIGhlaWdodD0iMjAwIj48ZGVmcz48c3R5bGUgdHlwZT0idGV4dC9jc3MiPjwvc3R5bGU+PC9kZWZzPjxwYXRoIGQ9Ik0xMTIwIDEwMjRIOTZjLTU0LjQgMC05Ni00MS42LTk2LTk2Vjk2YzAtNTQuNCA0MS42LTk2IDk2LTk2aDEwMjRjNTQuNCAwIDk2IDQxLjYgOTYgOTZ2ODMyYzAgNTQuNC00MS42IDk2LTk2IDk2ek05NiA2NGMtMTkuMiAwLTMyIDEyLjgtMzIgMzJ2ODMyYzAgMTkuMiAxMi44IDMyIDMyIDMyaDEwMjRjMTkuMiAwIDMyLTEyLjggMzItMzJWOTZjMC0xOS4yLTEyLjgtMzItMzItMzJIOTZ6IiBwLWlkPSIyMTM3IiBmaWxsPSIjY2RjZGNkIj48L3BhdGg+PHBhdGggZD0iTTY0IDc2OGMtOS42IDAtMTYtMy4yLTIyLjQtOS42LTEyLjgtMTIuOC0xMi44LTMyIDAtNDQuOGwzNTItMzUyYzEyLjgtMTIuOCAyOC44LTEyLjggNDEuNi0zLjJMODAwIDY2Mi40bDE3Mi44LTExNS4yYzEyLjgtNi40IDI1LjYtNi40IDM4LjQgMy4ybDE2MCAxMjhjMTIuOCA5LjYgMTYgMzIgNi40IDQ0LjgtOS42IDEyLjgtMzIgMTYtNDQuOCA2LjRMOTkyIDYxNy42bC0xNzIuOCAxMTUuMmMtMTIuOCA2LjQtMjguOCA2LjQtMzguNC0zLjJsLTM2MS42LTMwMC44TDg2LjQgNzU4LjRjLTYuNCA2LjQtMTIuOCA5LjYtMjIuNCA5LjZ6IiBwLWlkPSIyMTM4IiBmaWxsPSIjY2RjZGNkIj48L3BhdGg+PHBhdGggZD0iTTg5NiA1MTJjLTg5LjYgMC0xNjAtNzAuNC0xNjAtMTYwczcwLjQtMTYwIDE2MC0xNjAgMTYwIDcwLjQgMTYwIDE2MC03MC40IDE2MC0xNjAgMTYweiBtMC0yNTZjLTU0LjQgMC05NiA0MS42LTk2IDk2czQxLjYgOTYgOTYgOTYgOTYtNDEuNiA5Ni05Ni00MS42LTk2LTk2LTk2eiIgcC1pZD0iMjEzOSIgZmlsbD0iI2NkY2RjZCI+PC9wYXRoPjwvc3ZnPg==);
 }
+
+/* =========================================================
+   通用组件类（mc = maopu component）
+   全站统一圆角 / 阴影 / 留白 / 字号层级。
+   页面可以逐步套用，不影响已有样式。
+   ========================================================= */
+
+/* 卡片：白底、大圆角、极柔阴影 */
+.mc-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-md);
+  box-sizing: border-box;
+}
+
+.mc-card--flat {
+  box-shadow: none;
+  border: 1rpx solid var(--color-border);
+}
+
+/* 区块标题：左侧一条绿色短竖线 */
+.mc-section-title {
+  display: flex;
+  align-items: center;
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--color-text);
+  padding: var(--space-sm) 0;
+}
+
+.mc-section-title::before {
+  content: '';
+  width: 6rpx;
+  height: 28rpx;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-bright);
+  margin-right: var(--space-sm);
+}
+
+/* 按钮 */
+.mc-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 84rpx;
+  padding: 0 var(--space-lg);
+  border-radius: var(--radius-md);
+  font-size: var(--font-md);
+  box-sizing: border-box;
+}
+
+.mc-btn--primary {
+  background: var(--color-primary-bright);
+  color: #FFFFFF;
+  box-shadow: 0 6rpx 16rpx rgba(23, 128, 60, 0.24);
+}
+
+.mc-btn--ghost {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.mc-btn--plain {
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  border: 1rpx solid var(--color-border);
+}
+
+.mc-btn--block {
+  width: 100%;
+}
+
+/* 标签 */
+.mc-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 40rpx;
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-xs);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-bright);
+}
+
+/* 列表行 */
+.mc-cell {
+  display: flex;
+  align-items: center;
+  min-height: 96rpx;
+  padding: 0 var(--space-md);
+  background: var(--color-surface);
+  font-size: var(--font-md);
+  color: var(--color-text);
+}
+
+.mc-divider {
+  height: 1rpx;
+  background: var(--color-border);
+}
+
+/* 空状态 */
+.mc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-sm);
+}
+
 .container {
   display: flex;
   flex-direction: column;

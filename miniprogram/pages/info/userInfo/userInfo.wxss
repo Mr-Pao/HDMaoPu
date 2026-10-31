@@ -54,7 +54,7 @@ page {
   justify-content: center;
   align-items: center;
   border-radius: 20rpx;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   font-size: 40rpx;
   color: var(--color-primary);
   margin: 0 !important;
@@ -64,8 +64,8 @@ page {
   width: 120rpx;
   height: 120rpx;
   border-radius: calc(50% + 8rpx);
-  background-color: white;
-  border: 8rpx solid white;
+  background-color: var(--color-surface);
+  border: 8rpx solid var(--color-surface);
   box-shadow: 0rpx 10rpx 20rpx var(--color-ltblack-transparent);
 }
 
@@ -75,7 +75,7 @@ page {
   text-overflow: ellipsis;
   width: fit-content;
   white-space: nowrap;
-  color: white;
+  color: var(--color-surface);
   padding: 5rpx 10rpx;
   border-radius: 10rpx;
   font-size: 20rpx;
@@ -106,7 +106,7 @@ page {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: white;
+  background-color: var(--color-surface);
   padding: 30rpx 0;
   border-radius: 30rpx;
   box-shadow: 0rpx 10rpx 25rpx var(--color-ltblack-transparent);
@@ -153,7 +153,7 @@ page {
 /* 一些菜单 */
 .menu-container {
   width: 100%;
-  background-color: white;
+  background-color: var(--color-surface);
   border-radius: 30rpx;
   overflow: hidden;
   padding: 30rpx 0;

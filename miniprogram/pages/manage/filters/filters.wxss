@@ -104,7 +104,7 @@ button.bottom {
   left: 0;
   padding: 16rpx 40rpx env(safe-area-inset-bottom) 40rpx; /*底部iOS小黑边safe-area*/
   border-top: 1rpx solid var(--color-gray);
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
   width: 100%;
   box-sizing: border-box;
 }

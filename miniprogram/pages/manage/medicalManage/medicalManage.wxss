@@ -1,7 +1,7 @@
 .page {
   padding: 30rpx;
   min-height: 100vh;
-  background: #f7f7f7;
+  background: var(--color-gray-light);
   box-sizing: border-box;
 }
 
@@ -17,7 +17,7 @@
 
 .import-btn {
   margin-left: 20rpx;
-  background: #fff;
+  background: var(--color-surface);
   color: var(--color-primary);
   border: 1rpx solid var(--color-primary);
   font-size: 26rpx;
@@ -32,13 +32,13 @@
 
 .empty {
   text-align: center;
-  color: #999;
+  color: var(--color-text-tertiary);
   font-size: 28rpx;
   padding: 100rpx 0;
 }
 
 .record-card {
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 16rpx;
   padding: 24rpx;
   margin-bottom: 24rpx;
@@ -54,8 +54,8 @@
   font-size: 22rpx;
   padding: 4rpx 20rpx;
   border-radius: 24rpx;
-  color: #fff;
-  background: #999;
+  color: var(--color-surface);
+  background: var(--color-text-tertiary);
 }
 
 .type-vaccine { background: #1890ff; }
@@ -63,23 +63,23 @@
 .type-clinic { background: #f5222d; }
 .type-deworm { background: #13c2c2; }
 .type-injury { background: #fa8c16; }
-.type-other { background: #999; }
+.type-other { background: var(--color-text-tertiary); }
 
 .record-date {
   font-size: 24rpx;
-  color: #999;
+  color: var(--color-text-tertiary);
 }
 
 .record-title {
   font-size: 32rpx;
   font-weight: bold;
-  color: #333;
+  color: var(--color-text);
   margin-top: 16rpx;
 }
 
 .record-info {
   font-size: 26rpx;
-  color: #666;
+  color: var(--color-text-secondary);
   margin-top: 10rpx;
   line-height: 1.5;
 }
@@ -94,12 +94,12 @@
 .btn-delete {
   color: #f5222d;
   border: 1rpx solid #f5222d;
-  background: #fff;
+  background: var(--color-surface);
 }
 
 /* 编辑面板（内嵌，不用 fixed 弹窗，避免部分模拟器无法输入） */
 .edit-panel {
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 16rpx;
   padding: 32rpx;
   margin-bottom: 24rpx;
@@ -122,7 +122,7 @@
   width: 640rpx;
   max-height: 80vh;
   overflow-y: auto;
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 16rpx;
   padding: 32rpx;
 }
@@ -140,19 +140,19 @@
 
 .label {
   font-size: 26rpx;
-  color: #666;
+  color: var(--color-text-secondary);
   margin-bottom: 12rpx;
 }
 
 .input {
-  background: #f7f7f7;
+  background: var(--color-gray-light);
   border-radius: 12rpx;
   padding: 18rpx 24rpx;
   font-size: 28rpx;
 }
 
 .textarea {
-  background: #f7f7f7;
+  background: var(--color-gray-light);
   border-radius: 12rpx;
   padding: 18rpx 24rpx;
   font-size: 28rpx;
@@ -162,11 +162,11 @@
 }
 
 .picker {
-  background: #f7f7f7;
+  background: var(--color-gray-light);
   border-radius: 12rpx;
   padding: 18rpx 24rpx;
   font-size: 28rpx;
-  color: #333;
+  color: var(--color-text);
 }
 
 .modal-buttons {
@@ -181,8 +181,8 @@
 }
 
 .modal-btn.cancel {
-  background: #f5f5f5;
-  color: #666;
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
 }
 
 .modal-btn.confirm {

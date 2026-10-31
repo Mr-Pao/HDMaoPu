@@ -100,7 +100,7 @@ image{height:auto}
   width: 100%;
   border-radius: 15rpx;
   overflow: hidden;
-  background-color: white;
+  background-color: var(--color-surface);
   background-image: var(--img-default);
   background-size: 60% 60%;
   background-repeat: no-repeat;

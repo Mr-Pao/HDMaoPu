@@ -32,7 +32,7 @@ button.long {
   left: 0;
   padding: 16rpx 40rpx env(safe-area-inset-bottom) 40rpx; /*底部iOS小黑边safe-area*/
   border-top: 1rpx solid var(--color-gray);
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
   width: 100%;
   box-sizing: border-box;
 }
@@ -52,7 +52,7 @@ button.long {
   color: var(--color-gray-max);
   box-shadow: 0rpx 0rpx 30rpx var(--color-gray);
   padding: 30rpx;
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
 }
 
 #tips text {
@@ -67,7 +67,7 @@ button.long {
   padding: 40rpx 40rpx 30rpx 40rpx;
   box-shadow: 0rpx 0rpx 30rpx var(--color-gray);
   border-radius: 20rpx;
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
 }
 
 .line {

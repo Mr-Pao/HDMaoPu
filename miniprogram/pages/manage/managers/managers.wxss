@@ -59,7 +59,7 @@ button.long {
   line-height: 28rpx;
   text-align: center;
   font-size: 22rpx;
-  color: #fff;
+  color: var(--color-surface);
   background: transparent;
   transform: translate(-50%, -50%) scale(1);
   -webkit-transform: translate(-50%, -50%) scale(1);

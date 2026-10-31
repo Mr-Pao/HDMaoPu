@@ -15,7 +15,7 @@
 
 #photoBox, #resultBox, #adBox {
   width: 675rpx;
-  background-color: white;
+  background-color: var(--color-surface);
   box-shadow: 13rpx 13rpx 30rpx var(--color-gray);
   border-bottom-left-radius: 15rpx;
   border-bottom-right-radius: 15rpx;
@@ -41,7 +41,7 @@
 
 #authTips text {
   font-size: 30rpx;
-  color: white;
+  color: var(--color-surface);
 }
 
 #authTips button {
@@ -101,7 +101,7 @@
   height: 100rpx;
   background-color: var(--color-primary);
   border-radius: 50rpx;
-  border: 8rpx solid white;
+  border: 8rpx solid var(--color-surface);
   box-shadow: 0 0 0 8rpx var(--color-primary);
 }
 
