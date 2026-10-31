@@ -1,0 +1,39 @@
+name: set-inbox-policy
+
+# 只在手动触发时运行：桶策略是危险操作，不能自动化。
+# 做两件事：给桶设置「匿名可写 inbox/ 其余全拒」的策略，然后自带匿名自测。
+#
+# 运行方式：GitHub → Actions → set-inbox-policy → Run workflow
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  set-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: cos
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install COS SDK
+        working-directory: scripts
+        run: npm install cos-nodejs-sdk-v5 --no-save --no-audit --no-fund --registry=https://registry.npmmirror.com
+
+      - name: Apply inbox policy and self-test
+        working-directory: scripts
+        env:
+          COS_SECRET_ID: ${{ secrets.COS_SECRET_ID }}
+          COS_SECRET_KEY: ${{ secrets.COS_SECRET_KEY }}
+          COS_BUCKET: ${{ secrets.COS_BUCKET }}
+          COS_REGION: ${{ secrets.COS_REGION }}
+        run: node set-inbox-policy.js
