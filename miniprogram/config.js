@@ -24,9 +24,8 @@ module.exports = {
   //         由 GitHub Actions 每小时聚合成 data/*.json（客户端不放密钥，桶只开放 inbox/* 匿名写）
   // false = 一键关掉写通道，只保留本地覆盖层（离线可用，但换设备就丢）
   writeback_enabled: true,
-  // 【审核口令】仅用于解锁小程序的「审核队列」页面（客户端校验只管 UX）
-  // 真正的校验在 GitHub Actions 端，口令不对的 decision 会被丢弃
-  review_passcode: "mszgmvukz3r8tc3nqs35",
+  // 【管理口令】已移出小程序包：管理员在小程序内手动输入，只存手机本地 storage，
+  // 真正的校验在 GitHub Actions 端（REVIEW_PASSCODE），口令不对的提交会被丢弃
   // 【照片上传开关】v4.0 暂时关闭
   // 原因：原来靠云函数 unionOp/getURL 签发 COS 临时密钥，现在没有云函数了，
   //       小程序端拿不到上传凭证，一点上传就报错。

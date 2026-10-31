@@ -1,0 +1,151 @@
+<!--pages/manage/admin/admin.wxml-->
+<view class="container">
+
+  <!-- 未解锁：口令门 -->
+  <view class="gate" wx:if="{{!unlocked}}">
+    <view class="gate-icon">🔒</view>
+    <view class="gate-title">管理后台</view>
+    <view class="gate-tip">请输入管理口令</view>
+    <input
+      class="gate-input"
+      type="text"
+      password="{{true}}"
+      value="{{passcode}}"
+      placeholder="口令"
+      bindinput="onPasscodeInput"
+      confirm-type="done"
+      bindconfirm="unlock"
+    />
+    <button class="gate-btn" bindtap="unlock">解锁</button>
+    <view class="gate-note">口令仅在提交时校验，错误口令的提交会被自动丢弃</view>
+  </view>
+
+  <!-- 已解锁 -->
+  <block wx:else>
+    <view class="head">
+      <view class="head-title">管理后台</view>
+      <view class="head-lock" bindtap="lock">退出管理</view>
+    </view>
+    <view class="head-tip">口令仅在提交时校验，错误口令的提交会被自动丢弃</view>
+
+    <!-- Tab 栏 -->
+    <view class="tabs">
+      <view class="tab {{tab === 'cat' ? 'tab-active' : ''}}" data-tab="cat" bindtap="switchTab">猫资料编辑</view>
+      <view class="tab {{tab === 'photo' ? 'tab-active' : ''}}" data-tab="photo" bindtap="switchTab">照片审核</view>
+    </view>
+
+    <!-- Tab1 猫资料编辑 -->
+    <block wx:if="{{tab === 'cat'}}">
+      <picker mode="selector" range="{{catNames}}" bindchange="onCatPick">
+        <view class="picker-row">
+          <text>选择猫猫</text>
+          <text class="picker-value">{{catIndex >= 0 ? catNames[catIndex] : '点此选择'}}</text>
+        </view>
+      </picker>
+
+      <view class="card" wx:if="{{catIndex >= 0}}">
+        <view class="field">
+          <text class="label">名字</text>
+          <input class="input" value="{{form.name}}" data-field="name" bindinput="onFieldInput" />
+        </view>
+        <view class="field">
+          <text class="label">昵称</text>
+          <input class="input" value="{{form.nickname}}" data-field="nickname" bindinput="onFieldInput" />
+        </view>
+        <picker mode="selector" range="{{genderOptions}}" bindchange="onGenderPick">
+          <view class="field">
+            <text class="label">性别</text>
+            <text class="picker-value">{{form.gender}}</text>
+          </view>
+        </picker>
+        <view class="field">
+          <text class="label">校区</text>
+          <input class="input" value="{{form.campus}}" data-field="campus" bindinput="onFieldInput" />
+        </view>
+        <view class="field">
+          <text class="label">区域</text>
+          <input class="input" value="{{form.area}}" data-field="area" bindinput="onFieldInput" />
+        </view>
+        <view class="field">
+          <text class="label">花色</text>
+          <input class="input" value="{{form.colour}}" data-field="colour" bindinput="onFieldInput" />
+        </view>
+        <picker mode="date" value="{{form.birthday}}" bindchange="onBirthdayPick">
+          <view class="field">
+            <text class="label">生日</text>
+            <text class="picker-value">{{form.birthday || '未设置'}}</text>
+          </view>
+        </picker>
+        <view class="field">
+          <text class="label">性格特点</text>
+          <input class="input" value="{{form.characteristics}}" data-field="characteristics" bindinput="onFieldInput" />
+        </view>
+        <view class="field">
+          <text class="label">习性</text>
+          <input class="input" value="{{form.habit}}" data-field="habit" bindinput="onFieldInput" />
+        </view>
+        <view class="field">
+          <text class="label">撸猫指南</text>
+          <input class="input" value="{{form.tutorial}}" data-field="tutorial" bindinput="onFieldInput" />
+        </view>
+        <view class="field">
+          <text class="label">已绝育</text>
+          <switch checked="{{form.sterilized}}" data-field="sterilized" bindchange="onSwitch" color="#0C5F03" />
+        </view>
+        <picker mode="selector" range="{{adoptOptions}}" bindchange="onAdoptPick">
+          <view class="field">
+            <text class="label">领养状态</text>
+            <text class="picker-value">{{adoptOptions[form.adopt]}}</text>
+          </view>
+        </picker>
+        <picker mode="date" value="{{form.adoptTime}}" bindchange="onAdoptTimePick">
+          <view class="field">
+            <text class="label">领养日期</text>
+            <text class="picker-value">{{form.adoptTime || '未设置'}}</text>
+          </view>
+        </picker>
+        <view class="field">
+          <text class="label">失踪</text>
+          <switch checked="{{form.missing}}" data-field="missing" bindchange="onSwitch" color="#0C5F03" />
+        </view>
+        <view class="field">
+          <text class="label">返回喵星</text>
+          <switch checked="{{form.to_star}}" data-field="to_star" bindchange="onSwitch" color="#0C5F03" />
+        </view>
+
+        <button class="save-btn" bindtap="saveCat" disabled="{{saving}}">{{saving ? '提交中…' : '保存'}}</button>
+      </view>
+
+      <view class="empty" wx:else>先在上面选择一只猫猫</view>
+    </block>
+
+    <!-- Tab2 照片审核 -->
+    <block wx:else>
+      <picker mode="selector" range="{{catNames}}" bindchange="onPhotoCatPick">
+        <view class="picker-row">
+          <text>选择猫猫</text>
+          <text class="picker-value">{{photoCatIndex >= 0 ? catNames[photoCatIndex] : '点此选择'}}</text>
+        </view>
+      </picker>
+
+      <view class="loading" wx:if="{{photoLoading}}">加载中…</view>
+
+      <view class="empty" wx:elif="{{photoCatIndex < 0}}">选择猫猫查看它的照片</view>
+      <view class="empty" wx:elif="{{!photos.length}}">这只猫猫还没有照片</view>
+
+      <view class="photo-card" wx:for="{{photos}}" wx:key="_id">
+        <image class="photo-thumb" src="{{item.url}}" mode="aspectFill" lazy-load />
+        <view class="photo-info">
+          <view class="photo-state {{item.hidden ? 'state-hidden' : ''}}">{{item.hidden ? '已下架' : '展示中'}}</view>
+          <view
+            class="photo-btn {{item.hidden ? 'btn-restore' : 'btn-hide'}}"
+            data-id="{{item._id}}"
+            data-hidden="{{item.hidden}}"
+            bindtap="togglePhoto"
+          >{{item.hidden ? '恢复' : '下架'}}</view>
+        </view>
+      </view>
+    </block>
+  </block>
+
+</view>

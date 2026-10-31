@@ -101,10 +101,9 @@ Page({
             icon: "icon-location-o"
           },
           {
-            name: "猫猫管理",
-            path: "/pages/manage/catManage/catManage",
-            icon: "icon-cluster-o",
-            disabled: true
+            name: "管理后台",
+            path: "/pages/manage/admin/admin",
+            icon: "icon-cluster-o"
           },
           {
             name: "人员管理",

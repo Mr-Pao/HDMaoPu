@@ -45,7 +45,7 @@ const REVIEW_KEEP = 200;
 // 批量删除单次上限
 const DELETE_BATCH = 1000;
 
-const VALID_KINDS = ['like', 'follow', 'pop', 'rating', 'comment', 'decision'];
+const VALID_KINDS = ['like', 'follow', 'pop', 'rating', 'comment', 'decision', 'manage'];
 
 // ---------------------------------------------------------------------------
 // 数据读写
@@ -358,6 +358,72 @@ function trimQueue() {
   return removed;
 }
 
+// manage/updateCat 允许修改的猫字段白名单（与 data/cat.json 实际字段对齐）。
+// _id、rating、popularity、follow_count、photo_count_*、comment_count、deleted 等
+// 统计/系统字段不在名单内，出现在 patch 里整条拒绝。
+const MANAGE_CAT_PATCH_FIELDS = [
+  'name',
+  'nickname',
+  'gender',
+  'campus',
+  'area',
+  'colour',
+  'birthday',
+  'characteristics',
+  'habit',
+  'tutorial',
+  'sterilized',
+  'sterilized_time',
+  'adopt',
+  'adopt_time',
+  'missing',
+  'missing_time',
+  'to_star',
+  'deceased_time',
+];
+
+function handleManage(p) {
+  const { data } = p;
+  if (!tokenOk(data.token)) return 'drop:bad-token';
+
+  if (data.action === 'updateCat') return manageUpdateCat(data);
+  if (data.action === 'managePhoto') return managePhoto(data);
+  return 'drop:bad-action';
+}
+
+function manageUpdateCat(data) {
+  const catId = data.cat_id;
+  if (!catId) return 'drop:no-cat-id';
+  const patch = data.patch;
+  if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return 'drop:no-patch';
+
+  const keys = Object.keys(patch);
+  if (!keys.length) return 'drop:no-patch';
+  for (const k of keys) {
+    if (!MANAGE_CAT_PATCH_FIELDS.includes(k)) return 'drop:bad-patch-field';
+  }
+
+  const cat = findItem('cat', catId);
+  if (!cat) return 'drop:cat-not-found';
+
+  for (const k of keys) cat[k] = patch[k];
+  markTouched('cat');
+  return 'ok:cat-updated';
+}
+
+function managePhoto(data) {
+  const photoId = data.photo_id;
+  if (!photoId) return 'drop:no-photo-id';
+
+  // photo_id 传的是 photo.json 里的 _id，和 like 的口径一致
+  const photo = findItem('photo', photoId);
+  if (!photo) return 'drop:photo-not-found';
+
+  photo.hidden = !!data.hidden;
+  markTouched('photo');
+  return 'ok:photo-hidden';
+}
+
 const HANDLERS = {
   like: handleLike,
   follow: handleFollow,
@@ -365,6 +431,7 @@ const HANDLERS = {
   rating: handleRating,
   comment: handleComment,
   decision: handleDecision,
+  manage: handleManage,
 };
 
 // ---------------------------------------------------------------------------
@@ -545,15 +612,26 @@ function selftestObjects() {
     },
     { key: `inbox/like/${now + 13}-bad-aaaa.json`, body: 'not json at all' },
     { key: `inbox/evil/${now + 14}-bad-aaaa.json`, body: JSON.stringify({ v: 1, kind: 'evil', openid: 'x', ts: 1, data: {} }) },
+    // manage 自测：token 从环境变量注入（REVIEW_PASSCODE），代码里不出现真实口令
+    mk('manage', 'openid-a', { action: 'updateCat', token: REVIEW_PASSCODE || 'wrong', cat_id: cat, patch: { name: '大橘（自测改名）', habit: '自测晒太阳' } }, 15),
+    mk('manage', 'openid-a', { action: 'managePhoto', token: REVIEW_PASSCODE || 'wrong', photo_id: photo, hidden: true }, 16),
+    mk('manage', 'openid-a', { action: 'updateCat', token: 'definitely-wrong-token', cat_id: cat, patch: { name: '不该生效' } }, 17), // 口令错，应被丢弃
+    mk('manage', 'openid-a', { action: 'updateCat', token: REVIEW_PASSCODE || 'wrong', cat_id: cat, patch: { popularity: 999, name: '也不该生效' } }, 18), // 白名单外字段，整条拒绝
+    mk('manage', 'openid-a', { action: 'deleteEverything', token: REVIEW_PASSCODE || 'wrong' }, 19), // 未知 action，应被丢弃
   ];
 }
 
 function snapshot() {
+  const cat = findItem('cat', 'demo-cat-1');
+  const photo = findItem('photo', 'demo-photo-1');
   return {
-    catPop: findItem('cat', 'demo-cat-1') ? findItem('cat', 'demo-cat-1').popularity : null,
-    catFollow: findItem('cat', 'demo-cat-1') ? findItem('cat', 'demo-cat-1').follow_count : null,
-    catRating: findItem('cat', 'demo-cat-1') ? JSON.stringify(findItem('cat', 'demo-cat-1').rating) : null,
-    photoLike: findItem('photo', 'demo-photo-1') ? findItem('photo', 'demo-photo-1').like_count : null,
+    catPop: cat ? cat.popularity : null,
+    catFollow: cat ? cat.follow_count : null,
+    catRating: cat ? JSON.stringify(cat.rating) : null,
+    catName: cat ? cat.name : null,
+    catHabit: cat ? cat.habit : null,
+    photoLike: photo ? photo.like_count : null,
+    photoHidden: photo ? !!photo.hidden : null,
     queue: loadData('review_queue').items.length,
   };
 }

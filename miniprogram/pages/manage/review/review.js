@@ -5,15 +5,16 @@
 //   这里读 review_queue 里 status=pending 的项，点通过/拒绝 → 写 inbox/decision/
 //   下一次聚合时落库（通过）或只标状态（拒绝）
 //
-// 注意：口令校验在客户端只管 UX。真正的把关在 GitHub Actions 端，
+// 注意：口令不内置在小程序包里。用户手动输入，只存手机本地 storage（与管理后台共用），
+// 客户端只做非空校验。真正的把关在 GitHub Actions 端，
 // 口令不对的 decision 会被直接丢弃，所以即使有人逆向出这个页面也改不了审核结果。
 
-import config from "../../../config";
 import { putInbox } from "../../../utils/writeback";
 
 const app = getApp();
-const UNLOCK_KEY = "review_unlocked";
-const UNLOCK_TTL = 24 * 60 * 60 * 1000; // 24 小时免输入
+const PASSCODE_KEY = "manage_passcode";       // 与管理后台共用
+const PASSCODE_TS_KEY = "manage_passcode_ts"; // 与管理后台共用
+const PASSCODE_TTL = 24 * 60 * 60 * 1000; // 24 小时免输入
 
 const KIND_LABEL = {
   comment: "评论",
@@ -43,8 +44,8 @@ Page({
   },
 
   onLoad() {
-    const at = wx.getStorageSync(UNLOCK_KEY);
-    if (at && Date.now() - Number(at) < UNLOCK_TTL) {
+    const ts = Number(wx.getStorageSync(PASSCODE_TS_KEY) || 0);
+    if (wx.getStorageSync(PASSCODE_KEY) && ts && Date.now() - ts < PASSCODE_TTL) {
       this.setData({ unlocked: true });
       this.loadQueue();
     }
@@ -68,17 +69,16 @@ Page({
       this.setData({ error: "请输入口令" });
       return;
     }
-    if (input !== config.review_passcode) {
-      this.setData({ error: "口令不对", passcode: "" });
-      return;
-    }
-    wx.setStorageSync(UNLOCK_KEY, Date.now());
+    // 不做对错校验：口令只存本地，真校验在 Actions 端
+    wx.setStorageSync(PASSCODE_KEY, input);
+    wx.setStorageSync(PASSCODE_TS_KEY, Date.now());
     this.setData({ unlocked: true, passcode: "", error: "" });
     this.loadQueue();
   },
 
   lock() {
-    wx.removeStorageSync(UNLOCK_KEY);
+    wx.removeStorageSync(PASSCODE_KEY);
+    wx.removeStorageSync(PASSCODE_TS_KEY);
     this.setData({ unlocked: false, items: [] });
   },
 
@@ -133,7 +133,7 @@ Page({
     const ok = await putInbox("decision", {
       item_id: id,
       action: action === "approve" ? "approve" : "reject",
-      token: config.review_passcode,
+      token: String(wx.getStorageSync(PASSCODE_KEY) || ""),
     });
     wx.hideLoading();
 

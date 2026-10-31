@@ -294,7 +294,8 @@ Page({
     const qf = {
       cat_id: this.jsData.cat_id,
       verified: true,
-      best: true
+      best: true,
+      hidden: { $ne: true } // 管理后台下架的照片不展示
     };
     this.jsData.photoMax = (await app.mpServerless.db.collection('photo').count(qf)).result;
     await Promise.all([
@@ -324,7 +325,8 @@ Page({
     // 下面是相册的
     const qf_album = {
       cat_id: this.jsData.cat_id,
-      verified: true
+      verified: true,
+      hidden: { $ne: true } // 管理后台下架的照片不展示
     };
     this.jsData.albumMax = (await app.mpServerless.db.collection('photo').count(qf_album)).result;
     this.jsData.album_raw = [];
@@ -343,7 +345,8 @@ Page({
     const qf = {
       cat_id: this.jsData.cat_id,
       verified: true,
-      best: true
+      best: true,
+      hidden: { $ne: true } // 管理后台下架的照片不展示
     };
     const step = this.jsData.page_settings.photoStep;
     const now = cat.photo.length;
@@ -462,7 +465,8 @@ Page({
     }
     const qf = {
       cat_id: this.jsData.cat_id,
-      verified: true
+      verified: true,
+      hidden: { $ne: true } // 管理后台下架的照片不展示
     };
     const step = this.jsData.page_settings.albumStep;
     const now = this.jsData.album_raw.length;

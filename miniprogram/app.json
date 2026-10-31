@@ -34,6 +34,7 @@
     "pages/manage/badgeCode/addBadgeCode/addBadgeCode",
     "pages/manage/catManage/catManage",
     "pages/manage/review/review",
+    "pages/manage/admin/admin",
     "pages/manage/dashboard/dashboard"
   ],
   "subPackages": [

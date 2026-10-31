@@ -68,7 +68,7 @@ function requestPut(url, body) {
 
 /**
  * 往 COS 的 inbox/ 前缀写一条待聚合的记录
- * @param {string} kind like / follow / pop / rating / comment / decision
+ * @param {string} kind like / follow / pop / rating / comment / decision / manage
  * @param {object} data 见各调用点
  * @returns {Promise<boolean>} 是否成功写进 inbox
  */
