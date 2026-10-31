@@ -664,12 +664,14 @@ Page({
     if (!user.userInfo) {
       user.userInfo = {};
     }
-    // 处理关注
+    // 处理关注（以本地 storage 的 followedCatIds 为准，user.followCats 仅作兜底）
+    const followedIds = wx.getStorageSync('followedCatIds') || [];
     let followedCat;
-    if (!user.followCats || !user.followCats.includes(this.data.cat._id)) {
-      followedCat = false;
-    } else {
+    if ((followedIds && followedIds.includes(this.data.cat._id)) ||
+        (user.followCats && user.followCats.includes(this.data.cat._id))) {
       followedCat = true;
+    } else {
+      followedCat = false;
     }
     this.setData({
       user,
@@ -888,6 +890,17 @@ Page({
         cat_id: this.data.cat._id,
         follow: !followedCat,
       });
+
+      // 本地维护关注列表，供 myFollowCats / followFeed 等页面读取
+      let followedIds = wx.getStorageSync('followedCatIds') || [];
+      if (!followedCat) {
+        if (!followedIds.includes(this.data.cat._id)) {
+          followedIds.push(this.data.cat._id);
+        }
+      } else {
+        followedIds = followedIds.filter(id => id !== this.data.cat._id);
+      }
+      wx.setStorageSync('followedCatIds', followedIds);
     }
 
     wx.showToast({

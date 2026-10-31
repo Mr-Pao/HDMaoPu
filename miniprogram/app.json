@@ -25,21 +25,16 @@
     "pages/manage/imProcess/imProcess",
     "pages/manage/checkPhotos/checkPhotos",
     "pages/manage/filters/filters",
-    "pages/manage/managers/managers",
     "pages/manage/checkFeedbacks/checkFeedbacks",
     "pages/manage/replyFeedback/replyFeedback",
-    "pages/manage/rewards/rewards",
     "pages/manage/pageSettings/pageSettings",
     "pages/manage/badgeDef/badgeDef",
     "pages/manage/badgeDef/addBadgeDef/addBadgeDef",
-    "pages/manage/checkComment/checkComment",
     "pages/manage/badgeCode/badgeCode",
     "pages/manage/badgeCode/addBadgeCode/addBadgeCode",
     "pages/manage/catManage/catManage",
     "pages/manage/review/review",
-    "pages/manage/dashboard/dashboard",
-    "pages/manage/addCat/addCat",
-    "pages/manage/addRelations/addRelations"
+    "pages/manage/dashboard/dashboard"
   ],
   "subPackages": [
     {

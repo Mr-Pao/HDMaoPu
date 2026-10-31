@@ -73,19 +73,22 @@ Page({
             name: "照片审核",
             path: "/pages/manage/checkPhotos/checkPhotos",
             num: "numChkPhotos",
-            icon: "icon-photo-o"
+            icon: "icon-photo-o",
+            disabled: true
           },
           {
             name: "便利贴审核",
             path: "/pages/manage/checkComment/checkComment",
             num: "numChkComments",
-            icon: "icon-smile-comment-o"
+            icon: "icon-smile-comment-o",
+            disabled: true
           },
           {
             name: "反馈处理",
             path: "/pages/manage/checkFeedbacks/checkFeedbacks",
             num: "numFeedbacks",
-            icon: "icon-envelop-o"
+            icon: "icon-envelop-o",
+            disabled: true
           },
           {
             name: "猫抓板公告",
@@ -100,12 +103,14 @@ Page({
           {
             name: "猫猫管理",
             path: "/pages/manage/catManage/catManage",
-            icon: "icon-cluster-o"
+            icon: "icon-cluster-o",
+            disabled: true
           },
           {
             name: "人员管理",
             path: "/pages/manage/managers/managers",
-            icon: "icon-manager-o"
+            icon: "icon-manager-o",
+            disabled: true
           },
           {
             name: "特邀用户",
@@ -125,7 +130,8 @@ Page({
           {
             name: "投喂记录",
             path: "/pages/manage/rewards/rewards",
-            icon: "icon-balance-o"
+            icon: "icon-balance-o",
+            disabled: true
           },
           {
             name: "照片处理",
@@ -295,6 +301,14 @@ Page({
   clickbtn(e) {
     const to = e.currentTarget.dataset.to;
     if (!to) {
+      return false;
+    }
+    // 失效写功能的菜单项：拦截跳转，只给提示
+    if (e.currentTarget.dataset.disabled) {
+      wx.showToast({
+        title: '此功能需服务端支持，暂未开放',
+        icon: 'none'
+      });
       return false;
     }
     const actionMap = {

@@ -839,6 +839,20 @@ function createJsonServerless(options) {
       count: alive.filter(c => c.colour === name).length,
     }));
 
+    // 全站评分汇总：基于各猫 rating.scores 的 r1..r5 票数做加权平均
+    let ratingSum = 0;
+    let ratingCount = 0;
+    alive.forEach(c => {
+      const scores = c.rating && c.rating.scores;
+      if (!scores) return;
+      for (let i = 1; i <= 5; i++) {
+        const n = Number(scores['r' + i]) || 0;
+        ratingSum += i * n;
+        ratingCount += n;
+      }
+    });
+    const ratingAvg = ratingCount > 0 ? parseFloat((ratingSum / ratingCount).toFixed(1)) : 0;
+
     // 本月事件：新猫 / 绝育 / 领养 / 失踪 / 喵星
     const eventTypes = [
       ['新猫', 'create_time', c => true, 'newCats'],
@@ -894,6 +908,8 @@ function createJsonServerless(options) {
         campus: campus,
         colour: colourStats,
         events: events,
+        ratingAvg: ratingAvg,
+        ratingCount: ratingCount,
       },
     };
   }

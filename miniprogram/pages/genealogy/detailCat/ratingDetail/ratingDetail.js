@@ -1,5 +1,6 @@
 import { convertRatingList, genDefaultRating } from "../../../../utils/rating";
 import api from "../../../../utils/cloudApi";
+import { putInbox } from "../../../../utils/writeback";
 
 const app = getApp();
 Page({
@@ -157,8 +158,11 @@ Page({
 
     console.log(res);
 
-    // 更新猫的评分
-    await api.updateCatRating({ cat_id });
+    // 同步到 COS inbox，由 Action 聚合回写 data/cat.json 的 rating.scores。
+    // 聚合脚本按 { cat_id, score: 1-5 } 记一票，这里把 5 个维度的评分取平均提交。
+    const avg = myRatings.reduce((sum, r) => sum + r.score, 0) / myRatings.length;
+    const score = Math.min(5, Math.max(1, Math.round(avg)));
+    putInbox('rating', { cat_id, score });
     await Promise.all([
       this.reloadMyRatings(),
       this.reloadCatRating()

@@ -69,11 +69,12 @@
 <block wx:for="{{menuList}}" wx:key="title" wx:for-item="menu" wx:if="{{showCond[menu.show]}}">
   <view wx:if="{{menu.title == '管理后台'}}" class='block-name'>{{menu.title}}</view>
     <view wx:if="{{menu.title == '管理后台'}}" class="block">
-      <view wx:for="{{menu.items}}" wx:key="name" class="grid-item" bindtap='clickbtn' data-to='{{item.path}}'>
+      <view wx:for="{{menu.items}}" wx:key="name" class="grid-item {{item.disabled ? 'grid-item-disabled' : ''}}" bindtap='clickbtn' data-to='{{item.path}}' data-disabled='{{item.disabled}}'>
           <view class="iconfont {{item.icon}}"></view>
           <text wx:if="{{nums[item.num]}}" class="badge">{{nums[item.num]}}</text>
           <view wx:if="{{item.dot}}" class="dot"></view>
           <text class="grid-text">{{item.name}}</text>
+          <text wx:if="{{item.disabled}}" class="grid-disabled-tip">此功能需服务端支持，暂未开放</text>
       </view>
     </view>
 </block>

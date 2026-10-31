@@ -166,6 +166,19 @@ page {
   text-overflow: ellipsis;
 }
 
+/* 失效写功能的菜单项：置灰 + 提示 */
+.grid-item-disabled {
+  opacity: 0.45;
+}
+
+.grid-disabled-tip {
+  width: 100%;
+  margin-top: 4rpx;
+  font-size: 18rpx;
+  color: #999;
+  text-align: center;
+}
+
 .iconfont {
   font-family: 'iconfont';
   font-size: 55rpx;

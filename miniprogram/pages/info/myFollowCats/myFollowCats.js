@@ -7,7 +7,7 @@ import {
 import {
   getAvatar
 } from "../../../utils/cat";
-import api from "../../../utils/cloudApi";
+import { putInbox } from "../../../utils/writeback";
 const app = getApp();
 Page({
 
@@ -87,17 +87,18 @@ Page({
 
 
   async loadFollowCats() {
-    let { openid } = this.data.user;
-    // 获取用户的关注列表
-    const followCatIds = (await app.mpServerless.db.collection('user').findOne({
-      openid: openid
-    }, {
-      projection: {
-        followCats: 1
-      }
-    })).result.followCats;
+    // 关注列表改为本地 storage 维护（detailCat 关注/取关时同步写入）
+    const followCatIds = wx.getStorageSync('followedCatIds') || [];
 
     console.log(followCatIds);
+
+    if (!followCatIds.length) {
+      this.setData({
+        followCats: [],
+        followCount: 0,
+      });
+      return;
+    }
 
     // 加载猫猫的信息
     const { result: followCats } = await app.mpServerless.db.collection('cat').find({ _id: { $in: followCatIds } })
@@ -122,16 +123,38 @@ Page({
     this.jsData.updatingFollowCats = true;
 
     let { unfollowed, catid, index } = e.currentTarget.dataset;
-    let res = await api.updateFollowCats({
-      updateCmd: unfollowed ? "add" : "del",
-      catId: catid,
-    });
+
+    // 本地维护关注列表
+    let followedIds = wx.getStorageSync('followedCatIds') || [];
+    let res = true;
+    if (unfollowed) {
+      if (!followedIds.includes(catid)) {
+        followedIds.push(catid);
+      }
+    } else {
+      if (!followedIds.includes(catid)) {
+        // 本地列表里没有的猫，视为取关失败（异常状态）
+        res = false;
+      } else {
+        followedIds = followedIds.filter(id => id !== catid);
+      }
+    }
+    if (res) {
+      wx.setStorageSync('followedCatIds', followedIds);
+      // 同步到 COS inbox，由 Action 聚合关注数（与 detailCat 的关注行为保持一致）
+      putInbox('follow', {
+        cat_id: catid,
+        follow: !!unfollowed,
+      });
+    }
 
     let { followCount } = this.data;
-    followCount += unfollowed ? 1 : -1;
+    if (res) {
+      followCount += unfollowed ? 1 : -1;
+    }
 
     this.setData({
-      [`followCats[${index}].unfollowed`]: !unfollowed,
+      [`followCats[${index}].unfollowed`]: res ? !unfollowed : unfollowed,
       followCount
     });
 

@@ -187,7 +187,7 @@ module.exports = {
       bottom_tip: "*目前仅拥有十张以上靓照（清晰正面、仅含一只）的猫猫才能被认到哦！多多上传帮忙改进识别效果吧~",
       ad_tip: "识别累了，帮忙点下广告喵（揉眼睛 ( '-ωก̀ )",
     },
-    // 科普页，pages/science/science
+    // 科普页，pages/news/sciDetail
     science: {
       share_tip: "科普",
     },
