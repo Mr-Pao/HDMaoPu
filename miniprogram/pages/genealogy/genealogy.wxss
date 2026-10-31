@@ -599,3 +599,163 @@ scroll-view {
   justify-content: left;
   font-weight: bold;
 }
+/* ================= v4.2 首页重构：双列图鉴 ================= */
+.cards {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: flex-start;
+  align-content: flex-start;
+  justify-content: space-between;
+  padding: 0 22rpx;
+  box-sizing: border-box;
+}
+.cards > .hero,
+.cards > .h-filter-list,
+.cards > .tips-wrap,
+.cards > .loading,
+.cards > .loadnomore {
+  width: 100%;
+  flex: 0 0 100%;
+  box-sizing: border-box;
+}
+
+/* 顶部品牌区 */
+.hero { padding: 34rpx 6rpx 22rpx; }
+.hero-line { display: flex; align-items: baseline; }
+.hero-title {
+  font-size: 54rpx;
+  font-weight: 700;
+  letter-spacing: 6rpx;
+  color: var(--color-primary);
+  line-height: 64rpx;
+}
+.hero-count {
+  margin-left: 14rpx;
+  font-size: 24rpx;
+  color: var(--color-text-tertiary);
+}
+.hero-sub {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  color: var(--color-text-tertiary);
+}
+
+/* 窄卡 */
+.card {
+  width: 346rpx;
+  margin-bottom: 18rpx;
+  border-radius: 22rpx;
+  background-color: var(--color-surface);
+  box-shadow: 0 4rpx 16rpx rgba(12, 95, 3, 0.06);
+  overflow: hidden;
+  position: relative;
+  font-size: 22rpx;
+  line-height: 22rpx;
+}
+
+.shot {
+  position: relative;
+  height: 420rpx;
+  overflow: hidden;
+  background-color: var(--color-gray-light);
+}
+.shot image {
+  width: 100%;
+  height: 420rpx;
+  background-image: var(--img-default);
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: 45% 45%;
+}
+.shot.to_star image { filter: grayscale(100%); }
+
+.shot-flag {
+  position: absolute;
+  top: 16rpx;
+  left: 16rpx;
+  padding: 0 14rpx;
+  height: 34rpx;
+  line-height: 34rpx;
+  font-size: 19rpx;
+  color: var(--color-surface);
+  background-color: var(--color-primary-bright);
+  border-radius: var(--radius-pill);
+}
+.shot-flag--empty { background-color: rgba(31, 36, 33, 0.55); }
+
+.shot-credit {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0 14rpx;
+  height: 40rpx;
+  line-height: 40rpx;
+  font-size: 19rpx;
+  color: var(--color-surface);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card .info { padding: 18rpx 20rpx 22rpx; }
+.row-name { display: flex; align-items: center; }
+.card .info .name {
+  font-size: 32rpx;
+  line-height: 40rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+  color: var(--color-text);
+  max-width: 240rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.card .info image.gender { width: 24rpx; height: 24rpx; margin-left: 8rpx; margin-right: 0; }
+
+.chips { display: flex; flex-wrap: wrap; margin-top: 10rpx; }
+.chip {
+  height: 34rpx;
+  line-height: 34rpx;
+  padding: 0 14rpx;
+  border-radius: var(--radius-pill);
+  font-size: 19rpx;
+  margin-right: 8rpx;
+}
+.chip--adopt { color: var(--color-surface); background-color: var(--color-primary-bright); }
+.chip--star { color: var(--color-primary); background-color: var(--color-primary-soft); }
+
+.row-rating { display: flex; align-items: center; margin-top: 12rpx; }
+.row-rating .stars { display: flex; align-items: center; }
+.row-rating .one-star { width: 22rpx; height: 22rpx; margin-right: 3rpx; }
+.row-rating .one-star image { width: 22rpx; height: 22rpx; display: block; }
+.row-rating .one-star.gray image { opacity: 0.22; }
+.row-rating .score {
+  margin-left: 8rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+  color: var(--color-warning);
+}
+
+.row-meta { display: flex; align-items: center; margin-top: 10rpx; }
+.row-meta .where {
+  font-size: 20rpx;
+  color: var(--color-text-tertiary);
+  max-width: 210rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.row-meta .cmt { margin-left: auto; font-size: 20rpx; color: var(--color-text-tertiary); }
+
+.tips-wrap { padding: 6rpx 0 20rpx; text-align: center; }
+.tips-wrap .tips {
+  display: inline-block;
+  padding: 10rpx 24rpx;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-primary-softer);
+  font-size: 20rpx;
+  color: var(--color-text-secondary);
+}

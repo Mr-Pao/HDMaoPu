@@ -48,6 +48,14 @@
 </view>
 
 <scroll-view enable-flex='1' class='cards' style='height: {{heights.windowHeight - heights.filters}}px;' scroll-y='true' enable-back-to-top='true' bindscrolltolower='onReachBottom' bindscroll='fScroll' lower-threshold='{{main_lower_threshold}}' refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="onPullDownRefresh">
+  <view class='hero'>
+    <view class='hero-line'>
+      <text class='hero-title'>火大猫谱</text>
+      <text class='hero-count'>共 {{catsMax}} 只猫</text>
+    </view>
+    <view class='hero-sub'>校园猫咪图鉴 · 每一只都有名字</view>
+  </view>
+
   <!-- 校区外显筛选 -->
   <scroll-view class="h-filter-list" scroll-x="1" wx:if="{{filters[0].category.length > 1}}">
     <view class='h-filter-item {{item.all_active? "active": ""}}'  bindtap='fClickCampus' data-index='{{index}}' data-filters_sub="0"
@@ -60,71 +68,43 @@
 
   <block wx:for='{{cats}}' wx:key="_id">
     <view class='card' bindtap='clickCatCard' bindlongpress='bindManageCat' data-cat_id='{{item._id}}' data-index='{{index}}'>
-      <view class='label' wx:if="{{item.mphoto_new}}">{{text_cfg.genealogy.new_photo_tip}}</view>
-      <view class='image {{item.to_star? "to_star": ""}}'>
+      <view class='shot {{item.to_star? "to_star": ""}}'>
         <image bindload="bindImageLoaded" mode='aspectFill' src='{{item.photo.photo_compressed || item.photo.photo_id}}' data-index="{{index}}" lazy-load="{{true}}"></image>
-        <view class='image-title' wx:if='{{!item.photo_count_best || item.photo_count_best === 0}}'>{{text_cfg.genealogy.no_photo_tip}}</view>
-        <view class='image-title' wx:else>{{item.photo.photo_id? (text_cfg.genealogy.photo_by_tip + (item.photo.photographer ||(item.photo.userInfo? item.photo.userInfo.nickName: text_cfg.genealogy.photo_by_unknow))): text_cfg.genealogy.photo_loading_tip}}</view>
+        <view class='shot-flag' wx:if="{{item.mphoto_new}}">{{text_cfg.genealogy.new_photo_tip}}</view>
+        <view class='shot-flag shot-flag--empty' wx:elif='{{!item.photo_count_best || item.photo_count_best === 0}}'>{{text_cfg.genealogy.no_photo_tip}}</view>
+        <view class='shot-credit' wx:if='{{item.photo_count_best > 0}}'>{{item.photo.photo_id? (item.photo.photographer ||(item.photo.userInfo? item.photo.userInfo.nickName: text_cfg.genealogy.photo_by_unknow)): text_cfg.genealogy.photo_loading_tip}}</view>
       </view>
       <view class='info' hover-class="hoverInfo">
-        <view class='line'>
+        <view class='row-name'>
           <text class='name'>{{item.name}}</text>
           <block wx:if='{{item.gender}}'>
             <image mode='aspectFill' class='gender' wx:if='{{item.gender === "公"}}' src="/pages/public/images/card/card/male.png"></image>
             <image mode='aspectFill' class='gender' wx:if='{{item.gender === "母"}}' src="/pages/public/images/card/card/female.png"></image>
           </block>
-          <view wx:if='{{item.adopt}}' class='adopt'>{{adopt_desc[item.adopt]}}</view>
-          <view wx:if='{{item.to_star}}' class='to_star'>{{text_cfg.genealogy.to_star_tip}}</view>
-          <view class='popularity'>
-            <image src='/pages/public/images/card/card/pop.png'></image>
-            <text> {{item.popularity + (item.photo_count_total? item.photo_count_total * photoPopWeight: 0) }}</text>
-          </view>
-          <view class='comment' wx:if="{{item.comment_count}}">
-            <image src='/pages/public/images/card/card/comment.png'></image>
-            <text> {{item.comment_count}}</text>
-          </view>
         </view>
-
-        <view class='line' wx:if="{{item.rating}}">
-          <image mode='aspectFit' class='icon' src='/pages/public/images/card/card/star.png'></image>
+        <view class='chips' wx:if='{{item.adopt || item.to_star}}'>
+          <view wx:if='{{item.adopt}}' class='chip chip--adopt'>{{adopt_desc[item.adopt]}}</view>
+          <view wx:if='{{item.to_star}}' class='chip chip--star'>{{text_cfg.genealogy.to_star_tip}}</view>
+        </view>
+        <view class='row-rating' wx:if="{{item.rating}}">
           <view class="stars">
             <view class="one-star {{item.rating.avgScore >= j+1 ? '' : 'gray'}}"  wx:for="*****" wx:key="*this" wx:for-item="y" wx:for-index="j">
               <image src="/pages/public/images/button/rating_star.svg" mode="aspectFill"/>
             </view>
-            <view class="score">{{item.rating.avgScoreDisp || '0.0'}}</view>
           </view>
+          <text class="score">{{item.rating.avgScoreDisp || '0.0'}}</text>
         </view>
-        <view class='line' wx:if="{{item.birthday}}">
-          <image mode='aspectFit' class='icon' src='/pages/public/images/card/card/birth.png'></image>
-          <text>{{item.birthday}}</text>
+        <view class='row-meta'>
+          <text class='where'>{{(item.campus + item.area) || '-'}}</text>
+          <text class='cmt' wx:if="{{item.comment_count}}">{{item.comment_count}} 留言</text>
         </view>
-        <view class='line'>
-          <image mode='aspectFit' class='icon' src='/pages/public/images/card/card/cat.png'></image>
-          <text class="characteristics">{{item.characteristics_string}}</text>
-        </view>
-        <view class='line' wx:if="{{item.habit}}">
-          <image mode='aspectFit' class='icon' src='/pages/public/images/card/card/heart.png'></image>
-          <text class="habit">{{item.habit}}</text>
-        </view>
-        <view class='line'>
-          <image mode='aspectFit' class='icon' src='/pages/public/images/card/card/pos.png'></image>
-          <text>{{(item.campus + item.area) || '-'}}</text>
-          <view class='index'><text decode='true'>&lt; {{index+1}}/{{catsMax}} &gt;</text></view>
-        </view>
-
       </view>
     </view>
 
-     <!-- 广告 -->
-
-<!--     <view wx:if="{{adStep && (index+1)%adStep===0 && tipsList[(index+1)/adStep-1].tip.length>0}}">
-      <text  class="tips">{{tipsList[(index+1)/adStep-1].tip}}</text>
-    </view> -->
-    
-    <view wx:if="{{adStep && (index+1)%adStep===0 && tipsList[(index+1)/adStep-1].tip.length>0}}">
+    <!-- 广告 -->
+    <view wx:if="{{adStep && (index+1)%adStep===0 && tipsList[(index+1)/adStep-1].tip.length>0}}" class='tips-wrap'>
       <text  class="tips">{{tipsList[(index+1)/adStep-1].tip}}</text>
     </view>
-
   </block>
 
   <view class='loading' wx:if='{{!loadnomore}}'>
