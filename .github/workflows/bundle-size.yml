@@ -1,0 +1,75 @@
+name: bundle-size
+
+# 包体 CI 门禁（独立 workflow，与 process-inbox 等同仓库）
+on:
+  push:
+  pull_request:
+
+jobs:
+  bundle-size:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Estimate mini-program package sizes
+        env:
+          # 包体预算（字节）。微信主包/子包硬上限均为 2MB；此处用 3MB 作为回归护栏：
+          # 当前仓库主包估算约 2.7MB（见下方说明），阈值高于基线以留出余量，
+          # 仅当意外引入大文件导致主包超过 3MB 时才失败。
+          LIMIT_MAIN: "3145728"
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const root = path.join(process.cwd(), 'miniprogram');
+          const app = JSON.parse(fs.readFileSync(path.join(root, 'app.json'), 'utf8'));
+          // 子包根目录（子包各有独立 2MB 上限）
+          const subRoots = (app.subPackages || app.subpackages || [])
+            .map(s => s.root.replace(/\/$/, ''))
+            .filter(Boolean);
+          // 构建产物不计入（npm 依赖、开发者工具编译出的 miniprogram_npm）
+          const IGNORE = new Set(['node_modules', 'miniprogram_npm']);
+
+          function walk(dir, excludeRoots) {
+            let bytes = 0;
+            for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+              const p = path.join(dir, e.name);
+              if (e.isDirectory()) {
+                if (IGNORE.has(e.name)) continue;
+                if (excludeRoots.some(r => p.endsWith(path.sep + r))) continue;
+                bytes += walk(p, excludeRoots);
+              } else {
+                bytes += fs.statSync(p).size;
+              }
+            }
+            return bytes;
+          }
+
+          const limit = Number(process.env.LIMIT_MAIN) || 3 * 1024 * 1024;
+
+          // 主包 = 除子包根目录以外的所有文件
+          const mainBytes = walk(root, subRoots);
+          console.log(`主包估算：${mainBytes} 字节（${(mainBytes / 1048576).toFixed(3)} MB）`);
+
+          // 各子包各自统计（仅上报，不拦截；当前均远小于 2MB）
+          for (const r of subRoots) {
+            const b = walk(path.join(root, r), []);
+            console.log(`子包 ${r}：${b} 字节（${(b / 1048576).toFixed(3)} MB）`);
+          }
+
+          // ⚠️ du/fs 估算的局限（不影响拦截逻辑，仅作说明）：
+          //   1) 只统计源码体积，不含微信开发者工具编译产物（.wxml→.js 等），真实产物更大；
+          //   2) 小程序上传时平台会压缩，故 3MB 预算是粗筛护栏而非精确上限；
+          //   3) 当前主包已超微信名义 2MB：因 app.json 声明的部分子包页面
+          //      （pages/recognize、pages/info/badge）实际位于主包目录，属既有打包结构，
+          //      不在本门禁处理范围，需后续把相应文件移入 pages/packageA 才能真正独立分包。
+
+          if (mainBytes > limit) {
+            console.error(`::error::主包 ${mainBytes} 字节超过预算 ${limit} 字节（${(limit / 1048576).toFixed(2)} MB）`);
+            process.exit(1);
+          }
+          console.log('主包体积在预算内。');
+          NODE

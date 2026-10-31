@@ -1156,6 +1156,7 @@ module.exports = {
   createJsonServerless,
   // 下面几个导出给本地自测脚本用，业务代码不需要
   _matchFilter,
+  _matchValue,
   _applyQuery,
   _sortItems,
   CACHE_TTL,

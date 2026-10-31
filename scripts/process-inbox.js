@@ -146,7 +146,10 @@ function genId(prefix, ts) {
 // 入站对象的解析与校验
 // ---------------------------------------------------------------------------
 
-function parseObject(key, body) {
+// 防刷校验入口：体积上限 + JSON 解析 + body schema + openid 格式 + kind 白名单 + ts 窗口。
+// 抽成独立函数并导出，便于单元测试（process-inbox.test.js）直接断言各类拒绝原因，
+// 原聚合入口 processObjects 仍通过别名 parseObject 调用，行为不变。
+function validateInboxItem(key, body) {
   // too-large 前置拦截：单对象体积上限（防大文件灌爆 inbox），保留不变
   if (Buffer.byteLength(body, 'utf8') > MAX_OBJECT_BYTES) {
     return { ok: false, reason: 'too-large' };
@@ -178,6 +181,11 @@ function parseObject(key, body) {
     return { ok: false, reason: 'no-data' };
   }
   return { ok: true, payload, ts };
+}
+
+// 兼容别名：聚合入口 processObjects 仍调用 parseObject，行为不变
+function parseObject(key, body) {
+  return validateInboxItem(key, body);
 }
 
 function tokenOk(token) {
@@ -884,7 +892,13 @@ function printStats(stats) {
   }
 }
 
-main().catch(err => {
-  console.error('聚合脚本异常：', err);
-  process.exit(1);
-});
+// 仅当作为脚本直接运行时才执行聚合主流程；被单元测试 require 时不触发，
+// 避免测试引入时误跑 COS 操作 / 文件写入。
+if (require.main === module) {
+  main().catch(err => {
+    console.error('聚合脚本异常：', err);
+    process.exit(1);
+  });
+}
+
+module.exports = { validateInboxItem };
