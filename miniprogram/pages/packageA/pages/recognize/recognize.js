@@ -77,7 +77,7 @@ Page({
   async onShow() {
     if (!this.jsData.interfaceURL || !this.jsData.secretKey) {
       console.log('__wxConfig.envVersion: ', __wxConfig.envVersion);
-      var settings = await getGlobalSettings(__wxConfig.envVersion === 'release' ? 'recognize' : 'recognize_test');
+      var settings = await getGlobalSettings(__wxConfig.envVersion === 'release' ? 'recognize' : 'recognize_test') || {};
       this.jsData.interfaceURL = settings.interfaceURL;
       this.jsData.secretKey = settings.secretKey;
       await this.recognizeChatImage();

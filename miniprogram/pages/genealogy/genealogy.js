@@ -117,8 +117,8 @@ Page({
     this.jsData.catsStep = settings['catsStep'] || 1;
 
     this.setData({
-      main_lower_threshold: settings['main_lower_threshold'],
-      adStep: settings['adStep'],
+      main_lower_threshold: settings['main_lower_threshold'] || 50,
+      adStep: settings['adStep'] || 0,
       photoPopWeight: settings['photoPopWeight'] || 10
     });
 
@@ -240,7 +240,7 @@ Page({
 
   loadRecognize: async function () {
     const env = __wxConfig.envVersion === 'release' ? 'recognize' : 'recognize_test';
-    const settings = await getGlobalSettings(env);
+    const settings = await getGlobalSettings(env) || {};
     this.setData({
       showRecognize: settings.interfaceURL && !settings.interfaceURL.includes("https://your.domain.com")
     });
