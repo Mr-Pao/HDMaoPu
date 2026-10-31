@@ -207,11 +207,11 @@
     ]
   },
   "window": {
-    "backgroundColor": "#fff",
+    "backgroundColor": "#f7f7fa",
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#ffd101",
-    "navigationBarTitleText": "笃行猫谱",
-    "navigationBarTextStyle": "black"
+    "navigationBarBackgroundColor": "#0C5F03",
+    "navigationBarTitleText": "火大猫谱",
+    "navigationBarTextStyle": "white"
   },
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents",
