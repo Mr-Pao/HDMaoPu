@@ -1,5 +1,5 @@
 {
-  "version": "v1793452617965",
+  "version": "1793459326505",
   "items": [
     {
       "_id": "demo-cat-1",
@@ -32,21 +32,21 @@
         }
       ],
       "rating": {
-        "count": 0,
+        "count": 3,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
-          "r4": 0,
+          "r4": 3,
           "r5": 0
         },
-        "avgScore": 0,
-        "avgScoreDisp": "0.0"
+        "avgScore": 4,
+        "avgScoreDisp": "4.0"
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
-      "comment_count": 0,
-      "follow_count": 0,
+      "comment_count": 3,
+      "follow_count": 3,
       "latitude": 23.102685,
       "longitude": 113.299872,
       "mphoto": 1778839200000,
@@ -85,21 +85,21 @@
         }
       ],
       "rating": {
-        "count": 0,
+        "count": 4,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
-          "r4": 0,
-          "r5": 0
+          "r4": 2,
+          "r5": 2
         },
-        "avgScore": 0,
-        "avgScoreDisp": "0.0"
+        "avgScore": 4.5,
+        "avgScoreDisp": "4.5"
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
-      "comment_count": 0,
-      "follow_count": 0,
+      "comment_count": 4,
+      "follow_count": 6,
       "latitude": 23.096856,
       "longitude": 113.29708,
       "mphoto": 1778752800000,
@@ -138,21 +138,21 @@
         }
       ],
       "rating": {
-        "count": 0,
+        "count": 5,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
-          "r4": 0,
-          "r5": 0
+          "r4": 2,
+          "r5": 3
         },
-        "avgScore": 0,
-        "avgScoreDisp": "0.0"
+        "avgScore": 4.6,
+        "avgScoreDisp": "4.6"
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
-      "comment_count": 0,
-      "follow_count": 1,
+      "comment_count": 5,
+      "follow_count": 6,
       "latitude": 23.099602,
       "longitude": 113.299638,
       "mphoto": 1778666400000,
@@ -191,21 +191,21 @@
         }
       ],
       "rating": {
-        "count": 0,
+        "count": 6,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
-          "r4": 0,
-          "r5": 0
+          "r4": 5,
+          "r5": 1
         },
-        "avgScore": 0,
-        "avgScoreDisp": "0.0"
+        "avgScore": 4.166666666666667,
+        "avgScoreDisp": "4.2"
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
-      "comment_count": 0,
-      "follow_count": 0,
+      "comment_count": 6,
+      "follow_count": 6,
       "latitude": 23.1008,
       "longitude": 113.2965,
       "mphoto": 1778580000000,
@@ -244,21 +244,21 @@
         }
       ],
       "rating": {
-        "count": 0,
+        "count": 3,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
-          "r4": 0,
-          "r5": 0
+          "r4": 2,
+          "r5": 1
         },
-        "avgScore": 0,
-        "avgScoreDisp": "0.0"
+        "avgScore": 4.333333333333333,
+        "avgScoreDisp": "4.3"
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
-      "comment_count": 0,
-      "follow_count": 0,
+      "comment_count": 3,
+      "follow_count": 3,
       "latitude": 23.1042,
       "longitude": 113.2948,
       "mphoto": 1778493600000,
@@ -297,21 +297,21 @@
         }
       ],
       "rating": {
-        "count": 0,
+        "count": 4,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
-          "r4": 0,
+          "r4": 4,
           "r5": 0
         },
-        "avgScore": 0,
-        "avgScoreDisp": "0.0"
+        "avgScore": 4,
+        "avgScoreDisp": "4.0"
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
-      "comment_count": 0,
-      "follow_count": 0,
+      "comment_count": 4,
+      "follow_count": 3,
       "latitude": 23.0985,
       "longitude": 113.3012,
       "mphoto": 1778407200000,
@@ -350,20 +350,20 @@
         }
       ],
       "rating": {
-        "count": 0,
+        "count": 5,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
-          "r4": 0,
+          "r4": 5,
           "r5": 0
         },
-        "avgScore": 0,
-        "avgScoreDisp": "0.0"
+        "avgScore": 4,
+        "avgScoreDisp": "4.0"
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
-      "comment_count": 0,
+      "comment_count": 5,
       "follow_count": 0,
       "latitude": 23.1015,
       "longitude": 113.298,
@@ -403,20 +403,20 @@
         }
       ],
       "rating": {
-        "count": 0,
+        "count": 6,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
-          "r4": 0,
+          "r4": 6,
           "r5": 0
         },
-        "avgScore": 0,
-        "avgScoreDisp": "0.0"
+        "avgScore": 4,
+        "avgScoreDisp": "4.0"
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
-      "comment_count": 0,
+      "comment_count": 6,
       "follow_count": 0,
       "latitude": 23.103,
       "longitude": 113.2975,
@@ -456,20 +456,20 @@
         }
       ],
       "rating": {
-        "count": 0,
+        "count": 3,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
-          "r4": 0,
-          "r5": 0
+          "r4": 2,
+          "r5": 1
         },
-        "avgScore": 0,
-        "avgScoreDisp": "0.0"
+        "avgScore": 4.333333333333333,
+        "avgScoreDisp": "4.3"
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
-      "comment_count": 0,
+      "comment_count": 3,
       "follow_count": 0,
       "latitude": 23.099,
       "longitude": 113.2985,
@@ -509,20 +509,20 @@
         }
       ],
       "rating": {
-        "count": 0,
+        "count": 4,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
-          "r4": 0,
-          "r5": 0
+          "r4": 3,
+          "r5": 1
         },
-        "avgScore": 0,
-        "avgScoreDisp": "0.0"
+        "avgScore": 4.25,
+        "avgScoreDisp": "4.3"
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
-      "comment_count": 0,
+      "comment_count": 4,
       "follow_count": 0,
       "latitude": 23.105,
       "longitude": 113.3005,
@@ -562,20 +562,20 @@
         }
       ],
       "rating": {
-        "count": 0,
+        "count": 5,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
-          "r4": 0,
+          "r4": 5,
           "r5": 0
         },
-        "avgScore": 0,
-        "avgScoreDisp": "0.0"
+        "avgScore": 4,
+        "avgScoreDisp": "4.0"
       },
       "photo_count_best": 1,
       "photo_count_total": 1,
-      "comment_count": 0,
+      "comment_count": 5,
       "follow_count": 0,
       "latitude": 23.0975,
       "longitude": 113.295,

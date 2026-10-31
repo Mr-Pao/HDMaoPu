@@ -1,4 +1,35 @@
 {
-  "version": "2026-10-31T13:00:00Z",
-  "items": []
+  "version": "1793459326505",
+  "items": [
+    {
+      "_id": "demo-photo-rank-1",
+      "mdate": "2026-10-31T00:00:00.000Z",
+      "stat": {
+        "demo-openid-1": {
+          "count": 3
+        },
+        "demo-openid-2": {
+          "count": 4
+        },
+        "demo-openid-3": {
+          "count": 5
+        },
+        "demo-openid-4": {
+          "count": 6
+        },
+        "demo-openid-5": {
+          "count": 3
+        },
+        "demo-openid-6": {
+          "count": 4
+        },
+        "demo-openid-7": {
+          "count": 5
+        },
+        "demo-openid-8": {
+          "count": 6
+        }
+      }
+    }
+  ]
 }
