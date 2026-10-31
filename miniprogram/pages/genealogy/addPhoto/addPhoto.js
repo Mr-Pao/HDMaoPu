@@ -36,6 +36,13 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: async function (options) {
+    // v4.0 上传通道未开放，任何入口进来都直接退回
+    if (!config.photo_upload_enabled) {
+      wx.showToast({ title: '照片上传暂未开放', icon: 'none' });
+      setTimeout(() => wx.navigateBack(), 1200);
+      return;
+    }
+
     const cat_id = options.cat_id;
     // var catRes = await db.collection('cat').doc(cat_id).field({
     //   birthday: true,

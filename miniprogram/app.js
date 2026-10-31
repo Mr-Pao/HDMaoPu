@@ -1,33 +1,29 @@
 import { checkUpdateVersion, getDateWithDiffHours } from './utils/utils';
-import { app_version } from "./config";
-import { ensureCos } from './utils/common';
-import { app_id, space_id, space_secret, space_endpoint } from './config'
+import { app_version, demo_mode, data_base_url } from "./config";
 import eventBus from './utils/eventBus';
 import { createMockMpServerless } from './utils/demo';
+import { createJsonServerless } from './utils/datasource';
 
 let mpServerless;
+// 三种运行模式，优先级：demo_mode > 远程 JSON > demo 兜底
+//   demoMode = 本地硬编码假数据（utils/demo.js），保命预览用
+//   dataMode = COS 上的 data/<collection>.json，内存查询
 let demoMode = false;
+let dataMode = false;
 
-// 这里必须用 require 而不是 import：SDK 缺失时能在运行时降级，
-// 换成 import 会在编译期直接报错，降级逻辑就失效了。
-try {
-  var MPServerless = require('@alicloud/mpserverless-sdk');
-  mpServerless = new MPServerless({
-    uploadFile: wx.uploadFile,
-    request: wx.request,
-    getAuthCode: wx.login,
-    getFileInfo: wx.getFileInfo,
-    getImageInfo: wx.getImageInfo,
-  }, {
-    appId: app_id,
-    spaceId: space_id,
-    clientSecret: space_secret,
-    endpoint: space_endpoint,
-  });
-} catch (e) {
-  console.warn('[EMAS] SDK 加载失败，进入离线 Demo 模式:', e.message);
-  mpServerless = createMockMpServerless();
+if (demo_mode === true) {
   demoMode = true;
+  console.log('[Mode] demo_mode = true，使用本地假数据');
+  mpServerless = createMockMpServerless();
+} else if (data_base_url) {
+  dataMode = true;
+  console.log('[Mode] 使用 COS 静态数据源：' + data_base_url);
+  mpServerless = createJsonServerless({ baseUrl: data_base_url });
+} else {
+  // data_base_url 没配时退回 demo，不要让页面白屏
+  demoMode = true;
+  console.warn('[Mode] data_base_url 未配置，退回 demo 模式（本地假数据）');
+  mpServerless = createMockMpServerless();
 }
 
 const launchStartTime = Date.now();
@@ -44,9 +40,10 @@ App({
     this.globalData = {
       version: app_version,
       eventBus: eventBus,
+      demoMode: demoMode,
+      dataMode: dataMode,
       isReady: false,
-      tabDataPreloaded: false,
-      demoMode: demoMode
+      tabDataPreloaded: false
     };
 
     this.initCos().then(() => {
@@ -162,25 +159,52 @@ App({
   },
 
   async initSDK() {
-    if (demoMode) {
-      return;
-    }
-    return mpServerless.init();
+    // datasource 没有异步初始化步骤，保留这个钩子让 onLaunch 流程不变
+    return;
   },
 
   async initCos() {
-    this.cos = await ensureCos();
+    // EMAS 下线后没有云函数签发临时密钥，COS 客户端不再初始化；
+    // 照片走公有读直链（见 utils/common.js 里 signCosUrl 的 dataMode 分支）
+    this.cos = null;
   },
 
   async checkCacheValidity() {
     const clearDay = wx.getStorageSync('clear-all-cache');
     if (!clearDay || new Date(clearDay) < new Date()) {
       try {
+        // data/ 的 JSON 缓存和本地覆盖层必须留着：
+        // 否则每 48 小时清一次，断网启动就只剩空列表
+        const keep = this._snapshotDataSourceCache();
         wx.clearStorageSync();
+        this._restoreDataSourceCache(keep);
       } catch (e) {
         console.warn('Failed to clear storage:', e);
       }
       wx.setStorageSync('clear-all-cache', getDateWithDiffHours(48));
+    }
+  },
+
+  _snapshotDataSourceCache() {
+    const keep = {};
+    try {
+      const keys = wx.getStorageInfoSync().keys || [];
+      keys.forEach(key => {
+        if (key.indexOf('ds_cache_') === 0 || key.indexOf('ds_local_') === 0 || key === 'fake_openid') {
+          keep[key] = wx.getStorageSync(key);
+        }
+      });
+    } catch (e) {
+      console.warn('读取缓存键失败:', e.message);
+    }
+    return keep;
+  },
+
+  _restoreDataSourceCache(keep) {
+    try {
+      Object.keys(keep).forEach(key => wx.setStorageSync(key, keep[key]));
+    } catch (e) {
+      console.warn('恢复数据源缓存失败:', e.message);
     }
   },
 

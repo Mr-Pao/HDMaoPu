@@ -1,0 +1,49 @@
+name: sync-data
+
+# data/*.json 是「仓库当后台」的唯一数据源。
+# 每次改完 data/ 里的 json 推到 cos-version，这个 workflow 会把它上传到 COS，
+# 小程序端 GET {baseUrl}/data/<collection>.json 就能读到新数据。
+
+on:
+  push:
+    branches:
+      - cos-version
+    paths:
+      - 'data/**'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '只校验 JSON，不上传'
+        type: boolean
+        default: false
+
+concurrency:
+  group: sync-data
+  cancel-in-progress: true
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 安装依赖
+        working-directory: scripts
+        run: npm install cos-nodejs-sdk-v5 --no-save --no-audit --no-fund --registry=https://registry.npmmirror.com
+
+      - name: 上传 data/*.json 到 COS
+        working-directory: scripts
+        env:
+          COS_SECRET_ID: ${{ secrets.COS_SECRET_ID }}
+          COS_SECRET_KEY: ${{ secrets.COS_SECRET_KEY }}
+          COS_BUCKET: ${{ secrets.COS_BUCKET }}
+          COS_REGION: ${{ secrets.COS_REGION }}
+          DRY_RUN: ${{ inputs.dry_run == true && '1' || '0' }}
+        run: node upload-data.js

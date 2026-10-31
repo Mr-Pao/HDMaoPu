@@ -1,0 +1,71 @@
+name: review
+
+# 只监听 Issue 评论。注意：issue_comment 事件只读取默认分支（master）上的
+# workflow 定义，所以这个文件必须在 master 上也存在，否则线上不会触发。
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+  contents: read
+
+concurrency:
+  group: review-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  review:
+    if: >-
+      startsWith(github.event.comment.body, '/ok') ||
+      startsWith(github.event.comment.body, '/no') ||
+      startsWith(github.event.comment.body, '/approve') ||
+      startsWith(github.event.comment.body, '/reject')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 安装依赖
+        working-directory: scripts
+        run: npm install --no-audit --no-fund --registry=https://registry.npmmirror.com
+
+      # 兜底：上面的 if 表达式是 case-sensitive 且不 trim，这里再判一次，
+      # 避免表达式写错导致对非审核评论也去改 COS 对象。
+      - name: 检查评论命令
+        id: guard
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          set -euo pipefail
+          CMD="$(printf '%s' "$COMMENT_BODY" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+          echo "评论内容：$CMD"
+          case "$CMD" in
+            /ok*|/approve*|/no*|/reject*)
+              echo "ok=true" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "不是审核命令，跳过"
+              echo "ok=false" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      - name: 执行审核
+        if: steps.guard.outputs.ok == 'true'
+        working-directory: scripts
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          COMMENT_AUTHOR_ASSOCIATION: ${{ github.event.comment.author_association }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          COS_SECRET_ID: ${{ secrets.COS_SECRET_ID }}
+          COS_SECRET_KEY: ${{ secrets.COS_SECRET_KEY }}
+          COS_BUCKET: ${{ secrets.COS_BUCKET }}
+          COS_REGION: ${{ secrets.COS_REGION }}
+        run: node review.js

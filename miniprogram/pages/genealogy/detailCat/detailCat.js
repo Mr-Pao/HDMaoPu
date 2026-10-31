@@ -167,7 +167,8 @@ Page({
       this.reloadUserBadge(),
     ]);
     this.setData({
-      canUpload: canUpload,
+      // v4.0 上传暂未开放（config.photo_upload_enabled），直接隐藏入口
+      canUpload: !!canUpload && config.photo_upload_enabled === true,
       canComment: canComment
     });
   },
@@ -375,6 +376,10 @@ Page({
   },
 
   bindAddPhoto() {
+    if (!config.photo_upload_enabled) {
+      wx.showToast({ title: '上传功能正在改造，暂未开放', icon: 'none', duration: 2000 });
+      return;
+    }
     wx.navigateTo({
       url: '/pages/genealogy/addPhoto/addPhoto?cat_id=' + this.data.cat._id,
     });

@@ -1,0 +1,41 @@
+{
+  "version": "2026-10-31T13:00:00Z",
+  "items": [
+    {
+      "_id": "mi-1",
+      "name": "白猫",
+      "img": "/images/markers/white.jpg",
+      "enabled": true
+    },
+    {
+      "_id": "mi-2",
+      "name": "黑猫",
+      "img": "/images/markers/black.jpg",
+      "enabled": true
+    },
+    {
+      "_id": "mi-3",
+      "name": "橘猫",
+      "img": "/images/markers/orange.jpg",
+      "enabled": true
+    },
+    {
+      "_id": "mi-4",
+      "name": "蓝猫",
+      "img": "/images/markers/blue.jpg",
+      "enabled": true
+    },
+    {
+      "_id": "mi-5",
+      "name": "狸花",
+      "img": "/images/markers/tabby.jpg",
+      "enabled": true
+    },
+    {
+      "_id": "mi-6",
+      "name": "三花",
+      "img": "/images/markers/calico.jpg",
+      "enabled": true
+    }
+  ]
+}

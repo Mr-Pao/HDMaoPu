@@ -8,7 +8,23 @@ const secrets = require('./appSecret.js');
 
 module.exports = {
   // 版本号
-  app_version: "v3.1.0",
+  app_version: "v4.0.0",
+  // 【离线 Demo 模式】
+  // true  = 不连任何后端，使用 utils/demo.js 里的假数据（11 只猫 + 照片 + 设置）
+  // false = 走下面的 data_base_url（COS 上的静态 JSON）
+  // 注意：如果 data_base_url 拉不到数据，页面会是空列表（不是白屏），
+  //       把这里改回 true 就能看到假数据，方便排查是小程序的问题还是数据的问题。
+  demo_mode: false,
+  // 【COS 数据文件根地址】末尾不带斜杠。
+  // 小程序会去 GET {data_base_url}/data/cat.json、data/photo.json ……
+  // 留空则退回 demo_mode 的本地假数据
+  data_base_url: "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com",
+  // 【照片上传开关】v4.0 暂时关闭
+  // 原因：原来靠云函数 unionOp/getURL 签发 COS 临时密钥，现在没有云函数了，
+  //       小程序端拿不到上传凭证，一点上传就报错。
+  // 恢复上传有两条路：① 内置只授权 pending/* 的受限密钥 ② 接一个签发服务。
+  // 定下来之后把这里改成 true 即可，页面代码不用动。
+  photo_upload_enabled: false,
   // 小程序appid（从敏感配置文件加载）
   app_id: secrets.app_id,
   // EMAS空间ID（从敏感配置文件加载）
