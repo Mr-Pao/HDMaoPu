@@ -13,7 +13,7 @@ async function generateMpCode(cat) {
       cat.mpcode = result.mpcode;
     }
   } catch (error) {
-    console.error("??????????????:", error);
+    console.error("读取小程序码字段失败:", error);
   }
 }
 

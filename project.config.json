@@ -1,6 +1,5 @@
 {
   "miniprogramRoot": "miniprogram/",
-  "cloudfunctionRoot": "cloudfunctions/",
   "setting": {
     "localPlugins": false,
     "urlCheck": true,
@@ -46,7 +45,6 @@
   "simulatorType": "wechat",
   "simulatorPluginLibVersion": {},
   "compileType": "miniprogram",
-  "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
   "srcMiniprogramRoot": "miniprogram/",
   "editorSetting": {
     "tabIndent": "insertSpaces",
@@ -173,7 +171,22 @@
     }
   },
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      { "type": "folder", "value": "pages/manage/photoManagement" },
+      { "type": "folder", "value": "pages/manage/medicalManage" },
+      { "type": "folder", "value": "pages/manage/checkAdoption" },
+      { "type": "folder", "value": "pages/info/myFootprint" },
+      { "type": "folder", "value": "pages/info/myAdoption" },
+      { "type": "folder", "value": "pages/info/myAchievement" },
+      { "type": "folder", "value": "pages/adoption/applyAdoption" },
+      { "type": "folder", "value": "pages/genealogy/applyMapAccess" },
+      { "type": "folder", "value": "pages/genealogy/detailCat/relationGraph" },
+      { "type": "folder", "value": "pages/tools/updateUserRole" },
+      { "type": "folder", "value": "pages/tools/inviteUser" },
+      { "type": "folder", "value": "pages/debug" },
+      { "type": "folder", "value": "components/achievementRank" },
+      { "type": "folder", "value": "images/markers" }
+    ],
     "include": []
   },
   "appid": "wx5d52c6c8f098ed5e",
