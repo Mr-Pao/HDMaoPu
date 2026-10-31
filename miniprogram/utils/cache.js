@@ -72,7 +72,7 @@ const cacheTime = {
   pageSetting: 24 * 7,         // 页面设置 (7天)
   genealogyFCampus: 24 * 7 * 31, // 首页校区过滤选项 (31天)
   checkPhotoCampus: 24 * 7 * 31, // 最后一次审核照片的校区 (31天)
-  genealogyNews: 0,            // 首页的news弹窗 (不缓存)
+  genealogyNews: 12,           // 首页的news弹窗 (12小时内不重复弹)
 }
 
 module.exports = {

@@ -1,6 +1,5 @@
 // 存放共享功能，避免循环引用
 import { use_private_tencent_cos, sign_expires_tencent_cos } from "../config";
-import COS from '../packages/tencentcloud/cos';
 import { removeQueryParams, parseQueryParams, getDeltaHours } from './utils'
 import { getCacheItem, setCacheItem } from "./cache";
 
@@ -76,116 +75,11 @@ async function uploadFile(options) {
     })
   });
 };
-
-// 初始化腾讯云 COS
-async function ensureCos() {
-  if (!use_private_tencent_cos) {
-    return undefined;
-  }
-
-  var cos = new COS({
-    SimpleUploadMethod: 'putObject',
-    getAuthorization: async function (options, callback) {
-      var cosTemp = wx.getStorageSync('cosTemp');
-      const app = getApp();
-      if (!cosTemp || (new Date() > new Date(cosTemp.Expiration))) {
-        console.log("开始获取 cosTemp");
-        cosTemp = (await app.mpServerless.function.invoke('getTempCOS')).result
-        wx.setStorageSync('cosTemp', cosTemp);
-      }
-      if (!cosTemp || !cosTemp.Credentials) {
-        callback({
-          TmpSecretId: "empty",
-          TmpSecretKey: "empty",
-          SecurityToken: "empty",
-          ExpiredTime: "3392838427",
-        });
-        return;
-      }
-      callback({
-        TmpSecretId: cosTemp.Credentials.TmpSecretId,
-        TmpSecretKey: cosTemp.Credentials.TmpSecretKey,
-        SecurityToken: cosTemp.Credentials.Token,
-        ExpiredTime: cosTemp.ExpiredTime,
-      });
-    }
-  });
-  return cos;
-}
-
-// COS加密
+// COS加密：cos 静态化模式下公开读，无需签名，直接返回原 URL
 async function signCosUrl(inputUrl) {
-  let url = inputUrl;
-  // console.log("[signCosUrl]", url);
-  const app = getApp();
-  // 不是腾讯云COS的不加密
-  if (!url || !url.includes("myqcloud.com") || !app.cos || !use_private_tencent_cos) {
-    return url;
-  }
-
-  if (!_needResign(url)) {
-    return url;
-  }
-
-  // 去除参数部分
-  url = removeQueryParams(url);
-
-  // 获取缓存
-  let cacheKey = `cos-sign-${url}`;
-  let cacheItem = getCacheItem(cacheKey);
-  if (cacheItem) {
-    return cacheItem;
-  }
-
-  // 实际签名
-  let signedUrl = await _doCosSign(url);
-
-  // 保存缓存，使用默认过期时间
-  let expireHours = sign_expires_tencent_cos / 3600; // 默认过期时间（小时）
-  setCacheItem(cacheKey, signedUrl, expireHours);
-
-  return signedUrl;
+  return inputUrl;
 }
 
-// 检查是否需要重新签名
-async function _needResign(url) {
-  if (!url.includes("?")) {
-    return true;
-  }
-
-  let params = parseQueryParams(url);
-  let signTime = parseInt(params["q-sign-time"]);
-  // 检查是否有签名，签名是否过期
-  if (!signTime || getDeltaHours(signTime) * 3600 > sign_expires_tencent_cos) {
-    return true;
-  }
-
-  return false;
-}
-
-
-// 实际签名操作
-async function _doCosSign(url) {
-  const app = getApp();
-  const cosInfo = _getRegionBucketPath(url);
-  return new Promise((resolve) => {
-    app.cos.getObjectUrl({
-      Bucket: cosInfo.bucket, /* 填入您自己的存储桶，必须字段 */
-      Region: cosInfo.region, /* 存储桶所在地域，例如 ap-beijing，必须字段 */
-      Key: cosInfo.filePath, /* 存储在桶里的对象键（例如1.jpg，a/b/test.txt），支持中文，必须字段 */
-      Protocol: "https:",
-      Expires: sign_expires_tencent_cos, // 单位秒
-    }, function (err, data) {
-      if (err) {
-        console.error(err);
-        resolve(url)
-        return;
-      }
-      // console.log("[signCosUrl]", data.Url);
-      resolve(data.Url);
-    });
-  });
-}
 
 
 /**
@@ -228,31 +122,6 @@ function getOptimizedImageUrl(url, preferWebP = true) {
   return url;
 }
 
-// 提取COS的region和bucket字段
-function _getRegionBucketPath(url) {
-  // 返回：{region: 'ap-guangzhou', bucket: 'bucket-name', filePath: "xxx/xxx.xxx"}
-  const regex = /http[s]*:\/\//i;
-  const newUrl = url.replace(regex, '');
-  const items = _splitOnce(newUrl, '/');
-  const firstItems = items[0].split('.');
-
-  if (firstItems[0] !== 'cos') {
-    // 例如：https://bucket-name.cos.ap-guangzhou.myqcloud.com/sample.png
-    const bucket = firstItems[0].trim(); // 去除空白字符
-    return { region: firstItems[2], bucket: bucket, filePath: items[1] };
-  }
-
-  // 例如：https://cos.ap-guangzhou.myqcloud.com/bucket-name/sample.png
-  const path = _splitOnce(items[1], '/');
-  const bucket = path[0].trim(); // 去除空白字符
-  return { region: firstItems[1], bucket: bucket, filePath: path[1] };
-}
-
-function _splitOnce(str, sep) {
-  const idx = str.indexOf(sep);
-  return [str.slice(0, idx), str.slice(idx + 1)];
-}
-
 /**
  * 批量签名照片URL
  * @param {Object|Array} photos - 照片对象或照片数组
@@ -291,7 +160,6 @@ module.exports = {
   getCurrentUserOpenid,
   downloadFile,
   uploadFile,
-  ensureCos,
   signCosUrl,
   signPhotoUrls,
   convertToWebP,

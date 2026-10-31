@@ -94,7 +94,7 @@ Page({
     let settings = null;
     for (let retry = 0; retry < 3; retry++) {
       try {
-        settings = await getGlobalSettings('genealogy', { nocache: true });
+        settings = await getGlobalSettings('genealogy', {});
         break;
       } catch {
         if (retry < 2) await sleep(500);
