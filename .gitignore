@@ -23,3 +23,6 @@ miniprogram/signKey.js
 
 # 旧 .git 副本（历史误提交）
 _git/
+
+# 项目本地数据（WorkBuddy 会话与记忆）
+.workbuddy/
