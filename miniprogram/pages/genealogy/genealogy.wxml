@@ -78,40 +78,25 @@
   </scroll-view>
 
   <block wx:for='{{cats}}' wx:key="_id">
-    <view class='card {{item.to_star? "card--star": ""}}' bindtap='clickCatCard' bindlongpress='bindManageCat' data-cat_id='{{item._id}}' data-index='{{index}}'>
-      <view class='shot'>
-        <image bindload="bindImageLoaded" mode='aspectFill' src='{{item.photo.photo_compressed || item.photo.photo_id}}' data-index="{{index}}" lazy-load="{{true}}"></image>
-        <view class='veil'></view>
-        <view class='serial'>#{{index+1}}</view>
-        <view class='shot-flag' wx:if="{{item.mphoto_new}}">{{text_cfg.genealogy.new_photo_tip}}</view>
-        <view class='shot-flag shot-flag--empty' wx:elif='{{!item.photo_count_best || item.photo_count_best === 0}}'>{{text_cfg.genealogy.no_photo_tip}}</view>
-        <view class='badge-adopt' wx:if='{{item.adopt}}'>{{adopt_desc[item.adopt]}}</view>
-        <view class='stamp' wx:if='{{item.to_star}}'>{{text_cfg.genealogy.to_star_tip}}</view>
-        <view class='shot-name'>
-          <text class='card-title'>{{item.name}}</text>
-          <image mode='aspectFill' class='gender' wx:if='{{item.gender === "公"}}' src="/pages/public/images/card/card/male.png"></image>
-          <image mode='aspectFill' class='gender' wx:if='{{item.gender === "母"}}' src="/pages/public/images/card/card/female.png"></image>
+    <view class='tile {{index % 3 === 0 ? "tile--wide" : "tile--half"}} {{item.to_star? "tile--star": ""}}' bindtap='clickCatCard' bindlongpress='bindManageCat' data-cat_id='{{item._id}}' data-index='{{index}}'>
+      <image class='tile-img' bindload="bindImageLoaded" mode='aspectFill' src='{{item.photo.photo_compressed || item.photo.photo_id}}' data-index="{{index}}" lazy-load="{{true}}"></image>
+      <view class='tile-veil'></view>
+      <view class='tile-no'>{{index < 9 ? '0' : ''}}{{index+1}}</view>
+      <view class='tile-flag' wx:if="{{item.mphoto_new}}">{{text_cfg.genealogy.new_photo_tip}}</view>
+      <view class='tile-flag tile-flag--empty' wx:elif='{{!item.photo_count_best || item.photo_count_best === 0}}'>{{text_cfg.genealogy.no_photo_tip}}</view>
+      <view class='tile-star' wx:if='{{item.to_star}}'>{{text_cfg.genealogy.to_star_tip}}</view>
+      <view class='tile-adopt' wx:if='{{item.adopt}}'>{{adopt_desc[item.adopt]}}</view>
+      <view class='tile-foot'>
+        <view class='tile-name-row'>
+          <text class='tile-name'>{{item.name}}</text>
+          <image mode='aspectFill' class='tile-gender' wx:if='{{item.gender === "公"}}' src="/pages/public/images/card/card/male.png"></image>
+          <image mode='aspectFill' class='tile-gender' wx:if='{{item.gender === "母"}}' src="/pages/public/images/card/card/female.png"></image>
+          <text class='tile-score'>{{item.rating.avgScoreDisp || '0.0'}}</text>
         </view>
-        <view class='shot-where'>{{(item.campus + item.area) || '-'}}</view>
-      </view>
-      <view class='card-body'>
-        <view class='card-data'>
-          <view class='datum'>
-            <text class='dv'>{{item.rating.avgScoreDisp || '0.0'}}</text>
-            <text class='dk'>猫德评分</text>
-          </view>
-          <view class='datum'>
-            <text class='dv'>{{item.comment_count || 0}}</text>
-            <text class='dk'>便利贴</text>
-          </view>
-          <view class='datum'>
-            <text class='dv'>{{item.photo_count_total || 0}}</text>
-            <text class='dk'>张照片</text>
-          </view>
-          <view class='datum datum--last'>
-            <text class='dv'>{{item.popularity + (item.photo_count_total? item.photo_count_total * photoPopWeight: 0)}}</text>
-            <text class='dk'>热度</text>
-          </view>
+        <view class='tile-meta'>
+          <text class='tile-where'>{{(item.campus + item.area) || '-'}}</text>
+          <text class='tile-dot'>·</text>
+          <text class='tile-cmt'>{{item.comment_count || 0}} 便利贴</text>
         </view>
       </view>
     </view>

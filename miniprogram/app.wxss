@@ -282,3 +282,16 @@ page {
   border-radius: var(--dk-radius);
   box-shadow: 0 8rpx 24rpx rgba(12, 95, 3, 0.06);
 }
+
+
+/* ================= v4.6 图墙主题 ================= */
+page {
+  --wl-bg: #07090A;
+  --wl-line: rgba(255, 255, 255, 0.10);
+  --wl-text: #FFFFFF;
+  --wl-text-2: rgba(255, 255, 255, 0.54);
+  --wl-text-3: rgba(255, 255, 255, 0.32);
+  --wl-accent: #4ADE80;
+  background-color: #07090A;
+  color: #FFFFFF;
+}

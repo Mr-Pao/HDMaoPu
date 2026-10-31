@@ -1751,3 +1751,324 @@ page {
   color: #FFFFFF;
   font-weight: 700;
 }
+
+
+/* ================= v4.6 首页：图墙（SPACE GALLERY 式） ================= */
+page {
+  background-color: #07090A;
+}
+.cards {
+  background-color: #07090A;
+  padding: 0 10rpx;
+  display: flex;
+  flex-flow: row wrap;
+  align-content: flex-start;
+  justify-content: space-between;
+}
+.cards > .hero,
+.cards > .h-filter-list,
+.cards > .tips-wrap,
+.cards > .loading,
+.cards > .loadnomore,
+.cards > .tile-full {
+  width: 100%;
+  flex: 0 0 100%;
+}
+
+/* 顶部标题：极小字 + 高对比 */
+.hero {
+  padding: 26rpx 18rpx 20rpx 18rpx;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.hero-row {
+  display: flex;
+  align-items: baseline;
+  width: 100%;
+  justify-content: space-between;
+}
+.hero-left {
+  display: flex;
+  align-items: baseline;
+}
+.hero-kicker {
+  font-size: 19rpx;
+  letter-spacing: 6rpx;
+  color: rgba(255, 255, 255, 0.42);
+  margin: 0 20rpx 0 0;
+}
+.hero-title {
+  font-size: 40rpx;
+  line-height: 44rpx;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #FFFFFF;
+}
+.hero-right {
+  display: flex;
+  align-items: baseline;
+  padding-bottom: 0;
+}
+.hero-num {
+  font-size: 34rpx;
+  line-height: 36rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-right: 8rpx;
+}
+.hero-num-dk {
+  font-size: 18rpx;
+  letter-spacing: 1rpx;
+  color: rgba(255, 255, 255, 0.36);
+  margin-top: 0;
+}
+.hero-stat {
+  display: none;
+}
+
+/* 搜索：无框，一条下划线 */
+#search {
+  background-color: #07090A;
+}
+#search.shadow {
+  box-shadow: none;
+}
+#search .input-block {
+  background-color: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 16rpx;
+  box-shadow: none;
+}
+#search input.name {
+  color: #FFFFFF;
+}
+.searchPlaceholderStyle {
+  color: rgba(255, 255, 255, 0.32);
+}
+#search .input-icon image {
+  filter: brightness(0) invert(1);
+  opacity: 0.45;
+}
+#search .filter-btn image {
+  filter: brightness(0) invert(1);
+  opacity: 0.8;
+}
+
+/* 校区：细边框胶囊，未选中透明 */
+.h-filter-list {
+  padding: 8rpx 18rpx 14rpx 18rpx;
+  white-space: nowrap;
+}
+.h-filter-item {
+  display: inline-flex;
+  align-items: center;
+  height: 52rpx;
+  padding: 0 24rpx;
+  margin-right: 12rpx;
+  border-radius: 12rpx;
+  font-size: 23rpx;
+  letter-spacing: 1rpx;
+  color: rgba(255, 255, 255, 0.5);
+  background-color: transparent;
+  border: 1rpx solid rgba(255, 255, 255, 0.16);
+}
+.h-filter-item.active {
+  color: #07090A;
+  background-color: #FFFFFF;
+  border-color: #FFFFFF;
+  font-weight: 700;
+}
+.h-filter-item .location-logo {
+  filter: brightness(0) invert(1);
+  opacity: 0.45;
+}
+.h-filter-item.active .location-logo {
+  filter: none;
+  opacity: 1;
+}
+
+/* 图块：无边框、无阴影，直接铺 */
+.tile {
+  position: relative;
+  margin: 0 0 10rpx 0;
+  border-radius: 18rpx;
+  overflow: hidden;
+  background-color: #111;
+  border: none;
+  box-shadow: none;
+}
+.tile--wide {
+  width: 100%;
+  height: 470rpx;
+}
+.tile--half {
+  width: calc(50% - 5rpx);
+  height: 340rpx;
+}
+.tile-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 18rpx;
+  display: block;
+}
+.tile--star .tile-img {
+  filter: grayscale(0.9) brightness(0.85);
+}
+.tile-veil {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 62%;
+  background-image: linear-gradient(to top, rgba(0, 0, 0, 0.90) 0%, rgba(0, 0, 0, 0.55) 38%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
+}
+.tile-no {
+  position: absolute;
+  left: 18rpx;
+  top: 16rpx;
+  font-size: 20rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+  color: rgba(255, 255, 255, 0.86);
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.6);
+}
+.tile-flag {
+  position: absolute;
+  left: 18rpx;
+  top: 52rpx;
+  font-size: 18rpx;
+  letter-spacing: 1rpx;
+  color: #07090A;
+  background-color: #4ADE80;
+  border-radius: 8rpx;
+  padding: 4rpx 12rpx;
+  font-weight: 700;
+}
+.tile-flag--empty {
+  background-color: rgba(255, 255, 255, 0.82);
+  color: #07090A;
+}
+.tile-star {
+  position: absolute;
+  right: 18rpx;
+  top: 16rpx;
+  font-size: 17rpx;
+  letter-spacing: 2rpx;
+  color: rgba(255, 255, 255, 0.7);
+  border: 1rpx solid rgba(255, 255, 255, 0.34);
+  border-radius: 8rpx;
+  padding: 4rpx 10rpx;
+}
+.tile-adopt {
+  position: absolute;
+  right: 18rpx;
+  top: 52rpx;
+  font-size: 17rpx;
+  letter-spacing: 1rpx;
+  color: #4ADE80;
+  background-color: rgba(0, 0, 0, 0.42);
+  border-radius: 8rpx;
+  padding: 4rpx 12rpx;
+}
+.tile-foot {
+  position: absolute;
+  left: 20rpx;
+  right: 20rpx;
+  bottom: 18rpx;
+}
+.tile-name-row {
+  display: flex;
+  align-items: baseline;
+}
+.tile-name {
+  font-size: 42rpx;
+  line-height: 46rpx;
+  font-weight: 800;
+  letter-spacing: -0.5rpx;
+  color: #FFFFFF;
+  text-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.55);
+}
+.tile--half .tile-name {
+  font-size: 34rpx;
+  line-height: 38rpx;
+}
+.tile-gender {
+  width: 26rpx;
+  height: 26rpx;
+  margin-left: 10rpx;
+  opacity: 0.85;
+}
+.tile-score {
+  margin-left: auto;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #4ADE80;
+}
+.tile--half .tile-score {
+  font-size: 24rpx;
+}
+.tile-meta {
+  display: flex;
+  align-items: center;
+  margin-top: 6rpx;
+}
+.tile-where, .tile-cmt, .tile-dot {
+  font-size: 19rpx;
+  letter-spacing: 0.5rpx;
+  color: rgba(255, 255, 255, 0.54);
+}
+.tile-dot {
+  margin: 0 8rpx;
+}
+
+/* 提示 / 加载 */
+.tips-wrap {
+  padding: 6rpx 18rpx 20rpx 18rpx;
+}
+.tips {
+  font-size: 20rpx;
+  letter-spacing: 1rpx;
+  color: rgba(255, 255, 255, 0.30);
+}
+.loading, .loadnomore {
+  padding: 30rpx 0 20rpx 0;
+}
+.loading image, .loadnomore image {
+  filter: brightness(0) invert(1);
+  opacity: 0.24;
+}
+
+/* 筛选面板 */
+#filter-block {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+.filters {
+  background-color: #0B0E0F;
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.08);
+}
+.f-column .item {
+  color: rgba(255, 255, 255, 0.55);
+}
+.f-column .item.active {
+  color: #FFFFFF;
+  font-weight: 700;
+}
+#filter-block .divider {
+  border-color: rgba(255, 255, 255, 0.07);
+}
+#filter-block .buttons {
+  background-color: #0B0E0F;
+}
+#filter-block .btn {
+  border-radius: 12rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.55);
+}
+#filter-block .btn.active {
+  background-color: #FFFFFF;
+  border-color: #FFFFFF;
+  color: #07090A;
+  font-weight: 700;
+}
