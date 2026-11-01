@@ -1,5 +1,5 @@
 {
-  "version": "v1793531243692",
+  "version": "v1793531643900",
   "items": [
     {
       "_id": "pages",
@@ -85,6 +85,11 @@
           "appid": "wxb1a4cbb5fa337016",
           "name": "SpaceLaunch",
           "logo": "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/photos/friendlink/wxb1a4cbb5fa337016.png"
+        },
+        {
+          "appid": "wx6f2cf8d324868b78",
+          "name": "MyTools",
+          "logo": "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/photos/friendlink/wx6f2cf8d324868b78.png"
         }
       ]
     },
