@@ -11,7 +11,6 @@ import { signCosUrl } from "../../utils/common";
 const app = getApp();
 
 const { applyNav } = require('../../utils/nav');
-const passcode = require('../../utils/passcode');
 
 // 连击「关于」标题多少次才弹管理口令
 const TAP_TO_UNLOCK = 5;
@@ -26,7 +25,6 @@ Page({
     linkFetchedAt: 0,
     tapCount: 0,
     tapAt: 0,
-    gateCode: undefined,   // undefined = 还没拉过远端；'' = 远端没设口令
   },
 
   data: {
@@ -326,20 +324,15 @@ Page({
     }
   },
 
-  // 远端读口令；结果缓存在 jsData.gateCode，每次进页面重拉一次（很轻的一个 JSON）
+  // 远端读口令。不缓存：改完 data/gate.json 下次连击就生效，不用重启小程序
   async loadGateCode() {
-    if (this.jsData.gateCode !== undefined) return this.jsData.gateCode;
-    let code = '';
     try {
       const { result } = await app.mpServerless.db.collection('gate').findOne({ _id: 'gate' });
-      code = String((result && result.code) || '').trim();
+      return String((result && result.code) || '').trim();
     } catch (e) {
       console.warn('[INFO] 口令配置读取失败', e);
-      // 读失败时不要把 gateCode 定死成空，下次进页面还能重试
       return '';
     }
-    this.jsData.gateCode = code;
-    return code;
   },
 
   // 连击计数：间隔超 TAP_WINDOW 就重新从 1 数
@@ -388,10 +381,6 @@ Page({
           return;
         }
         this.setUnlocked(true);
-        // 同一个口令顺手存成提交用的 token，管理页里就不用再输一遍。
-        // ⚠️ 前提：这个口令要和 Actions 的 REVIEW_PASSCODE 一致，
-        //    不一致的话页面能进、但提交会被服务端 drop:bad-token 静默丢弃。
-        passcode.setToken(input);
         this.setData({ "showCond.manager": true });
         wx.showToast({ title: '已进入管理后台', icon: 'none' });
         // 解锁后补拉一次待处理数量
