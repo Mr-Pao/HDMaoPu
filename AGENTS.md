@@ -32,7 +32,7 @@ NODE="C:/Users/yzx49/Program/HBuilderX/plugins/node/node.exe"
 - 数据端到端校验（66 项，真实数据不变量口径）：`"$NODE" scripts/verify-demo-data.js`
 - 重新生成演示数据：`"$NODE" scripts/gen-demo-data.js [--dry-run]`（固定种子、幂等）
 - 颜色硬编码 → token：`"$NODE" scripts/recolor-tokens.js [--dry-run]`
-- inbox 聚合自测：`DRY_RUN=1 REVIEW_PASSCODE=xxx "$NODE" scripts/process-inbox.js`
+- inbox 聚合自测：`DRY_RUN=1 "$NODE" scripts/process-inbox.js`（管理口令读 `data/gate.json` 的 `code`，不需要环境变量）
 - 上传数据到 COS：`COS_SECRET_ID=.. COS_SECRET_KEY=.. COS_BUCKET=.. COS_REGION=.. "$NODE" scripts/upload-data.js`（加 `DRY_RUN=1` 只校验）
 - git 命令**一律加** `-c core.preindex=false`（见"坑"第 1 条）
 - **猫↔照片归属重建工具**（2026-11-01 建，见下方「照片归属重建工具」一节）：密钥读 process.env → 项目根 `.env`；三步 `relink-scan.js` → 网页认猫 → `relink-apply.js`
@@ -109,7 +109,7 @@ NODE="C:/Users/yzx49/Program/HBuilderX/plugins/node/node.exe"
 - `sync-data.yml` 的 `branches` 必须是 `cos`，`paths` 是 `data/**`（曾因分支改名未跟改，导致 COS 数据停在旧版）
 - fork 仓库的 scheduled workflow 默认禁用，需在 Actions 页手动 Enable
 - `concurrency.cancel-in-progress: false` 不能改成 true：上传中途被杀会留下传了一半的数据
-- Actions secrets 只有 4 个 COS 变量 + `REVIEW_PASSCODE`；口令**不进小程序包**，客户端校验只管 UX
+- Actions secrets 只需 4 个 COS 变量；管理口令统一读 `data/gate.json` 的 `code`（v4.0.42 起），`REVIEW_PASSCODE` 只作老部署兜底、可不配
 
 ### 14. 测试与验收的盲区
 E2E（`scripts/e2e/`，miniprogram-automator）只查 console error，**抓不到 catch 吞掉的 TypeError**。UI 断言（`flow-test.js`）是必要补充。当前环境跑不了 E2E（沙箱拦 reg.exe），只有本地装了微信开发者工具才能跑。
@@ -142,7 +142,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.36`），commit message 末尾带版本号。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.42`），commit message 末尾带版本号。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -159,7 +159,14 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-01）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.36`
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.42`
+- **v4.0.42：管理口令收敛为 `data/gate.json` 一处（2026-11-01）**
+  - **用户原话（m01906）：「我只是想在小程序端加一个密码，输入了之后就能进入管理界面管理数据，怎么搞得这么麻烦啊，一定要搞什么REVIEW_PASSCODE吗」**——此前口令分两处：界面进不进认 `data/gate.json` 的 `code`，提交能不能过认 Actions secret `REVIEW_PASSCODE`，两处不一致就表现为「进去了但提交没反应」，而 secret 在手机上根本看不到。
+  - **`scripts/process-inbox.js` 新增 `currentGateCode()`**：`loadData('gate').items.find(it => it._id === 'gate')` 取 `code` 并 trim，读失败 `console.warn` 后返回空串；`tokenOk(token)` 改为 `const expect = currentGateCode() || REVIEW_PASSCODE || ''`。**`REVIEW_PASSCODE` 降级为兜底**（gate.json 缺失或 code 为空时才用），老部署可继续留着，新部署完全不用配。
+  - `selftestObjects()` 里 14 处 `REVIEW_PASSCODE || 'wrong'` 改为 `SELFTEST_TOKEN`（函数开头 `const SELFTEST_TOKEN = currentGateCode() || REVIEW_PASSCODE || 'wrong'`），自测不再依赖环境变量；末尾警告改判 `!currentGateCode() && !REVIEW_PASSCODE`。
+  - `.github/workflows/process-inbox.yml` 给 `REVIEW_PASSCODE` 那行加注释说明只作兜底；`data/gate.json` 的 `note` 改成「全站只有这一处口令」并说明服务端也读它；`miniprogram/utils/passcode.js` 顶部口诀同步修正。
+  - 验证：`DRY_RUN=1` **不带 REVIEW_PASSCODE** 跑 30 条自测，manage 生效 6 条；临时把 gate code 改成 `zzz-temp` → manage 全部 `drop:bad-token`，改回 `0000` → 恢复生效，**证明服务端确实读 gate.json**；单测 47/47、verify 66/66。
+  - 提交 `9d11c92`（7 files）。⚠️ 当时本地领先 `origin/cos` 11 个提交，push 被拒（远端 Actions 提交了 `130eeab chore(data): 聚合 inbox 写入`），用 `git rebase origin/cos`（带 `rebase.autoStash=true` 避开用户自己改的 `app_logo.png`/`图片.pptx`）后才推上去。
 - **v4.0.36：关于页按参考图重构布局（2026-11-01）**
   - **用户原话（m01124）：「能再派一个子智能体改关于界面么，风格不变，布局参考这张图，连击五次可以改到火大猫谱字上，管理后台卡片可以放在关于上方，如果不是管理员就隐藏」**。参考图是一款叫 SpaceLaunch 的 App 的「我的」页：居中圆 logo → 大标题 → 灰字副标语 → 三格数据条（竖分隔）→ 淡色提示卡 → 分节标题「探索」→ 2 列卡片 → 分节标题「关于」→ 竖列表行组 → 底部小字。
   - **改动 3 个文件，`info.js` 一字未动**：`info.wxml` 104→**133 行**（+43 −14）、`info.wxss` 465→**621 行**（**纯追加 156 行，0 删除**，v5.5 块从 **:468** 起）、`config.js`（`app_version` v4.0.35→**v4.0.36**，`text.info` 新增 **11 键**）。
@@ -201,7 +208,7 @@ cos-version  从上游错误派生，废弃
   - **口令明文存 `data/gate.json` 的 `code` 字段**（用户要求「密码可以存在cos，我能直接后台修改就行」，所以**废弃 SHA-256 哈希版**，也不需要任何计算脚本）。文件结构：`{"version":"<ts>","items":[{"_id":"gate","code":"0000","note":"..."}]}`。留空 = 管理入口不可解锁。
   - **`miniprogram/pages/info/info.js`**：常量 `TAP_TO_UNLOCK = 5`、`TAP_WINDOW = 800`（超时就重新计数，「连击」不是「累计」）、`UNLOCK_KEY = 'admin_unlocked'`；`jsData` 加 `tapCount/tapAt`；`onShow` 里 `this.setData({ "showCond.manager": this.isUnlocked() })`；新增 `isUnlocked()`/`setUnlocked(v)`/`loadGateCode()`/`onTitleTap()`/`askAdminPasscode()`/`refreshManagerNums()`。
   - ⚠️ **`loadGateCode()` 故意不缓存**：每次连击都现拉 `gate` 集合 `_id='gate'` 的 `code`，这样改完 `data/gate.json` 下次连击就生效，不用发版也不用重启（`2908f0f` 就是修这个）。
-  - ⚠️ **`data/` 是公开 CDN，口令等于公开**——它只是「别让普通用户误入」的 UX 门，**真正的写入权限边界仍是 Actions 端 `REVIEW_PASSCODE`**（`scripts/process-inbox.js` 的 `tokenOk()`，别人提交会被 `drop:bad-token` 静默丢弃）。
+  - ⚠️ **`data/` 是公开 CDN，口令等于公开**——它只是「别让普通用户误入」的 UX 门。**v4.0.42 起服务端 `tokenOk()` 也读同一个 `data/gate.json` 的 `code`**（原先读 Actions secret `REVIEW_PASSCODE`），所以改这一处就同时决定「界面能不能进」和「提交能不能过」，不用配 secret；口令不对的提交仍是 `drop:bad-token` 静默丢弃。
   - `miniprogram/pages/info/info.wxml:8` `.nav-title` 加 `catchtap="onTitleTap"`（v4.0.36 已迁到「火大猫谱」标题）；`scripts/set-admin-passcode.js` 曾建后**已删除**。
   - ⚠️ **`data/gate.json` 必须真的传到 COS**：只在本地会出现「管理入口未启用」——`datasource` 对 404 有 `NOT_FOUND_COOLDOWN = CACHE_TTL`（10 分钟）冷却，改完要等冷却或重开小程序。上传方法见「COS 上传踩坑」一节。
   - 提交 `34d1634` + `2908f0f`。
@@ -234,7 +241,7 @@ cos-version  从上游错误派生，废弃
   - COS 上曾出现过一条 `relink-photo-1`（指向 `photos/demo-cat-12/0001.jpg`，猫 `demo-cat-12 奶盖`），是误把 `photos/demo-cat-1/cover.jpg` 复制过来当新照片的假数据。**2026-11-01 已彻底清除**（远端只剩 11 条 photo、11 只 cat，孤儿对象 `photos/demo-cat-12/0001.jpg` 已删）。
 - 其余演示规模：comment 48 / rating 48 / user 9 / news 8 …
 - UI 已全站统一白底大圆角（v5.2），图库是横向漂流墙（8 行宽窄交替 marquee）
-- 审核/管理**已无口令锁屏门**（v4.0.33）：右上角「口令」按钮输一次永久存本地 storage `manage_passcode`，`utils/passcode.js` 统一读写；真正校验仍在 `process-inbox.js` 的 `REVIEW_PASSCODE`（token 不对的提交直接 `drop:bad-token` 静默丢弃）
+- 审核/管理**已无口令锁屏门**（v4.0.33）：关于页连击「火大猫谱」5 次 → 输口令 → 解锁并顺手存本地 storage `manage_passcode`（`utils/passcode.js` 统一读写，解锁标记 `admin_unlocked`）；真正校验在 `process-inbox.js` 的 `tokenOk()`，**读 `data/gate.json` 的 `code`**（v4.0.42 起；`REVIEW_PASSCODE` 仅兜底），token 不对的提交直接 `drop:bad-token` 静默丢弃
 - **徽章（勋章）功能已全站删除**（v4.0.17）：10 个页面 40 个文件、`components/badgeModal`、`components/badgeRank`（只有死页 leaderboard 引用）、`utils/badge.js`、`cloudApi.js` 的 `getBadge/giveBadge/genBadgeCode/loadBadgeCode`、`data/{badge,badge_def,badge_rank}.json`、11 张图片、`config.badge_rank_*_img` 常量、`gen-demo-data.js` 的 BADGE_DEFS 段、`verify-demo-data.js` 的 8 个校验项全部清除。`app.json` 页面 38→34、分包 3→1。`info` 页删「徽章口袋」card 与「徽章管理」菜单。`ratingDetail.wxss` 原有 `@import "../badgeDetail/badgeDetail.wxss"`，已内联所需的 `.bd-block`/`.bd-title`；`app.wxss` 里零引用的 `--color-badge-A/B/C` 三个 token 也已删（文件其余 token 不动）
 - **「猫际关系」卡按数据显隐**（v4.0.18）：外层条件改为 `{{cat.relations && cat.relations.length}}`（不再对管理员单向开放），没有关系时整张卡不显示；卡内「+ 添加关系」入口删除，`detailCat.js` 的 `toAddRelation()` 一并删除，**改到「猫咪信息纠错」页**（`feedbackDetail`）——仅管理员可见（`isManagerAsync(3)`），`.adminEntry` 块在 `.userInfo` 之后
 - 详情页整体信息架构（v4.0.17 重构）：猫猫档案卡（去绿条 label-block、扁平两列）→ 猫友评价卡 → 疫苗卡 → 猫际关系卡 → 相册；卡片间距统一 24rpx
