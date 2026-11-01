@@ -11,6 +11,8 @@ import { signCosUrl } from "../../utils/common";
 
 const app = getApp();
 
+const { applyNav } = require('../../utils/nav');
+
 Page({
   data: {
     logo_img,
@@ -189,6 +191,7 @@ Page({
 
   // 用 onShow 不用 onLoad，为了在返回这个页面时也能重新加载
   onShow: async function () {
+    applyNav(this);
     // 切换自定义tab
     showTab(this);
 

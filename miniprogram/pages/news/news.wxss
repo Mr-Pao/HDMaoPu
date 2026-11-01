@@ -193,405 +193,101 @@ swiper image {
   margin: 30rpx 0;
 }
 
-/* ================= v4.2 猫抓板重构 ================= */
+/* ================= v5.0 猫抓板：白色主题 ================= */
 page {
-  background-color: var(--color-bg);
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
 }
+
+/* 轮播 */
 swiper {
-  width: 702rpx;
   height: 300rpx;
-  margin: 24rpx 24rpx 8rpx 24rpx;
-  border-radius: 32rpx;
-  box-shadow: 0 10rpx 30rpx rgba(12, 95, 3, 0.14);
+  margin: 8rpx 24rpx 0 24rpx;
+  border-radius: var(--dk-radius-lg);
   overflow: hidden;
+  border: 1rpx solid var(--dk-line);
 }
-swiper swiper-item image {
+swiper image {
   width: 100%;
-  height: 100%;
-  display: block;
+  height: 300rpx;
+  border-radius: var(--dk-radius-lg);
 }
+
+/* 分类胶囊 */
 .button_container {
-  height: 132rpx;
-  margin: 24rpx 20rpx 0 20rpx;
-  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 20rpx 24rpx 4rpx 24rpx;
+}
+.normal_button,
+.checked_button {
+  height: 60rpx;
+  padding: 0 28rpx;
+  margin: 0 12rpx 12rpx 0;
+  border-radius: var(--dk-radius-pill);
+  font-size: 24rpx;
+  line-height: 60rpx;
+  letter-spacing: 0.5rpx;
+  box-shadow: none;
 }
 .normal_button {
-  width: 18%;
-  padding: 10rpx 4rpx;
-  border-bottom: none;
-  border-radius: 24rpx;
-  color: var(--color-text-secondary);
+  color: var(--dk-text-2);
   background-color: transparent;
+  border: 1rpx solid var(--dk-line);
 }
 .checked_button {
-  background-color: var(--color-primary-soft);
-  border-color: transparent;
-  color: var(--color-primary);
+  color: #FFFFFF;
+  background-color: var(--dk-accent);
+  border: 1rpx solid var(--dk-accent);
+  font-weight: 700;
 }
-.checked_button .tab-logo {
-  background-color: transparent;
-  border-radius: 0;
-}
-.tab-logo {
-  width: 76rpx;
-  height: 80rpx;
-  padding: 4rpx 8rpx;
-}
-.tab-text {
-  font-size: 23rpx;
-  letter-spacing: 1rpx;
-}
+
+/* 列表卡 */
 .news-box {
-  margin: 22rpx 24rpx;
-  padding: 28rpx 26rpx 26rpx 28rpx;
-  border-radius: 28rpx;
-  box-shadow: 0 6rpx 22rpx rgba(12, 95, 3, 0.07);
+  margin: 0 24rpx 18rpx 24rpx;
+  padding: 24rpx;
+  background-color: var(--dk-card);
+  border: 1rpx solid var(--dk-line);
+  border-radius: var(--dk-radius);
+  box-shadow: none;
+}
+.news.infoBox {
+  flex: 1;
 }
 .news.title {
-  font-size: 34rpx;
+  color: var(--dk-text);
+  font-size: 30rpx;
   font-weight: 700;
-  letter-spacing: 1rpx;
-  color: var(--color-text);
+  line-height: 42rpx;
   margin-bottom: 10rpx;
 }
-.news.content {
-  font-size: 27rpx;
-  line-height: 38rpx;
-  color: var(--color-text-secondary);
+.news .content {
+  color: var(--dk-text-2);
+  font-size: 23rpx;
+  line-height: 34rpx;
 }
 .news.tag {
   width: auto;
   height: 40rpx;
+  padding: 0 16rpx;
   line-height: 40rpx;
-  padding: 0 18rpx;
-  margin: 4rpx 12rpx 0 0;
-  border-radius: var(--radius-pill);
   font-size: 20rpx;
-  font-weight: 600;
-  background-color: var(--color-primary-soft);
-  color: var(--color-primary);
+  border-radius: var(--dk-radius-pill);
+  background-color: var(--dk-accent-soft);
+  color: var(--dk-accent-2);
 }
-.news.user, .news.time {
-  font-size: 23rpx;
-  color: var(--color-text-tertiary);
-}
-.cover-image {
-  width: 192rpx;
-  height: 192rpx;
-  border-radius: 22rpx;
-  margin: 0 0 2rpx 24rpx;
-}
-
-
-/* ================= v4.3.0 猫抓板：杂志排版风 ================= */
-page {
-  background-color: #F2F0E9;
-}
-swiper {
-  width: 702rpx;
-  height: 320rpx;
-  margin: 24rpx 24rpx 10rpx 24rpx;
-  border-radius: 0;
-  border: 2rpx solid #0C5F03;
-  box-shadow: 8rpx 8rpx 0 #0C5F03;
-  overflow: hidden;
-}
-.button_container {
-  height: 136rpx;
-  margin: 26rpx 22rpx 0 22rpx;
-  align-items: center;
-}
-.normal_button {
-  width: 18%;
-  padding: 8rpx 4rpx;
-  border-bottom: none;
-  border-radius: 2rpx;
-  color: #8A8578;
-  background-color: transparent;
-}
-.checked_button {
-  background-color: #0C5F03;
-  border-color: transparent;
-  color: #FBFAF6;
-}
-.checked_button .tab-logo {
-  background-color: transparent;
-  border-radius: 0;
-  filter: brightness(0) invert(1);
-}
-.tab-logo {
-  width: 72rpx;
-  height: 76rpx;
-  padding: 4rpx 8rpx;
-}
-.tab-text {
-  font-size: 22rpx;
-  letter-spacing: 2rpx;
-}
-.news-box {
-  margin: 22rpx 24rpx;
-  padding: 26rpx 24rpx;
-  border-radius: 2rpx;
-  background-color: #FBFAF6;
-  border: 2rpx solid #0C5F03;
-  box-shadow: 7rpx 7rpx 0 #0C5F03;
-}
-.news.title {
-  font-size: 38rpx;
-  line-height: 44rpx;
-  font-weight: 900;
-  letter-spacing: -1rpx;
-  color: #12200C;
-  margin-bottom: 10rpx;
-}
-.news.content {
-  font-size: 26rpx;
-  line-height: 38rpx;
-  color: #5A5648;
-}
-.news.tag {
-  width: auto;
-  height: 38rpx;
-  line-height: 38rpx;
-  padding: 0 14rpx;
-  margin: 4rpx 12rpx 0 0;
-  border-radius: 2rpx;
-  font-size: 19rpx;
-  font-weight: 700;
-  letter-spacing: 1rpx;
-  background-color: #0C5F03;
-  color: #FBFAF6;
-}
-.news.user, .news.time {
-  font-size: 21rpx;
-  letter-spacing: 1rpx;
-  color: #8A8578;
+.news .user,
+.news .time {
+  color: var(--dk-text-3);
+  font-size: 20rpx;
 }
 .cover-image {
-  width: 190rpx;
-  height: 190rpx;
-  border-radius: 2rpx;
-  margin: 0 0 2rpx 22rpx;
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: var(--radius-md);
+  margin-left: 20rpx;
+  flex: 0 0 180rpx;
 }
-
-
-/* ================= v4.4 猫抓板：深色沉浸 ================= */
-page {
-  background-color: #080B09;
-  color: #EDF2ED;
-}
-swiper {
-  width: 698rpx;
-  margin: 24rpx 26rpx 8rpx 26rpx;
-  height: 320rpx;
-  border-radius: 32rpx;
-  border: none;
-  box-shadow: none;
-  overflow: hidden;
-}
-.normal_button {
-  color: rgba(237, 242, 237, 0.42);
-  background-color: transparent;
-  border-radius: 999rpx;
-}
-.checked_button {
-  background-color: rgba(74, 222, 128, 0.16);
-  color: #4ADE80;
-}
-.checked_button .tab-logo {
-  filter: none;
-}
-.tab-logo {
-  filter: brightness(0) invert(1);
-  opacity: 0.42;
-}
-.checked_button .tab-logo {
-  filter: none;
-  opacity: 1;
-}
-.tab-text {
-  font-size: 21rpx;
-  letter-spacing: 1rpx;
-}
-.news-box {
-  margin: 20rpx 26rpx;
-  padding: 26rpx 24rpx;
-  border-radius: 28rpx;
-  background-color: rgba(255, 255, 255, 0.045);
-  border: 1rpx solid rgba(255, 255, 255, 0.09);
-  box-shadow: none;
-}
-.news.title {
-  color: #EDF2ED;
-  font-size: 36rpx;
-  font-weight: 700;
-  letter-spacing: 0;
-}
-.news.content {
-  color: rgba(237, 242, 237, 0.52);
-}
-.news.tag {
-  background-color: rgba(74, 222, 128, 0.14);
-  color: #4ADE80;
-  border-radius: 999rpx;
-  font-weight: 600;
-}
-.news.user, .news.time {
-  color: rgba(237, 242, 237, 0.34);
-}
-.cover-image {
-  border-radius: 22rpx;
-}
-
-
-/* ================= v4.5 猫抓板：浅色沉浸 ================= */
-page {
-  background-color: #F7F9F7;
-  color: #0F1A10;
-}
-swiper {
-  box-shadow: 0 12rpx 32rpx rgba(12, 95, 3, 0.14);
-}
-.normal_button {
-  color: rgba(15, 26, 16, 0.42);
-  background-color: transparent;
-}
-.checked_button {
-  background-color: rgba(12, 95, 3, 0.08);
-  color: #0C5F03;
-}
-.tab-logo {
-  filter: none;
-  opacity: 0.4;
-}
-.checked_button .tab-logo {
-  filter: none;
-  opacity: 1;
-}
-.news-box {
-  background-color: #FFFFFF;
-  border: 1rpx solid rgba(12, 95, 3, 0.08);
-  box-shadow: 0 8rpx 24rpx rgba(12, 95, 3, 0.06);
-}
-.news.title {
-  color: #0F1A10;
-}
-.news.content {
-  color: rgba(15, 26, 16, 0.52);
-}
-.news.tag {
-  background-color: rgba(12, 95, 3, 0.08);
-  color: #0C5F03;
-}
-.news.user, .news.time {
-  color: rgba(15, 26, 16, 0.32);
-}
-
-
-/* ================= v4.6 猫抓板：深色 ================= */
-page {
-  background-color: #07090A;
-  color: #FFFFFF;
-}
-swiper {
-  border-radius: 20rpx;
-  box-shadow: none;
-}
-.normal_button {
-  color: rgba(255, 255, 255, 0.4);
-  background-color: transparent;
-  border-radius: 10rpx;
-}
-.checked_button {
-  background-color: rgba(255, 255, 255, 0.10);
-  color: #FFFFFF;
-}
-.tab-logo {
-  filter: brightness(0) invert(1);
-  opacity: 0.4;
-}
-.checked_button .tab-logo {
-  filter: none;
-  opacity: 1;
-}
-.news-box {
-  background-color: rgba(255, 255, 255, 0.045);
-  border: 1rpx solid rgba(255, 255, 255, 0.08);
-  border-radius: 22rpx;
-  box-shadow: none;
-}
-.news.title {
-  color: #FFFFFF;
-  font-size: 34rpx;
-  font-weight: 700;
-}
-.news.content {
-  color: rgba(255, 255, 255, 0.5);
-}
-.news.tag {
-  background-color: rgba(74, 222, 128, 0.14);
-  color: #4ADE80;
-  border-radius: 8rpx;
-  font-weight: 600;
-}
-.news.user, .news.time {
-  color: rgba(255, 255, 255, 0.3);
-}
-.cover-image {
-  border-radius: 16rpx;
-}
-
-
-/* ================= v4.7 猫抓板：白底信息型 ================= */
-page {
-  background-color: #F5F6F5;
-  color: #10160F;
-}
-swiper {
-  border-radius: 18rpx;
-  box-shadow: none;
-  border: 1rpx solid #E9EDE9;
-}
-.normal_button {
-  color: #8A928A;
-  background-color: transparent;
-  border-radius: 10rpx;
-}
-.checked_button {
-  background-color: rgba(12, 95, 3, 0.08);
-  color: #0C5F03;
-}
-.tab-logo {
-  filter: none;
-  opacity: 0.36;
-}
-.checked_button .tab-logo {
-  filter: none;
-  opacity: 1;
-}
-.news-box {
-  background-color: #FFFFFF;
-  border: 1rpx solid #E9EDE9;
-  border-radius: 18rpx;
-  box-shadow: none;
-}
-.news.title {
-  color: #10160F;
-  font-size: 33rpx;
-  font-weight: 700;
-}
-.news.content {
-  color: #7A837A;
-}
-.news.tag {
-  background-color: rgba(12, 95, 3, 0.08);
-  color: #0C5F03;
-  border-radius: 8rpx;
-  font-weight: 600;
-}
-.news.user, .news.time {
-  color: #A2AAA2;
-}
-.cover-image {
-  border-radius: 12rpx;
+.emptyImg {
+  opacity: 0.5;
 }

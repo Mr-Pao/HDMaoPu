@@ -74,13 +74,13 @@
     ]
   },
   "window": {
-    "backgroundColor": "#f7f7fa",
-    "backgroundTextStyle": "light",
+    "backgroundColor": "#F5F7F5",
+    "backgroundTextStyle": "dark",
     "navigationBarBackgroundColor": "#0C5F03",
     "navigationBarTitleText": "火大猫谱",
     "navigationBarTextStyle": "white",
-    "backgroundColorTop": "#f7f7fa",
-    "backgroundColorBottom": "#f7f7fa"
+    "backgroundColorTop": "#F5F7F5",
+    "backgroundColorBottom": "#F5F7F5"
   },
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents",

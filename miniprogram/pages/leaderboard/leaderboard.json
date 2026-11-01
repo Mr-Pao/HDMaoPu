@@ -1,4 +1,5 @@
 {
+  "navigationStyle": "custom",
   "usingComponents": {
     "heart": "/packages/heart-button/heart",
     "photoRank": "/components/photoRank/photoRank",

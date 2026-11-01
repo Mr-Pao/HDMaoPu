@@ -1,6 +1,16 @@
 <!--pages/followFeed/followFeed.wxml-->
 
-<scroll-view id="comment-list" scroll-y="true" bindscrolltolower='loadMoreFeed' enable-back-to-top="true" enable-flex="1" refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="onPullDownRefresh">
+<view class="dk-glow"></view>
+<view class="nav" style="padding-top: {{statusBarHeight}}px;">
+  <view class="nav-flex">
+    <view class="nav-l">
+      <view class="nav-sub">MOMENTS</view>
+      <view class="nav-title">喵友圈</view>
+    </view>
+  </view>
+</view>
+
+<scroll-view id="comment-list" scroll-y="true" bindscrolltolower='loadMoreFeed' enable-back-to-top="true" enable-flex="1" refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="onPullDownRefresh" style="height: calc(100% - {{statusBarHeight}}px - 88rpx);">
 
   <scroll-view scroll-x="true" enable-flex="true" show-scrollbar="false" enhanced="true" class="story-bar" wx:if="{{followCats && followCats.length > 0}}">
     <view class="story-container">

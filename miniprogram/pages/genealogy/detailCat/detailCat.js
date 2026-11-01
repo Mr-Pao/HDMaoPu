@@ -58,6 +58,8 @@ const photoOrder = [{
 },
 ]
 
+const { applyNav } = require('../../../utils/nav');
+
 Page({
 
   /**
@@ -184,7 +186,9 @@ Page({
   /**
    * 生命周期函数--监听页面显示
    */
-  onShow: function () { },
+  onShow: function () {
+    applyNav(this);
+  },
 
   /**
    * 生命周期函数--监听页面隐藏
@@ -228,6 +232,16 @@ Page({
     const current = e.detail.current;
     if (current === ((this.data.cat.photo || []).length - 1)) {
       this.loadMorePhotos(this.data.cat._id);
+    }
+  },
+
+  // 自绘导航栏返回
+  goBack() {
+    const pages = getCurrentPages();
+    if (pages.length > 1) {
+      wx.navigateBack();
+    } else {
+      wx.switchTab({ url: '/pages/genealogy/genealogy' });
     }
   },
 

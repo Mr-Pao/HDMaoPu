@@ -15,6 +15,8 @@ const app = getApp();
 
 const share_text = config.text.app_name + ' - ' + config.text.genealogy.share_tip;
 
+const { applyNav } = require('../../utils/nav');
+
 Page({
   //不需要渲染到wxml的数据存储在jsData中
   jsData: {
@@ -49,6 +51,7 @@ Page({
     },]
   },
   onShow: function () {
+    applyNav(this);
     // 切换自定义tab
     showTab(this);
   },
@@ -330,7 +333,7 @@ Page({
       success: res => {
         // console.log(res);
         this.setData({
-          "heights.threads": 35,
+          "heights.threads": (res.statusBarHeight || 20) + 160 * (res.windowWidth / 750),
           "heights.screenHeight": res.screenHeight,
           "heights.windowHeight": res.windowHeight,
           "heights.statusBarHeight": res.statusBarHeight,

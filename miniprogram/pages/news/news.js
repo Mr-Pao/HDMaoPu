@@ -8,6 +8,8 @@ const share_text = text_cfg.app_name + ' - ' + text_cfg.science.share_tip;
 
 const app = getApp();
 
+const { applyNav } = require('../../utils/nav');
+
 Page({
   data: {
     text_cfg: text_cfg,
@@ -78,6 +80,7 @@ Page({
     this.setSciImgs();
   },
   onShow: function () {
+    applyNav(this);
     // 切换自定义tab
     showTab(this);
   },

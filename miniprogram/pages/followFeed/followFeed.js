@@ -30,6 +30,8 @@ const maxNDaysAgo = 30;
 // 头像渐变边框
 const { gradientAvatarSvg } = require('./gradientAvatar.svg.js');
 
+const { applyNav } = require('../../utils/nav');
+
 Page({
   jsData: {
     loadingLock: false,
@@ -134,6 +136,7 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow() {
+    applyNav(this);
     // 切换自定义tab
     showTab(this);
   },

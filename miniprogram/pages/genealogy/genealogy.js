@@ -35,7 +35,7 @@ Page({
     filters_input: '',
     filters_show_shadow: false,
     filters_empty: true,
-    heights: { filters: 40 },
+    heights: { filters: 140, statusBarHeight: 20, navBarHeight: 44 },
     catsMax: 0,
     loading: false,
     loadnomore: false,
@@ -540,12 +540,19 @@ Page({
   getHeights() {
     wx.getSystemInfo({
       success: res => {
+        const rpx2px = res.windowWidth / 750;
+        const app = getApp();
+        const g = (app && app.globalData) || {};
+        const statusBarHeight = g.statusBarHeight || res.statusBarHeight || 20;
+        // 自定义导航：状态栏 + 标题行(约 92rpx) + 搜索行(84rpx) + 上下留白
+        const filters = statusBarHeight + 210 * rpx2px;
         this.setData({
-          "heights.filters": res.screenHeight * 0.065,
+          "heights.filters": filters,
+          "heights.statusBarHeight": statusBarHeight,
+          "heights.navBarHeight": g.navBarHeight || 44,
           "heights.screenHeight": res.screenHeight,
           "heights.windowHeight": res.windowHeight,
-          "heights.statusBarHeight": res.statusBarHeight,
-          "heights.rpx2px": res.windowWidth / 750,
+          "heights.rpx2px": rpx2px,
         });
       }
     });

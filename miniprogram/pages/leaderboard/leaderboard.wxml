@@ -1,4 +1,14 @@
 <!-- 频道切换 -->
+<view class="dk-glow"></view>
+<view class="nav" style="padding-top: {{statusBarHeight}}px;">
+  <view class="nav-flex">
+    <view class="nav-l">
+      <view class="nav-sub">CHARTS</view>
+      <view class="nav-title">榜单</view>
+    </view>
+  </view>
+</view>
+
 <view class="thread-list" style="height: {{heights.threads}}px;">
   <view class='thread-item {{threadsActive == index? "active": ""}}' bindtap='fClickThread' data-index='{{index}}' wx:for="{{threads}}" wx:key="*this">
     <view class="thread-item-name">{{item}}</view>

@@ -181,318 +181,125 @@ heart {
   margin: 20rpx 20rpx 20rpx 20rpx;
 }
 
-/* ================= v4.2 榜单重构 ================= */
+/* ================= v5.0 榜单：白色主题 ================= */
 page {
-  background: var(--color-bg);
-}
-.thread-list {
-  padding: 8rpx 40rpx 0 40rpx;
-  background-color: transparent;
-  box-shadow: none;
-  align-items: flex-start;
-}
-.thread-item {
-  padding: 6rpx 32rpx;
-  border-radius: var(--radius-pill);
-  margin: 0 6rpx;
-  transition: background-color 0.2s ease;
-}
-.thread-item.active {
-  background-color: var(--color-primary-soft);
-}
-.thread-item-bar {
-  display: none;
-}
-.thread-item-name {
-  font-size: 28rpx;
-  color: var(--color-text-secondary);
-}
-.thread-item.active .thread-item-name {
-  color: var(--color-primary);
-  font-weight: 600;
-}
-.column_item {
-  width: 342rpx;
-  border-radius: 24rpx;
-  margin: 0 auto 18rpx auto;
-  box-shadow: 0 4rpx 16rpx rgba(12, 95, 3, 0.07);
-}
-.location {
-  top: 16rpx;
-  right: 16rpx;
-  font-size: 19rpx;
-  padding: 6rpx 14rpx;
-  border-radius: var(--radius-pill);
-  background-color: rgba(31, 36, 33, 0.55);
-  color: var(--color-surface);
-}
-.info {
-  width: 342rpx;
-  padding: 16rpx 4rpx 16rpx 18rpx;
-}
-.names {
-  width: 290rpx;
-  max-width: 290rpx;
-}
-.cat-name {
-  font-size: 29rpx;
-  letter-spacing: 1rpx;
-  color: var(--color-text);
-}
-.pher-name, .photo-date {
-  font-size: 21rpx;
-  color: var(--color-text-tertiary);
-}
-.like-num {
-  font-size: 19rpx;
-  color: var(--color-text-tertiary);
-}
-.h-filter-list {
-  justify-content: flex-start;
-  padding: 0 22rpx;
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
 }
 
-
-/* ================= v4.3.0 榜单：杂志排版风 ================= */
-page {
-  background: #F2F0E9;
-}
+/* 频道胶囊切换 */
 .thread-list {
-  padding: 10rpx 24rpx 0 24rpx;
-  background-color: transparent;
-  box-shadow: none;
+  display: flex;
   align-items: center;
-  justify-content: flex-start;
-}
-.thread-item {
-  padding: 8rpx 26rpx;
-  border-radius: 2rpx;
-  margin: 0 10rpx 0 0;
-  border: 2rpx solid transparent;
-}
-.thread-item.active {
-  background-color: #0C5F03;
-  border-color: #0C5F03;
-}
-.thread-item-bar {
-  display: none;
-}
-.thread-item-name {
-  font-size: 27rpx;
-  font-weight: 700;
-  letter-spacing: 1rpx;
-  color: #5A5648;
-}
-.thread-item.active .thread-item-name {
-  color: #FBFAF6;
-  font-weight: 800;
-}
-.column_item {
-  width: 342rpx;
-  border-radius: 2rpx;
-  margin: 0 auto 18rpx auto;
-  background-color: #FBFAF6;
-  border: 2rpx solid #0C5F03;
-  box-shadow: 6rpx 6rpx 0 #0C5F03;
-}
-.location {
-  top: 12rpx;
-  right: 12rpx;
-  font-size: 19rpx;
-  letter-spacing: 1rpx;
-  padding: 0 12rpx;
-  height: 38rpx;
-  line-height: 38rpx;
-  border-radius: 2rpx;
-  background-color: #0C5F03;
-  color: #FBFAF6;
-}
-.info {
-  width: 342rpx;
-  padding: 16rpx 4rpx 16rpx 16rpx;
-}
-.cat-name {
-  font-size: 32rpx;
-  font-weight: 900;
-  letter-spacing: 0;
-  color: #12200C;
-}
-.pher-name, .photo-date {
-  font-size: 20rpx;
-  letter-spacing: 1rpx;
-  color: #8A8578;
-}
-.like-num {
-  font-size: 19rpx;
-  color: #8A8578;
-}
-
-
-/* ================= v4.4 榜单：深色沉浸 ================= */
-page {
-  background-color: #080B09;
-  color: #EDF2ED;
-}
-.thread-list {
+  padding: 8rpx 24rpx 0 24rpx;
   background-color: transparent;
   box-shadow: none;
-  padding: 12rpx 26rpx 4rpx 26rpx;
 }
 .thread-item {
-  padding: 10rpx 28rpx;
+  position: relative;
+  flex: 0 0 auto;
+  height: 60rpx;
+  padding: 0 28rpx;
   margin-right: 12rpx;
-  border-radius: 999rpx;
-  background-color: rgba(255, 255, 255, 0.055);
-  border: 1rpx solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--dk-radius-pill);
+  border: 1rpx solid var(--dk-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.thread-item.active {
-  background-color: #4ADE80;
-  border-color: #4ADE80;
+.thread-item-name {
+  font-size: 24rpx;
+  line-height: 60rpx;
+  color: var(--dk-text-2);
+  font-weight: 400;
 }
 .thread-item-bar {
   display: none;
 }
-.thread-item-name {
-  color: rgba(237, 242, 237, 0.55);
-  font-size: 25rpx;
-  font-weight: 600;
+.thread-item.active {
+  background-color: var(--dk-accent);
+  border-color: var(--dk-accent);
 }
 .thread-item.active .thread-item-name {
-  color: #080B09;
+  color: #FFFFFF;
   font-weight: 700;
 }
+
+/* 照片卡 */
 .column_item {
-  background-color: rgba(255, 255, 255, 0.045);
-  border: 1rpx solid rgba(255, 255, 255, 0.09);
-  border-radius: 28rpx;
+  background-color: var(--dk-card);
+  border: 1rpx solid var(--dk-line);
+  border-radius: var(--dk-radius);
   box-shadow: none;
+  overflow: hidden;
+}
+.column_pic {
+  border-radius: var(--dk-radius) var(--dk-radius) 0 0;
+  overflow: hidden;
 }
 .location {
-  background-color: rgba(0, 0, 0, 0.45);
-  border-radius: 999rpx;
-  color: #FFFFFF;
+  color: rgba(255, 255, 255, 0.94);
+  background-color: rgba(16, 22, 15, 0.55);
+  border-radius: var(--dk-radius-pill);
+  font-size: 18rpx;
+  padding: 4rpx 14rpx;
   backdrop-filter: blur(8rpx);
 }
+.info {
+  padding: 16rpx 20rpx 18rpx 20rpx;
+}
+.names {
+  min-width: 0;
+}
 .cat-name {
-  color: #EDF2ED;
+  color: var(--dk-text);
+  font-size: 26rpx;
   font-weight: 700;
 }
-.pher-name, .photo-date, .like-num {
-  color: rgba(237, 242, 237, 0.36);
+.photo-info {
+  margin-top: 4rpx;
+}
+.pher-name,
+.photo-date {
+  color: var(--dk-text-3);
+  font-size: 19rpx;
+}
+.like-num {
+  color: var(--dk-text-2);
+  font-size: 20rpx;
 }
 
-
-/* ================= v4.5 榜单：浅色沉浸 ================= */
-page {
-  background-color: #F7F9F7;
-  color: #0F1A10;
+/* 筛选胶囊 */
+.h-filter-list {
+  width: auto;
+  height: auto;
+  padding: 6rpx 24rpx 10rpx 24rpx;
+  white-space: nowrap;
 }
-.thread-item {
-  background-color: #FFFFFF;
-  border: 1rpx solid rgba(12, 95, 3, 0.10);
-}
-.thread-item.active {
-  background-color: #0C5F03;
-  border-color: #0C5F03;
-}
-.thread-item-name {
-  color: rgba(15, 26, 16, 0.55);
-}
-.thread-item.active .thread-item-name {
-  color: #FFFFFF;
-}
-.column_item {
-  background-color: #FFFFFF;
-  border: 1rpx solid rgba(12, 95, 3, 0.08);
-  box-shadow: 0 8rpx 24rpx rgba(12, 95, 3, 0.06);
-}
-.location {
-  background-color: rgba(0, 0, 0, 0.40);
-  color: #FFFFFF;
-}
-.cat-name {
-  color: #0F1A10;
-}
-.pher-name, .photo-date, .like-num {
-  color: rgba(15, 26, 16, 0.34);
-}
-
-
-/* ================= v4.6 榜单：深色 ================= */
-page {
-  background-color: #07090A;
-  color: #FFFFFF;
-}
-.thread-item {
+.h-filter-item {
+  display: inline-flex;
+  align-items: center;
+  height: 52rpx;
+  padding: 0 24rpx;
+  margin: 0 12rpx 0 0;
+  border-radius: var(--dk-radius-pill);
+  font-size: 22rpx;
+  color: var(--dk-text-2);
   background-color: transparent;
-  border: 1rpx solid rgba(255, 255, 255, 0.14);
-  border-radius: 12rpx;
+  border: 1rpx solid var(--dk-line);
 }
-.thread-item.active {
-  background-color: #FFFFFF;
-  border-color: #FFFFFF;
-}
-.thread-item-name {
-  color: rgba(255, 255, 255, 0.5);
-}
-.thread-item.active .thread-item-name {
-  color: #07090A;
+.h-filter-item.active {
+  color: #FFFFFF;
+  background-color: var(--dk-accent);
+  border-color: var(--dk-accent);
   font-weight: 700;
 }
-.column_item {
-  background-color: rgba(255, 255, 255, 0.045);
-  border: 1rpx solid rgba(255, 255, 255, 0.08);
-  border-radius: 20rpx;
-  box-shadow: none;
-}
-.location {
-  background-color: rgba(0, 0, 0, 0.5);
-  border-radius: 8rpx;
-  color: #FFFFFF;
-}
-.cat-name {
-  color: #FFFFFF;
-}
-.pher-name, .photo-date, .like-num {
-  color: rgba(255, 255, 255, 0.32);
-}
 
-
-/* ================= v4.7 榜单：白底信息型 ================= */
-page {
-  background-color: #F5F6F5;
-  color: #10160F;
+.loading,
+.loadnomore {
+  opacity: 0.42;
 }
-.thread-item {
-  background-color: #FFFFFF;
-  border: 1rpx solid #E9EDE9;
-  border-radius: 10rpx;
-}
-.thread-item.active {
-  background-color: #0C5F03;
-  border-color: #0C5F03;
-}
-.thread-item-name {
-  color: #6B746B;
-}
-.thread-item.active .thread-item-name {
-  color: #FFFFFF;
-  font-weight: 600;
-}
-.column_item {
-  background-color: #FFFFFF;
-  border: 1rpx solid #E9EDE9;
-  border-radius: 16rpx;
-  box-shadow: none;
-}
-.location {
-  background-color: rgba(0, 0, 0, 0.42);
-  border-radius: 8rpx;
-  color: #FFFFFF;
-}
-.cat-name {
-  color: #10160F;
-}
-.pher-name, .photo-date, .like-num {
-  color: #A2AAA2;
+.loading image,
+.loadnomore image {
+  filter: none;
 }

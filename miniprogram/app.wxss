@@ -235,77 +235,142 @@ page {
 @import "./pages/public/wxss/iconfont.wxss"
 
 
-/* ================= 深色沉浸式主题（v4.4） ================= */
+/* =========================================================
+   v5.0 沉浸式深色主题（唯一生效主题）
+   参考物：深空 / 发射直播类 App —— 近黑微绿底、半透明玻璃卡、
+   1rpx 极细描边、大号数据、胶囊控件、浮岛底部导航。
+   旧 v4.4~v4.7 四套叠加主题已删除，避免规则互殴。
+   ========================================================= */
 page {
-  --dk-bg: #080B09;
-  --dk-bg-2: #0C100E;
-  --dk-card: rgba(255, 255, 255, 0.055);
-  --dk-card-2: rgba(255, 255, 255, 0.085);
-  --dk-line: rgba(255, 255, 255, 0.10);
-  --dk-text: #EDF2ED;
-  --dk-text-2: rgba(237, 242, 237, 0.62);
-  --dk-text-3: rgba(237, 242, 237, 0.38);
-  --dk-accent: #4ADE80;
-  --dk-accent-soft: rgba(74, 222, 128, 0.14);
-  --dk-radius: 32rpx;
-  background-color: #080B09;
-  color: #EDF2ED;
+  /* 底色三层：最底 / 次级面 / 玻璃卡面 */
+  --dk-bg: #F5F7F5;
+  --dk-bg-2: #FFFFFF;
+  --dk-card: #FFFFFF;
+  --dk-card-2: #FFFFFF;
+  --dk-card-solid: #FFFFFF;
+
+  /* 描边：极细淡绿，营造玻璃边界 */
+  --dk-line: rgba(12, 95, 3, 0.10);
+  --dk-line-strong: rgba(12, 95, 3, 0.20);
+
+  /* 文字三级 */
+  --dk-text: #10160F;
+  --dk-text-2: rgba(16, 22, 15, 0.62);
+  --dk-text-3: rgba(16, 22, 15, 0.38);
+
+  /* 强调绿：品牌绿不改色号 */
+  --dk-accent: #0C5F03;
+  --dk-accent-2: #14801F;
+  --dk-accent-soft: rgba(12, 95, 3, 0.08);
+  --dk-accent-line: rgba(12, 95, 3, 0.22);
+
+  /* 形状 */
+  --dk-radius: 28rpx;
+  --dk-radius-lg: 36rpx;
+  --dk-radius-pill: 999rpx;
+  --dk-gap: 24rpx;
+
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
 }
 
+/* 顶部渐变光晕：让浅底不至于死板 */
+.dk-glow {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 520rpx;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 80% at 20% 0%,
+    rgba(12, 95, 3, 0.10) 0%,
+    rgba(12, 95, 3, 0.03) 34%,
+    rgba(245, 247, 245, 0) 72%
+  );
+  z-index: 0;
+}
+
+/* 玻璃卡：半透明 + 细描边 + 大圆角 */
 .dk-card {
   background-color: var(--dk-card);
   border: 1rpx solid var(--dk-line);
   border-radius: var(--dk-radius);
+  box-sizing: border-box;
 }
 
-
-/* ================= 浅色沉浸式主题（v4.5） ================= */
-page {
-  --dk-bg: #F7F9F7;
-  --dk-bg-2: #FFFFFF;
-  --dk-card: #FFFFFF;
-  --dk-card-2: rgba(12, 95, 3, 0.06);
-  --dk-line: rgba(12, 95, 3, 0.10);
-  --dk-text: #0F1A10;
-  --dk-text-2: rgba(15, 26, 16, 0.55);
-  --dk-text-3: rgba(15, 26, 16, 0.34);
-  --dk-accent: #0C5F03;
-  --dk-accent-soft: rgba(12, 95, 3, 0.08);
-  --dk-radius: 32rpx;
-  background-color: #F7F9F7;
-  color: #0F1A10;
+/* 大数字 / 数据栏 */
+.dk-num {
+  color: var(--dk-text);
+  font-size: 40rpx;
+  font-weight: 700;
+  letter-spacing: -0.5rpx;
 }
 
-.dk-card {
-  background-color: #FFFFFF;
-  border: 1rpx solid rgba(12, 95, 3, 0.08);
-  border-radius: var(--dk-radius);
-  box-shadow: 0 8rpx 24rpx rgba(12, 95, 3, 0.06);
+.dk-num-k {
+  color: var(--dk-text-3);
+  font-size: 20rpx;
+  font-weight: 400;
+  letter-spacing: 1rpx;
 }
 
-
-/* ================= v4.6 图墙主题 ================= */
-page {
-  --wl-bg: #07090A;
-  --wl-line: rgba(255, 255, 255, 0.10);
-  --wl-text: #FFFFFF;
-  --wl-text-2: rgba(255, 255, 255, 0.54);
-  --wl-text-3: rgba(255, 255, 255, 0.32);
-  --wl-accent: #4ADE80;
-  background-color: #07090A;
-  color: #FFFFFF;
+/* 胶囊标签 */
+.dk-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 44rpx;
+  padding: 0 20rpx;
+  border-radius: var(--dk-radius-pill);
+  font-size: 21rpx;
+  color: var(--dk-accent-2);
+  background-color: var(--dk-accent-soft);
+  border: 1rpx solid var(--dk-accent-line);
 }
 
+/* 自绘导航栏（navigationStyle: custom 后各页共用） */
+.nav {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 32rpx 14rpx 32rpx;
+  box-sizing: border-box;
+  z-index: 20;
+}
 
-/* ================= v4.7 信息型主题 ================= */
-page {
-  --f-bg: #F5F6F5;
-  --f-surface: #FFFFFF;
-  --f-line: #E9EDE9;
-  --f-text: #10160F;
-  --f-text-2: #6B746B;
-  --f-text-3: #A2AAA2;
-  --f-accent: #0C5F03;
-  background-color: #F5F6F5;
-  color: #10160F;
+.nav-sub {
+  color: var(--dk-text-3);
+  font-size: 19rpx;
+  letter-spacing: 4rpx;
+  text-transform: uppercase;
+}
+
+.nav-title {
+  color: var(--dk-text);
+  font-size: 46rpx;
+  line-height: 50rpx;
+  font-weight: 800;
+  letter-spacing: -1rpx;
+  margin-top: 8rpx;
+}
+
+.nav-flex {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.nav-num {
+  font-size: 46rpx;
+  line-height: 50rpx;
+  font-weight: 800;
+  letter-spacing: -1.5rpx;
+  color: var(--dk-accent);
+}
+
+.nav-num-k {
+  font-size: 19rpx;
+  letter-spacing: 1rpx;
+  color: var(--dk-text-3);
+  margin-left: 8rpx;
 }

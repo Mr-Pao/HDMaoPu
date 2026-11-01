@@ -1,4 +1,5 @@
 {
+  "navigationStyle": "custom",
   "usingComponents": {
     "mp-gallery": "/packages/weui/gallery/gallery",
     "badgeModal": "/components/badgeModal/badgeModal",

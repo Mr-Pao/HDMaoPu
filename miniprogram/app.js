@@ -28,6 +28,34 @@ if (demo_mode === true) {
 
 const launchStartTime = Date.now();
 
+// 自绘导航栏尺寸：全局 navigationStyle: custom 后，各页需要自己留出状态栏与胶囊高度
+function getNavMetrics() {
+  let statusBarHeight = 20;
+  let navBarHeight = 44;
+  try {
+    const info = wx.getSystemInfoSync();
+    statusBarHeight = info.statusBarHeight || 20;
+  } catch (e) {
+    // 取不到就用兜底值
+  }
+  try {
+    const rect = wx.getMenuButtonBoundingClientRect();
+    if (rect && rect.height) {
+      // 胶囊上下留白 4px，导航栏高度 = 胶囊高 + 上下留白，保证标题垂直居中
+      navBarHeight = rect.height + 8;
+    }
+  } catch (e) {
+    // 取不到就用兜底值
+  }
+  return {
+    statusBarHeight,
+    navBarHeight,
+    navBarTotal: statusBarHeight + navBarHeight
+  };
+}
+
+const navMetrics = getNavMetrics();
+
 App({
   // globalData 先给初始值（含 version），页面 onShow 等早于 onLaunch 完成的读取不会拿到 undefined
   globalData: {
@@ -36,7 +64,10 @@ App({
     demoMode: demoMode,
     dataMode: dataMode,
     isReady: false,
-    tabDataPreloaded: false
+    tabDataPreloaded: false,
+    statusBarHeight: navMetrics.statusBarHeight,
+    navBarHeight: navMetrics.navBarHeight,
+    navBarTotal: navMetrics.navBarTotal
   },
 
   async onLaunch() {
@@ -53,7 +84,10 @@ App({
       demoMode: demoMode,
       dataMode: dataMode,
       isReady: false,
-      tabDataPreloaded: false
+      tabDataPreloaded: false,
+      statusBarHeight: navMetrics.statusBarHeight,
+      navBarHeight: navMetrics.navBarHeight,
+      navBarTotal: navMetrics.navBarTotal
     };
 
     this.initCos().then(() => {

@@ -1,3 +1,13 @@
+<view class="dk-glow"></view>
+<view class="nav" style="padding-top: {{statusBarHeight}}px;">
+  <view class="nav-flex">
+    <view class="nav-l">
+      <view class="nav-sub">CAMPUS BOARD</view>
+      <view class="nav-title">猫抓板</view>
+    </view>
+  </view>
+</view>
+
 <view class='loading' wx:if='{{updateRequest}}'>
   <image src='/pages/public/images/system/loading.gif'></image>
 </view>

@@ -1,5 +1,15 @@
 <!--miniprogram/pages/info/info.wxml-->
 <!-- <text>miniprogram/pages/info/info.wxml</text> -->
+<view class="dk-glow"></view>
+<view class="nav" style="padding-top: {{statusBarHeight}}px;">
+  <view class="nav-flex">
+    <view class="nav-l">
+      <view class="nav-sub">MAOPU</view>
+      <view class="nav-title">关于</view>
+    </view>
+  </view>
+</view>
+
 <view class='mina-info'>
   <image src='{{logo_img}}' bindtap="showMpCode" show-menu-by-longpress="1"></image>
   <view class='title'>{{text_cfg.app_name}}</view>

@@ -1,16 +1,31 @@
 <!--miniprogram/pages/genealogy/genealogy.wxml-->
 
-<view id='search' class='{{filters_show_shadow? "shadow": ""}}' style='height: {{heights.filters}}px'>
-  <view class='input-block'>
-    <view class='input-icon'>
-      <image mode='aspectFit' src="/pages/public/images/filter/search.png"></image>
+<view class="dk-glow"></view>
+
+<view id='search' class='{{filters_show_shadow? "shadow": ""}}' style='height: {{heights.filters}}px; padding-top: {{heights.statusBarHeight}}px;'>
+  <view class='nav-row'>
+    <view class='nav-l'>
+      <text class='nav-k'>MAOPU / CAMPUS CAT</text>
+      <text class='nav-t'>火大猫谱</text>
     </view>
-    <input class='name' placeholder='{{text_cfg.genealogy.search_tip}}' placeholder-class='searchPlaceholderStyle' value='{{filters_input}}' maxlength='20' confirm-type='search' bindinput='fSearchInput' bindconfirm='fSearch'></input>
+    <view class='nav-r'>
+      <text class='nav-n'>{{catsMax || cats.length}}</text>
+      <text class='nav-nk'>只在册</text>
+    </view>
   </view>
-  
-  <view class='filter-btn' bindtap='fToggle'>
-    <image wx:if='{{filters_active}}' mode='aspectFit' src="/pages/public/images/filter/filter_y.png"></image>
-    <image wx:else mode='aspectFit' src="/pages/public/images/filter/filter.png"></image>
+
+  <view class='search-row'>
+    <view class='input-block'>
+      <view class='input-icon'>
+        <image mode='aspectFit' src="/pages/public/images/filter/search.png"></image>
+      </view>
+      <input class='name' placeholder='{{text_cfg.genealogy.search_tip}}' placeholder-class='searchPlaceholderStyle' value='{{filters_input}}' maxlength='20' confirm-type='search' bindinput='fSearchInput' bindconfirm='fSearch'></input>
+    </view>
+
+    <view class='filter-btn' bindtap='fToggle'>
+      <image wx:if='{{filters_active}}' mode='aspectFit' src="/pages/public/images/filter/filter_y.png"></image>
+      <image wx:else mode='aspectFit' src="/pages/public/images/filter/filter.png"></image>
+    </view>
   </view>
 </view>
 
@@ -48,14 +63,22 @@
 </view>
 
 <scroll-view enable-flex='1' class='cards' style='height: {{heights.windowHeight - heights.filters}}px;' scroll-y='true' enable-back-to-top='true' bindscrolltolower='onReachBottom' bindscroll='fScroll' lower-threshold='{{main_lower_threshold}}' refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="onPullDownRefresh">
-  <!-- 顶部标题 -->
-  <view class='head'>
-    <view class='head-l'>
-      <text class='head-title'>火大猫谱</text>
-      <text class='head-sub'>共 {{catsMax || cats.length}} 只在册</text>
-    </view>
-    <view class='head-r'>
-      <text class='head-n'>{{cats.length}}</text>
+  <!-- 顶部数据卡 -->
+  <view class='hero'>
+    <view class='hero-k'>CAMPUS CAT INDEX</view>
+    <view class='hero-row'>
+      <view class='hero-cell'>
+        <text class='hero-n'>{{catsMax || cats.length}}</text>
+        <text class='hero-k2'>在册猫猫</text>
+      </view>
+      <view class='hero-cell'>
+        <text class='hero-n hero-n--accent'>{{adopt_count || 0}}</text>
+        <text class='hero-k2'>待领养</text>
+      </view>
+      <view class='hero-cell'>
+        <text class='hero-n'>{{cats.length}}</text>
+        <text class='hero-k2'>当前结果</text>
+      </view>
     </view>
   </view>
 

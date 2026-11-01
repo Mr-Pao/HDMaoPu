@@ -3,8 +3,17 @@
 
 <!-- 背景下拉看到黄色块 -->
 <view id='bg-yellow' style='{{hideBgBlock? "background-color: transparent;": ""}}'></view>
+
+<!-- 自绘导航栏（去标题栏后需要自己画返回） -->
+<view class='dc-nav' style='height: {{statusBarHeight + navBarHeight}}px; padding-top: {{statusBarHeight}}px;'>
+  <view class='dc-back' bindtap='goBack'>
+    <view class='dc-back-icon'></view>
+  </view>
+  <view class='dc-nav-title'>{{cat.name || "猫猫详情"}}</view>
+</view>
+
 <!-- 整个页面容器 -->
-<scroll-view id='container' scroll-y="1" bindscrolltolower='loadMoreAlbum' enable-back-to-top="true" bindscroll="bindContainerScroll">
+<scroll-view id='container' scroll-y="1" bindscrolltolower='loadMoreAlbum' enable-back-to-top="true" bindscroll="bindContainerScroll" style='padding-top: {{statusBarHeight + navBarHeight}}px;'>
   <!-- 半圆形下面的白底块 -->
   <view id='bg-big-circle'></view>
   <!-- 这是黄色的半圆形 -->
