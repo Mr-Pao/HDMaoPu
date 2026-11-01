@@ -1,8 +1,9 @@
 import { getCurrentPath, shareTo } from "../../../utils/utils";
-import { getPageUserInfo, checkCanFeedback } from "../../../utils/user";
+import { getUser, checkCanFeedback, isManagerAsync } from "../../../utils/user";
 import { requestNotice, sendNotifyChkFeeedback } from "../../../utils/msg";
 import { putInbox } from "../../../utils/writeback";
 import { text as text_cfg } from "../../../config";
+import { getCurrentUserOpenid } from "../../../utils/common";
 import api from "../../../utils/cloudApi";
 const app = getApp();
 Page({
@@ -10,12 +11,14 @@ Page({
    * 页面的初始数据
    */
   data: {
-    isAuth: false,
     user: {},
+    defaultAvatar: '/pages/public/images/system/user.png',
     feedbackLength: 0,
     maxlength: 300,
     cat: undefined,
-    text_cfg: text_cfg
+    text_cfg: text_cfg,
+    isManager: false,
+    showEdit: false,
   },
 
   /**
@@ -29,6 +32,11 @@ Page({
       });
     }
 
+    // 管理员可在此直接进入关系管理（添加关系入口已从详情页迁来）
+    this.setData({
+      isManager: await isManagerAsync(3)
+    });
+
     // 检查是否可以上传
     this.setData({
       canFeedback: await checkCanFeedback()
@@ -36,7 +44,8 @@ Page({
   },
 
   async onShow() {
-    await getPageUserInfo(this);
+    const user = await getUser();
+    this.setData({ user: user || {} });
   },
 
   /**
@@ -49,6 +58,7 @@ Page({
     return shareTo(share_text, path);
   },
 
+  // 头像昵称只在「后台回复我」时才需要，改为选填，不拦表单
   getUInfo: function () {
     this.setData({
       showEdit: true
@@ -58,6 +68,10 @@ Page({
     this.setData({
       showEdit: false
     });
+  },
+  async onUserInfoUpdated(e) {
+    const user = (e && e.detail && e.detail.user) || (await getUser());
+    this.setData({ user: user || {} });
   },
 
   bindInput(e) {
@@ -104,8 +118,10 @@ Page({
       title: '正在提交...',
       mask: true,
     })
+    // 用户记录拿不到时兜底取 openid，保证每条反馈都能追到人
+    const openid = (this.data.user && this.data.user.openid) || await getCurrentUserOpenid();
     var data = {
-      openid: this.data.user.openid,
+      openid: openid,
       openDate: api.getDate(),
       feedbackInfo: submitData.feedbackInfo,
       contactInfo: submitData.contactInfo,
@@ -113,7 +129,7 @@ Page({
     };
     if (this.data.cat != undefined) {
       data.cat_id = this.data.cat._id;
-      data.cat_name = this.data.cat_name;
+      data.cat_name = this.data.cat.name;
     }
     const res = await api.curdOp({
       operation: "add",
@@ -166,6 +182,12 @@ Page({
       console.log('repliable record fail:\n', res);
     }
 
+  },
+
+  toAddRelation() {
+    const cat_id = this.data.cat && this.data.cat._id;
+    if (!cat_id) return;
+    wx.navigateTo({ url: `/pages/manage/catManage/catManage?cat_id=${cat_id}&activeTab=relation` });
   },
 
   async changeAgreement(e) {

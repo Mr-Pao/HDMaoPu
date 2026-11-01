@@ -1,40 +1,36 @@
 <form bindsubmit="bindSubmit" wx:if="{{canFeedback}}">
-  <view wx:if="{{!isAuth}}" class='unAuth'>
-    <!-- <text>请授权后进行操作</text> -->
-    <view class='userInfo'>
-      <image src='/pages/public/images/system/user.png'></image>
-      <view>
-        <text>[等待授权]\n---准备为「<text style="font-weight:600;">{{cat? cat.name: text_cfg.app_name}}</text>」反馈信息</text>
-      </view>
+  <!-- 昵称头像改为选填：点这块打开编辑弹窗，不拦提交 -->
+  <view class='userInfo' bindtap='getUInfo' hover-class='link-hover'>
+    <image src='{{user.userInfo.avatarUrl || defaultAvatar}}'></image>
+    <view class='userInfo-text'>
+      <text>{{user.userInfo.nickName || "匿名猫友"}}\n---正在为「<text style="font-weight:600;">{{cat? cat.name: text_cfg.app_name}}</text>」反馈信息</text>
+      <text class='authHint'>{{user.userInfo.nickName ? "点此修改头像昵称" : "点此设置头像昵称（选填）"}}</text>
     </view>
-    <button class='long primary' bindtap='getUInfo'>点击授权</button>
   </view>
-  <block wx:else>
-    <!-- <view>--已经授权--</view> -->
-    <view class='userInfo'>
-      <image src='{{user.userInfo.avatarUrl}}'></image>
-      <view>
-        <text>{{user.userInfo.nickName}}\n---正在为「<text style="font-weight:600;">{{cat? cat.name: text_cfg.app_name}}</text>」反馈信息</text>
-      </view>
+  <view class='adminEntry' wx:if="{{isManager && cat && cat._id}}" bindtap='toAddRelation' hover-class='link-hover'>
+    <view class='adminEntry-title'>管理</view>
+    <view class='adminEntry-btn'>
+      <text class='iconfont icon-relation'></text>
+      <text>添加猫际关系</text>
     </view>
-    <view class='inputColumns'>
-      <view>
-        <text class='inputTitle'>{{text_cfg.feedback_detail.feedback_title}}：</text>
-        <textarea class='feedbackColumn' placeholder="{{text_cfg.feedback_detail.feedback_tip}}" name='feedbackInfo' maxlength='{{maxlength}}' bindinput='bindInput' data-name="feedbackInfo"></textarea>
-        <text class='lengthTips'>{{text_cfg.feedback_detail.input_length_tip}}：{{feedbackLength}}/{{maxlength}}</text>
-      </view>
-      <view style='margin-top:40rpx;'>
-        <text class="inputTitle">{{text_cfg.feedback_detail.contract_title}}：</text>
-        <input placeholder="{{text_cfg.feedback_detail.contract_tip}}" name='contactInfo' maxlength='30' bindinput='bindInput' data-name="contactInfo"/>
-      </view>
+  </view>
+  <view class='inputColumns'>
+    <view>
+      <text class='inputTitle'>{{text_cfg.feedback_detail.feedback_title}}：</text>
+      <textarea class='feedbackColumn' placeholder="{{text_cfg.feedback_detail.feedback_tip}}" name='feedbackInfo' maxlength='{{maxlength}}' bindinput='bindInput' data-name="feedbackInfo"></textarea>
+      <text class='lengthTips'>{{text_cfg.feedback_detail.input_length_tip}}：{{feedbackLength}}/{{maxlength}}</text>
     </view>
-    <checkbox-group class="agreement" bindchange="changeAgreement">
-      <checkbox color="var(--color-primary)" checked="{{agreementChecked}}">对于其他信息，您已阅读并同意<navigator url="/pages/info/agreement/agreement">《服务协议和隐私政策》</navigator></checkbox>
-    </checkbox-group>
-    <view class='submitButton'>
-      <button form-type='submit' disabled="{{contactLength > 0 && !agreementChecked}}">{{text_cfg.feedback_detail.submit_button}}</button>
+    <view style='margin-top:40rpx;'>
+      <text class="inputTitle">{{text_cfg.feedback_detail.contract_title}}：</text>
+      <input placeholder="{{text_cfg.feedback_detail.contract_tip}}" name='contactInfo' maxlength='30' bindinput='bindInput' data-name="contactInfo"/>
     </view>
-  </block>
+  </view>
+  <checkbox-group class="agreement" bindchange="changeAgreement">
+    <checkbox color="var(--color-primary)" checked="{{agreementChecked}}">对于其他信息，您已阅读并同意<navigator url="/pages/info/agreement/agreement">《服务协议和隐私政策》</navigator></checkbox>
+  </checkbox-group>
+  <view class='submitButton'>
+    <button form-type='submit' disabled="{{contactLength > 0 && !agreementChecked}}">{{text_cfg.feedback_detail.submit_button}}</button>
+  </view>
 </form>
 <view class='footnote' wx:else>
   <text>*暂不开放反馈信息功能</text>
@@ -42,3 +38,4 @@
 <view class='footnote'>
   <text>{{text_cfg.feedback_detail.submit_tip}}</text>
 </view>
+<modifyUserInfo show="{{showEdit}}" bind:close="closeEdit" bind:userInfoUpdated="onUserInfoUpdated"></modifyUserInfo>

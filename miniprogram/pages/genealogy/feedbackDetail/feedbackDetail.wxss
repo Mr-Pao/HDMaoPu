@@ -8,6 +8,21 @@ page {
   width: 100%;
   padding: 0rpx 0rpx 30rpx 0;
   display: flex;
+  align-items: flex-start;
+}
+
+.userInfo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.userInfo .authHint {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  line-height: 34rpx;
+  height: auto;
+  color: var(--dk-accent);
+  opacity: 0.75;
 }
 
 .userInfo image {
@@ -107,4 +122,45 @@ page {
 /* 卡片圆角统一到 20rpx 档 */
 .card, .box, .item-card, .list-item, .cell {
   border-radius: 20rpx;
+}
+
+/* 管理员专属入口：添加猫际关系（由详情页关系卡迁来） */
+.adminEntry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--dk-card);
+  border: 1rpx solid var(--dk-line);
+  border-radius: 20rpx;
+  padding: 24rpx 28rpx;
+  margin-bottom: 30rpx;
+  box-sizing: border-box;
+}
+
+.adminEntry-title {
+  font-size: 30rpx;
+  color: var(--dk-text);
+  opacity: 0.6;
+  letter-spacing: 2rpx;
+}
+
+.adminEntry-btn {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 28rpx;
+  border-radius: var(--dk-radius-pill);
+  background-color: var(--color-primary-soft);
+  color: var(--dk-accent);
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.adminEntry-btn .iconfont {
+  font-size: 30rpx;
+  color: var(--dk-accent);
+  margin-right: 10rpx;
+}
+
+.link-hover {
+  opacity: 0.7;
 }

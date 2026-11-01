@@ -27,3 +27,11 @@ _git/
 # 项目本地数据（WorkBuddy 会话与记忆）
 .workbuddy/
 test-artifacts/
+
+# 猫↔照片归属重建工具（本地产物与密钥）
+.env
+relink-result.json
+relink-workbench.html
+
+# DSH AgentTeams 运行态（含归档团队），不进版本控制
+.agent-teams/
