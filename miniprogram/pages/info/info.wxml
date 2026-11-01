@@ -5,7 +5,7 @@
   <view class="nav-flex">
     <view class="nav-l">
       <view class="nav-sub">MAOPU</view>
-      <view class="nav-title">关于</view>
+      <view class="nav-title" catchtap="onTitleTap">关于</view>
     </view>
   </view>
 </view>

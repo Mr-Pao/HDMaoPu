@@ -1,5 +1,4 @@
 // miniprogram/pages/info/info.js
-import { isManagerAsync } from "../../utils/user";
 import { text as text_cfg, mpcode_img } from "../../config";
 import { showTab } from "../../utils/page";
 
@@ -12,11 +11,22 @@ import { signCosUrl } from "../../utils/common";
 const app = getApp();
 
 const { applyNav } = require('../../utils/nav');
+const passcode = require('../../utils/passcode');
+
+// 连击「关于」标题多少次才弹管理口令
+const TAP_TO_UNLOCK = 5;
+// 两次点击间隔超过这个毫秒数就重新计数（「连击」而不是「累计」）
+const TAP_WINDOW = 800;
+// 本机记住「已解锁」的标记，口令正确一次后本次安装内不再反复要
+const UNLOCK_KEY = 'admin_unlocked';
 
 Page({
   // 非渲染数据（不进 setData，避免无谓的视图层通信）
   jsData: {
     linkFetchedAt: 0,
+    tapCount: 0,
+    tapAt: 0,
+    gateCode: undefined,   // undefined = 还没拉过远端；'' = 远端没设口令
   },
 
   data: {
@@ -185,6 +195,9 @@ Page({
     // 友情链接可能在管理后台被增删，回到本页时按 5 分钟节流重新拉一次
     this.loadFriendLinks();
 
+    // 已解锁过管理后台的，进页面直接把菜单放出来（不用再连击）
+    this.setData({ "showCond.manager": this.isUnlocked() });
+
     // 获取version
     this.setData({
       version: getApp().globalData.version
@@ -271,7 +284,7 @@ Page({
       currentCatsCount: numCurrentCats,
     });
 
-    if (!await isManagerAsync()) {
+    if (!this.isUnlocked()) {
       return;
     }
 
@@ -288,6 +301,126 @@ Page({
       "nums.numImProcess": numImProcess,
       "showCond.manager": true,
     });
+  },
+
+  // ---------- 管理后台入口：连击「关于」标题 5 次 → 口令 → 解锁 ----------
+  //
+  // 口令存在 data/gate.json 的 code 字段，改完 push cos 自动同步 COS，无需发版。
+  // data/ 是公开 CDN，口令等于公开——它只是「别让普通用户误入」的 UX 门，
+  // 真正的写入权限仍在 Actions 端 REVIEW_PASSCODE。
+
+  isUnlocked() {
+    try {
+      return !!wx.getStorageSync(UNLOCK_KEY);
+    } catch (e) {
+      return false;
+    }
+  },
+
+  setUnlocked(v) {
+    try {
+      if (v) wx.setStorageSync(UNLOCK_KEY, 1);
+      else wx.removeStorageSync(UNLOCK_KEY);
+    } catch (e) {
+      console.warn('[INFO] 解锁标记读写失败', e);
+    }
+  },
+
+  // 远端读口令；结果缓存在 jsData.gateCode，每次进页面重拉一次（很轻的一个 JSON）
+  async loadGateCode() {
+    if (this.jsData.gateCode !== undefined) return this.jsData.gateCode;
+    let code = '';
+    try {
+      const { result } = await app.mpServerless.db.collection('gate').findOne({ _id: 'gate' });
+      code = String((result && result.code) || '').trim();
+    } catch (e) {
+      console.warn('[INFO] 口令配置读取失败', e);
+      // 读失败时不要把 gateCode 定死成空，下次进页面还能重试
+      return '';
+    }
+    this.jsData.gateCode = code;
+    return code;
+  },
+
+  // 连击计数：间隔超 TAP_WINDOW 就重新从 1 数
+  onTitleTap() {
+    const now = Date.now();
+    if (now - (this.jsData.tapAt || 0) > TAP_WINDOW) {
+      this.jsData.tapCount = 0;
+    }
+    this.jsData.tapAt = now;
+    this.jsData.tapCount = (this.jsData.tapCount || 0) + 1;
+
+    if (this.jsData.tapCount < TAP_TO_UNLOCK) return;
+
+    this.jsData.tapCount = 0;
+    // 已经解锁过就别再骚扰
+    if (this.isUnlocked()) {
+      this.setData({ "showCond.manager": true });
+      return;
+    }
+    this.askAdminPasscode();
+  },
+
+  async askAdminPasscode() {
+    const code = await this.loadGateCode();
+    if (!code) {
+      wx.showModal({
+        title: '管理入口未启用',
+        content: '远端还没有配置管理口令（data/gate.json 的 code 为空）。',
+        showCancel: false,
+      });
+      return;
+    }
+
+    wx.showModal({
+      editable: true,
+      title: '管理口令',
+      placeholderText: '输入管理口令',
+      confirmText: '进入',
+      cancelText: '取消',
+      success: res => {
+        if (!res || !res.confirm) return;
+        const input = String(res.content || "").trim();
+        if (!input) return;
+        if (input !== code) {
+          wx.showToast({ title: '口令不对', icon: 'none' });
+          return;
+        }
+        this.setUnlocked(true);
+        // 同一个口令顺手存成提交用的 token，管理页里就不用再输一遍。
+        // ⚠️ 前提：这个口令要和 Actions 的 REVIEW_PASSCODE 一致，
+        //    不一致的话页面能进、但提交会被服务端 drop:bad-token 静默丢弃。
+        passcode.setToken(input);
+        this.setData({ "showCond.manager": true });
+        wx.showToast({ title: '已进入管理后台', icon: 'none' });
+        // 解锁后补拉一次待处理数量
+        this.refreshManagerNums && this.refreshManagerNums();
+      },
+      fail: err => {
+        console.warn('[INFO] 口令弹窗失败', err);
+      },
+    });
+  },
+
+  // 解锁后补算管理角标（onShow 的早退分支不会再跑一遍）
+  async refreshManagerNums() {
+    try {
+      const imProcessQf = { photo_compressed: { $in: [undefined, ''] }, verified: true };
+      const { result: numChkPhotos } = await app.mpServerless.db.collection('photo').count({ verified: false });
+      const { result: numChkComments } = await app.mpServerless.db.collection('comment').count({ needVerify: true });
+      const { result: numFeedbacks } = await app.mpServerless.db.collection('feedback').count({ dealed: false });
+      const { result: numImProcess } = await app.mpServerless.db.collection('photo').count(imProcessQf);
+      this.setData({
+        "nums.numChkPhotos": numChkPhotos,
+        "nums.numChkComments": numChkComments,
+        "nums.numFeedbacks": numFeedbacks,
+        "nums.numImProcess": numImProcess,
+        "showCond.manager": true,
+      });
+    } catch (e) {
+      console.warn('[INFO] 管理角标刷新失败', e);
+    }
   },
 
   /**
