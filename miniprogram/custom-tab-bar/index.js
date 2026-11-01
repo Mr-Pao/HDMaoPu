@@ -49,8 +49,13 @@ Component({
       });
       return;
     }
-    const fullTab = settings.fullTab.split(',');
-    const ctrlTab = new Map(settings.ctrlTab.split(',').map(i => [i, true]));
+    // 旧版「榜单」(leaderboard) 已下线，改为「图库」(gallery)。
+    // 用户本地可能还缓存着旧 setting（pageSetting 缓存 7 天），
+    // 这里做别名映射，无论缓存新旧都能正确显示图库 tab。
+    const alias = { leaderboard: 'gallery' };
+    const normalize = k => { const t = (k || '').trim(); return alias[t] || t; };
+    const fullTab = settings.fullTab.split(',').map(normalize);
+    const ctrlTab = new Map(settings.ctrlTab.split(',').map(i => [normalize(i), true]));
     var minTab = fullTab.filter(x => ctrlTab.get(x) === undefined);
     // console.log("tabBar", ctrlTab, minTab, fullTab);
     // 根据用户类型来确定底Tab
