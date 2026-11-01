@@ -1374,3 +1374,33 @@ page {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
+
+/* ---------- 首页右上「识猫」入口（MeowID） ---------- */
+.nav-recognize {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  height: 56rpx;
+  padding: 0 22rpx;
+  margin-left: 20rpx;
+  margin-bottom: 6rpx;
+  border-radius: var(--dk-radius-pill);
+  background-color: var(--dk-accent-soft);
+  border: 1rpx solid var(--dk-accent-line);
+}
+
+.nav-recognize-t {
+  font-size: 24rpx;
+  line-height: 32rpx;
+  letter-spacing: 1rpx;
+  color: var(--dk-accent);
+}
+
+.nav-recognize-arrow {
+  font-size: 26rpx;
+  line-height: 32rpx;
+  margin-left: 6rpx;
+  color: var(--dk-accent);
+  opacity: 0.7;
+}

@@ -237,29 +237,49 @@ module.exports = {
     },
   },
   recognize: {
-    tip: "识猫页设置",
-    interfaceURL: {
+    tip: "识猫页设置（正式版）｜MeowID 开放平台，项目 ID 和 API Key 到 platform.meowid.net 项目页复制",
+    apiBase: {
       type: "text",
-      tip: "识猫接口地址链接",
-      default: "https://your.domain.com/recognizeCatPhoto_test"
+      tip: "MeowID 接口地址",
+      default: "https://platform.meowid.net"
     },
-    secretKey: {
+    projectId: {
       type: "text",
-      tip: "识猫接口秘钥",
-      default: "key"
+      tip: "项目 ID（完整 UUID，8-4-4-4-12）",
+      default: ""
+    },
+    apiKey: {
+      type: "text",
+      tip: "API Key（mk_live_ 开头）",
+      default: ""
+    },
+    topK: {
+      type: "number",
+      tip: "每次最多返回候选数",
+      default: "3"
     },
   },
   recognize_test: {
-    tip: "识猫页（开发接口）设置",
-    interfaceURL: {
+    tip: "识猫页设置（开发版）｜不填则开发版不可用",
+    apiBase: {
       type: "text",
-      tip: "识猫开发接口地址链接",
-      default: "https://your.domain.com/recognizeCatPhoto"
+      tip: "MeowID 接口地址",
+      default: "https://platform.meowid.net"
     },
-    secretKey: {
+    projectId: {
       type: "text",
-      tip: "识猫开发接口秘钥",
-      default: "key"
+      tip: "项目 ID（完整 UUID，8-4-4-4-12）",
+      default: ""
+    },
+    apiKey: {
+      type: "text",
+      tip: "API Key（mk_live_ 开头）",
+      default: ""
+    },
+    topK: {
+      type: "number",
+      tip: "每次最多返回候选数",
+      default: "3"
     },
   }
 }

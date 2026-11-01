@@ -33,5 +33,8 @@ test-artifacts/
 relink-result.json
 relink-workbench.html
 
+# MeowID 注册进度（记录已灌到平台的照片，避免重复上传）
+.meowid-enroll-state.json
+
 # DSH AgentTeams 运行态（含归档团队），不进版本控制
 .agent-teams/

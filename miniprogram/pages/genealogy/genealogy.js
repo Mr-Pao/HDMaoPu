@@ -66,6 +66,8 @@ Page({
     newsImage: "",
     text_cfg: config.text,
     dataReady: false,
+    // 识猫入口显隐（MeowID 配好项目 ID + API Key 才显示）
+    showRecognize: false,
     // 新增：下拉刷新状态
     refreshing: false
   },
@@ -283,8 +285,9 @@ Page({
   loadRecognize: async function () {
     const env = __wxConfig.envVersion === 'release' ? 'recognize' : 'recognize_test';
     const settings = await getGlobalSettings(env) || {};
+    // MeowID：项目 ID 和 API Key 都填了才显示识猫入口
     this.setData({
-      showRecognize: settings.interfaceURL && !settings.interfaceURL.includes("https://your.domain.com")
+      showRecognize: !!(settings.projectId && settings.apiKey)
     });
   },
 

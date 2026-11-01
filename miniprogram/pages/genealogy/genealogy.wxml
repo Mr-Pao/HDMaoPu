@@ -8,6 +8,10 @@
       <text class='nav-k'>MAOPU / CAMPUS CAT</text>
       <text class='nav-t'>火大猫谱</text>
     </view>
+    <view wx:if='{{showRecognize}}' class='nav-recognize' bindtap='clickRecognize'>
+      <text class='nav-recognize-t'>识猫</text>
+      <text class='nav-recognize-arrow'>›</text>
+    </view>
   </view>
 
   <view class='search-row'>

@@ -17,7 +17,10 @@
         "photoPopWeight": 10
       },
       "recognize": {
-        "showRecognizeBtn": true
+        "apiBase": "https://platform.meowid.net",
+        "projectId": "",
+        "apiKey": "",
+        "topK": 3
       },
       "accessCtrl": {
         "ctrlUser": "guest",

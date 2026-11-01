@@ -65,18 +65,6 @@
   position: relative;
 }
 
-#photoPreview .catBox {
-  position: absolute;
-  /* top,left,width,height在wxml中绑定JS计算结果 */
-  border: 4rpx solid var(--color-gray);
-  border-radius: 20rpx;
-  box-sizing: border-box;
-}
-
-#photoPreview .catBox.chosen {
-  border-color: var(--color-primary);
-}
-
 #cameraControll {
   padding: 0 40rpx;
   display: flex;

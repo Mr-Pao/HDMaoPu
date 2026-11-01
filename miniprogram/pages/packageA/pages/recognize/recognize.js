@@ -3,7 +3,6 @@ import {
   cat_status_adopt
 } from "../../../../config";
 import {
-  hex_sha256,
   randomInt
 } from "../../../../utils/utils";
 import {
@@ -15,6 +14,14 @@ import drawUtils from "../../../../utils/draw";
 
 const share_text = text_cfg.app_name + ' - ' + text_cfg.recognize.share_tip;
 const app = getApp();
+
+// MeowID 开放平台的默认地址，配置里没写 apiBase 时用它兜底
+const DEFAULT_API_BASE = 'https://platform.meowid.net';
+// 一次识别最多展示几只候选
+const MAX_DISPLAY = 5;
+// 上传超时：MeowID 首次推理冷启动可能很慢，别设太短
+const UPLOAD_TIMEOUT = 60 * 1000;
+
 Page({
 
   /**
@@ -33,9 +40,9 @@ Page({
     colourList: ['所有花色'],
     colourIndex: 0,
     catList: [], // 展示的猫猫列表
-    catBoxList: [], // 展示的猫猫框列表
-    catIdx: null, // 在有多只猫猫的图片中，识别的猫猫的编号
     showResultBox: false, // 用来配合动画延时展示resultBox
+    resultTitle: '', // 结果区标题（认出来 / 没认出来 / 没猫）
+    showNoCatIcon: false, // 没检测到猫时显示提示图标
     showAdBox: true, // 展示banner广告
     ad: {},
     text_cfg: text_cfg,
@@ -45,13 +52,16 @@ Page({
   },
 
   jsData: {
-    // 接口设置，onLoad中从数据库拉取。
-    interfaceURL: null,
-    secretKey: null,
-    canvasSideLen: 500,
-    // 图片长宽比，在compresPhoto函数中记录。用于重新映射后端返回的catBox位置信息。
-    widthHeightRatio: null,
-    // 接口返回的识别结果。展示的结果为在此基础上筛选。
+    // MeowID 接口设置，onShow 中从数据库拉取。
+    apiBase: null,
+    projectId: null,
+    apiKey: null,
+    topK: 3,
+    configLoaded: false,
+    canvasSideLen: 720,
+    // 最后一次接口返回的原始信息（用于区分「没检测到猫」和「没认出来」）
+    lastSearch: null,
+    // 接口返回的候选猫猫（已查过本地 cat 集合），展示的结果为在此基础上筛选。
     recognizeResults: [],
   },
 
@@ -74,23 +84,42 @@ Page({
   },
 
   async onShow() {
-    if (!this.jsData.interfaceURL || !this.jsData.secretKey) {
-      var settings = await getGlobalSettings(__wxConfig.envVersion === 'release' ? 'recognize' : 'recognize_test') || {};
-      this.jsData.interfaceURL = settings.interfaceURL;
-      this.jsData.secretKey = settings.secretKey;
-      await this.recognizeChatImage();
-    } else { // 没杀后台回到聊天重新识别的情况
-      this.recognizeChatImage()
-    }
+    await this.loadRecognizeSettings();
+    // 从聊天素材打开时自动识别（scene 1173）
+    this.recognizeChatImage();
   },
 
+  // 读取识猫接口配置（MeowID：apiBase / projectId / apiKey / topK）
+  async loadRecognizeSettings() {
+    const env = __wxConfig.envVersion === 'release' ? 'recognize' : 'recognize_test';
+    const settings = await getGlobalSettings(env) || {};
+    let apiBase = (settings.apiBase || DEFAULT_API_BASE).trim();
+    if (apiBase && !/^https?:\/\//i.test(apiBase)) {
+      apiBase = 'https://' + apiBase;
+    }
+    apiBase = apiBase.replace(/\/+$/, '');
+    const topK = parseInt(settings.topK, 10);
+    this.jsData.apiBase = apiBase;
+    this.jsData.projectId = (settings.projectId || '').trim();
+    this.jsData.apiKey = (settings.apiKey || '').trim();
+    this.jsData.topK = isNaN(topK) || topK <= 0 ? 3 : Math.min(topK, 20);
+    this.jsData.configLoaded = true;
+  },
+
+  hasRecognizeConfig() {
+    return !!(this.jsData.projectId && this.jsData.apiKey);
+  },
 
   recognizeChatImage() {
     var launchOptions = wx.getEnterOptionsSync();
     if (launchOptions.scene !== 1173) {
       return;
     }
-    var chatImage = launchOptions.forwardMaterials[0].path;
+    var materials = launchOptions.forwardMaterials;
+    if (!materials || !materials.length || !materials[0].path) {
+      return;
+    }
+    var chatImage = materials[0].path;
     if (this.data.photoPath === chatImage) {
       // 已经识别了
       return;
@@ -143,75 +172,117 @@ Page({
     });
   },
 
+  toastTip(title, duration) {
+    wx.showToast({
+      icon: 'none',
+      title: title,
+      duration: duration || 2500,
+      mask: true
+    });
+  },
+
+  // 把 MeowID 的响应统一成候选数组。
+  // 单猫时后端可能直接返回扁平对象（没有 candidates 包裹），这里一并兼容。
+  extractCandidates(resp) {
+    if (!resp) return [];
+    if (Array.isArray(resp.candidates)) {
+      return resp.candidates;
+    }
+    return [resp];
+  },
+
   async recognizePhoto() {
     // 检查接口设置
-    if (!this.jsData.interfaceURL || !this.jsData.secretKey) {
-      wx.showToast({
-        icon: 'error',
-        title: '出错了'
-      });
+    if (!this.jsData.configLoaded) {
+      await this.loadRecognizeSettings();
+    }
+    if (!this.hasRecognizeConfig()) {
+      this.toastTip(text_cfg.recognize.no_config_tip);
       return;
     }
+
     wx.showLoading({
       title: '翻阅猫谱中...',
       mask: true
     });
-    // 压缩图片
-    const compressPhotoPath = await this.compressPhoto();
 
-    const compressPhotoInfo = await wx.getImageInfo({
-      src: compressPhotoPath,
-    });
-    this.jsData.compressPhotoInfo = compressPhotoInfo;
-
-    // 计算签名
-    const photoBase64 = wx.getFileSystemManager().readFileSync(compressPhotoPath, 'base64');
-    const timestamp = Math.round(new Date().getTime() / 1000);
-    const signature = hex_sha256(photoBase64 + timestamp + this.jsData.secretKey);
-    // 调用服务端接口进行识别
-    const that = this;
-    const formData = {
-      timestamp: timestamp,
-      signature: signature,
-    };
-    if (this.data.catIdx !== null) {
-      formData.catIdx = this.data.catIdx;
+    let compressPhotoPath;
+    try {
+      compressPhotoPath = await this.compressPhoto();
+    } catch (err) {
+      wx.hideLoading();
+      this.toastTip(text_cfg.recognize.network_tip);
+      return;
     }
+
+    const { apiBase, projectId, apiKey, topK } = this.jsData;
+    const url = `${apiBase}/v1/projects/${encodeURIComponent(projectId)}/search?top_k=${topK}`;
+    const that = this;
+
     wx.uploadFile({
       filePath: compressPhotoPath,
-      name: 'photo',
-      url: this.jsData.interfaceURL,
-      formData: formData,
-      timeout: 10 * 1000, // 10s超时
-      async success(resp) {
+      name: 'image', // MeowID 的 multipart 字段名固定为 image
+      url: url,
+      header: {
+        // MeowID 只认 Authorization: Bearer <api key>
+        Authorization: 'Bearer ' + apiKey
+      },
+      timeout: UPLOAD_TIMEOUT,
+      success(resp) {
+        let body = null;
         try {
-          if (resp.statusCode != 200) {
-            throw resp.data;
-          }
-          const res = JSON.parse(resp.data); // 这里也可能抛出异常
-          if (res.ok === true) {
-            await that.loadRecognizeResult(res.data);
-          } else {
-            throw res;
-          }
+          body = JSON.parse(resp.data); // 这里也可能抛出异常
         } catch (err) {
-          wx.hideLoading();
-          wx.showToast({
-            icon: 'error',
-            title: '出错了'
-          });
-          wx.reportMonitor('recognizeCatPhotoError', 1);
+          body = null;
         }
+        if (resp.statusCode != 200) {
+          wx.hideLoading();
+          that.toastTip(that.describeError(resp.statusCode, body), 3500);
+          wx.reportMonitor('recognizeCatPhotoError', 1);
+          return;
+        }
+        if (!body) {
+          wx.hideLoading();
+          that.toastTip(text_cfg.recognize.network_tip);
+          wx.reportMonitor('recognizeCatPhotoError', 1);
+          return;
+        }
+        that.loadRecognizeResult(body);
       },
       fail(err) {
         wx.hideLoading();
-        wx.showToast({
-          icon: 'error',
-          title: '出错了'
-        });
+        that.toastTip(text_cfg.recognize.network_tip);
         wx.reportMonitor('recognizeCatPhotoError', 1);
       }
     });
+  },
+
+  // 把接口错误翻译成人话
+  describeError(statusCode, body) {
+    const detail = body && body.detail;
+    const code = (detail && detail.code) || (body && body.code) || '';
+    if (code === 'project_mismatch') {
+      return text_cfg.recognize.project_mismatch_tip;
+    }
+    if (code === 'invalid_api_key') {
+      return text_cfg.recognize.key_invalid_tip;
+    }
+    if (code === 'AUTH_SESSION_EXPIRED') {
+      return text_cfg.recognize.key_expired_tip;
+    }
+    if (detail && typeof detail === 'object' && detail.message) {
+      return detail.message;
+    }
+    if (typeof detail === 'string' && detail) {
+      return detail;
+    }
+    if (statusCode === 413) {
+      return text_cfg.recognize.too_large_tip;
+    }
+    if (statusCode === 429) {
+      return text_cfg.recognize.rate_limit_tip;
+    }
+    return text_cfg.recognize.network_tip;
   },
 
   async compressPhoto() {
@@ -219,13 +290,11 @@ Page({
     const photoInfo = await wx.getImageInfo({
       src: this.data.photoPath,
     });
-    // 记录图片长宽比。用于重新映射后端返回的catBox位置信息。
-    this.jsData.widthHeightRatio = photoInfo.width / photoInfo.height;
     // 使用canvas方法压缩图片
     const { canvasSideLen } = this.jsData;
     const drawRate = Math.max(photoInfo.width, photoInfo.height) / canvasSideLen; // 计算缩放比
-    const drawWidth = photoInfo.width / drawRate;
-    const drawHeight = photoInfo.height / drawRate;
+    const drawWidth = Math.round(photoInfo.width / drawRate);
+    const drawHeight = Math.round(photoInfo.height / drawRate);
     if (!this.jsData.ctx) {
       const { ctx, canvas } = await drawUtils.initCanvas('#canvasForCompress');
       this.jsData.ctx = ctx;
@@ -245,40 +314,115 @@ Page({
     return compressPhotoPath;
   },
 
-  async loadRecognizeResult(result) {
-    // 解析猫猫框
-    let catBoxes = result.catBoxes;
-    let catBoxList = [];
-    const previewSideLen = 675; // view#previewArea的长宽rpx值
-    const compressSideLen = this.jsData.canvasSideLen; // 上传到后台的图片的长边长度
-    const ratio = previewSideLen / compressSideLen; // 缩放比
-    const { compressPhotoInfo } = this.jsData;
-    for (let catBox of catBoxes) {
-      let xOffset = 0, yOffset = 0;
-      // 短边由于居中会产生offset
-      if (this.jsData.widthHeightRatio < 1) {
-        xOffset = previewSideLen * ((1 - this.jsData.widthHeightRatio) / 2);
-      } else {
-        yOffset = previewSideLen * ((1 - 1 / this.jsData.widthHeightRatio) / 2);
+  async loadRecognizeResult(resp) {
+    const candidates = this.extractCandidates(resp);
+    const faceDetected = candidates.some(c => c && c.face_detected);
+    this.jsData.lastSearch = {
+      faceDetected: faceDetected,
+      unknown: candidates.some(c => c && c.unknown),
+    };
+
+    // 拍平所有候选的 matches，按相似度从高到低排
+    let matches = [];
+    for (const candidate of candidates) {
+      if (candidate && Array.isArray(candidate.matches)) {
+        matches = matches.concat(candidate.matches);
       }
+    }
+    matches.sort((a, b) => (b.score || 0) - (a.score || 0));
+    // 同一只猫只保留最高分那一条
+    const seen = {};
+    matches = matches.filter(m => {
+      if (!m || !m.cat_id || seen[m.cat_id]) return false;
+      seen[m.cat_id] = true;
+      return true;
+    });
 
-      // PC端压缩后的照片，尺寸不一定是500
-      const realDrawRate = compressSideLen / Math.max(compressPhotoInfo.width, compressPhotoInfo.height);
+    // 并行查本地猫谱，查不到的（本地没注册这只猫）直接丢掉
+    const cats = await Promise.all(matches.map(m => this.getCatInfo(m)));
+    this.jsData.recognizeResults = cats.filter(c => !!c);
 
-      catBoxList.push({
-        x: catBox.xmin * realDrawRate * ratio + xOffset,
-        y: catBox.ymin * realDrawRate * ratio + yOffset,
-        width: (catBox.xmax - catBox.xmin) * realDrawRate * ratio,
-        height: (catBox.ymax - catBox.ymin) * realDrawRate * ratio
-      });
+    await this.applyFilterAndShow();
+  },
+
+  catFilter(res) {
+    //点击筛选picker
+    var type = res.currentTarget.dataset.type;
+    // picker 返回的是字符串，统一转成数字，避免筛选与回滚时索引类型不一致
+    var value = parseInt(res.detail.value, 10);
+    if (isNaN(value) || value < 0) {
+      value = this.data[type + 'Index'];
     }
     this.setData({
-      catBoxList: catBoxList
+      [type + 'IndexOld']: this.data[type + 'Index'],
+      lastFilterType: type,
+      [type + 'Index']: value
+    })
+    this.applyFilterAndShow();
+  },
+
+  // 按位置/花色筛选，生成展示列表（不再做 softmax，直接用接口给的相似度）
+  filterCatList() {
+    const choseCampus = this.data.campusList[this.data.campusIndex];
+    const choseColour = this.data.colourList[this.data.colourIndex];
+    return this.jsData.recognizeResults.filter(cat => {
+      const campusOk = choseCampus === '所有位置' || cat.campus === choseCampus;
+      const colourOk = choseColour === '所有花色' || cat.colour === choseColour;
+      return campusOk && colourOk;
     });
-    // 识别结果
-    this.jsData.recognizeResults = await Promise.all(result.recognizeResults.map(this.getCatInfo));
-    await this.pickCatList();
+  },
+
+  async applyFilterAndShow() {
+    wx.showLoading({
+      title: '筛选中...',
+    });
+
+    const filtered = this.filterCatList();
+    const lastSearch = this.jsData.lastSearch || {};
+
+    if (filtered.length === 0) {
+      wx.hideLoading();
+      // 筛选没结果时回滚选项；识别本身没结果是正常情况，不回滚
+      if (this.jsData.recognizeResults.length > 0 && this.data.lastFilterType) {
+        this.setData({
+          [this.data.lastFilterType + 'Index']: this.data[this.data.lastFilterType + "IndexOld"]
+        });
+        this.toastTip('找不到这样的猫猫，试试换个选项吧', 2000);
+        return false;
+      }
+      this.setData({
+        catList: [],
+        showNoCatIcon: !lastSearch.faceDetected,
+        resultTitle: lastSearch.faceDetected
+          ? text_cfg.recognize.unrecognized_tip
+          : text_cfg.recognize.no_cat_tip,
+        showResultBox: false,
+      });
+      // 结果区上移的动画留一点时间
+      const that = this;
+      setTimeout(() => {
+        that.setData({ showResultBox: true });
+      }, 300);
+      return false;
+    }
+
+    const displayList = [];
+    for (let index = 0; index < filtered.length && index < MAX_DISPLAY; index++) {
+      const catInfo = filtered[index];
+      catInfo.photo = await this.getCatPhoto(catInfo);
+      displayList.push(catInfo);
+    }
+
     wx.hideLoading();
+    this.setData({
+      catList: displayList,
+      showNoCatIcon: false,
+      resultTitle: displayList.length === 1
+        ? text_cfg.recognize.single_cat_rec_tip
+        : text_cfg.recognize.multi_cat_rec_tip,
+      showResultBox: false,
+    });
+
     // 在布局完成上移后展示resultBox
     const that = this;
     setTimeout(() => {
@@ -286,106 +430,56 @@ Page({
         showResultBox: true,
       });
     }, 500);
+    return true;
   },
 
-  catFilter(res) {
-    //点击筛选picker
-    var type = res.currentTarget.dataset.type;
-    this.setData({
-      [type + 'IndexOld']: this.data[type + 'Index'],
-      lastFilterType: type,
-      [type + 'Index']: res.detail.value
-    })
-    this.pickCatList();
-  },
-
-  async pickCatList() {
-    wx.showLoading({
-      title: '筛选中...',
-    })
-
-    const that = this;
-    const choseCampus = that.data.campusList[that.data.campusIndex];
-    const choseColour = that.data.colourList[that.data.colourIndex];
-    const catList = this.jsData.recognizeResults.filter(cat => {
-      if ((choseCampus === cat.campus || choseCampus === "所有位置") && (choseColour === cat.colour || choseColour === "所有花色")) {
-        return true; //筛选结果
-      }
-    });
-
-    if (catList.length === 0) {
-      wx.hideLoading();
-      this.setData({
-        [this.data.lastFilterType + 'Index']: this.data[this.data.lastFilterType + "IndexOld"] // 无筛选结果，恢复原选项
-      })
-      wx.showToast({
-        title: '找不到这样的猫猫，试试换个选项吧',
-        duration: 2000,
-        icon: 'none',
-        mask: true
-      })
-      return false;
-    } else {
-      this.calculateSoftmaxProb(catList);
-    }
-
-    let displayList = [];
-    // 少于maxNum只全部展示；多于maxNum：最多maxNum只，最少minNum只，去除概率太低的
-    const minProb = 0.001;
-    const minNum = 3;
-    const maxNum = 5;
-
-    if (catList.length <= maxNum) {
-      for (let index = 0; index < catList.length; index++) {
-        const catInfo = catList[index];
-        catInfo.photo = await this.getCatPhoto(catInfo);
-        displayList.push(catInfo);
-      }
-    } else {
-      for (let index = 0; index < maxNum; index++) {
-        if (catList[index].prob > minProb || index < minNum) {
-          const catInfo = catList[index];
-          catInfo.photo = await this.getCatPhoto(catInfo);
-          displayList.push(catInfo);
-        } else {
-          break;
-        }
+  // MeowID 的 cat_id 是建档时服务端生成的，猫谱本地主键是 _id。
+  // 优先用 data/cat.json 的 meowid_id（scripts/meowid-enroll.js 写入）对上，
+  // 其次兼容「直接把 _id 当 cat_id 注册」，最后按猫名兜底（手工在控制台建的同名猫）。
+  async getCatInfo(match) {
+    const db = app.mpServerless.db.collection('cat');
+    let catInfo = null;
+    if (match.cat_id) {
+      catInfo = (await db.findOne({ meowid_id: match.cat_id })).result;
+      if (!catInfo) {
+        catInfo = (await db.findOne({ _id: match.cat_id })).result;
       }
     }
-
-    this.setData({
-      catList: displayList
-    });
-    wx.hideLoading();
-  },
-
-  // 根据模型输出的得分（即每个对象的score属性）计算softmax概率，并将结果放到原对象的prob属性上
-  calculateSoftmaxProb(catList) {
-    const scores = catList.map(item => item.score);
-    const maxScore = scores.reduce((prev, cur) => Math.max(prev, cur));
-    const expScoreSum = scores.reduce((prev, cur) => prev + Math.exp(cur - maxScore), 0);
-    catList.forEach(item => {
-      item.prob = Math.exp(item.score - maxScore) / expScoreSum;
-    });
-  },
-
-  async getCatInfo(cat) {
-    const { result: catInfo } = await app.mpServerless.db.collection('cat').findOne({ _id: cat.catID });
-    catInfo.score = cat.score;
+    if (!catInfo && match.cat_name) {
+      catInfo = (await db.findOne({ name: match.cat_name })).result;
+    }
+    if (!catInfo) {
+      return null;
+    }
+    // 直接用接口返回的相似度（0-1），不再做 softmax
+    catInfo.score = match.score;
+    catInfo.support = match.support;
     return catInfo;
   },
 
   async getCatPhoto(catInfo) {
-    // 从精选照片里随机挑选一张
-    const query = {
+    // 优先从精选照片里随机挑一张
+    const best = await this.queryOnePhoto({
       cat_id: catInfo._id,
       verified: true,
       best: true
-    };
-    var total = catInfo.photo_count_best;
-    var index = randomInt(0, total);
-    var { result: photoURL } = await app.mpServerless.db.collection('photo').findOne(query, { skip: index });
-    return photoURL;
+    }, catInfo.photo_count_best);
+    if (best) return best;
+    // 没有精选图就退而求其次，随便拿一张过审的
+    return await this.queryOnePhoto({
+      cat_id: catInfo._id,
+      verified: true
+    }, catInfo.photo_count_total);
+  },
+
+  async queryOnePhoto(query, count) {
+    const total = Math.max(1, parseInt(count, 10) || 1);
+    const index = randomInt(0, total);
+    const { result: photo } = await app.mpServerless.db.collection('photo').findOne(query, { skip: index });
+    if (photo) return photo;
+    // skip 越界（计数不准）时退回第一条
+    const { result: fallback } = await app.mpServerless.db.collection('photo').findOne(query);
+    return fallback || null;
   },
 
   async choosePhoto() {
@@ -405,13 +499,15 @@ Page({
   },
 
   reset() {
+    this.jsData.recognizeResults = [];
+    this.jsData.lastSearch = null;
     this.setData({
       photoPath: null,
       photoBase64: null,
-      catBoxList: [],
       catList: [],
-      catIdx: null,
       showResultBox: false,
+      resultTitle: '',
+      showNoCatIcon: false,
       campusIndex: 0,
       colourIndex: 0
     });
@@ -460,23 +556,10 @@ Page({
     });
   },
 
-  tapCatBox(e) {
-    const index = e.currentTarget.dataset.index;
-    const currentCatIdx = this.data.catIdx in this.data.catBoxList ? this.data.catIdx : 0;
-    if (index !== currentCatIdx) {
-      this.setData({
-        catList: [],
-        showResultBox: false,
-        catIdx: index,
-      });
-      this.recognizePhoto();
-    }
-  },
-
   onShareAppMessage() {
     return {
       title: share_text,
-      imageUrl: '/pages/public/images/recognize/share_cover.jpg'
+      imageUrl: '/pages/packageA/pages/images/recognize/share_cover.jpg'
     };
   },
   onShareTimeline: function () {

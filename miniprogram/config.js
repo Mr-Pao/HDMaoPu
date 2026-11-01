@@ -8,7 +8,7 @@ const secrets = require('./appSecret.js');
 
 module.exports = {
   // 版本号
-  app_version: "v4.0.55",
+  app_version: "v4.0.56",
   // 【离线 Demo 模式】
   // true  = 不连任何后端，使用 utils/demo.js 里的假数据（11 只猫 + 照片 + 设置）
   // false = 走下面的 data_base_url（COS 上的静态 JSON）
@@ -196,12 +196,21 @@ module.exports = {
       select_btn: "启用相机权限",
       reselect_btn: "重新选图",
       no_cat_tip: "照片里好像没有猫猫",
-      multi_cat_tip: "点击对应方框可以更改想识别的猫猫",
+      multi_cat_tip: "照片里可能有多只猫猫，下面按相似度从高到低排好了",
       no_cat_rec_tip: "看起来，整张照片更像...",
       single_cat_rec_tip: "看起来，这张照片里的猫猫更像...",
-      multi_cat_rec_tip: "看起来，黄色框框中的猫猫更像...",
+      multi_cat_rec_tip: "看起来，这张照片里的猫猫们更像...",
       bottom_tip: "*目前仅拥有十张以上靓照（清晰正面、仅含一只）的猫猫才能被认到哦！多多上传帮忙改进识别效果吧~",
       ad_tip: "识别累了，帮忙点下广告喵（揉眼睛 ( '-ωก̀ )",
+      // 以下为 MeowID 接入新增
+      no_config_tip: "识猫功能还没配置好，去关于页→管理后台填一下吧",
+      unrecognized_tip: "这张照片里的猫猫还没录入猫谱，或者角度太刁钻啦",
+      project_mismatch_tip: "项目 ID 和 API Key 对不上，请检查后台设置",
+      key_invalid_tip: "API Key 无效，请检查后台设置",
+      key_expired_tip: "API Key 已失效或权限不足",
+      too_large_tip: "照片太大啦，换一张试试",
+      rate_limit_tip: "识别太频繁啦，歇一会儿再试",
+      network_tip: "网络不太好，稍后再试试",
     },
     // 科普页，pages/news/sciDetail
     science: {

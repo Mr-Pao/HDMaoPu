@@ -24,10 +24,7 @@
       <!-- 相机取景预览 -->
       <camera wx:if="{{cameraAuth && !photoPath}}" device-position="{{devicePosition}}" resolution="high" frame-size="large" flash="off" id="cameraPreview"></camera>
       <!-- 拍照/选图结果预览 -->
-      <view wx:if="{{photoPath}}" id="photoPreview" style="background-image: url('data:image/png;base64,{{photoBase64}}');" bindtap="tapPreview">
-        <view wx:for="{{catBoxList}}" wx:key="item" class="catBox {{(!catIdx || catIdx > catBoxList.length) && index === 0 || index === catIdx ? 'chosen' : ''}}" style="top: {{item.y}}rpx; left: {{item.x}}rpx; width: {{item.width}}rpx; height: {{item.height}}rpx;" catchtap="tapCatBox" data-index="{{index}}">
-        </view>
-      </view>
+      <view wx:if="{{photoPath}}" id="photoPreview" style="background-image: url('data:image/png;base64,{{photoBase64}}');" bindtap="tapPreview"></view>
 
       <!-- 重新选图按钮 -->
       <view wx:if="{{photoPath}}" id="resetButton" bindtap="reset">
@@ -44,15 +41,15 @@
   </view>
 
   <!-- 识别结果 -->
-  <view id="resultBox" wx:if="{{catList.length && showResultBox}}">
-    <view class="tip" wx:if="{{catBoxList.length != 1}}">
+  <view id="resultBox" wx:if="{{showResultBox}}">
+    <view class="tip" wx:if="{{showNoCatIcon}}">
       <image mode='aspectFit' class='icon' src='/pages/packageA/pages/images/recognize/tip.png'></image>
-      <text>{{!catBoxList.length ? text_cfg.recognize.no_cat_tip : text_cfg.recognize.multi_cat_tip}}</text>
+      <text>{{text_cfg.recognize.no_cat_tip}}</text>
     </view>
-    <view class="title">{{!catBoxList.length ? text_cfg.recognize.no_cat_rec_tip : (catBoxList.length == 1 ? text_cfg.recognize.single_cat_rec_tip : text_cfg.recognize.multi_cat_rec_tip)}}</view>
+    <view class="title">{{resultTitle}}</view>
 
-    <view class="filter">
-      <picker bindchange="catFilter" data-type="campus" value="{{index}}" range="{{campusList}}">
+    <view class="filter" wx:if="{{catList.length}}">
+      <picker bindchange="catFilter" data-type="campus" value="{{campusIndex}}" range="{{campusList}}">
         <view class="picker">
           <view class="type">
             {{campusList[campusIndex]}}
@@ -60,7 +57,7 @@
           <image src="/pages/packageA/pages/images/recognize/down.png" class="icon"></image>
         </view>
       </picker>
-      <picker bindchange="catFilter" data-type="colour" value="{{index}}" range="{{colourList}}">
+      <picker bindchange="catFilter" data-type="colour" value="{{colourIndex}}" range="{{colourList}}">
         <view class="picker">
           <view class="type">
             {{colourList[colourIndex]}}
@@ -90,10 +87,10 @@
         </view>
         <view class='line'>
           <image mode='aspectFit' class='icon' src='/pages/public/images/card/card/pos.png'></image>
-          <text>{{(item.campus + item.area) || '-'}}</text>
+          <text>{{item.campus}}{{item.area ? ' ' + item.area : ''}}</text>
         </view>
       </view>
-      <view class="prob">{{m1.toFixed(100 * item.prob, 1) + '%'}}</view>
+      <view class="prob">{{m1.toFixed(100 * item.score, 1) + '%'}}</view>
     </view>
     <view class="footnote">{{text_cfg.recognize.bottom_tip}}</view>
   </view>

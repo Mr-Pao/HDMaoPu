@@ -133,6 +133,27 @@
 
 ---
 
+## v4.0.56 拍照识猫改接 MeowID（2026-11-02，原 AGENTS.md 当前状态条目）
+
+- **v4.0.56：拍照识猫改接 MeowID 开放平台（2026-11-02）** — 用户指令（m00001）「https://platform.meowid.net/?lang=zh-CN 做猫咪拍照或上传照片识别功能」。
+  - **项目地址/凭据**：`PROJECT_ID` 与 `API_KEY` 由用户在 platform.meowid.net 控制台「项目」页复制，**代码里一律不硬编码**。API key 形如 `mk_live_<projectId前16位>_<secret>`，但**项目 UUID 不等于 key 里那段十六进制**——实测用 key 里那 16 位、大小写变体、`prj_/proj_/PRJ_` 前缀、数字 1–40、路径穿越等都返回 `403 {"code":"project_mismatch"}`，且**服务端只比对 key 绑定项目、不查存在性**（不存在的 pid 也是同一个 403），所以**枚举不可行**。换假 key 返回 `401 {"code":"invalid_api_key"}` 可用来判断 key 真伪。`/v1/projects`、`/v1/projects/{pid}/api-keys`、`/v1/mobile/me` 带 API key 都是 `401 AUTH_SESSION_EXPIRED`（属登录 session 端点，key 进不去）。
+  - **鉴权头只认 `Authorization: Bearer <key>`**；`X-Api-Key` 或裸 key → `401 {"detail":"Missing bearer token"}`。
+  - **识猫端点**：`POST {apiBase}/v1/projects/{projectId}/search?top_k=N&threshold=T`，`top_k` 1–100 默认 5、`threshold` −1~1 可选。multipart 单字段名 **`image`**（`wx.uploadFile` 的 `name:'image'`，微信自动生成 boundary，**不能自定义 Content-Type**）。响应 `{candidates:[{index,route,face_detected,unknown,matches:[{cat_id,cat_name,score,support}]}]}`，单猫时可能退化为扁平 `{route,face_detected,unknown,matches}`（平台前端 `De()` 就是 `Array.isArray(y.candidates)?y.candidates:[{index:0,...y}]`）；**`matches[].score` 才是相似度（0–1），`candidates[].score` 是检测分，别再拿它当识别概率**；`support` 是有效向量数。**响应里没有 bbox / face_box**（`face_box` 只存在于「注册照」对象上），所以旧页面的「画框 + 点框切猫」能力 MeowID 给不了，已整体删掉。
+  - **改动的 8 个文件**（`git status` 口径 11 files +357 −229，含 `.gitignore`/`data/setting.json`/`scripts/meowid-enroll.js`）：
+    1. `miniprogram/pages/packageA/pages/recognize/recognize.js` **整体重写**（502→576 行）：删 `hex_sha256` import 与 `catBoxList/catIdx/tapCatBox/calculateSoftmaxProb`；`jsData` 改 `{apiBase,projectId,apiKey,topK:3,configLoaded,canvasSideLen:720,lastSearch,recognizeResults}`（`canvasSideLen` 500→720）；新增 `hasRecognizeConfig/loadRecognizeSettings/normalizeApiBase/toastTip/extractCandidates/describeError/loadRecognizeResult/applyFilterAndShow/queryOnePhoto`；`getCatInfo` 三级匹配 `meowid_id → _id → name`；`getCatPhoto` 先查 `best:true` 再退全量；概率直接 `m1.toFixed(100*item.score,1)`。
+    2. `recognize.wxml`（109→106 行）：删 `#photoPreview` 里的 `.catBox` 循环；`#resultBox` 改 `wx:if="{{showResultBox}}"`；`.tip` 改 `wx:if="{{showNoCatIcon}}"`；`.title` 用 `{{resultTitle}}`；`.filter` 加 `wx:if="{{catList.length}}"`；位置行改 `{{item.campus}}{{item.area ? ' ' + item.area : ''}}`（原来 `(campus+area)||'-'` 在 `area` 为空时会显示 `-`）。
+    3. `recognize.wxss`：删 `#photoPreview .catBox` / `.catBox.chosen` 两段（原 68–78 行），其余 331 行不动（**本页 0 处硬编码 hex，全走 `--color-*`**）。
+    4. `miniprogram/pages/manage/pageSettings/desc.js`：`recognize` / `recognize_test` 两组字段由 `interfaceURL + secretKey` 换成 `apiBase`（默认 `https://platform.meowid.net`）/ `projectId`（默认 `""`）/ `apiKey`（默认 `""`）/ `topK`（`type:"number"`，默认 `"3"`），tip 写「完整 UUID，8-4-4-4-12」。⚠️ 该文件是 **CRLF**，要整块 `
+` 替换才写对。
+    5. `data/setting.json` 的 `_id='pages'` 下 `recognize` 由 `{showRecognizeBtn:true}`（无代码引用）改为 `{apiBase:"https://platform.meowid.net",projectId:"",apiKey:"",topK:3}`。
+    6. `miniprogram/pages/genealogy/genealogy.js`：`data` 加 `showRecognize:false`，`loadRecognize()` 改判 `settings.projectId && settings.apiKey`（原判 `interfaceURL`）。
+    7. `genealogy.wxml:6-14` 在 `.nav-row` 右侧加 `识别` 胶囊入口 `bindtap='clickRecognize'` —— **`clickRecognize` 方法早就存在（`:546` 跳分包页）但从没被任何 wxml 绑定过，入口一直是死的**。`genealogy.wxss` 末尾追加 `.nav-recognize/.nav-recognize-t/.nav-recognize-arrow`（`--dk-accent-soft` 底 + `--dk-accent-line` 边 + pill 圆角，文件 LF）。
+    8. `miniprogram/config.js`：`app_version v4.0.55 → v4.0.56`；`text.recognize` 现有 **17 键**，新增 `no_config_tip/unrecognized_tip/project_mismatch_tip/key_invalid_tip/key_expired_tip/too_large_tip/rate_limit_tip/network_tip`，并把 `multi_cat_tip`/`multi_cat_rec_tip` 改为「按相似度从高到低排好了」的措辞。
+  - **新建 `scripts/meowid-enroll.js`**（独立 `scripts/package.json`，`node --check` 通过）：把 `data/cat.json` 的 21 只猫 + 每只最多 12 张照注册进 MeowID。密钥读 `process.env` → 项目根 `.env`（`parseDotEnv()/readSecret()` 抄 `relink-apply.js` 写法），变量 `MEOWID_PROJECT_ID` / `MEOWID_API_KEY`，可选 `MEOWID_API_BASE`、`MAX_PER_CAT`(12)、`ONLY_CAT`、`REQUEST_TIMEOUT`(120000)、`DRY_RUN=1`、**`CHECK_ONLY=1`（只 `GET /v1/projects/{pid}/cats` 验 key↔project 配对，打印个体列表后退出，不写盘不传图）**。流程：建档 `POST .../cats` body `{name,metadata:{local_id,campus,area,colour},active:true}`（响应无固定形状，`pickCatId()` 兼容 `id/cat_id/catId/{cat:{id}}/{data:{id}}`，兜底按 name 查列表）→ **每成功一只立刻回写 `cat.meowid_id` 并 `saveJson('data/cat.json')`** → 按 `photoScore`（best +100、真实拍日期 +10、like_count）挑图 → 下载原图 → multipart `image` → `POST .../cats/{catId}/images`（**202 也算成功**，异步抽向量）→ 每张成功记 `.meowid-enroll-state.json` 的 `uploaded[photo._id]` 防重复。`.gitignore` 已加该 state 文件。
+  - **计费口径（bundle i18n 原文）**：按「猫咪向量提取」计次（注册与识别都算），扣 key 所属账户余额；注册图没检测到猫或处理失败不扣；识别图没检测到猫计 0 次；**一次多猫识别只扣 1 次**；机构认证可申请「免费的年度公益套餐」（`POST /v1/organization-verifications`，multipart `logo` + `proofs`）。图片上限 15 MiB，支持 JPEG/PNG/WebP。
+  - **状态：代码已全部落盘并回归通过，但 `projectId`/`apiKey` 仍为空 → 首页「识别」入口默认隐藏、`recognize` 页提示「识猫功能还没配置好」。** 拿到完整 UUID 后的三步：① `CHECK_ONLY=1 node scripts/meowid-enroll.js` 验通 → ② 去掉 `CHECK_ONLY` 跑全量灌库（会写 `data/cat.json` 的 `meowid_id`）→ ③ 关于页连击 5 次进管理后台「页面设置」填 `projectId`/`apiKey` → 真机识别一次。
+  - 验证：`node --test tests/datasource.test.js tests/cache.test.js tests/process-inbox.test.js` **47/47**；`node scripts/verify-demo-data.js` **66/66**；`node --check` 覆盖 5 个 .js；`data/setting.json` JSON 合法。
+
 ## 照片归属重建工具（2026-11-01 建）（原 AGENTS.md 行 319–331）
 
 背景：桶里 `compressed/` 298 张真实猫照私有读且猫↔照片归属随 EMAS 空间删除永久丢失，靠人肉眼认照片重建映射。三步：
