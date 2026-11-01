@@ -8,7 +8,7 @@ const secrets = require('./appSecret.js');
 
 module.exports = {
   // 版本号
-  app_version: "v4.0.23",
+  app_version: "v4.0.28",
   // 【离线 Demo 模式】
   // true  = 不连任何后端，使用 utils/demo.js 里的假数据（11 只猫 + 照片 + 设置）
   // false = 走下面的 data_base_url（COS 上的静态 JSON）
@@ -73,14 +73,12 @@ module.exports = {
     genealogy: {
       share_tip: "发现身边校园猫咪",
       search_tip: "搜索猫猫名字或昵称",
-      filter_tip: "点此进行筛选",
       new_photo_tip: "有新相片！",
       no_photo_tip: "暂无封面照片...",
       photo_by_tip: "Photo by ",
       photo_by_unknow_tip: "匿名猫友",
       photo_loading_tip: "加载照片ing",
       to_star_tip: "返回喵星",
-      adopt_btn: "只小猫",
     },
     // 关于页，pages/info/info
     info: {

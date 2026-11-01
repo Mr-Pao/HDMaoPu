@@ -135,7 +135,7 @@ Page({
     this.setData({ showEventsPopup: false });
   },
 
-  // 选择校区
+  // 选择位置
   selectCampus(e) {
     const index = e.currentTarget.dataset.index;
     this.setData({
@@ -245,7 +245,7 @@ Page({
     }
   },
 
-  // 计算当前选中校区的最大区域猫咪数量，用于条形图显示
+  // 计算当前选中位置的最大区域猫咪数量，用于条形图显示
   calculateMaxAreaCount() {
     if (!this.data.stats || !this.data.stats.campus || 
         !this.data.stats.campus[this.data.selectedCampus] || 

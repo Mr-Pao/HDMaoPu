@@ -23,10 +23,10 @@
       </view>
       
       <view class="form-item">
-        <view class="form-label">校区及区域</view>
+        <view class="form-label">位置及区域</view>
         <picker mode="multiSelector" range='{{pickers.campus_area}}' value='{{pickers.campus_index}}' bindchange='bindAreaChange' bindcolumnchange='pickerAreaColumnChange'>
           <view class="picker-container">
-            <text class="picker-text">{{cat.campus && cat.area ? cat.campus + cat.area : '请选择'}}</text>
+            <text class="picker-text">{{cat.campus ? (cat.area ? cat.campus + ' ' + cat.area : cat.campus) : '请选择'}}</text>
             <text class="iconfont icon-arrow-down picker-icon"></text>
           </view>
         </picker>

@@ -228,7 +228,7 @@ Page({
             totalCats: statsData.basic.total,
             totalPhotos: statsData.month.totalPhotos
           },
-          // 使用云函数返回的校区数据
+          // 使用云函数返回的位置数据
           campuses: statsData.campus.map(item => ({
             name: item.campus,
             count: item.count

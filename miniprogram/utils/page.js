@@ -19,18 +19,28 @@ async function _getSetting(_id, options) {
   const { result } = await app.mpServerless.db.collection('setting').findOne({ _id: _id });
   cacheItem = result
 
-  setCacheItem(cacheKey, cacheItem, cacheTime.pageSetting);
+  // nocache 模式下不落盘：只借 datasource 自己的 10 分钟 SWR 缓存，
+  // 避免 7 天的 storage 缓存把线上改动挡住
+  if (!nocache) {
+    setCacheItem(cacheKey, cacheItem, cacheTime.pageSetting);
+  }
   return cacheItem;
 }
 
-// 加载校区区域过滤器
+// 加载位置/花色过滤器
+// 不用 7 天的 storage 缓存：直接走 datasource 的 SWR 缓存（10 分钟），
+// 这样改 data/setting.json 后最多 10 分钟就能在小程序端看到新选项
 async function loadFilter(options) {
-  return await _getSetting('filter', options);
+  const opts = options || {};
+  if (!opts.nocache) opts.nocache = true;
+  return await _getSetting('filter', opts);
 }
 
 // 获取全局的设置
 async function getGlobalSettings(key, options) {
-  var res = await _getSetting('pages', options);
+  const opts = options || {};
+  if (!opts.nocache) opts.nocache = true;
+  var res = await _getSetting('pages', opts);
   if (!res) {
     return undefined;
   }

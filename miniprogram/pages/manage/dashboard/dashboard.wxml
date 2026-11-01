@@ -159,9 +159,9 @@
       </view>
     </view>
 
-    <!-- 校区分布 -->
+    <!-- 位置分布 -->
     <view class="bento-card large">
-      <view class="card-title">校区分布</view>
+      <view class="card-title">位置分布</view>
       <view class="card-content campus-stats">
         <block wx:for="{{stats.campus}}" wx:key="campus">
           <view class="campus-item">
@@ -177,7 +177,7 @@
     <view class="bento-card large">
       <view class="card-title">区域分布详情</view>
       <view class="card-content">
-        <!-- 校区选择器和排序按钮 -->
+        <!-- 位置选择器和排序按钮 -->
         <view class="distribution-header">
           <view class="campus-selector">
             <view 

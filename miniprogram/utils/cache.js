@@ -70,8 +70,8 @@ const cacheTime = {
   commentCount: 0.08,          // 便利贴数量 (5分钟) - 之前为0，改为合理值避免频繁查询
   likeItem: 72,                // 点赞行为 (3天)
   pageSetting: 24 * 7,         // 页面设置 (7天)
-  genealogyFCampus: 24 * 7 * 31, // 首页校区过滤选项 (31天)
-  checkPhotoCampus: 24 * 7 * 31, // 最后一次审核照片的校区 (31天)
+  genealogyFCampus: 24 * 7 * 31, // 首页位置过滤选项 (31天)
+  checkPhotoCampus: 24 * 7 * 31, // 最后一次审核照片的位置 (31天)
   genealogyNews: 12,           // 首页的news弹窗 (12小时内不重复弹)
 }
 

@@ -59,7 +59,7 @@
           </view>
         </picker>
         <view class="field">
-          <text class="label">校区</text>
+          <text class="label">位置</text>
           <input class="input" value="{{form.campus}}" data-field="campus" bindinput="onFieldInput" />
         </view>
         <view class="field">

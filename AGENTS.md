@@ -28,7 +28,7 @@ NODE="C:/Users/yzx49/Program/HBuilderX/plugins/node/node.exe"
 - 单测（46 例）：`"$NODE" --test tests/datasource.test.js tests/cache.test.js tests/process-inbox.test.js`
   - **必须显式列文件**；`node --test tests/` 会把目录当单个测试文件跑并报 fail
   - 用 `plugins/node18/node.exe`（v18.20.0）会挂 1 例：`mock.timers.enable` 不支持 `Date` → `ERR_INVALID_ARG_VALUE`
-- 数据端到端校验（50 项）：`"$NODE" scripts/verify-demo-data.js`
+- 数据端到端校验（65 项，真实数据不变量口径）：`"$NODE" scripts/verify-demo-data.js`
 - 重新生成演示数据：`"$NODE" scripts/gen-demo-data.js [--dry-run]`（固定种子、幂等）
 - 颜色硬编码 → token：`"$NODE" scripts/recolor-tokens.js [--dry-run]`
 - inbox 聚合自测：`DRY_RUN=1 REVIEW_PASSCODE=xxx "$NODE" scripts/process-inbox.js`
@@ -141,7 +141,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.23`），commit message 末尾带版本号。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.27`），commit message 末尾带版本号。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -158,7 +158,34 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-01）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.23`
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.27`
+- **v4.0.27：全站「校区」文案改「位置」+ 配置缓存版本失效 + 抽屉骨架回退原版**
+  - **抽屉骨架必须沿用原版**（用户两次纠正："抽屉还是和原来一样，下拉，只改里面的三行，你在乱动什么"）：`#filter-block` 用 `style='height: {{heights.windowHeight - heights.filters}}px'` + 半透明黑遮罩，内部依次 `.filters`（三行胶囊）/ `.divider` / `.buttons`（左「重 置」`fRowReset`、右「完 成」`fHide`，`filters_legal` 时右侧变主色）。**不要再自创 `.fpanel` 底部圆角弹层 / `.fbar-head` / 绿色 `.fbar-done`**，那套已被明确否掉。
+  - **全站「校区」→「位置」**：`miniprogram/` 下 20 个文件、36 处文案已批量替换（`catInfoTab`、`addCat`、`checkComment`、`checkPhotos`、`dashboard`「位置分布」、`filters`「位置选项/新增位置」、`managers` 权限说明、`map`、`recognize`「所有位置」、`info`「位置/区域/花色」、`utils/cache.js` 注释）。`data/news.json` 的「我们在南校园设置了 6 个保暖猫窝」改为「我们在校园里设置了」，`miniprogram/utils/demo.js` 的 MOCK_CATS 11 条 `campus` 与 `MOCK_SETTINGS.filter` 同步改成校内/校外/其它。**复查 `grep -rn 校区 miniprogram/ --include=*.js --include=*.wxml --include=*.json` 必须为 0**。
+  - **猫卡位置拼接要留空格**：`campus` 从「南校园」变「校内」后，`campus + area` 会粘成「校内北门花坛」，两处已改成 `campus + ' ' + area`（`genealogy.wxml:106`、`detailCat.wxml:82`）。
+  - **配置缓存的版本失效机制（本次踩坑的根因）**：`utils/page.js` 的 `_getSetting` 用 `cacheTime.pageSetting = 24*7` 小时写 storage，**发版改 campus/colour/fullTab 后老用户最长 7 天看不到新值**——这就是用户真机上仍显示「南校园」的原因。两处修复：① `loadFilter()` / `getGlobalSettings()` 默认强制 `nocache: true`（只借 datasource 的 10 分钟 SWR 缓存），且 nocache 时**不落盘**；② `app.js` 新增 `_migrateConfigCache()`，在 `checkCacheValidity()` 开头用 `app_version` 当哨兵，版本变化就删掉 `setting-*` / `ds_cache_setting` / `genealogy-fcampus` 三类键（猫数据缓存不动，避免断网空列表）。⚠️ `tests/cache.test.js` 里直接种 storage 的用例**不带 epoch 字段**，所以 `cache.js` 内部**不能**加版本字段校验，哨兵只能放在 `app.js` 这层，否则挂 2 例。
+
+- **筛选抽屉改三行胶囊 + 位置三分类 + 花色精简（v4.0.26）**：首页导航栏右侧保留原筛选按钮（`<view class='filter-btn' bindtap='fToggle'>`，`filters_active` 时换 `filter_y.png`），点开的**抽屉里**改成用户给的三行样板（顶部 `{{catsMax}} 只猫猫` + 右侧「重置」，三行胶囊，每行首颗「全部」高亮，底部绿色「完成」）。
+  - ⚠️ 曾误把三行做成常驻栏并删掉筛选按钮，被用户否掉（"保留筛选按钮啊，只是弹出来的抽屉做成这三行"）——筛选按钮必须在，三行只在抽屉里。
+  - 数据模型从"两级 category 联选"改成**每行一维 options**：`filters = [{key, name, all_active, options:[{name, cond, active, count}]}]`，三行依次 `campus`(位置) / `colour`(花色) / `state`(状态)。`loadFilters()` 在 `genealogy.js:249-308` 重建。
+  - 第三行「状态」7 个值（用户定的）：已领养 `{adopt:1}` / 寻找领养中 `{adopt:2}` / 待绝育 `{sterilized:false}` / 已绝育 `{sterilized:true}` / 未失踪 `{missing:false}` / 已失踪 `{missing:true}` / 去往喵星 `{to_star:true}`。**状态互斥**，`_rowConditions()` 里多选要包成 `{$or: [...]}`，不能像位置/花色那样用 `$in`（那三个 cat 字段是数组/字符串单值）。
+  - 关键函数：`fCheckLegal` / `_rowConditions` / `_conditionsOf(filters, skipRowIndex, onlyIndex)` / `fGet` / `updateCounts`（每颗胶囊按"其他行条件 + 本行该选项"算 count）/ `applyFilters` / `fRowAll` / `fRowOpt` / `fRowReset` / `_nextHeroMode`。旧的两级联选函数（`fShow`/`fClickMain`/`fClickCategory`/`fClickSub`/`fComfirm`/`fReset`/`fClickCampus`）已全部删除。
+  - `hero_mode` 联动：`_nextHeroMode(filters)` = 所有行都 `all_active` 时回 `''`（第一格高亮），否则 `'custom'`；`heroFilter()` 也已改写到新模型（点「待领养」= 把 state 行的「寻找领养中」置 active）。
+  - **位置 = 校内 / 校外 / 其它**（原只有「南校园」一个校区值）：`cat.campus` 按 area 映射重写（北门花坛/法学院边草坪/荣光堂/图书馆广场/英东体育场/园东湖/逸夫楼→校内；第一教学楼/怀士堂→校外；东门/惺亭→其它）。`data/filter.json` 与 **`data/setting.json` 内嵌的那份 `_id='filter'`** 都要改——`utils/page.js:27` 的 `loadFilter()` 读的是后者，`filter.json` 只是历史副本。
+  - **花色精简为 7 类**（用户给清单）：橘色 / 黑色 / 白色 / 狸花 / 三花 / 玳瑁 / 重点色。映射：橘、橘白→橘色；黑、奶牛、黑白、黑灰→黑色；白→白色；狸花、彩狸、狸白、棕→狸花；其余直通。同步改了 `data/cat.json`、`data/setting.json`、`data/filter.json`、`miniprogram/utils/demo.js` 的 MOCK_CATS。
+  - 首页每页条数 `pages.genealogy.catsStep` 由 3 改为 **10**（`data/setting.json`）；代码默认值仍是 12，以远端配置为准。
+- **COS 上传踩坑（2026-11-01 定位，务必按此操作）**：`C:\Users\yzx49\tmp\cosprobe\putpub.js` 的 `put(key, body, acl)` 实测可用，但**必须用 `node -e` 内联调用**（`require('./putpub').put('/data/x.json', fs.readFileSync(...), 'public-read')`）。走命令行 `node putpub.js <key> <file> public-read` 会稳定返回 **nginx 400 Bad Request**（`<html>…<center>400 Bad Request</center>…nginx`），**即使 key 已带前导斜杠**，成因未明（与 shell 传参/编码有关），别再在这上面耗时间。`cos.js` 的 `request('PUT', '/path', {}, body)` 可写但**不能带 ACL**（会变私有）。上传后必须 `curl -s -o /dev/null -w "%{http_code}"` 验证匿名 200。
+- **首页 hero 数据卡：三格指标 + 点击筛选（v4.0.25）**：`pages/genealogy/genealogy.wxml` 的 `.hero-row` 三格改为 **在册 / 待领养 / 本月新增**（原「在册猫猫 / 待领养 / 当前结果」），每格 `catchtap='heroFilter' data-type='all'|'adopt'|'new'`（**必须 catchtap，bindtap 会冒泡触发整卡 `toDashboard` 跳看板**）。
+  - `genealogy.js` 状态机 `hero_mode: '' | 'all' | 'adopt' | 'new' | 'custom'`：`''`=初始全部态（第一格高亮）、`heroFilter` 按 type 重设 filters 后 `reloadCats()`、`fGet()` 在 `hero_mode==='new'` 时 push `{ create_time: { $gte: this.getMonthStartISO() } }`、`fReset` 回 `''`、`fComfirm` 手动筛选后置 `'custom'`（三格都不高亮）。
+  - 计数：`countTotalCats()` 的 `count({})`→`total_count`、`countNewCats()`→`new_count`、原 `countWaitingAdopt()`→`adopt_count`；三者并入 `reloadCats()` 的 `Promise.all`（现 5 项）。`getMonthStartISO()` = `new Date(now.getFullYear(), now.getMonth(), 1).toISOString()`（本地时区本月 1 日）。
+  - 选中态样式在 `genealogy.wxss` 末尾：`.hero-cell.on .hero-n`/`.hero-cell.on .hero-k2` 变 `--dk-accent`，`.hero-cell.on::after` 画 34rpx×4rpx 圆角短横线（`:first-child` 左对齐）。
+  - **右下角漂浮「找领养」按钮已整块删除**：wxml 的 `#find-adopt`、`.adopt-filter-tip`；wxss 的 `#find-adopt*`、`.adopt-filter-tip*`（含深色化块）、`.shake` + `@keyframes upAnimation`；js 的 `clickAdoptBtn()` / `showFilterTip()` / `newUserTip()` 与 `const tipInterval`、`onLoad` 里的 `this.newUserTip()`；`config.js` 的 `text.genealogy.filter_tip` 与 `adopt_btn`。`#back-to-firstpage` 保留。
+  - 实测（本地 `data/cat.json`）：在册 11 / 待领养 2（小白 demo-cat-4、汤圆 demo-cat-10）/ 本月新增 0（猫的 `create_time` 都在 2026-05~10）。`_compareValues` 对 ISO 字符串按字典序比较等价于时间序，所以 `$gte` 直接比字符串即可。
+- **数据看板已从管理后台提到首页入口（v4.0.24）**：`pages/genealogy/genealogy.wxml` 顶部的**整张 hero 数据卡**改成 `bindtap='toDashboard'`，卡内 `.hero-head` 一行放左侧 `.hero-k` 标题 + 右侧 `.hero-link`（「数据看板 ›」绿色胶囊，静态胶囊不是独立按钮，跟着整卡一起点）。`genealogy.js` 新增 `toDashboard()` → `wx.navigateTo({url: "/pages/manage/dashboard/dashboard"})`；样式 `.hero-head`(flex space-between，`align-items: flex-start`)、`.hero-link`(999rpx 圆角、`--dk-accent-soft` 底 + `--dk-accent-line` 边)、`.hero-link-t`、`.hero-link-arrow` 加在 `.hero-k` 之后。同时从 `pages/info/info.js` 的 `menuList` 管理后台分组里删掉原本的「数据看板」项（`icon-bar-chart-o`）。
+  - ⚠️ 早期方案（已废弃）是在 `.nav-row` 右侧加 `.nav-dash` 独立胶囊，用户看图后否掉了，改成整卡点击。`nav-dash` 相关 wxml/wxss 已全部清除（残留检查为 0）。
+  - `--dk-soft` 不是有效 token（有效的是 `--dk-accent-soft` / `--dk-accent-line`），别再误用。
+  - dashboard 页面本身**没有任何管理员校验**（`dashboard.json` 只有 popup 组件，`dashboard.js` 无 `isManager`），所以放宽到首页后普通用户可直接看，数据全部来自 `datasource._getCatStats()` 本地重算，不额外消耗流量。
+  - 注意 `.hero-k::after` 那条绿色短横线是首页 hero 卡专属，别复用到别处。
 - **用户档案体系已整体放弃（v4.0.23）**：根因是 `utils/datasource.js:27` 的 `OPENID_STORAGE_KEY = 'fake_openid'` + `_getOrCreateOpenid()`（`:1229-1237`）生成 `guest_xxxxxxxx` 存本地，**与微信账号完全无关**，换设备/清缓存/重装就是新人；而 `data/user.json` 从没有 nickname 字段、`scripts/process-inbox.js` 里一次 `loadData('user')` 都没有，用户昵称压根不上传。要做真跨设备只能接 `wx.login` → 服务端 code2session，和「月成本 ≤5 元、不引服务器」的红线冲突 → 用户拍板：**不做档案，每个提交场景当场自己填昵称，不填就是匿名用户**。
   - 删掉的 4 个页面（共 20 文件）：`pages/info/userInfo/`（个人主页，含子目录 `modifyUserInfo/`）、`pages/info/myFollowCats/`、`pages/info/myAdoption/`、`pages/info/feedback/myFeedback/`。连带 `app.json` 34→30 页、`packOptions.ignore` 19→18 项、`info.js` 的 `data.cards` 5→2（只剩投喂罐头 / 程序开发）、`info/feedback/feedback.js` 的 `toMyFeedback()`、`utils/user.js` 的 `toSetUserInfo()`、`utils/msg.js:130` 订阅消息跳转页改 `pages/info/info`。
   - **`components/modifyUserInfo/` 整目录已删除**，全仓 0 引用。v4.0.19–v4.0.21 那套「json 注册组件 + 点此设置头像昵称」的旧范式**已作废，别再照着抄**。
@@ -166,10 +193,15 @@ cos-version  从上游错误派生，废弃
   - 昵称只在本机记忆（`last_nickname`），换设备自然丢失——这是已接受的取舍，别再提"恢复码/微信登录"方案。
   - 遗留死代码（不影响运行）：`components/photoRank/` 仍留着 `bindtap='getUInfo'` 与 `setData({showEdit:true})`，但该组件只被未注册死页 `pages/leaderboard` 引用且组件已无从打开；`utils/user.js` 的 `getPageUserInfo()` 也还在，现存调用点只剩 `applyMapAccess.js:34`（ignore 死页）与 `photoRank.js:31`（上述死组件）。以后新增页面用 `getUser()`，别调 `getPageUserInfo`（它在无 `userInfo` 时直接 `return false`，不设 `isAuth`/`user`，会让 `wx:else` 分支永不渲染 = 空白页）。
 - 数据源：`https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com`，微信后台已加 request 合法域名
-- **整份 `data/` 都是演示假数据，没有任何真实猫记录**：`cat` 11/11、`photo` 11/11、`comment` 48/48、`rating` 48/48、`user` 9/9 的 `_id` **全部**以 `demo-` 开头（`demo-cat-1..11`、`demo-photo-1..11` …），11 只猫名是大橘/三花/小黑/小白/奶茶/芝麻/年糕/团子/花生/汤圆/布丁，全部 `campus: 南校园`。由 `scripts/gen-demo-data.js` 固定种子生成（**注意：它不生成 photo，只重写已有条目**）。
-  - 猫的 `birthday` **全部有值**（不是空），范围 2022-06-15 ~ 2024-05-01，例如大橘 `2023-01-01`；详情页「拍摄时约 X 月龄」就是拿它和 `shooting_date` 算的。
-  - ⚠️ 区分"记录假"与"图真"：`photo.json` 引用的 `photos/demo-cat-N/cover.jpg` 是**真实拍摄的猫照片素材**（抽查 demo-cat-1 为室内猫吃罐头图），不是 AI 生成。假的是猫名、拍摄日期、点赞数这些元数据。
-  - ✅ 已修的数据缺陷（2026-11-01）：`demo-photo-11` 的 `shooting_date` 曾是 `"2026-05-00"`（5 月 0 日，非法），`detailCat.js:564-570` 会算成负数月龄。已改为 `2026-04-30`，并在 `scripts/verify-demo-data.js` 补 3 项校验（相册查询 / `shooting_date` 合法日期 / 拍摄日期不早于猫生日），校验总数 47→50。
+- **2026-11-01 起 `data/` 已是真实数据（演示数据全清）**：`cat` **21 只真猫**、`photo` **278 张**，`comment`/`rating`/`feedback`/`news`/`adoption`/`inter`/`achievement`/`reward`/`photo_rank`/`inbox_log`/`review_queue`/`user` **共 12 张表已清空为 `items: []`**。旧的 demo 数据备份在 `C:/Users/yzx49/tmp/catid/data-bak-demo/`（仓库外），要回滚从那里取。
+  - `cat._id` = `cat-<拼音>`（如 `cat-naigai`），`campus` = 校外/其它/校内，`area` 全为 `""`，`colour` 是看代表图人工判的（**未经用户确认，可能要改**），`rating` 全零对象、`photo_count_total` = 真实张数、`mphoto` 从 2026-10-01 起每猫 +1 天。
+  - `photo._id` = `photo-<拼音>-<nnn>`，三个 URL 同源指向 `catimg/<area-slug>/<cat-slug>/<nnn>.<ext>`；`best` 只给每猫第 1 张；`shooting_date` 只有 **8 张** 有 EXIF 真日期，其余兜底 `2026-01-01`（278 个文件 mtime 全是同一天，无法区分）。
+  - `user` 表清空后，`datasource._userOp('get')` 的 `remoteConfirmedEmpty` 分支生效：**首个访客自动拿 `manager=99`**（这是原有语义，不是 bug）。
+  - 猫的 `birthday` / `gender` / `area` **全部是空串**（真实数据里没有这些信息）。详情页靠 `wx:if` 隐藏，不会显示空行；「拍摄时约 X 月龄」在没有生日时不出现。
+  - ⚠️ **`area` 为空是刻意设计，别再按「campus && area」判位置**：位置只到「区域」这一级。展示的地方一律写成 `cat.area ? cat.campus + ' ' + cat.area : cat.campus`（`genealogy.wxml:106`、`detailCat.wxml:82`、`catInfoTab.wxml:29`、`addCat.wxml:8`），保存校验只校验 `campus`（`catInfoTab.js` 的 `saveCat` 与 `addCat.js` 的 `upload`）。旧代码用 `&&` 判存在会让详情页显示 `-`、编辑猫存不进去。
+  - 筛选 picker 的第二列（细分地点）在 `filter.area` 为空时会是空数组 → 两个 `loadPickers()` 都补了 `if (!area_category[campus].length) area_category[campus] = [''];` 占位，否则多列 picker 越界。
+  - `data/setting.json` 内嵌的 `_id='filter'` 与 `data/filter.json` **已同步**（2026-11-01，脚本 `C:/Users/yzx49/tmp/catid/sync_setting_filter.py`）。以后改花色/位置仍要两处一起改：`loadFilter()`（`utils/page.js:27`）读的是 setting。当前 `colour` = 橘色/黑色/白色/狸花/三花/玳瑁/重点色，`campuses` = 校内/校外/其它，`area` = `[]`。
+  - ✅ 数据校验脚本已改成真实数据口径（2026-11-01）：`scripts/verify-demo-data.js` 从「demo 断言 50 项」改为 **65 项不变量**（引用完整、`photo_count_*` 与实况自洽、每猫最多 1 张 best、`shooting_date` 合法且不早于生日、`colour`/`campus` 必须落在 `filter` 枚举内、`photo_compressed` 必须是 `catimg/<拼音>/<拼音>/<3位序号>.<ext>`、12 张空表查询不抛异常…）。**文件名沿用旧名**，别再改成 verify-real-data.js。
   - ⚠️ **本地改了 `data/` 不会自动上 COS**：要 push `cos` 触发 `sync-data.yml`。2026-11-01 14:12 复查：远端 `data/photo.json` 已是修正后的 11 条、无非法日期，说明 `sync-data.yml` 已跑通。
   - COS 上曾出现过一条 `relink-photo-1`（指向 `photos/demo-cat-12/0001.jpg`，猫 `demo-cat-12 奶盖`），是误把 `photos/demo-cat-1/cover.jpg` 复制过来当新照片的假数据。**2026-11-01 已彻底清除**（远端只剩 11 条 photo、11 只 cat，孤儿对象 `photos/demo-cat-12/0001.jpg` 已删）。
 - 其余演示规模：comment 48 / rating 48 / user 9 / news 8 …
@@ -211,6 +243,6 @@ cos-version  从上游错误派生，废弃
 1. 改了什么数据？→ 是否需要同步 `data/` + 推 `cos`（触发 `sync-data.yml`）
 2. 新页面/组件？→ `app.json` 注册 **且** 从 `packOptions.ignore` 移除
 3. 改样式？→ 只动 hex，别动颜色关键字；`app.wxss` 排除
-4. 改完跑：单测 46 例 + `verify-demo-data.js` 50 项（删徽章少 8 项、新增相册日期 3 项；一次就够，不要来回验）
+4. 改完跑：单测 46 例 + `verify-demo-data.js` 65 项（真实数据不变量口径；一次就够，不要来回验）
 5. 升 `config.js` 的 `app_version`，commit message 带版本号
 6. 有持久价值的新结论 → 追加到本文件（不要写 `.workbuddy/memory/`）

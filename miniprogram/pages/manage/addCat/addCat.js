@@ -259,7 +259,7 @@ Page({
     const column = e.detail.column;
     const index = e.detail.value;
 
-    if (column == 0) {  // 修改了校区列内容，区域列变为对应校区的区域
+    if (column == 0) {  // 修改了位置列内容，区域列变为对应位置的区域
       var now_campus = pickers.campus_area[0][index];
       pickers.campus_area[1] = pickers.area_category[now_campus];
       this.setData({
@@ -271,9 +271,11 @@ Page({
   bindAreaChange(e) {    // 这个和columnChange的区别是要确认才触发
     var pickers = this.data.pickers;
     const indices = e.detail.value;
+    const campusList = pickers.campus_area[0] || [];
+    const areaList = pickers.campus_area[1] || [];
     this.setData({
-      'cat.campus': pickers.campus_area[0][indices[0]],
-      'cat.area': pickers.campus_area[1][indices[1]]
+      'cat.campus': campusList[indices[0]] || '',
+      'cat.area': areaList[indices[1]] || ''
     });
   },
   async loadPickers() {
@@ -286,6 +288,10 @@ Page({
     }
     for (const area of filterRes.area) {
       area_category[area.campus].push(area.name);
+    }
+    // 没有细分区域时给一个空占位，避免 picker 第二列是空数组
+    for (const campus of filterRes.campuses) {
+      if (!area_category[campus].length) area_category[campus] = [''];
     }
     var first_campus = filterRes.campuses[0];
     this.setData({
@@ -304,9 +310,9 @@ Page({
       });
       return false;
     }
-    if (!this.data.cat.campus || !this.data.cat.area) {
+    if (!this.data.cat.campus) {
       wx.showToast({
-        title: '缺少校区及区域',
+        title: '缺少位置',
         icon: 'error'
       });
       return false;

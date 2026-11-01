@@ -1,8 +1,8 @@
 <block wx:if="{{auth}}">
-  <!-- 校区管理 -->
+  <!-- 位置管理 -->
   <view class='mainF-block'>
     <view class="campus-block">
-      <view class="title">校区选项</view>
+      <view class="title">位置选项</view>
       <view class="container">
         <view class='category-box' wx:for="{{filters[0].category}}" wx:for-item="ctg" wx:for-index='cateindex' wx:key='name'>
           <!-- <view class="category">{{ctg.name}}</view> -->
@@ -16,7 +16,7 @@
           <input class='content' name='name'></input>
           <button class='submit' form-type='submit'>确定</button>
         </form>
-        <button wx:if='{{!addingCampus}}' class='long' bindtap='addCampus'>加校区</button>
+        <button wx:if='{{!addingCampus}}' class='long' bindtap='addCampus'>新增位置</button>
       </view>
     </view>
   </view>

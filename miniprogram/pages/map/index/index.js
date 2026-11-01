@@ -24,8 +24,8 @@ Page({
     text_cfg: config.text,
     loading: true,
     demoMode: false,
-    campusButtons: [],    // [{name, latitude, longitude, scale}] 有坐标的校区
-    campusBtnExpanded: false,  // 校区按钮是否展开
+    campusButtons: [],    // [{name, latitude, longitude, scale}] 有坐标的位置
+    campusBtnExpanded: false,  // 位置按钮是否展开
     showTrajectory: false,       // 是否正在展示轨迹
     trajectoryPoints: [],        // 当前展示的轨迹点（来自 inter 表）
     trajectoryMarkers: [],      // 轨迹点 marker（替代普通猫 marker）
@@ -72,13 +72,13 @@ Page({
     this.locateUser();
   },
 
-  // 加载校区中心坐标（从 setting.filter 的 campusCenters 字段）
+  // 加载位置中心坐标（从 setting.filter 的 campusCenters 字段）
   async loadCampusCenters() {
     try {
       var filter = await loadFilter({ nocache: true });
       var centers = filter && filter.campusCenters;
       this.jsData.campusCenters = centers || {};
-      // 生成 WXML 用的按钮列表：仅包含有坐标的校区
+      // 生成 WXML 用的按钮列表：仅包含有坐标的位置
       var buttons = [];
       for (var name in this.jsData.campusCenters) {
         var c = this.jsData.campusCenters[name];
@@ -93,7 +93,7 @@ Page({
       }
       this.setData({ campusButtons: buttons });
     } catch (e) {
-      console.log('加载校区中心坐标失败:', e.message);
+      console.log('加载位置中心坐标失败:', e.message);
     }
   },
 
@@ -826,12 +826,12 @@ Page({
     });
   },
 
-  // 切换校区按钮展开/折叠
+  // 切换位置按钮展开/折叠
   toggleCampusBtns() {
     this.setData({ campusBtnExpanded: !this.data.campusBtnExpanded });
   },
 
-  // 点击地图任意位置 → 折叠校区按钮
+  // 点击地图任意位置 → 折叠位置按钮
   onMapTap() {
     if (this.data.campusBtnExpanded) {
       this.setData({ campusBtnExpanded: false });

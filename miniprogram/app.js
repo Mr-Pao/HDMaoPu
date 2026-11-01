@@ -212,6 +212,8 @@ App({
   },
 
   async checkCacheValidity() {
+    this._migrateConfigCache();
+
     const clearDay = wx.getStorageSync('clear-all-cache');
     if (!clearDay || new Date(clearDay) < new Date()) {
       try {
@@ -224,6 +226,29 @@ App({
         console.warn('Failed to clear storage:', e);
       }
       wx.setStorageSync('clear-all-cache', getDateWithDiffHours(48));
+    }
+  },
+
+  // 配置类缓存（filter / pages / tabBar 等）在版本升级时必须失效。
+  // 它们由 utils/page.js 用 cacheTime.pageSetting = 7 天写入，
+  // 发版改了 campus / colour / fullTab 之后，老用户最长要等 7 天才看到新值。
+  // 这里用 app_version 当哨兵：版本变了就丢掉这批配置缓存，猫数据缓存不动。
+  _migrateConfigCache() {
+    try {
+      const key = 'config-cache-version';
+      if (wx.getStorageSync(key) === app_version) {
+        return;
+      }
+      const { keys } = wx.getStorageInfoSync();
+      (keys || []).forEach(k => {
+        if (k.indexOf('setting-') === 0 || k === 'ds_cache_setting' || k === 'genealogy-fcampus') {
+          wx.removeStorageSync(k);
+        }
+      });
+      wx.setStorageSync(key, app_version);
+      console.log('[Cache] 版本变更，已清理配置缓存:', app_version);
+    } catch (e) {
+      console.warn('[Cache] 清理配置缓存失败:', e && e.message);
     }
   },
 

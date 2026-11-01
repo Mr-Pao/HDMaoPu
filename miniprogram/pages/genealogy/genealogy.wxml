@@ -27,66 +27,56 @@
 
 <!-- 点击过滤按钮出来的块 -->
 <view id='filter-block' style='height: {{heights.windowHeight - heights.filters}}px;' catchtouchmove="voidMove" hidden='{{!filters_show}}' bindtap='fHide'>
-  <!-- filter选择部分 -->
+  <!-- 三行胶囊：位置 / 花色 / 状态 -->
   <view class='filters' catchtap='voidMove'>
-    <scroll-view class='f-column f-column-1 main' scroll-y='1'>
-      <view class='padding-block'></view>
-      <view class='item {{item.active? "active": ""}}' wx:for='{{filters}}' wx:key='name' bindtap='fClickMain' data-index='{{index}}'>
-        <text>{{item.name}}</text>
-
-        <view class='right-arrow' wx:if='{{item.active}}'>
-          <image mode='aspectFill' src="/pages/public/images/filter/right.png"></image> 
-        </view>
+    <block wx:for="{{filters}}" wx:key="name" wx:for-index="rowIdx" wx:for-item="rowItem">
+      <view class='frow'>
+        <text class='frow-k'>{{rowItem.name}}</text>
+        <scroll-view class='frow-scroll' scroll-x='1' enable-flex='1'>
+          <view class='fpill {{rowItem.all_active ? "on" : ""}}' catchtap='fRowAll' data-row='{{rowIdx}}'>全部</view>
+          <view wx:for='{{rowItem.options}}' wx:for-item='opt' wx:for-index='optIdx' wx:key='name'
+                class='fpill {{opt.active ? "on" : ""}}' catchtap='fRowOpt' data-row='{{rowIdx}}' data-opt='{{optIdx}}'>
+            <text>{{opt.name}}</text>
+            <text class='fpill-n' wx:if='{{opt.count !== undefined}}'>{{opt.count}}</text>
+          </view>
+        </scroll-view>
       </view>
-    </scroll-view>
-    <scroll-view class='f-column f-column-3' scroll-y='1'>
-      <view class='padding-block'></view>
-      <view wx:for='{{filters[filters_sub].category}}' wx:key='name' data-index='{{index}}'>
-        <view class='item {{item.all_active? "active": ""}}' bindtap='fClickCategory' data-index='{{index}}'>{{item.name}}</view>
-        <view wx:for='{{item.items}}' wx:key='name' wx:for-index='innerindex' wx:for-item='inneritem' class='item {{inneritem.active? "active": ""}}' bindtap='fClickSub' data-index="{{index}}" data-innerindex="{{innerindex}}">{{inneritem.name}}</view>
-        <!-- 来一条分割线 -->
-        <view wx:if='{{index != (filters[filters_sub].category.length - 1)}}' class='divider'></view>
-      </view>
-    </scroll-view>
+    </block>
   </view>
   <!-- 来一条分割线 -->
-  <view class='divider'  catchtap='voidMove'></view>
+  <view class='divider' catchtap='voidMove'></view>
   <!-- 按钮部分 -->
-  <view class='buttons'  catchtap='voidMove'>
-    <view class='btn' bindtap='fReset'>重 置</view>
-    <view class='btn {{filters_legal? "active": ""}}' bindtap='fComfirm'>完 成</view>
+  <view class='buttons' catchtap='voidMove'>
+    <view class='btn' bindtap='fRowReset'>重 置</view>
+    <view class='btn {{filters_legal? "active": ""}}' bindtap='fHide'>完 成</view>
   </view>
 </view>
 
 <scroll-view enable-flex='1' class='cards' style='height: {{heights.windowHeight - heights.filters}}px;' scroll-y='true' enable-back-to-top='true' bindscrolltolower='onReachBottom' bindscroll='fScroll' lower-threshold='{{main_lower_threshold}}' refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="onPullDownRefresh">
-  <!-- 顶部数据卡 -->
-  <view class='hero'>
-    <view class='hero-k'>CAMPUS CAT INDEX</view>
-    <view class='hero-row'>
-      <view class='hero-cell'>
-        <text class='hero-n'>{{catsMax || cats.length}}</text>
-        <text class='hero-k2'>在册猫猫</text>
+  <!-- 顶部数据卡（整卡点击 → 数据看板） -->
+  <view class='hero' bindtap='toDashboard'>
+    <view class='hero-head'>
+      <view class='hero-k'>CAMPUS CAT INDEX</view>
+      <view class='hero-link'>
+        <text class='hero-link-t'>数据看板</text>
+        <text class='hero-link-arrow'>›</text>
       </view>
-      <view class='hero-cell'>
+    </view>
+    <view class='hero-row'>
+      <view class='hero-cell {{hero_mode === "" ? "on" : ""}}' catchtap='heroFilter' data-type='all'>
+        <text class='hero-n'>{{total_count || catsMax || cats.length}}</text>
+        <text class='hero-k2'>在册</text>
+      </view>
+      <view class='hero-cell {{hero_mode === "adopt" ? "on" : ""}}' catchtap='heroFilter' data-type='adopt'>
         <text class='hero-n hero-n--accent'>{{adopt_count || 0}}</text>
         <text class='hero-k2'>待领养</text>
       </view>
-      <view class='hero-cell'>
-        <text class='hero-n'>{{cats.length}}</text>
-        <text class='hero-k2'>当前结果</text>
+      <view class='hero-cell {{hero_mode === "new" ? "on" : ""}}' catchtap='heroFilter' data-type='new'>
+        <text class='hero-n'>{{new_count || 0}}</text>
+        <text class='hero-k2'>本月新增</text>
       </view>
     </view>
   </view>
-
-  <!-- 校区外显筛选 -->
-  <scroll-view class="h-filter-list" scroll-x="1" wx:if="{{filters[0].category.length > 1}}">
-    <view class='h-filter-item {{item.all_active? "active": ""}}'  bindtap='fClickCampus' data-index='{{index}}' data-filters_sub="0"
-          wx:for="{{filters[0].category}}" wx:key="name">
-          <image class="location-logo" wx:if="{{! item.all_active}}" src="/pages/public/images/filter/location_gray.png" mode="aspectFit"></image>
-          <image class="location-logo" wx:else src="/pages/public/images/filter/location_active_dark.png" mode="aspectFit"></image>
-          {{item.name}}
-    </view>
-  </scroll-view>
 
   <block wx:for='{{cats}}' wx:key="_id">
     <view class='row {{item.to_star? "row--star": ""}}' bindtap='clickCatCard' bindlongpress='bindManageCat' data-cat_id='{{item._id}}' data-index='{{index}}'>
@@ -113,7 +103,7 @@
           <text class='row-score-k'>猫德</text>
         </view>
 
-        <view class='row-where'>{{(item.campus + item.area) || '-'}}</view>
+        <view class='row-where'>{{item.area ? item.campus + ' ' + item.area : (item.campus || '-')}}</view>
 
         <view class='row-nums'>
           <text class='row-num'>{{item.comment_count || 0}}<text class='row-num-k'>便利贴</text></text>
@@ -141,19 +131,9 @@
   <view style="height: {{tabBarHeight}}px;"></view>
 </scroll-view>
 
-<!-- 漂浮的领养logo -->
-<view wx:if="{{adopt_count}}" id="find-adopt" bindtap="clickAdoptBtn">
-  <image class="logo shake" src="/pages/public/images/button/find_adopt.png"></image>
-  <view class="count">{{adopt_count}}{{text_cfg.genealogy.adopt_btn}}</view>
-</view>
 <!-- 返回首页 -->
 <view wx:if="{{!filters_empty}}" id="back-to-firstpage" bindtap="clickBackFirstPageBtn">
   <image class="back-btn" src="/pages/public/images/button/back_to_first_page.png"></image>
-</view>
-<!-- 点击漂浮后的提示 -->
-<view class="adopt-filter-tip {{show_filter_tip? '': 'hide'}}">
-  <view class="tri"></view>
-  <view class="content">{{text_cfg.genealogy.filter_tip}}</view>
 </view>
 
 <!-- 公告弹窗 -->

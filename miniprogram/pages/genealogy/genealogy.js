@@ -1,7 +1,6 @@
 import {
   shuffle,
   regReplace,
-  getDeltaHours,
   sleep,
   getCurrentPath
 } from "../../utils/utils";
@@ -21,7 +20,6 @@ import { isManagerAsync, checkCanShowNews } from "../../utils/user";
 import { signCosUrl } from "../../utils/common";
 
 const default_png = undefined;
-const tipInterval = 24; // 提示间隔时间 hours
 const share_text = config.text.app_name + ' - ' + config.text.genealogy.share_tip;
 const app = getApp();
 
@@ -29,9 +27,7 @@ Page({
   data: {
     cats: [],
     filters: [],
-    filters_sub: 0,
     filters_legal: true,
-    filters_show: false,
     filters_input: '',
     filters_show_shadow: false,
     filters_empty: true,
@@ -41,6 +37,9 @@ Page({
     loadnomore: false,
     adopt_desc: config.cat_status_adopt,
     adopt_count: 0,
+    new_count: 0,
+    total_count: 0,
+    hero_mode: '',
     ad_show: {},
     ad: {},
     newsList: [],
@@ -246,6 +245,8 @@ Page({
     });
   },
 
+  // 三行胶囊过滤器：位置 / 花色 / 状态
+  // 每行 = { key, name, all_active, options: [{name, cond, active, count}] }
   loadFilters: async function (fcampus) {
     const res = await loadFilter();
     if (!res) {
@@ -256,87 +257,48 @@ Page({
       });
       return false;
     }
-    
-    const filters = [];
-    
-    // 校区过滤器
-    const area_item = {
-      key: 'area',
-      cateKey: 'campus',
-      name: '校区',
-      category: [{
-        name: '全部校区',
-        items: [],
-        all_active: true
-      }]
-    };
-    
-    const classifier = {};
-    res.campuses.forEach(campus => {
-      classifier[campus] = {
-        name: campus,
-        items: [],
-        all_active: false
-      };
-    });
-    
-    res.area.forEach(area => {
-      if (classifier[area.campus]) {
-        classifier[area.campus].items.push(area);
+
+    const filters = [
+      {
+        key: 'campus',
+        name: '位置',
+        all_active: true,
+        options: (res.campuses || []).map(name => ({ name, cond: { campus: name } }))
+      },
+      {
+        key: 'colour',
+        name: '花色',
+        all_active: true,
+        options: (res.colour || []).map(name => ({ name, cond: { colour: name } }))
+      },
+      {
+        key: 'state',
+        name: '状态',
+        all_active: true,
+        options: [
+          { name: '已领养', cond: { adopt: 1 } },
+          { name: '寻找领养中', cond: { adopt: 2 } },
+          { name: '待绝育', cond: { sterilized: false } },
+          { name: '已绝育', cond: { sterilized: true } },
+          { name: '未失踪', cond: { missing: false } },
+          { name: '已失踪', cond: { missing: true } },
+          { name: '去往喵星', cond: { to_star: true } }
+        ]
       }
-    });
-    
-    Object.values(classifier).forEach(category => {
-      area_item.category.push(category);
-    });
-    
-    if (fcampus && fcampus.length === area_item.category.length) {
-      fcampus.split('').forEach((activeFlag, i) => {
-        if (area_item.category[i]) {
-          area_item.category[i].all_active = activeFlag === "1";
-        }
-      });
+    ];
+
+    // 分享链接里带回的位置选择（"1" 表示该位置被选中）
+    const loc = filters[0].options;
+    if (fcampus && fcampus.length === loc.length) {
+      loc.forEach((opt, i) => { opt.active = fcampus[i] === '1'; });
+      filters[0].all_active = !loc.some(o => o.active);
     }
-    
-    filters.push(area_item);
-    
-    // 花色过滤器
-    const colour_item = {
-      key: 'colour',
-      name: '花色',
-      category: [{
-        name: '全部花色',
-        items: res.colour.map(name => ({ name })),
-        all_active: true
-      }]
-    };
-    filters.push(colour_item);
-    
-    // 领养状态过滤器
-    const adopt_status = [{ name: "未知", value: null }];
-    config.cat_status_adopt.forEach((name, i) => {
-      adopt_status.push({ name, value: i });
-    });
-    
-    const adopt_item = {
-      key: 'adopt',
-      name: '领养',
-      category: [{
-        name: '全部状态',
-        items: adopt_status,
-        all_active: true
-      }]
-    };
-    filters.push(adopt_item);
-    
-    // 设置默认激活的过滤器
-    filters[0].active = true;
-    
-    this.newUserTip();
+
     this.setData({ filters });
-    
-    // 确保加载猫咪数据
+
+    // 确保加载猫咪数据（数字统计在 reloadCats 之后进行，避免读到空 filters）
     await this.reloadCats();
+    await this.updateCounts();
   },
 
   onReady: function () {
@@ -373,8 +335,8 @@ Page({
   },
 
   getFCampusStr: function () {
-    return this.data.filters[0].category
-      .map(item => item.all_active ? "1" : "0")
+    return this.data.filters[0].options
+      .map(opt => opt.active ? "1" : "0")
       .join("");
   },
 
@@ -409,7 +371,9 @@ Page({
     
     await Promise.all([
       this.loadMoreCats(),
+      this.countTotalCats(),
       this.countWaitingAdopt(),
+      this.countNewCats(),
       this.setFCampusCache()
     ]);
     
@@ -544,15 +508,14 @@ Page({
         const app = getApp();
         const g = (app && app.globalData) || {};
         const statusBarHeight = g.statusBarHeight || res.statusBarHeight || 20;
-        // 自定义导航：状态栏 + 标题行(约 92rpx) + 搜索行(84rpx) + 上下留白
-        const filters = statusBarHeight + 210 * rpx2px;
+        // 自定义导航：状态栏 + 标题行 + 搜索行 + 上下留白
+        const filters = statusBarHeight + 170 * rpx2px;
         this.setData({
           "heights.filters": filters,
           "heights.statusBarHeight": statusBarHeight,
           "heights.navBarHeight": g.navBarHeight || 44,
           "heights.screenHeight": res.screenHeight,
           "heights.windowHeight": res.windowHeight,
-          "heights.rpx2px": rpx2px,
         });
       }
     });
@@ -567,142 +530,72 @@ Page({
     }
   },
 
-  // 过滤器相关函数
-  voidMove: function () { },
-  
+  // 筛选抽屉开关
   fToggle: function () {
     this.setData({ filters_show: !this.data.filters_show });
   },
-  
-  fShow: function () {
-    this.setData({ filters_show: true });
-  },
-  
+
   fHide: function () {
     this.setData({ filters_show: false });
   },
-  
-  fClickMain: function (e) {
-    const filters = this.data.filters.map((f, i) => ({
-      ...f,
-      active: i === e.currentTarget.dataset.index
-    }));
-    
-    this.setData({
-      filters,
-      filters_sub: e.currentTarget.dataset.index
-    });
-  },
-  
-  fClickCategory: async function (e, singleChoose) {
-    const filters = [...this.data.filters];
-    let filters_sub = e.target.dataset.filters_sub;
-    if (filters_sub === undefined) filters_sub = this.data.filters_sub;
-    
-    const index = e.target.dataset.index;
-    const category = filters[filters_sub].category[index];
-    const all_active = !category.all_active;
-    
-    if (index === 0 || singleChoose) {
-      filters[filters_sub].category.forEach((ctg, i) => {
-        ctg.all_active = i === index ? all_active : false;
-        ctg.items.forEach(item => { item.active = false; });
-      });
-    } else {
-      filters[filters_sub].category[0].all_active = false;
-      category.all_active = all_active;
-      category.items.forEach(item => { item.active = false; });
-    }
-    
-    this.setData({
-      filters,
-      filters_legal: this.fCheckLegal(filters)
-    });
-  },
-  
-  fClickSub: function (e) {
-    const filters = [...this.data.filters];
-    const filters_sub = this.data.filters_sub;
-    const categoryIndex = e.target.dataset.index;
-    const itemIndex = e.target.dataset.innerindex;
-    
-    const category = filters[filters_sub].category[categoryIndex];
-    category.items[itemIndex].active = !category.items[itemIndex].active;
-    category.all_active = false;
-    
-    if (categoryIndex !== 0) {
-      filters[filters_sub].category[0].all_active = false;
-    }
-    
-    this.setData({
-      filters,
-      filters_legal: this.fCheckLegal(filters)
+
+  voidMove: function () { },
+
+  // 首页 → 数据看板
+  toDashboard: function () {
+    wx.navigateTo({
+      url: "/pages/manage/dashboard/dashboard",
     });
   },
   
   fCheckLegal: function (filters) {
-    for (const mainF of filters) {
-      if (mainF.category[0].all_active) continue;
-      
-      let count = 0;
-      for (const category of mainF.category) {
-        if (category.all_active) {
-          count += category.items.length;
-        } else {
-          count += category.items.filter(item => item.active).length;
-        }
-      }
-      
-      if (count === 0) return false;
+    for (const row of filters) {
+      if (row.all_active) continue;
+      if (!row.options.some(o => o.active)) return false;
     }
     return true;
   },
-  
-  fGet: async function() {
+
+  // 单行的查询条件；onlyIndex 指定时只看该选项（用于算每颗胶囊的数字）
+  _rowConditions: function (row, onlyIndex) {
+    if (row.all_active) return [];
+    const picked = row.options.filter((o, i) => o.active && (onlyIndex === undefined || i === onlyIndex));
+    if (!picked.length) return [];
+    // 状态行每颗胶囊自带完整条件，多选时语义互斥（已绝育 vs 待绝育），取并集
+    if (row.key === 'state') {
+      const conds = picked.map(o => o.cond);
+      return conds.length === 1 ? conds : [{ $or: conds }];
+    }
+    return [{ [row.key]: { $in: picked.map(o => o.name) } }];
+  },
+
+  _conditionsOf: function (filters, skipRowIndex, onlyIndex) {
+    const conditions = [];
+    filters.forEach((row, i) => {
+      if (i === skipRowIndex) return;
+      conditions.push(...this._rowConditions(row, i === skipRowIndex ? onlyIndex : undefined));
+    });
+    if (skipRowIndex !== undefined) {
+      conditions.push(...this._rowConditions(filters[skipRowIndex], onlyIndex));
+    }
+    if (!conditions.length) return {};
+    return conditions.length === 1 ? conditions[0] : { $and: conditions };
+  },
+
+  async fGet() {
     const filters = this.data.filters;
     const conditions = [];
-    
-    // 处理选择的过滤器
-    filters.forEach(mainF => {
-      if (mainF.category[0].all_active) return;
-      
-      const selected = [];
-      let cateSelected = [];
-      const cateFilter = Boolean(mainF.cateKey);
-      
-      mainF.category.forEach(category => {
-        let cateKeyPushed = false;
-        
-        category.items.forEach(item => {
-          if (category.all_active || item.active) {
-            let choice = item.name;
-            if (item.value === null) choice = { $type: "missing" };
-            else if (item.value !== undefined) choice = item.value;
-            
-            selected.push(choice);
-            
-            if (cateFilter && !cateKeyPushed) {
-              cateSelected.push(category.name);
-              cateKeyPushed = true;
-            }
-          }
-        });
-      });
-      
-      if (selected.length > 0) {
-        conditions.push({ [mainF.key]: { $in: selected } });
-        if (cateFilter && cateSelected.length > 0) {
-          conditions.push({ [mainF.cateKey]: { $in: cateSelected } });
-        }
-      }
+
+    filters.forEach(row => {
+      conditions.push(...this._rowConditions(row));
     });
-    
+
     // 处理搜索输入
     const filters_input = regReplace(this.data.filters_input);
     if (filters_input) {
       const searchTerms = filters_input.trim().split(' ');
       const regexPattern = searchTerms.map(term => `.*${term}.*`).join('|');
-      
+
       conditions.push({
         $or: [
           { name: { $regex: regexPattern } },
@@ -710,44 +603,90 @@ Page({
         ]
       });
     }
-    
+
+    // 首页「本月新增」快捷筛选
+    if (this.data.hero_mode === 'new') {
+      conditions.push({ create_time: { $gte: this.getMonthStartISO() } });
+    }
+
     this.setData({ filters_active: conditions.length > 0 });
-    return conditions.length > 0 ? { $and: conditions } : {};
+    if (!conditions.length) return {};
+    return conditions.length === 1 ? conditions[0] : { $and: conditions };
   },
-  
-  fComfirm: function() {
-    if (!this.data.filters_legal) return false;
-    
-    this.lockBtn();
-    this.reloadCats();
-    this.fHide();
-    this.unlockBtn();
-  },
-  
-  fReset: async function() {
-    const filters = this.data.filters.map(mainF => ({
-      ...mainF,
-      category: mainF.category.map(category => ({
-        ...category,
-        all_active: category.name.includes('全部'),
-        items: category.items.map(item => ({ ...item, active: false }))
-      }))
+
+  // 每颗胶囊后面的数量：其余行条件 + 该选项自身条件
+  async updateCounts() {
+    const filters = this.data.filters;
+    const col = app.mpServerless.db.collection('cat');
+
+    const rows = await Promise.all(filters.map(async (row, rowIdx) => {
+      const options = await Promise.all(row.options.map(async (opt, optIdx) => {
+        const { result } = await col.count(this._conditionsOf(filters, rowIdx, optIdx));
+        return Object.assign({}, opt, { count: result });
+      }));
+      return Object.assign({}, row, { options });
     }));
-    
+
+    this.setData({ filters: rows });
+  },
+
+  // 应用筛选：算数字 + 重载列表
+  async applyFilters(filters, hero_mode) {
     this.setData({
       filters,
+      hero_mode: hero_mode !== undefined ? hero_mode : this.data.hero_mode,
       filters_legal: this.fCheckLegal(filters)
     });
-    
-    await this.fComfirm();
+    await this.updateCounts();
+    await this.reloadCats();
   },
-  
-  fClickCampus: async function(e) {
+
+  // 点某行的「全部」
+  async fRowAll(e) {
     if (this.jsData.pageLoadingLock) return false;
-    await this.fClickCategory(e, true);
-    await this.fComfirm();
+    const rowIdx = Number(e.currentTarget.dataset.row);
+    const filters = this.data.filters.map((row, i) => (
+      i === rowIdx
+        ? Object.assign({}, row, { all_active: true, options: row.options.map(o => Object.assign({}, o, { active: false })) })
+        : row
+    ));
+    this.lockBtn();
+    await this.applyFilters(filters, this._nextHeroMode(filters));
+    this.unlockBtn();
   },
-  
+
+  // 点某个选项（可多选）
+  async fRowOpt(e) {
+    if (this.jsData.pageLoadingLock) return false;
+    const rowIdx = Number(e.currentTarget.dataset.row);
+    const optIdx = Number(e.currentTarget.dataset.opt);
+    const filters = this.data.filters.map((row, i) => {
+      if (i !== rowIdx) return row;
+      const options = row.options.map((o, j) => (j === optIdx ? Object.assign({}, o, { active: !o.active }) : o));
+      return Object.assign({}, row, { all_active: !options.some(o => o.active), options });
+    });
+    this.lockBtn();
+    await this.applyFilters(filters, this._nextHeroMode(filters));
+    this.unlockBtn();
+  },
+
+  // 行内重置
+  async fRowReset() {
+    if (this.jsData.pageLoadingLock) return false;
+    const filters = this.data.filters.map(row => Object.assign({}, row, {
+      all_active: true,
+      options: row.options.map(o => Object.assign({}, o, { active: false }))
+    }));
+    this.lockBtn();
+    await this.applyFilters(filters, '');
+    this.unlockBtn();
+  },
+
+  // 手动筛选后三格数字不再高亮：全部行都回到「全部」时才恢复第一格
+  _nextHeroMode(filters) {
+    return (filters || this.data.filters).every(r => r.all_active) ? '' : 'custom';
+  },
+
   fSearchInput: function(e) {
     this.setData({ filters_input: e.detail.value });
   },
@@ -794,58 +733,59 @@ Page({
     this.setData({ adopt_count });
   },
 
-  async clickAdoptBtn() {
-    if (this.jsData.pageLoadingLock) return false;
-    this.lockBtn();
-    
-    const filters = [...this.data.filters];
-    const filters_sub = filters.findIndex(f => f.key === "adopt");
-    if (filters_sub === -1) {
-      this.unlockBtn();
-      return false;
-    }
-    
-    const target_status = config.cat_status_adopt_target;
-    const category = filters[filters_sub].category[0];
-    const index = category.items.findIndex(item => item.name === target_status);
-    
-    if (index === -1 || category.items[index].active) {
-      this.unlockBtn();
-      return false;
-    }
-    
-    category.items[index].active = true;
-    category.all_active = false;
-    filters[filters_sub].category[0].all_active = false;
-    
-    this.setData({
-      filters,
-      filters_legal: this.fCheckLegal(filters)
+  // 本月 1 日 00:00（本地时区）对应的 UTC ISO 字符串
+  getMonthStartISO() {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  },
+
+  async countTotalCats() {
+    const { result: total_count } = await app.mpServerless.db.collection('cat').count({});
+    this.setData({ total_count });
+  },
+
+  async countNewCats() {
+    const { result: new_count } = await app.mpServerless.db.collection('cat').count({
+      create_time: { $gte: this.getMonthStartISO() }
     });
-    
-    await Promise.all([this.reloadCats(), this.showFilterTip()]);
+    this.setData({ new_count });
+  },
+
+  // 点首页三格数字：在册=全部 / 待领养=adopt 目标状态 / 本月新增=create_time 当月
+  async heroFilter(e) {
+    if (this.jsData.pageLoadingLock) return false;
+    const type = e.currentTarget.dataset.type;
+    this.lockBtn();
+
+    // 先复位所有筛选条件
+    const filters = this.data.filters.map(row => Object.assign({}, row, {
+      all_active: true,
+      options: row.options.map(o => Object.assign({}, o, { active: false }))
+    }));
+
+    let hero_mode = '';
+    if (type === 'adopt') {
+      hero_mode = 'adopt';
+      const stateRow = filters.find(f => f.key === 'state');
+      if (stateRow) {
+        const idx = stateRow.options.findIndex(o => o.name === config.cat_status_adopt_target);
+        if (idx !== -1) {
+          stateRow.options[idx].active = true;
+          stateRow.all_active = false;
+        }
+      }
+    } else if (type === 'new') {
+      hero_mode = 'new';
+    }
+
+    await this.applyFilters(filters, hero_mode);
     this.unlockBtn();
-  },
-
-  async showFilterTip() {
-    this.setData({ show_filter_tip: true });
-    await sleep(6000);
-    this.setData({ show_filter_tip: false });
-  },
-
-  newUserTip() {
-    const key = "newUserTip";
-    const lastTime = wx.getStorageSync(key);
-    if (lastTime && getDeltaHours(lastTime) < tipInterval) return;
-    
-    this.showFilterTip();
-    wx.setStorageSync(key, new Date());
   },
 
   async clickBackFirstPageBtn() {
     if (this.jsData.pageLoadingLock) return false;
     this.lockBtn();
-    await this.fReset();
+    await this.fRowReset();
     await this.fSearchClear();
     this.unlockBtn();
   },

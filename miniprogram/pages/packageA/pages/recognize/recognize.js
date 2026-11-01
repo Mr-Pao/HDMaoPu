@@ -25,7 +25,7 @@ Page({
     devicePosition: 'back', // 前置/后置摄像头
     photoPath: null, // 用户选择的照片的路径
     photoBase64: null, // 用户选择的照片的base64编码，用于设置background-image
-    campusList: ['所有校区'],
+    campusList: ['所有位置'],
     campusIndex: 0,
     campusIndexOld: 0,
     lastFilterType: '',
@@ -59,7 +59,7 @@ Page({
     var res = await loadFilter();
     console.log('filterRes:', res);
     this.setData({
-      campusList: ['所有校区'].concat(res.campuses),
+      campusList: ['所有位置'].concat(res.campuses),
       colourList: ['所有花色'].concat(res.colour)
     })
 
@@ -320,7 +320,7 @@ Page({
     const choseCampus = that.data.campusList[that.data.campusIndex];
     const choseColour = that.data.colourList[that.data.colourIndex];
     const catList = this.jsData.recognizeResults.filter(cat => {
-      if ((choseCampus === cat.campus || choseCampus === "所有校区") && (choseColour === cat.colour || choseColour === "所有花色")) {
+      if ((choseCampus === cat.campus || choseCampus === "所有位置") && (choseColour === cat.colour || choseColour === "所有花色")) {
         return true; //筛选结果
       }
     });

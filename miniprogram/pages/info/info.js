@@ -59,11 +59,6 @@ Page({
             icon: "icon-check-square-o"
           },
           {
-            name: "数据看板",
-            path: "/pages/manage/dashboard/dashboard",
-            icon: "icon-bar-chart-o"
-          },
-          {
             name: "照片审核",
             path: "/pages/manage/checkPhotos/checkPhotos",
             num: "numChkPhotos",
@@ -95,7 +90,7 @@ Page({
             icon: "icon-friends-o"
           },
           {
-            name: "校区/区域/花色",
+            name: "位置/区域/花色",
             path: "/pages/manage/filters/filters",
             icon: "icon-location-o"
           },

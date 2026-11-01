@@ -1,5 +1,5 @@
 {
-  "version": "1793514687317",
+  "version": "1793517097762",
   "items": [
     {
       "_id": "pages",
@@ -11,7 +11,7 @@
         "photoPopWeight": 10
       },
       "genealogy": {
-        "catsStep": 3,
+        "catsStep": 10,
         "main_lower_threshold": 55,
         "adStep": 6,
         "photoPopWeight": 10
@@ -58,69 +58,20 @@
     {
       "_id": "filter",
       "colour": [
-        "橘",
-        "白",
-        "黑",
-        "橘白",
-        "三花",
+        "橘色",
+        "黑色",
+        "白色",
         "狸花",
-        "奶牛",
+        "三花",
         "玳瑁",
-        "彩狸",
-        "黑白",
-        "黑灰",
-        "棕",
-        "狸白"
+        "重点色"
       ],
       "campuses": [
-        "南校园"
+        "校内",
+        "校外",
+        "其它"
       ],
-      "area": [
-        {
-          "campus": "南校园",
-          "name": "北门花坛"
-        },
-        {
-          "campus": "南校园",
-          "name": "法学院边草坪"
-        },
-        {
-          "campus": "南校园",
-          "name": "荣光堂"
-        },
-        {
-          "campus": "南校园",
-          "name": "图书馆广场"
-        },
-        {
-          "campus": "南校园",
-          "name": "英东体育场"
-        },
-        {
-          "campus": "南校园",
-          "name": "园东湖"
-        },
-        {
-          "campus": "南校园",
-          "name": "逸夫楼"
-        },
-        {
-          "campus": "南校园",
-          "name": "第一教学楼"
-        },
-        {
-          "campus": "南校园",
-          "name": "怀士堂"
-        },
-        {
-          "campus": "南校园",
-          "name": "东门"
-        },
-        {
-          "campus": "南校园",
-          "name": "惺亭"
-        }
-      ]
+      "area": []
     },
     {
       "_id": "friendLink",

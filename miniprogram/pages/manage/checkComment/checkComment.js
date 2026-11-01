@@ -87,7 +87,7 @@ Page({
       campus_list[campus].push(c);
     }
 
-    // 恢复最后一次审批的校区
+    // 恢复最后一次审批的位置
     var cache_active_campus = cache.getCacheItem("checkPhotoCampus");
     if (!cache_active_campus || !campus_list[cache_active_campus]) {
       cache_active_campus = undefined

@@ -38,7 +38,7 @@ Page({
     for (let i = 0, len = filterRes.campuses.length; i < len; ++i) {
       classifier[filterRes.campuses[i]] = {
         name: filterRes.campuses[i],
-        items: [],    // 记录属于这个校区的area
+        items: [],    // 记录属于这个位置的area
         adding: false,
       };
     }
