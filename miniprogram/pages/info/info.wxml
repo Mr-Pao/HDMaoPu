@@ -96,5 +96,5 @@
   </button>
 
 <!-- 底tab占位 -->
-<view style="height: {{tabBarHeight}}px;"></view>
+<view style="height: {{tabBarHeight + 60}}px;"></view>
 

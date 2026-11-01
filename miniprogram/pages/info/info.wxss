@@ -273,11 +273,14 @@ page {
 
 /*弹出层*/
 .plus {
-  width: 100rpx;
-  height: 100rpx;
+  width: 96rpx;
+  height: 96rpx;
   position: fixed;
-  bottom: 200rpx;
-  right: 50rpx;
+  bottom: 220rpx;
+  right: 40rpx;
+  border-radius: 50%;
+  border: 6rpx solid #FFFFFF;
+  box-shadow: 0 8rpx 24rpx rgba(12, 95, 3, 0.22);
   filter: drop-shadow(0px 12rpx 12rpx rgba(0, 0, 0, 0.15));
   display: block;
   justify-content: center;

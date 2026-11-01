@@ -10,7 +10,7 @@
   </view>
 </view>
 
-<scroll-view id="comment-list" scroll-y="true" bindscrolltolower='loadMoreFeed' enable-back-to-top="true" enable-flex="1" refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="onPullDownRefresh" style="height: calc(100% - {{statusBarHeight}}px - 88rpx);">
+<scroll-view id="comment-list" scroll-y="true" bindscrolltolower='loadMoreFeed' enable-back-to-top="true" enable-flex="1" refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="onPullDownRefresh" style="height: calc(100% - {{statusBarHeight}}px - {{tabBarHeight}}px - 70rpx);">
 
   <scroll-view scroll-x="true" enable-flex="true" show-scrollbar="false" enhanced="true" class="story-bar" wx:if="{{followCats && followCats.length > 0}}">
     <view class="story-container">

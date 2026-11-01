@@ -8,10 +8,6 @@
       <text class='nav-k'>MAOPU / CAMPUS CAT</text>
       <text class='nav-t'>火大猫谱</text>
     </view>
-    <view class='nav-r'>
-      <text class='nav-n'>{{catsMax || cats.length}}</text>
-      <text class='nav-nk'>只在册</text>
-    </view>
   </view>
 
   <view class='search-row'>

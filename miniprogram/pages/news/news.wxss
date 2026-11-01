@@ -242,6 +242,30 @@ swiper image {
   font-weight: 700;
 }
 
+/* 分类胶囊 v5.3 修复：横排不换行 */
+.button_container {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.normal_button,
+.checked_button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.tab-logo {
+  height: 30rpx;
+  width: 30rpx;
+  margin-right: 6rpx;
+}
+.tab-text {
+  white-space: nowrap;
+  line-height: 1;
+  font-size: 24rpx;
+}
+
 /* 列表卡 */
 .news-box {
   margin: 0 24rpx 18rpx 24rpx;

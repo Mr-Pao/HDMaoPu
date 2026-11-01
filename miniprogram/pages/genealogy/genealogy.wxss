@@ -1164,6 +1164,7 @@ page {
   margin: 6rpx 24rpx 20rpx 24rpx;
   padding: 34rpx 30rpx 30rpx 30rpx;
   border-radius: 32rpx;
+  background-image: linear-gradient(135deg, rgba(12, 95, 3, 0.06), rgba(12, 95, 3, 0.015) 46%, rgba(12, 95, 3, 0) 70%);
   background-color: var(--dk-card);
   border: 1rpx solid var(--dk-line);
   box-shadow: 0 2rpx 12rpx rgba(12, 95, 3, 0.04);
