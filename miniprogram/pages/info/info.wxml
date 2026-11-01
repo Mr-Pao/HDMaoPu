@@ -4,7 +4,7 @@
      状态栏高度改用下方 .mina-info 的 padding-top 兜住，避免内容顶到刘海 -->
 <view class="mina-info" style="padding-top: {{statusBarHeight + 12}}px;">
   <image src='{{logo_img}}' bindtap="showMpCode" show-menu-by-longpress="1"></image>
-  <view class='title' catchtap="onTitleTap" hover-class="tap-dim" hover-stay-time="80">{{text_cfg.app_name}}</view>
+  <view class='title' catchtap="onTitleTap">{{text_cfg.app_name}}</view>
   <view class='dev'><text>{{text_cfg.info.slogan}}</text></view>
 
   <!-- ② 数据条：两行三格，格间竖细线 -->
