@@ -1,4 +1,32 @@
 {
-  "version": "1793462400000",
-  "items": []
+  "version": "v1793526262852",
+  "items": [
+    {
+      "_id": "rv-1793523110816-mvxn89c2ujk8cp",
+      "kind": "comment",
+      "openid": "guest_908baf6f",
+      "ts": 1793523110816,
+      "status": "pending",
+      "create_time": "2026-11-01T08:51:50.816Z",
+      "data": {
+        "cat_id": "cat-daimao",
+        "content": "好",
+        "nickname": "匿名猫友"
+      }
+    },
+    {
+      "_id": "rv-1793520873817-mvxn89c3j4cx0f",
+      "kind": "photo",
+      "openid": "guest_2b62ccfb",
+      "ts": 1793520873817,
+      "status": "pending",
+      "create_time": "2026-11-01T08:14:33.817Z",
+      "data": {
+        "photo_key": "pending/guest_2b62ccfb-1793520873598.png",
+        "cat_id": "cat-daimao",
+        "photographer": "",
+        "shooting_date": "2026-11"
+      }
+    }
+  ]
 }
