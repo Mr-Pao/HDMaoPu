@@ -7,17 +7,17 @@ function isDemoMode() {
 
 // 校园猫咪 Demo 数据
 const DEMO_CATS = [
-  { _id: 'demo-cat-1', name: '大橘', campus: '校内', area: '北门花坛', birthday: '2023-01-01', colour: '橘色', character: '亲人', characteristics: '亲人', habit: '喜欢晒太阳', popularity: 100, gender: '公', status_adopt: '1' },
-  { _id: 'demo-cat-2', name: '三花', campus: '校内', area: '法学院边草坪', birthday: '2022-06-15', colour: '三花', character: '文静', characteristics: '文静', habit: '喜欢躲在草丛', popularity: 85, gender: '母', status_adopt: '0' },
-  { _id: 'demo-cat-3', name: '小黑', campus: '校内', area: '荣光堂', birthday: '2023-03-20', colour: '黑色', character: '胆小', characteristics: '胆小', habit: '晚上出没', popularity: 70, gender: '公', status_adopt: '0' },
-  { _id: 'demo-cat-4', name: '小白', campus: '校内', area: '图书馆广场', birthday: '2024-01-10', colour: '白色', character: '粘人', characteristics: '粘人', habit: '喜欢蹭人', popularity: 120, gender: '母', status_adopt: '2' },
-  { _id: 'demo-cat-5', name: '奶茶', campus: '校内', area: '英东体育场', birthday: '2023-09-05', colour: '橘色', character: '贪吃', characteristics: '贪吃', habit: '对罐头没有抵抗力', popularity: 95, gender: '公', status_adopt: '0' },
-  { _id: 'demo-cat-6', name: '芝麻', campus: '校内', area: '园东湖', birthday: '2022-11-18', colour: '黑色', character: '好动', characteristics: '好动', habit: '追逐小鸟', popularity: 80, gender: '母', status_adopt: '0' },
-  { _id: 'demo-cat-7', name: '年糕', campus: '校内', area: '逸夫楼', birthday: '2024-02-28', colour: '白色', character: '温顺', characteristics: '温顺', habit: '喜欢在楼前趴着', popularity: 110, gender: '母', status_adopt: '1' },
-  { _id: 'demo-cat-8', name: '团子', campus: '校外', area: '第一教学楼', birthday: '2023-07-12', colour: '橘色', character: '慵懒', characteristics: '慵懒', habit: '整天睡觉', popularity: 90, gender: '公', status_adopt: '0' },
-  { _id: 'demo-cat-9', name: '花生', campus: '校外', area: '怀士堂', birthday: '2023-04-22', colour: '黑色', character: '机灵', characteristics: '机灵', habit: '会讨食物', popularity: 105, gender: '公', status_adopt: '0' },
-  { _id: 'demo-cat-10', name: '汤圆', campus: '其它', area: '东门', birthday: '2024-05-01', colour: '白色', character: '害羞', characteristics: '害羞', habit: '躲在角落', popularity: 75, gender: '母', status_adopt: '2' },
-  { _id: 'demo-cat-11', name: '布丁', campus: '其它', area: '惺亭', birthday: '2022-08-30', colour: '橘色', character: '傲娇', characteristics: '傲娇', habit: '若即若离', popularity: 88, gender: '母', status_adopt: '0' },
+  { _id: 'demo-cat-1', name: '大橘', campus: '校内', area: '北门花坛', birthday: '2023-01-01', colour: '橘色', character: '亲人', characteristics: '亲人；喜欢晒太阳', popularity: 100, gender: '公', status_adopt: '1' },
+  { _id: 'demo-cat-2', name: '三花', campus: '校内', area: '法学院边草坪', birthday: '2022-06-15', colour: '三花', character: '文静', characteristics: '文静；喜欢躲在草丛', popularity: 85, gender: '母', status_adopt: '0' },
+  { _id: 'demo-cat-3', name: '小黑', campus: '校内', area: '荣光堂', birthday: '2023-03-20', colour: '黑色', character: '胆小', characteristics: '胆小；晚上出没', popularity: 70, gender: '公', status_adopt: '0' },
+  { _id: 'demo-cat-4', name: '小白', campus: '校内', area: '图书馆广场', birthday: '2024-01-10', colour: '白色', character: '粘人', characteristics: '粘人；喜欢蹭人', popularity: 120, gender: '母', status_adopt: '2' },
+  { _id: 'demo-cat-5', name: '奶茶', campus: '校内', area: '英东体育场', birthday: '2023-09-05', colour: '橘色', character: '贪吃', characteristics: '贪吃；对罐头没有抵抗力', popularity: 95, gender: '公', status_adopt: '0' },
+  { _id: 'demo-cat-6', name: '芝麻', campus: '校内', area: '园东湖', birthday: '2022-11-18', colour: '黑色', character: '好动', characteristics: '好动；追逐小鸟', popularity: 80, gender: '母', status_adopt: '0' },
+  { _id: 'demo-cat-7', name: '年糕', campus: '校内', area: '逸夫楼', birthday: '2024-02-28', colour: '白色', character: '温顺', characteristics: '温顺；喜欢在楼前趴着', popularity: 110, gender: '母', status_adopt: '1' },
+  { _id: 'demo-cat-8', name: '团子', campus: '校外', area: '第一教学楼', birthday: '2023-07-12', colour: '橘色', character: '慵懒', characteristics: '慵懒；整天睡觉', popularity: 90, gender: '公', status_adopt: '0' },
+  { _id: 'demo-cat-9', name: '花生', campus: '校外', area: '怀士堂', birthday: '2023-04-22', colour: '黑色', character: '机灵', characteristics: '机灵；会讨食物', popularity: 105, gender: '公', status_adopt: '0' },
+  { _id: 'demo-cat-10', name: '汤圆', campus: '其它', area: '东门', birthday: '2024-05-01', colour: '白色', character: '害羞', characteristics: '害羞；躲在角落', popularity: 75, gender: '母', status_adopt: '2' },
+  { _id: 'demo-cat-11', name: '布丁', campus: '其它', area: '惺亭', birthday: '2022-08-30', colour: '橘色', character: '傲娇', characteristics: '傲娇；若即若离', popularity: 88, gender: '母', status_adopt: '0' },
 ];
 
 const DEMO_PHOTOS = [

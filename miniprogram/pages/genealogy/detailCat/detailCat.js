@@ -247,13 +247,11 @@ Page({
       return;
     }
     cat.photo = [];
-    if ((cat.characteristics || []).length) {
-      cat.characteristics_string = cat.characteristics + '\n';
+    // v4.0.48 只有 characteristics 一个字段承载「性格及特点」，历史数组数据也兼容
+    if (Array.isArray(cat.characteristics)) {
+      cat.characteristics_string = cat.characteristics.filter(Boolean).join('，');
     } else {
-      cat.characteristics_string = '';
-    }
-    if (cat.habit) {
-      cat.characteristics_string += cat.habit;
+      cat.characteristics_string = cat.characteristics || '';
     }
     cat.avatar = await getAvatar(cat._id, cat.photo_count_best);
 

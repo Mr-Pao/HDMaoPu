@@ -63,7 +63,6 @@ Page({
       colour: "",
       birthday: "",
       characteristics: "",
-      habit: "",
       tutorial: "",
       sterilized: false,
       adopt: 0,
@@ -195,7 +194,6 @@ Page({
         colour: cat.colour || "",
         birthday: cat.birthday || "",
         characteristics: cat.characteristics || "",
-        habit: cat.habit || "",
         tutorial: cat.tutorial || "",
         sterilized: cat.sterilized === true,
         adopt: Number(cat.adopt) || 0,
@@ -257,7 +255,6 @@ Page({
     patch.colour = String(form.colour || "").trim();
     patch.birthday = String(form.birthday || "").trim();
     patch.characteristics = String(form.characteristics || "").trim();
-    patch.habit = String(form.habit || "").trim();
     patch.tutorial = String(form.tutorial || "").trim();
     patch.sterilized = form.sterilized === true;
     patch.adopt = Number(form.adopt) || 0;

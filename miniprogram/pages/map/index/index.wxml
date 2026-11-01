@@ -125,9 +125,9 @@ module.exports = {
             <text wx:else>{{currentCat.gender}}</text>
           </view>
         </view>
-        <view class="info-row" wx:if="{{currentCat.characteristics || currentCat.habit}}">
+        <view class="info-row" wx:if="{{currentCat.characteristics}}">
           <text class="info-label">性格特点</text>
-          <text class="info-value">{{currentCat.characteristics}}{{currentCat.habit ? '，' + currentCat.habit : ''}}</text>
+          <text class="info-value">{{currentCat.characteristics}}</text>
         </view>
         <view class="info-row" wx:if="{{currentCat.tutorial}}">
           <text class="info-label">撸猫指南</text>

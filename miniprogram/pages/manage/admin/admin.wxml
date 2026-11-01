@@ -59,10 +59,6 @@
         <input class="input" value="{{form.characteristics}}" data-field="characteristics" bindinput="onFieldInput" />
       </view>
       <view class="field">
-        <text class="label">习性</text>
-        <input class="input" value="{{form.habit}}" data-field="habit" bindinput="onFieldInput" />
-      </view>
-      <view class="field">
         <text class="label">撸猫指南</text>
         <input class="input" value="{{form.tutorial}}" data-field="tutorial" bindinput="onFieldInput" />
       </view>

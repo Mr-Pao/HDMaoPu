@@ -80,7 +80,6 @@ export interface Cat {
   colour?: string;
   gender?: string;
   characteristics?: string | string[];
-  habit?: string;
   tutorial?: string;
   popularity?: number;
   sterilized?: boolean;

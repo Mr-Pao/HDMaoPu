@@ -23,6 +23,24 @@ const default_png = undefined;
 const share_text = config.text.app_name + ' - ' + config.text.genealogy.share_tip;
 const app = getApp();
 
+/**
+ * v4.0.48 首页猫卡「特点」摘要。
+ * - characteristics 历史数据是数组，管理后台改完可能是字符串，两种都吃
+ * - 数据里是长句描述（详情页展示全文），列表卡只显示 characteristics，超长由 CSS 省略
+ */
+function traitText(v) {
+  if (Array.isArray(v)) {
+    return v.map((x) => String(x == null ? '' : x).trim()).filter(Boolean).join('，');
+  }
+  return String(v == null ? '' : v).trim();
+}
+
+function catTraits(cat) {
+  return {
+    trait_text: traitText(cat && cat.characteristics),
+  };
+}
+
 Page({
   data: {
     cats: [],
@@ -211,6 +229,8 @@ Page({
     });
     
     if (updatedCat) {
+      const traits = catTraits(updatedCat);
+      updatedCat.trait_text = traits.trait_text;
       this.setData({ [`cats[${index}]`]: updatedCat });
       this.loadCatPhoto(updatedCat, index);
     }
@@ -403,6 +423,9 @@ Page({
     new_cats.forEach(d => {
       d.photo = default_png;
       d.characteristics_string = [(d.colour || '') + ''].concat(d.characteristics || []).join('，');
+      // v4.0.48 列表卡展示 characteristics 摘要
+      const traits = catTraits(d);
+      d.trait_text = traits.trait_text;
       
       if (d.mphoto) {
         const modified_date = new Date(d.mphoto);

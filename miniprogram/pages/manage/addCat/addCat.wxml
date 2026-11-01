@@ -16,14 +16,11 @@
     <view class='label colour'>花色：</view>
     <picker mode="selector" range='{{pickers.colour}}' value='0' bindchange='pickerChange' data-key='colour'>{{cat.colour == undefined? '请选择': cat.colour}}</picker>
 
-    <view class='label characteristics'>外貌特点：</view>
-    <input type='text' value='{{cat.characteristics}}' bindinput="inputText" data-key='characteristics'></input>
+    <view class='label characteristics'>性格及特点：</view>
+    <textarea type='text' value='{{cat.characteristics}}' bindinput="inputText" data-key='characteristics'></textarea>
 
     <view class='label tutorial'>{{text_cfg.detail_cat.label_tutorial}}：</view>
     <textarea type='text' value='{{cat.tutorial}}' bindinput="inputText" data-key='tutorial'></textarea>
-
-    <view class='label habit'>性格：</view>
-    <input type='text' value='{{cat.habit}}' bindinput="inputText" data-key='habit'></input>
 
     <view class='label gender'>性别：</view>
     <picker mode="selector" range='{{pickers.gender}}' value='{{picker_selected.gender}}' bindchange='pickerChange' data-key='gender'>{{cat.gender == undefined? '请选择': cat.gender}}</picker>

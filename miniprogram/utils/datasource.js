@@ -574,7 +574,6 @@ function createJsonServerless(options) {
         area: cat.area || '',
         gender: cat.gender || '',
         characteristics: cat.characteristics || '',
-        habit: cat.habit || '',
         tutorial: cat.tutorial || '',
         adopt: cat.adopt || '0',
         to_star: cat.to_star || false,

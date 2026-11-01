@@ -99,6 +99,18 @@
           <view class='row-star' wx:if='{{item.to_star}}'>{{text_cfg.genealogy.to_star_tip}}</view>
         </view>
 
+        <!-- v4.0.48 特点摘要（详情页看全文，这里两行省略） -->
+        <view class='row-traits'>
+          <view class='row-trait-v' wx:if='{{item.trait_text}}'>{{item.trait_text}}</view>
+          <view class='row-trait-v row-trait-v--empty' wx:else>{{text_cfg.genealogy.traits_empty_tip}}</view>
+        </view>
+
+        <!-- v4.0.49 花色 + 位置同一行，放在猫德评分上方 -->
+        <view class='row-meta'>
+          <text class='row-chip' wx:if='{{item.colour}}'>{{item.colour}}</text>
+          <text class='row-meta-t'>{{item.area ? item.campus + ' ' + item.area : (item.campus || '-')}}</text>
+        </view>
+
         <view class='row-score'>
           <text class='row-score-v'>{{item.rating.avgScoreDisp || '0.0'}}</text>
           <view class='row-bar'>
@@ -106,8 +118,6 @@
           </view>
           <text class='row-score-k'>猫德</text>
         </view>
-
-        <view class='row-where'>{{item.area ? item.campus + ' ' + item.area : (item.campus || '-')}}</view>
 
         <view class='row-nums'>
           <text class='row-num'>{{item.comment_count || 0}}<text class='row-num-k'>便利贴</text></text>

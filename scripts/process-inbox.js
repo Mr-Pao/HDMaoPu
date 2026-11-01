@@ -654,7 +654,6 @@ const MANAGE_CAT_PATCH_FIELDS = [
   'colour',
   'birthday',
   'characteristics',
-  'habit',
   'tutorial',
   'sterilized',
   'sterilized_time',
@@ -678,7 +677,6 @@ const MANAGE_CAT_PATCH_TYPES = {
   colour: 'string',
   birthday: 'string',
   characteristics: 'string',
-  habit: 'string',
   tutorial: 'string',
   sterilized: 'boolean',
   sterilized_time: 'string',
@@ -1354,7 +1352,7 @@ function selftestObjects() {
     { key: `inbox/like/${now + 13}-bad-aaaa.json`, body: 'not json at all' },
     { key: `inbox/evil/${now + 14}-bad-aaaa.json`, body: JSON.stringify({ v: 1, kind: 'evil', openid: 'x', ts: 1, data: {} }) },
     // manage 自测：token 取 data/gate.json 的 code，代码里不出现真实口令
-    mk('manage', 'openid-a', { action: 'updateCat', token: SELFTEST_TOKEN, cat_id: cat, patch: { name: '大橘（自测改名）', habit: '自测晒太阳' } }, 15),
+    mk('manage', 'openid-a', { action: 'updateCat', token: SELFTEST_TOKEN, cat_id: cat, patch: { name: '大橘（自测改名）', characteristics: '亲人；自测晒太阳' } }, 15),
     mk('manage', 'openid-a', { action: 'managePhoto', token: SELFTEST_TOKEN, photo_id: photo, hidden: true }, 16),
     mk('manage', 'openid-a', { action: 'updateCat', token: 'definitely-wrong-token', cat_id: cat, patch: { name: '不该生效' } }, 17), // 口令错，应被丢弃
     mk('manage', 'openid-a', { action: 'updateCat', token: SELFTEST_TOKEN, cat_id: cat, patch: { popularity: 999, name: '也不该生效' } }, 18), // 白名单外字段，整条拒绝
@@ -1437,7 +1435,7 @@ function snapshot() {
     catFollow: cat ? cat.follow_count : null,
     catRating: cat ? JSON.stringify(cat.rating) : null,
     catName: cat ? cat.name : null,
-    catHabit: cat ? cat.habit : null,
+    catTraits: cat ? cat.characteristics : null,
     photoLike: photo ? photo.like_count : null,
     photoHidden: photo ? !!photo.hidden : null,
     friendLinks: friendLink ? JSON.stringify((friendLink.apps || []).map(a => a.name)) : null,
