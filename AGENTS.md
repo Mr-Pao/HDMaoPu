@@ -163,7 +163,7 @@ cos-version  从上游错误派生，废弃
   - `commentBoard`（v4.0.20）：原 `wx:if="{{!isAuth}}"` 按钮 + `<block wx:else>` 把输入区整个藏起来，改成输入区常显、顶部加 `.input-user` 提示条；`doSendComment` 里 `user.openid` / `user.userInfo.nickName` 全部加兜底
   - `modifyNews`（v4.0.21）：删掉「等待授权/点击授权」块与 `wx:if="{{isAuth}}"` 包裹，表单改由 `wx:if="{{auth}}"`（管理员 Level-2）控制，无权限时显示 `.noAuth` 整页空态（`tipText` + 「打扰了」按钮，`goBack()`）；`openidLastModify` / `userNicknameLastModify` 加兜底
   - `createNews`：wxml 本就没有 `getUInfo` 绑定（`:3` 是 `wx:if="{{auth}}"`），但 js 有死方法 `getUInfo/closeEdit` 且 `onShow` 还在调无效的 `getPageUserInfo` —— 已删死方法、`onShow` 改 `getUser()`，避免 `user.userInfo.nickName`（wxml `:5` placeholder）为 undefined
-  - **仍走旧 `getPageUserInfo` 的页面**（若以后也报"点不动/空白"，按上面范式改）：其余调用点未清点，改前先 `grep -rn "getPageUserInfo" miniprogram/ | grep -v node_modules`
+  - **仍走旧 `getPageUserInfo` 的页面**（2026-11-01 已清点，全站只剩两处）：`addPhoto.js:79`（该页没有昵称编辑 UI，`isAuth` 副作用无害，未动）、`applyMapAccess.js:34`（在 `packOptions.ignore` 里的死页，未动）。以后新增页面别再调它，用 `getUser()`。
   - ⚠️ `modifyUserInfo` 的头像上传仍走 `utils/common.js uploadFile()` → 云函数 `getURL`，dataMode 下必然返回 undefined（EMAS 已删），**只有昵称能存下来，头像存不了**。要修得照 `addPhoto.js` 改成 COS 匿名直传。
 - 数据源：`https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com`，微信后台已加 request 合法域名
 - **整份 `data/` 都是演示假数据，没有任何真实猫记录**：`cat` 11/11、`photo` 11/11、`comment` 48/48、`rating` 48/48、`user` 9/9 的 `_id` **全部**以 `demo-` 开头（`demo-cat-1..11`、`demo-photo-1..11` …），11 只猫名是大橘/三花/小黑/小白/奶茶/芝麻/年糕/团子/花生/汤圆/布丁，全部 `campus: 南校园`。由 `scripts/gen-demo-data.js` 固定种子生成（**注意：它不生成 photo，只重写已有条目**）。
