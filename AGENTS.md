@@ -142,7 +142,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.54`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.55`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -159,10 +159,17 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-01）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.54`
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.55`
 - **v4.0.53：全量代码审计优化落地（2026-11-01）** — 用户指令「除六（可加功能）其余全做」。改动：①B1 下架照片露出——`cat.js`(getBestPhoto/getLatestPhoto)、`datasource.js`(_getCatLocations)、`gallery.js`、`detailCat.js` 相册均过滤 `hidden`/`deleted`；②B2 `detailCat.js` likeCat/likeCountChanged 改 async + `await putInbox('like',...)`；③B3 服务端新增 `deleteComment` kind + `handleDeleteComment`（仅作者删/幂等/软删），客户端 `commentBoard.js` 真 putInbox；④B4 `handleDecision` 新增 `approvePhoto` 真复制 pending→catimg 并 append `photo.json`、cat.photo_count_total+1；⑤二 6 处 `api.curdOp` 假写→真 putInbox：`inter`(图库点赞)/`relationTab`/`checkFeedbacks`/`replyFeedback`/`pageSettings`/`filters`/`catInfoTab`(movePhoto)，服务端补 `manageFeedback`/`managePageSettings`/`saveFilter`/`movePhoto` action（白名单+永不throw+markTouched）；⑥三 删 `leaderboard`/`components/photoRank`/`components/achievementRank` 死页与孤儿组件 + `news.js` clickScience + `info.js` clearCache + `cloudApi.getMpCode`；⑦四 `gallery` PER_ROW 12→8、genealogy 并发池5、删 `common.js` convertToWebP/getOptimizedImageUrl 死代码；⑧五 删 252 处调试 console.log；⑨七 新建 `utils/nickname.js`（NICKNAME_MAX=20）应用到 commentBoard/feedbackDetail/modifyNews（3 页非 4 页，addPhoto 已匿名直传无昵称）；管理页口令壳评估后不抽（`promptToken` 已是共享 API）；`datasource.js` 不拆。验收：47 单测 + 66 verify + DRY_RUN 自测全过；提交 `1e48b71`。⚠️ 用户自有改动 `app_logo.png`/`图片.pptx` 未纳入审计提交。
 
 - **v4.0.54：五维评分雷达图（2026-11-02）** — 用户从审计「六·可加功能」里选了「五维评分可视化」（m00339）。在详情页「猫友评价」卡**展开详情**里，原本的 5 行 `star-rating` 替换为 **canvas-2d 五维雷达图**：`detailCat.js` 新增 `drawRatingRadar()`（用 `wx.createSelectorQuery().select('#rating-radar').fields({node:true,size:true})`，按 `cat.rating.catRatings` 的 `{name,score}` 画五边形，`#0C5F03` 描点、`#14801F` 描边、`rgba(20,128,31,0.18)` 填充，4 圈同心网格+维度标签；dpr 取 `wx.getWindowInfo().pixelRatio`，兜底 2），`bindDetailRating` 展开时与 `onShow`（`showDetailRating` 为真时）各重绘一次；`detailCat.wxml` 用 `<canvas type="2d" id="rating-radar">` + `count===0` 时显示「暂无评分，快来当第一个～」；`detailCat.wxss` 新增 `.rating-radar`(高440rpx)/`.rating-radar-empty`。设计依据：五维 = `utils/rating.js` 的 `ratingMap`（r1猫德/r2颜值/r3社交/r4干饭/r5活力），值来自 `cat.rating.dimAvg`（已由 `process-inbox` 的 `handleRating` 重算）。**只动视觉、不碰数据结构、不引依赖、主题色不变**。验收：47 单测 + 66 verify 全过（canvas 渲染只能在微信开发者工具里目测，node 测试不覆盖）。提交见 v4.0.54 commit。
+- **v4.0.55：数据看板加「近半年趋势」+「成长时间轴」（2026-11-02）** — 用户从审计「六·可加功能」里选了「数据看板时间轴」（m00549）。三文件纯增量：
+  - `miniprogram/utils/datasource.js` 的 `_getCatStats()` 扩返回字段（**原有 basic/rates/gender/month/campus/colour/events 一字未动**）：① `trend`（近 6 个自然月，每项 `{key:'YYYY-M', label:'M月', newCats, adopted, sterilized}`）+ `trendMax`（三列最大值，供百分比高度）；② `timeline`（**全量**事件按日聚合，`byDay` 同日 items 按 `order={绝育:0,领养:1,失踪:2,喵星:3,新猫:4}` 排序，生成 `summary` 如「新猫 3 · 绝育 1」，输出 `{key,label:'M月D日',yearLabel:'YYYY年',summary,items}`，时间倒序 `.slice(0,30)`）。
+  - ⚠️ **为什么不用现成的 `stats.events` 做时间轴**：`events` 只含**本月**且真实数据里 21 只猫的 `sterilized_time`/`adopt_time` 等全为 `null`、`create_time` 全是导入日 2026-11-01 → 本月事件几乎为空。所以另算全量聚合。`mphoto` 是**毫秒时间戳不是计数**，别当照片数用。
+  - `miniprogram/pages/manage/dashboard/dashboard.wxml`：在「领养情况」卡**之前**插入两张 `.bento-card.large`——`.trend-card`（标题 + `.trend-legend` 三点图例 #0C5F03/#14801F/rgba(12,95,3,0.28)；`.trend-chart` 每列三根 `.trend-bar`，`height` 用 `stats.trendMax > 0 ? (item.x / stats.trendMax) * 100 : 0`%；空态「暂无趋势数据」）与 `.timeline-card`（标题 + `.more-button`「本月事件」`bindtap="showEventsPopup"`；`.timeline-list` 每行 `.timeline-axis`{dot+line} + `.timeline-body`{date/summary + `.timeline-tag` 按 type 映射五种 class}；空态「暂无时间轴数据」）。
+  - `miniprogram/pages/manage/dashboard/dashboard.wxss`：文件末尾追加样式块（`.card,.box...{border-radius:20rpx}` 之后）。颜色只用品牌绿与既有语义色（missing `#C65A00`、deceased `#636366`），**零新增色值族**；`trend-chart` 高 260rpx、`trend-bar` 宽 14rpx、`timeline-list` `max-height:640rpx;overflow-y:auto`、`timeline-dot` 16rpx + 6rpx 光环。
+  - 验收：`node --check` 过、单测 **47/47**、`verify-demo-data.js` **66/66**、WXML 标签平衡 view 221/221 block 6/6 text 46/46 popup 3/3 image 3/3、WXSS 花括号平衡。`tests/datasource.test.js:243` 断言的 timeline 是**领养申请**的 timeline，与看板无关，未受影响。
+
 - **v4.0.42：管理口令收敛为 `data/gate.json` 一处（2026-11-01）**
   - **用户原话（m01906）：「我只是想在小程序端加一个密码，输入了之后就能进入管理界面管理数据，怎么搞得这么麻烦啊，一定要搞什么REVIEW_PASSCODE吗」**——此前口令分两处：界面进不进认 `data/gate.json` 的 `code`，提交能不能过认 Actions secret `REVIEW_PASSCODE`，两处不一致就表现为「进去了但提交没反应」，而 secret 在手机上根本看不到。
   - **`scripts/process-inbox.js` 新增 `currentGateCode()`**：`loadData('gate').items.find(it => it._id === 'gate')` 取 `code` 并 trim，读失败 `console.warn` 后返回空串；`tokenOk(token)` 改为 `const expect = currentGateCode() || REVIEW_PASSCODE || ''`。**`REVIEW_PASSCODE` 降级为兜底**（gate.json 缺失或 code 为空时才用），老部署可继续留着，新部署完全不用配。

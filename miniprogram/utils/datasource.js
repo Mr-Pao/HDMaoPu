@@ -1026,6 +1026,8 @@ function createJsonServerless(options) {
     ];
     const month = { newCats: 0, sterilized: 0, adopted: 0, missing: 0, deceased: 0 };
     let events = [];
+    // 全量事件（不限本月），供时间轴按日聚合
+    const allEvents = [];
 
     eventTypes.forEach(function (def) {
       const type = def[0], field = def[1], cond = def[2], key = def[3];
@@ -1038,6 +1040,12 @@ function createJsonServerless(options) {
         name: c.name,
         id: c._id,
       }));
+      alive.filter(c => cond(c) && c[field]).forEach(c => allEvents.push({
+        type: type,
+        timestamp: c[field],
+        name: c.name,
+        id: c._id,
+      }));
     });
     // Invalid Date（如 timestamp 为非法字符串）按 0 处理，避免 NaN 让排序结果不确定
     const tsOf = t => {
@@ -1045,6 +1053,64 @@ function createJsonServerless(options) {
       return isNaN(d.getTime()) ? 0 : d.getTime();
     };
     events = events.sort((a, b) => tsOf(b.timestamp) - tsOf(a.timestamp));
+
+    // ---------- 近 6 个月趋势（新增 / 领养 / 绝育） ----------
+    // 从当前月起往前推 5 个月，共 6 个自然月
+    const trend = [];
+    for (let i = 5; i >= 0; i--) {
+      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+      const s = start.getTime();
+      const e = end.getTime();
+      const inRange = t => {
+        const ts = tsOf(t);
+        return ts > 0 && ts >= s && ts < e;
+      };
+      trend.push({
+        key: start.getFullYear() + '-' + (start.getMonth() + 1),
+        label: (start.getMonth() + 1) + '月',
+        newCats: alive.filter(c => inRange(c.create_time)).length,
+        adopted: alive.filter(c => c.adopt === 1 && inRange(c.adopt_time)).length,
+        sterilized: alive.filter(c => c.sterilized === true && inRange(c.sterilized_time)).length,
+      });
+    }
+    // 趋势最大值，供柱状图做百分比高度
+    let trendMax = 0;
+    trend.forEach(row => {
+      trendMax = Math.max(trendMax, row.newCats, row.adopted, row.sterilized);
+    });
+
+    // ---------- 时间轴：全量事件按日聚合 ----------
+    const byDay = {};
+    allEvents.forEach(ev => {
+      const ts = tsOf(ev.timestamp);
+      if (!ts) return;
+      const d = new Date(ts);
+      const key = d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1) + '-' + (d.getDate() < 10 ? '0' : '') + d.getDate();
+      if (!byDay[key]) {
+        byDay[key] = { key: key, timestamp: ts, label: '', items: [] };
+      }
+      byDay[key].timestamp = Math.max(byDay[key].timestamp, ts);
+      byDay[key].items.push({ type: ev.type, name: ev.name, id: ev.id });
+    });
+    const timeline = Object.keys(byDay).map(k => {
+      const g = byDay[k];
+      const d = new Date(g.timestamp);
+      // 同一天内：绝育/领养/失踪/喵星优先于新猫，便于一眼看到关键事件
+      const order = { '绝育': 0, '领养': 1, '失踪': 2, '喵星': 3, '新猫': 4 };
+      g.items.sort((a, b) => (order[a.type] || 9) - (order[b.type] || 9));
+      // 当日概括：按类型计数，如「新猫 3 · 绝育 1」
+      const counts = {};
+      g.items.forEach(it => { counts[it.type] = (counts[it.type] || 0) + 1; });
+      const summary = Object.keys(counts).map(t => t + ' ' + counts[t]).join(' · ');
+      return {
+        key: g.key,
+        label: (d.getMonth() + 1) + '月' + d.getDate() + '日',
+        yearLabel: d.getFullYear() + '年',
+        summary: summary,
+        items: g.items,
+      };
+    }).sort((a, b) => byDay[b.key].timestamp - byDay[a.key].timestamp).slice(0, 30);
 
     return {
       success: true,
@@ -1073,6 +1139,9 @@ function createJsonServerless(options) {
           },
         },
         month: month,
+        trend: trend,
+        trendMax: trendMax,
+        timeline: timeline,
         campus: campus,
         colour: colourStats,
         events: events,

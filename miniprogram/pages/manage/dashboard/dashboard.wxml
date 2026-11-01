@@ -118,6 +118,64 @@
       </view>
     </view>
 
+    <!-- 近半年趋势 -->
+    <view class="bento-card large trend-card">
+      <view class="card-title-container">
+        <view class="card-title">近半年趋势</view>
+        <view class="trend-legend">
+          <view class="trend-legend-item"><view class="trend-dot newcat"></view><text>新增</text></view>
+          <view class="trend-legend-item"><view class="trend-dot adopted"></view><text>领养</text></view>
+          <view class="trend-legend-item"><view class="trend-dot sterilized"></view><text>绝育</text></view>
+        </view>
+      </view>
+      <view class="card-content">
+        <block wx:if="{{stats.trend && stats.trend.length > 0}}">
+          <view class="trend-chart">
+            <view wx:for="{{stats.trend}}" wx:key="key" class="trend-col">
+              <view class="trend-bars">
+                <view class="trend-bar newcat" style="height: {{stats.trendMax > 0 ? (item.newCats / stats.trendMax) * 100 : 0}}%;"></view>
+                <view class="trend-bar adopted" style="height: {{stats.trendMax > 0 ? (item.adopted / stats.trendMax) * 100 : 0}}%;"></view>
+                <view class="trend-bar sterilized" style="height: {{stats.trendMax > 0 ? (item.sterilized / stats.trendMax) * 100 : 0}}%;"></view>
+              </view>
+              <view class="trend-label">{{item.label}}</view>
+              <view class="trend-num">{{item.newCats + item.adopted + item.sterilized}}</view>
+            </view>
+          </view>
+        </block>
+        <view wx:else class="no-data">暂无趋势数据</view>
+      </view>
+    </view>
+
+    <!-- 成长时间轴 -->
+    <view class="bento-card large timeline-card">
+      <view class="card-title-container">
+        <view class="card-title">成长时间轴</view>
+        <view class="more-button" bindtap="showEventsPopup" wx:if="{{stats.events && stats.events.length > 1}}">本月事件</view>
+      </view>
+      <view class="card-content">
+        <block wx:if="{{stats.timeline && stats.timeline.length > 0}}">
+          <view class="timeline-list">
+            <view wx:for="{{stats.timeline}}" wx:key="key" class="timeline-row">
+              <view class="timeline-axis">
+                <view class="timeline-dot"></view>
+                <view class="timeline-line" wx:if="{{index < stats.timeline.length - 1}}"></view>
+              </view>
+              <view class="timeline-body">
+                <view class="timeline-head">
+                  <text class="timeline-date">{{item.yearLabel}}{{item.label}}</text>
+                  <text class="timeline-summary">{{item.summary}}</text>
+                </view>
+                <view class="timeline-names">
+                  <text wx:for="{{item.items}}" wx:for-item="ev" wx:key="id" class="timeline-tag {{ev.type === '绝育' ? 'sterilized' : (ev.type === '领养' ? 'adopted' : (ev.type === '失踪' ? 'missing' : (ev.type === '喵星' ? 'deceased' : 'newcat')))}}">{{ev.type}} {{ev.name}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </block>
+        <view wx:else class="no-data">暂无时间轴数据</view>
+      </view>
+    </view>
+
     <!-- 第三行：领养情况 -->
     <view class="bento-card normal">
       <view class="card-title">领养情况</view>
