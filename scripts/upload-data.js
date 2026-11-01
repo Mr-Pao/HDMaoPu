@@ -144,6 +144,27 @@ function putObject(cos, file) {
   });
 }
 
+// 上传后再读一次对象 ACL，确认 AllUsers 能读。
+//
+// 为什么必须验：COS 每次 PUT 都用请求里的 ACL 整体替换旧对象的 ACL，不继承。
+// 只要有人绕过本脚本（手工 putObject、别的一次性脚本）覆盖了 data/*.json 又没带
+// public-read，那份 JSON 就悄悄变成私有——小程序拿到 403，页面直接空掉，而且
+// 前端只会报一行 403 看不出来龙去脉。2026-11-01 就发生过一次（data/news.json）。
+function verifyAcl(cos, key) {
+  return new Promise((resolve) => {
+    cos.getObjectAcl({ Bucket: COS_BUCKET, Region: COS_REGION, Key: key }, (err, data) => {
+      if (err) return resolve({ ok: false, reason: err.message || String(err) });
+      const grants = (data && data.Grants) || [];
+      const publicRead = grants.some(g => {
+        const grantee = g.Grantee || {};
+        const id = String(grantee.ID || grantee.URI || '');
+        return (id.includes('AllUsers') || id.includes('global/AllUsers')) && String(g.Permission) === 'READ';
+      });
+      resolve({ ok: publicRead, reason: publicRead ? 'AllUsers READ' : '缺少 AllUsers READ' });
+    });
+  });
+}
+
 async function main() {
   const files = collectFiles();
 
@@ -166,6 +187,7 @@ async function main() {
 
   let ok = 0;
   const failed = [];
+  const aclFailed = [];
 
   for (const f of files) {
     try {
@@ -173,6 +195,12 @@ async function main() {
       const etag = res && res.ETag ? String(res.ETag).replace(/"/g, '') : '-';
       console.log(`✔ ${f.key}  ${formatSize(f.size)}  上传成功（etag ${etag}）`);
       ok++;
+
+      const acl = await verifyAcl(cos, f.key);
+      if (!acl.ok) {
+        console.error(`  ✘ ACL 校验未通过（${acl.reason}）：${f.key} 匿名 GET 会 403`);
+        aclFailed.push(f.key);
+      }
     } catch (err) {
       console.error(`✘ ${f.key}  上传失败：${err && err.message ? err.message : err}`);
       failed.push(f.key);
@@ -180,9 +208,14 @@ async function main() {
   }
 
   console.log('----------------------------------------');
-  console.log(`完成：成功 ${ok} 个，失败 ${failed.length} 个`);
+  console.log(`完成：成功 ${ok} 个，失败 ${failed.length} 个，ACL 异常 ${aclFailed.length} 个`);
+  if (aclFailed.length) {
+    console.error('ACL 异常列表（这些对象小程序读不到，页面会空）：' + aclFailed.join(', '));
+  }
   if (failed.length) {
     console.error('失败列表：' + failed.join(', '));
+  }
+  if (failed.length || aclFailed.length) {
     process.exit(1);
   }
 }
