@@ -33,20 +33,6 @@ Page({
     friendLinkImgLoaded:false,
     text_cfg: text_cfg,
 
-    // 卡片，不需要设计绘制卡片图，只需用放图标即可
-    cards: [
-      {
-        icon:"/pages/public/images/info/btn/reward.svg",
-        label:"投喂罐头",
-        path:"/pages/info/reward/reward",
-      },{
-        icon:"/pages/public/images/info/btn/team.svg",
-        label:"程序开发",
-        path:"/pages/info/devTeam/devTeam",
-      }
-    ],
-
-
     nums: {},  // 菜单栏的各个数量
     // 菜单栏是否显示的条件
     showCond: {

@@ -47,25 +47,7 @@
   </view>
 </view>
 
-<!-- ③ 淡色提示卡：文案统一放 config.text.info，别在 wxml 里硬编码 -->
-<view class="tip-card">
-  <view class="tip-card-icon iconfont icon-smile-comment-o"></view>
-  <view class="tip-card-body">
-    <view class="tip-card-title">{{text_cfg.info.tip_title}}</view>
-    <view class="tip-card-desc">{{text_cfg.info.tip_desc}}</view>
-  </view>
-</view>
-
-<!-- ④ 探索：2 列卡片 -->
-<view class='block-name'>{{text_cfg.info.explore}}</view>
-<view class="card-container">
-  <view class="card" wx:for="{{cards}}" wx:key="label" bindtap='clickbtn' data-to='{{item.path}}'>
-    <image class="icon" src="{{item.icon}}"></image>
-    <view class="card-text">{{item.label}}</view>
-  </view>
-</view>
-
-<!-- ⑤ 友情链接：整块按数据显隐（后台可增删，删空后不显示空卡片） -->
+<!-- ③ 友情链接：整块按数据显隐（后台可增删，删空后不显示空卡片） -->
 <block wx:if="{{friendApps.length}}">
   <view class='block-name'>{{text_cfg.info.friends}}</view>
   <view class="block">
@@ -77,7 +59,7 @@
   </view>
 </block>
 
-<!-- 工具（历史分组，当前 menuList 只有「管理后台」一组，本块不渲染） -->
+<!-- ④ 工具（历史分组，当前 menuList 只有「管理后台」一组，本块不渲染） -->
 <block wx:for="{{menuList}}" wx:key="title" wx:for-item="menu" wx:if="{{showCond[menu.show]}}">
   <view wx:if="{{menu.title != '管理后台'}}" class='block-name'>{{menu.title}}</view>
   <view wx:if="{{menu.title != '管理后台'}}" class='card-container'>
@@ -88,7 +70,7 @@
   </view>
 </block>
 
-<!-- ⑥ 管理后台：宫格式布局（15 项，保持 3 列），待处理数量右上角红点标记 -->
+<!-- ⑤ 管理后台：宫格式布局（15 项，保持 3 列），待处理数量右上角红点标记 -->
 <!--    showCond.manager 由 isUnlocked() 控制，非管理员恒 false → 整块隐藏 -->
 <block wx:for="{{menuList}}" wx:key="title" wx:for-item="menu" wx:if="{{showCond[menu.show]}}">
   <view wx:if="{{menu.title == '管理后台'}}" class='block-name'>{{menu.title}}</view>
@@ -103,16 +85,20 @@
     </view>
 </block>
 
-<!-- ⑦ 关于：竖列表行组（左标题 / 右值 + ›） -->
+<!-- ⑥ 关于：竖列表行组（左标题 / 右值 + ›） -->
 <view class='block-name'>{{text_cfg.info.about}}</view>
 <view class="about-list">
   <view class="about-row">
     <view class="about-k">{{text_cfg.info.row_version}}</view>
     <view class="about-v">{{version || '-'}}</view>
   </view>
-  <view class="about-row" bindtap='clickbtn' data-to='/pages/info/feedback/feedback' hover-class="row-hover" hover-stay-time="80">
-    <view class="about-k">{{text_cfg.info.row_feedback}}</view>
-    <view class="about-v">{{text_cfg.info.row_feedback_value}}<text class="about-arrow">›</text></view>
+  <view class="about-row" bindtap='clickbtn' data-to='/pages/info/reward/reward' hover-class="row-hover" hover-stay-time="80">
+    <view class="about-k">{{text_cfg.info.row_reward}}</view>
+    <view class="about-v">{{text_cfg.info.row_reward_value}}<text class="about-arrow">›</text></view>
+  </view>
+  <view class="about-row" bindtap='clickbtn' data-to='/pages/info/devTeam/devTeam' hover-class="row-hover" hover-stay-time="80">
+    <view class="about-k">{{text_cfg.info.row_dev}}</view>
+    <view class="about-v">{{text_cfg.info.row_dev_value}}<text class="about-arrow">›</text></view>
   </view>
   <button class="about-row about-row-btn" open-type="contact" hover-class="row-hover" hover-stay-time="80">
     <view class="about-k">{{text_cfg.info.row_contact}}</view>
@@ -120,14 +106,5 @@
   </button>
 </view>
 
-<!-- ⑧ 底部说明小字 -->
-<view class="foot-note">{{text_cfg.info.footer}}</view>
-
-<!-- 悬浮按钮 -->
-  <button open-type="contact" plain='true' style="border: none;">
-  <image  class="plus" src='/pages/public/images/info/btn/1.png'></image>
-
-  </button>
-
-<!-- 底tab占位 -->
+<!-- ⑦ 底tab占位 -->
 <view style="height: {{tabBarHeight + 60}}px;"></view>

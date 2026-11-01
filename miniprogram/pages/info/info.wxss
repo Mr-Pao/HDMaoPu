@@ -466,8 +466,7 @@ page {
 
 /* =========================================================
    v5.5 关于页布局重构（参考 SpaceLaunch「我的」页）
-   分节顺序：品牌头 → 数据条 → 提示卡 → 探索 → 友情链接
-             → 管理后台 → 关于 → 底部声明
+   分节顺序：品牌头 → 数据条 → 友情链接 → 管理后台 → 关于 → 底部声明
    新增样式一律用 app.wxss 已有 token，不新增硬编码色值
    ========================================================= */
 
@@ -501,47 +500,16 @@ page {
   line-height: 1.3;
 }
 
-/* ③ 淡色提示卡 */
-.tip-card {
-  display: flex;
-  align-items: flex-start;
-  margin: 22rpx 24rpx 0 24rpx;
-  padding: 22rpx 24rpx;
-  background-color: var(--dk-accent-soft);
-  border: 1rpx solid var(--dk-accent-line);
-  border-radius: var(--dk-radius);
-  box-sizing: border-box;
-}
-.tip-card-icon {
-  flex-shrink: 0;
-  width: 52rpx;
-  font-size: 40rpx;
-  line-height: 1.1;
-  color: var(--dk-accent);
-  filter: none;
-}
-.tip-card-body {
-  flex: 1;
-  min-width: 0;
-  padding-left: 6rpx;
-}
-.tip-card-title {
-  font-size: 24rpx;
-  font-weight: 700;
-  line-height: 1.45;
-  color: var(--dk-accent);
-}
-.tip-card-desc {
-  margin-top: 6rpx;
-  font-size: 21rpx;
-  line-height: 1.55;
-  color: var(--dk-text-2);
+/* 数据条直接与友情链接/管理后台衔接，补一点上间距 */
+.mina-info + .block-name {
+  margin-top: 34rpx;
 }
 
-/* ④ 探索：两列卡片（2 项正好一行两列，不再拉高） */
+/* 工具分组（menuList 里非「管理后台」的组）仍用两列卡片 */
 .card-container {
   margin: 0 24rpx;
-}.card {
+}
+.card {
   height: 176rpx;
   justify-content: center;
 }
@@ -553,7 +521,7 @@ page {
   letter-spacing: 1rpx;
 }
 
-/* ⑦ 关于：竖列表行组 */
+/* 关于：竖列表行组 */
 .about-list {
   margin: 0 24rpx;
   background-color: var(--dk-card);
@@ -610,12 +578,5 @@ page {
   display: none;
 }
 
-/* ⑧ 底部声明小字 */
-.foot-note {
-  margin: 32rpx 28rpx 8rpx 28rpx;
-  font-size: 20rpx;
-  line-height: 1.6;
-  text-align: center;
-  color: var(--dk-text-3);
-}
+/* 底部声明小字已按用户要求移除（2026-11-01），.foot-note 不再使用 */
 
