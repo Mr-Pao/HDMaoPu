@@ -93,7 +93,7 @@ button+button {
 .news.tag {
   width: 80rpx;
   height: 38rpx;
-  border-radius: 15rpx;
+  border-radius: 20rpx;
   margin: 0 15rpx 0 0;
   
   font-size: 24rpx;
@@ -132,4 +132,17 @@ button+button {
 .single-image {
   /* width: 100%; */
   height: 200rpx;
+}
+/* =========================================================
+   v5.1 全站统一外观（二级页自动套用）
+   与首页/图库/详情页同一套：白底、细描边、大圆角、无重阴影
+   ========================================================= */
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+/* 卡片圆角统一到 20rpx 档 */
+.card, .box, .item-card, .list-item, .cell {
+  border-radius: 20rpx;
 }

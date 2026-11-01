@@ -51,7 +51,7 @@ button.submit {
   line-height: 40rpx;
   padding: 20rpx 30rpx;
   border: 1rpx solid var(--color-gray-max);
-  border-radius: 10rpx;
+  border-radius: 20rpx;
   margin-top: 20rpx;
 }
 
@@ -84,4 +84,17 @@ button.submit {
 
 .label.user {
   color: var(--color-gray-max);
+}
+/* =========================================================
+   v5.1 全站统一外观（二级页自动套用）
+   与首页/图库/详情页同一套：白底、细描边、大圆角、无重阴影
+   ========================================================= */
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+/* 卡片圆角统一到 20rpx 档 */
+.card, .box, .item-card, .list-item, .cell {
+  border-radius: 20rpx;
 }

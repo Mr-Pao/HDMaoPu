@@ -76,9 +76,9 @@
   "window": {
     "backgroundColor": "#F5F7F5",
     "backgroundTextStyle": "dark",
-    "navigationBarBackgroundColor": "#0C5F03",
+    "navigationBarBackgroundColor": "#F5F7F5",
     "navigationBarTitleText": "火大猫谱",
-    "navigationBarTextStyle": "white",
+    "navigationBarTextStyle": "black",
     "backgroundColorTop": "#F5F7F5",
     "backgroundColorBottom": "#F5F7F5"
   },

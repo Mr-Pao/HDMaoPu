@@ -85,7 +85,7 @@ page {
 .relation.add {
   border: 3rpx dashed var(--color-gray-dark);
   margin: 20rpx 30rpx;
-  border-radius: 15rpx;
+  border-radius: 20rpx;
   text-align: center;
   font-size: 28rpx;
   color: var(--color-primary-dark);
@@ -180,4 +180,17 @@ page {
 .old-data {
   font-size: 20rpx;
   color: var(--color-gray-dark);
+}
+/* =========================================================
+   v5.1 全站统一外观（二级页自动套用）
+   与首页/图库/详情页同一套：白底、细描边、大圆角、无重阴影
+   ========================================================= */
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+/* 卡片圆角统一到 20rpx 档 */
+.card, .box, .item-card, .list-item, .cell {
+  border-radius: 20rpx;
 }

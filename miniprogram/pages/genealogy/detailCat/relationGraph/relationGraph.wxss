@@ -102,7 +102,7 @@ page {
   font-size: 20rpx;
   min-width: 32rpx;
   height: 32rpx;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -120,7 +120,7 @@ page {
   color: var(--text-main);
   background: var(--color-surface);
   padding: 4rpx 12rpx;
-  border-radius: 10rpx;
+  border-radius: 20rpx;
   box-shadow: 0 2rpx 6rpx rgba(0,0,0,0.05);
   font-weight: bold;
   white-space: nowrap;
@@ -166,7 +166,7 @@ page {
   font-size: 18rpx;
   background: var(--color-surface);
   padding: 2rpx 8rpx;
-  border-radius: 8rpx;
+  border-radius: 20rpx;
   color: var(--text-sub);
   border: 1rpx solid #FFF0D6;
   max-width: 220rpx;
@@ -380,4 +380,18 @@ page {
   padding: 12rpx 20rpx;
   border-radius: 999rpx;
   box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1);
+}
+
+/* =========================================================
+   v5.1 全站统一外观（二级页自动套用）
+   与首页/图库/详情页同一套：白底、细描边、大圆角、无重阴影
+   ========================================================= */
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+/* 卡片圆角统一到 20rpx 档 */
+.card, .box, .item-card, .list-item, .cell {
+  border-radius: 20rpx;
 }

@@ -527,3 +527,18 @@ page {
   color: var(--dk-text);
   border-bottom: 1rpx solid var(--dk-line);
 }
+
+/* =========================================================
+   v5.2 喵友圈精修
+   ========================================================= */
+
+.photo-block,
+.comment-block {
+  border-radius: 28rpx;
+  border: 1rpx solid var(--dk-line);
+  box-shadow: 0 2rpx 10rpx rgba(12, 95, 3, 0.035);
+}
+.cat-name {
+  font-size: 30rpx;
+  font-weight: 700;
+}

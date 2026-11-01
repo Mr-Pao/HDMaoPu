@@ -69,7 +69,7 @@
   position: absolute;
   /* top,left,width,height在wxml中绑定JS计算结果 */
   border: 4rpx solid var(--color-gray);
-  border-radius: 10rpx;
+  border-radius: 20rpx;
   box-sizing: border-box;
 }
 
@@ -270,7 +270,7 @@
 .catCard .info .adopt {
   padding: 0 10rpx;
   height: 30rpx;
-  border-radius: 15rpx;
+  border-radius: 20rpx;
   font-size: 18rpx;
   line-height: 30rpx;
   text-align: center;
@@ -281,7 +281,7 @@
 
 .catCard .info .to_star {
   height: 30rpx;
-  border-radius: 15rpx;
+  border-radius: 20rpx;
   font-size: 18rpx;
   line-height: 30rpx;
   text-align: center;
@@ -315,4 +315,17 @@
   font-size: 24rpx;
   color: var(--color-gray-max);
   text-align: center;
+}
+/* =========================================================
+   v5.1 全站统一外观（二级页自动套用）
+   与首页/图库/详情页同一套：白底、细描边、大圆角、无重阴影
+   ========================================================= */
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+/* 卡片圆角统一到 20rpx 档 */
+.card, .box, .item-card, .list-item, .cell {
+  border-radius: 20rpx;
 }

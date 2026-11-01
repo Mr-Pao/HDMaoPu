@@ -402,3 +402,37 @@ page {
 .grid-disabled-tip {
   color: var(--dk-text-3);
 }
+
+/* =========================================================
+   v5.2 我的页精修
+   ========================================================= */
+
+.mina-info {
+  margin: 12rpx 24rpx 0 24rpx;
+  padding: 44rpx 32rpx 34rpx 32rpx;
+  border-radius: 34rpx;
+  background-color: var(--dk-card);
+  border: 1rpx solid var(--dk-line);
+  box-shadow: 0 2rpx 14rpx rgba(12, 95, 3, 0.05);
+}
+.title {
+  font-size: 46rpx;
+  letter-spacing: -1rpx;
+}
+.num-title {
+  font-size: 46rpx;
+  font-weight: 800;
+  letter-spacing: -1rpx;
+}
+.small-title {
+  font-size: 19rpx;
+  letter-spacing: 1rpx;
+  color: var(--dk-text-3);
+}
+.card,
+.tool,
+.block {
+  border-radius: 26rpx;
+  border: 1rpx solid var(--dk-line);
+  box-shadow: 0 2rpx 10rpx rgba(12, 95, 3, 0.035);
+}

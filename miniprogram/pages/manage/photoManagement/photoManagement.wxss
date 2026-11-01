@@ -44,7 +44,7 @@
   display: flex;
   align-items: center;
   background: var(--color-gray-light);
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   padding: 0 20rpx;
   height: 60rpx;
   margin-right: 20rpx;
@@ -94,7 +94,7 @@
 .action-btn {
   justify-content: center; /* 水平居中 */
   align-items: center;    /* 垂直居中 */
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   transition: background-color 0.2s;
 }
 
@@ -112,7 +112,7 @@
   padding: 6rpx;
   background: var(--color-gray-light);
   box-sizing: border-box;
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   width: 100%;
 }
 
@@ -124,7 +124,7 @@
 }
 
 .stat-card {
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   text-align: center;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
   display: flex;
@@ -220,7 +220,7 @@
   align-items: center;
   padding: 8rpx 14rpx;
   background: var(--color-gray-light);
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   border: 1rpx solid var(--color-border);
   transition: all 0.2s ease;
   flex-shrink: 0;
@@ -255,7 +255,7 @@
   color: var(--color-text-tertiary);
   background: rgba(255, 255, 255, 0.2);
   padding: 2rpx 4rpx;
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   flex-shrink: 0;
 }
 
@@ -307,7 +307,7 @@
 
 .cat-item {
   background: var(--color-surface);
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   overflow: hidden;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
   border: 1rpx solid #f0f0f0;
@@ -359,7 +359,7 @@
   color: var(--color-text-secondary);
   background: var(--color-bg);
   padding: 4rpx 12rpx;
-  border-radius: 12rpx;
+  border-radius: 20rpx;
 }
 
 .best-count {
@@ -367,7 +367,7 @@
   color: var(--color-text-secondary);
   background: #fff8e1;
   padding: 4rpx 12rpx;
-  border-radius: 12rpx;
+  border-radius: 20rpx;
 }
 
 .cat-campus {
@@ -380,7 +380,7 @@
   color: var(--color-text-secondary);
   background: #e8f4fd;
   padding: 0rpx 8rpx;
-  border-radius: 8rpx;
+  border-radius: 20rpx;
 }
 
 /* 照片页面筛选栏 */
@@ -436,7 +436,7 @@
   align-items: center;
   padding: 8rpx 14rpx;
   background: var(--color-gray-light);
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   border: 1rpx solid var(--color-border);
   transition: all 0.2s ease;
   flex-shrink: 0;
@@ -480,7 +480,7 @@
   color: var(--color-text-tertiary);
   background: rgba(255, 255, 255, 0.2);
   padding: 2rpx 4rpx;
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   flex-shrink: 0;
 }
 
@@ -504,7 +504,7 @@
   justify-content: center;
   padding: 14rpx 0;
   background: var(--color-gray-light);
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   border: 1rpx solid var(--color-border);
   transition: all 0.2s ease;
   flex: 1;
@@ -565,7 +565,7 @@
   position: relative;
   width: 100%;
   aspect-ratio: 1;
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   overflow: hidden;
   background: var(--color-gray-light);
   transition: all 0.2s ease;
@@ -607,7 +607,7 @@
   background: rgba(0, 0, 0, 0.7);
   color: var(--color-surface);
   padding: 6rpx 10rpx;
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   font-size: 20rpx;
   font-weight: 600;
   backdrop-filter: blur(10px);
@@ -688,7 +688,7 @@
 .action-btn {
   justify-content: center; /* 水平居中 */
   align-items: center;    /* 垂直居中 */
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   font-size: 24rpx;
   font-weight: 600;
   border: none;
@@ -738,7 +738,7 @@
 
 .modal-content {
   background: var(--color-surface);
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   padding: 40rpx;
   width: 100%;
   max-width: 560rpx;
@@ -768,7 +768,7 @@
 .modal-btn {
   flex: 1;
   padding: 24rpx;
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   font-size: 28rpx;
   font-weight: 600;
   border: none;
@@ -826,4 +826,17 @@
   .campus-name {
     max-width: 50rpx;
   }
+}
+/* =========================================================
+   v5.1 全站统一外观（二级页自动套用）
+   与首页/图库/详情页同一套：白底、细描边、大圆角、无重阴影
+   ========================================================= */
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+/* 卡片圆角统一到 20rpx 档 */
+.card, .box, .item-card, .list-item, .cell {
+  border-radius: 20rpx;
 }

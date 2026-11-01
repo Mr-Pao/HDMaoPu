@@ -1155,3 +1155,25 @@ swiper-item image {
   font-size: 25rpx;
   line-height: 38rpx;
 }
+
+/* =========================================================
+   v5.2 详情页精修
+   ========================================================= */
+
+.info .name {
+  font-size: 64rpx;
+  letter-spacing: -1.5rpx;
+}
+.identity .count {
+  border-radius: 999rpx;
+  border: 1rpx solid var(--dk-line);
+  background-color: rgba(12, 95, 3, 0.04);
+}
+.details .card {
+  border-radius: 28rpx;
+  border: 1rpx solid var(--dk-line);
+  box-shadow: 0 2rpx 10rpx rgba(12, 95, 3, 0.035);
+}
+.details .card-header {
+  border-bottom: 1rpx solid var(--dk-line);
+}

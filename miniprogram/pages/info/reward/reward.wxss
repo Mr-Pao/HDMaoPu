@@ -5,7 +5,7 @@
   margin: 50rpx 30rpx 0 30rpx;
   padding: 50rpx 30rpx 25rpx 30rpx;
   box-sizing: border-box;
-  border-radius: 10rpx;
+  border-radius: 20rpx;
   box-shadow: 0 0 10rpx var(--color-gray-max);
   position: relative;
   display: flex;
@@ -65,4 +65,17 @@ button.primary {
   font-size: 28rpx;
   margin: 15rpx 40rpx;
   color: var(--color-gray-max);
+}
+/* =========================================================
+   v5.1 全站统一外观（二级页自动套用）
+   与首页/图库/详情页同一套：白底、细描边、大圆角、无重阴影
+   ========================================================= */
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+/* 卡片圆角统一到 20rpx 档 */
+.card, .box, .item-card, .list-item, .cell {
+  border-radius: 20rpx;
 }

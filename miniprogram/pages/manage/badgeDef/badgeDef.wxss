@@ -35,7 +35,7 @@ page {
   border: 1rpx solid var(--color-primary-dark);
   background-color: var(--color-primary);
   color: var(--color-black-min);
-  border-radius: 10rpx;
+  border-radius: 20rpx;
   padding: 10rpx 30rpx;
   margin-left: auto;
   line-break: strict;
@@ -66,4 +66,17 @@ button.primary {
 
 .badge-level-C .badge-name {
   color: var(--color-badge-C);
+}
+/* =========================================================
+   v5.1 全站统一外观（二级页自动套用）
+   与首页/图库/详情页同一套：白底、细描边、大圆角、无重阴影
+   ========================================================= */
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+/* 卡片圆角统一到 20rpx 档 */
+.card, .box, .item-card, .list-item, .cell {
+  border-radius: 20rpx;
 }

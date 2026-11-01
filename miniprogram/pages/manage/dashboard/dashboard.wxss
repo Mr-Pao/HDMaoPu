@@ -240,7 +240,7 @@
   width: 100%;
   height: 16rpx;
   background-color: rgba(52, 199, 89, 0.15);
-  border-radius: 10rpx;
+  border-radius: 20rpx;
   overflow: hidden;
   margin-bottom: 20rpx;
 }
@@ -301,7 +301,7 @@
 }
 
 .campus-item {
-  border-radius: 16rpx;
+  border-radius: 20rpx;
 }
 
 .campus-name {
@@ -391,7 +391,7 @@
 .event-item {
   display: flex;
   align-items: center;
-  border-radius: 12rpx;
+  border-radius: 20rpx;
 }
 
 .event-type {
@@ -572,7 +572,7 @@
 .area-bar {
   height: 16rpx;
   background-color: var(--color-gray-light);
-  border-radius: 10rpx;
+  border-radius: 20rpx;
   overflow: hidden;
   display: flex;
   position: relative;
@@ -614,7 +614,7 @@
 /* TNR分数条 */
 .tnr-bar {
   height: 20rpx;
-  border-radius: 10rpx;
+  border-radius: 20rpx;
   margin-right: 15rpx;
   min-width: 10rpx;
   max-width: 120rpx;
@@ -643,7 +643,7 @@
   width: 100%;
   margin-bottom: 20rpx;
   background-color: var(--color-gray-light);
-  border-radius: 10rpx;
+  border-radius: 20rpx;
   padding: 15rpx;
   box-sizing: border-box;
 }
@@ -772,7 +772,7 @@
 /* 信息面板 */
 .info-panel {
   padding: 20rpx;
-  border-radius: 10rpx;
+  border-radius: 20rpx;
   margin-bottom: 30rpx;
 }
 
@@ -820,4 +820,17 @@
   flex: 1;
   font-size: 24rpx;
   color: var(--color-gray-max);
+}
+/* =========================================================
+   v5.1 全站统一外观（二级页自动套用）
+   与首页/图库/详情页同一套：白底、细描边、大圆角、无重阴影
+   ========================================================= */
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+/* 卡片圆角统一到 20rpx 档 */
+.card, .box, .item-card, .list-item, .cell {
+  border-radius: 20rpx;
 }

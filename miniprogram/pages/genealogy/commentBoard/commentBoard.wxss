@@ -135,7 +135,7 @@ page {
   background-color: var(--color-white-dark);
   color: var(--color-black-light);
   padding: 18rpx 20rpx;
-  border-radius: 10rpx;
+  border-radius: 20rpx;
 
   font-size: 30rpx;
   line-height: 30rpx;
@@ -222,4 +222,18 @@ button.primary {
   background:
     -webkit-linear-gradient(top, var(--color-comment-paper-pink) 38rpx, var(--color-gray) 40rpx);
   background-size: 100% 40rpx;
+}
+
+/* =========================================================
+   v5.1 全站统一外观（二级页自动套用）
+   与首页/图库/详情页同一套：白底、细描边、大圆角、无重阴影
+   ========================================================= */
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+/* 卡片圆角统一到 20rpx 档 */
+.card, .box, .item-card, .list-item, .cell {
+  border-radius: 20rpx;
 }

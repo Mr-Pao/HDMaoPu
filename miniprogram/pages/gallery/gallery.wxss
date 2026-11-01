@@ -331,3 +331,45 @@ page {
   text-align: center;
   line-height: 1.65;
 }
+
+/* =========================================================
+   v5.2 图库精修：HUD 更锐、墙更有纵深
+   ========================================================= */
+
+.hud-kicker {
+  font-size: 22rpx;
+  font-weight: 800;
+  letter-spacing: 6rpx;
+  color: var(--dk-text);
+}
+.hud-dot {
+  width: 12rpx;
+  height: 12rpx;
+  box-shadow: 0 0 12rpx rgba(12, 95, 3, 0.65);
+}
+.hud-count {
+  font-size: 21rpx;
+  letter-spacing: 1rpx;
+  color: var(--dk-text-2);
+}
+.hud-line {
+  height: 2rpx;
+  margin-top: 14rpx;
+  background-image: linear-gradient(90deg, rgba(12, 95, 3, 0.55), rgba(12, 95, 3, 0.06) 60%, rgba(12, 95, 3, 0));
+}
+
+.cell {
+  border: 2rpx solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 6rpx 18rpx rgba(12, 95, 3, 0.10);
+}
+.cell-img {
+  display: block;
+}
+
+.all-btn {
+  box-shadow: 0 10rpx 30rpx rgba(12, 95, 3, 0.16), inset 0 1rpx 0 rgba(255, 255, 255, 0.95);
+}
+.all-text {
+  font-weight: 700;
+  letter-spacing: 1rpx;
+}

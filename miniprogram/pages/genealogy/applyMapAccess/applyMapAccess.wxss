@@ -13,7 +13,7 @@ page {
 
 /* 状态卡片 */
 .status-card {
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   padding: 40rpx 30rpx;
   margin-bottom: 30rpx;
   text-align: center;
@@ -80,7 +80,7 @@ page {
 /* 申请条件 */
 .requirement-box {
   background: var(--color-primary-light);
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   padding: 25rpx;
   margin-bottom: 30rpx;
 }
@@ -120,7 +120,7 @@ page {
 /* 自动通过规则 */
 .auto-pass-box {
   background: #f0f4ff;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   padding: 25rpx;
   margin-bottom: 30rpx;
   border: 2rpx solid #d0d9f0;
@@ -187,4 +187,18 @@ textarea {
   font-size: 24rpx;
   color: var(--color-gray-max);
   text-align: center;
+}
+
+/* =========================================================
+   v5.1 全站统一外观（二级页自动套用）
+   与首页/图库/详情页同一套：白底、细描边、大圆角、无重阴影
+   ========================================================= */
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+/* 卡片圆角统一到 20rpx 档 */
+.card, .box, .item-card, .list-item, .cell {
+  border-radius: 20rpx;
 }

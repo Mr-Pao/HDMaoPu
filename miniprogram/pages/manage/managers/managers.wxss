@@ -29,7 +29,7 @@ button.long {
   padding: 20rpx 35rpx;
   margin: 20rpx 20rpx 30rpx 20rpx;
   box-shadow: 0rpx 0rpx 10rpx var(--color-gray);
-  border-radius: 10rpx;
+  border-radius: 20rpx;
 }
 
 .search {
@@ -78,7 +78,7 @@ button.long {
   padding: 15rpx 10rpx;
   margin: 20rpx 20rpx 50rpx 20rpx;
   box-shadow: 0rpx 0rpx 10rpx var(--color-gray);
-  border-radius: 10rpx;
+  border-radius: 20rpx;
 }
 
 .user-box .info {
@@ -145,4 +145,17 @@ button.manager-update {
   color: var(--color-gray-dark);
   text-align: center;
   text-decoration: underline dotted;
+}
+/* =========================================================
+   v5.1 全站统一外观（二级页自动套用）
+   与首页/图库/详情页同一套：白底、细描边、大圆角、无重阴影
+   ========================================================= */
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+/* 卡片圆角统一到 20rpx 档 */
+.card, .box, .item-card, .list-item, .cell {
+  border-radius: 20rpx;
 }

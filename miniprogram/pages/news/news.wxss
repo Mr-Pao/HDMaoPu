@@ -291,3 +291,17 @@ swiper image {
 .emptyImg {
   opacity: 0.5;
 }
+
+/* =========================================================
+   v5.2 猫抓板精修
+   ========================================================= */
+
+.news-box {
+  border-radius: 28rpx;
+  border: 1rpx solid var(--dk-line);
+  box-shadow: 0 2rpx 12rpx rgba(12, 95, 3, 0.045);
+}
+.news.title {
+  font-size: 34rpx;
+  letter-spacing: -0.5rpx;
+}

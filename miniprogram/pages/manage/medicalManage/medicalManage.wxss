@@ -39,7 +39,7 @@
 
 .record-card {
   background: var(--color-surface);
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   padding: 24rpx;
   margin-bottom: 24rpx;
 }
@@ -100,7 +100,7 @@
 /* 编辑面板（内嵌，不用 fixed 弹窗，避免部分模拟器无法输入） */
 .edit-panel {
   background: var(--color-surface);
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   padding: 32rpx;
   margin-bottom: 24rpx;
 }
@@ -123,7 +123,7 @@
   max-height: 80vh;
   overflow-y: auto;
   background: var(--color-surface);
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   padding: 32rpx;
 }
 
@@ -146,14 +146,14 @@
 
 .input {
   background: var(--color-gray-light);
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   padding: 18rpx 24rpx;
   font-size: 28rpx;
 }
 
 .textarea {
   background: var(--color-gray-light);
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   padding: 18rpx 24rpx;
   font-size: 28rpx;
   width: 100%;
@@ -163,7 +163,7 @@
 
 .picker {
   background: var(--color-gray-light);
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   padding: 18rpx 24rpx;
   font-size: 28rpx;
   color: var(--color-text);
@@ -192,3 +192,17 @@
 
 .record-actions button, .modal-buttons button { margin-left: 20rpx; }
 .record-actions button:first-child, .modal-buttons button:first-child { margin-left: 0; }
+
+/* =========================================================
+   v5.1 全站统一外观（二级页自动套用）
+   与首页/图库/详情页同一套：白底、细描边、大圆角、无重阴影
+   ========================================================= */
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+/* 卡片圆角统一到 20rpx 档 */
+.card, .box, .item-card, .list-item, .cell {
+  border-radius: 20rpx;
+}

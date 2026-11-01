@@ -59,7 +59,7 @@
   width: 340rpx;
   margin: 8rpx;
   background: var(--color-comment-paper-white);
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   overflow: hidden;
 }
 
@@ -90,7 +90,7 @@
   display: flex;
   align-items: center;
   background: var(--color-comment-paper-white);
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   padding: 24rpx;
   margin: 20rpx 30rpx 0;
 }
@@ -131,7 +131,7 @@
 /* 便利贴卡片 */
 .comment-card {
   background: var(--color-comment-paper-white);
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   padding: 24rpx;
   margin: 20rpx 30rpx 0;
 }
@@ -159,4 +159,18 @@
 .comment-time {
   font-size: 22rpx;
   color: var(--color-text-tertiary);
+}
+
+/* =========================================================
+   v5.1 全站统一外观（二级页自动套用）
+   与首页/图库/详情页同一套：白底、细描边、大圆角、无重阴影
+   ========================================================= */
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+/* 卡片圆角统一到 20rpx 档 */
+.card, .box, .item-card, .list-item, .cell {
+  border-radius: 20rpx;
 }

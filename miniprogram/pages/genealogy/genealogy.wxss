@@ -1138,3 +1138,120 @@ page {
 .adopt-filter-tip .tri {
   border-color: transparent transparent #FFFFFF transparent;
 }
+
+/* =========================================================
+   v5.2 首页精修：更大的数字、更透的卡片、更稳的层次
+   ========================================================= */
+
+/* 顶部导航：数字更有分量 */
+.nav-t {
+  font-size: 50rpx;
+  letter-spacing: -1rpx;
+}
+.nav-n {
+  font-size: 54rpx;
+  letter-spacing: -2rpx;
+  line-height: 1;
+}
+.nav-nk {
+  font-size: 18rpx;
+  letter-spacing: 2rpx;
+  margin-top: 4rpx;
+}
+
+/* 数据卡：从"一排数字"升级为"巨号数字 + 发丝分隔栏" */
+.hero {
+  margin: 6rpx 24rpx 20rpx 24rpx;
+  padding: 34rpx 30rpx 30rpx 30rpx;
+  border-radius: 32rpx;
+  background-color: var(--dk-card);
+  border: 1rpx solid var(--dk-line);
+  box-shadow: 0 2rpx 12rpx rgba(12, 95, 3, 0.04);
+}
+.hero-k {
+  font-size: 19rpx;
+  letter-spacing: 5rpx;
+  color: var(--dk-text-3);
+  font-weight: 700;
+}
+.hero-k::after {
+  content: '';
+  display: block;
+  width: 56rpx;
+  height: 4rpx;
+  margin-top: 12rpx;
+  border-radius: 2rpx;
+  background-color: var(--dk-accent);
+  opacity: 0.85;
+}
+.hero-row {
+  display: flex;
+  align-items: flex-end;
+  margin-top: 26rpx;
+}
+.hero-cell {
+  flex: 1;
+  padding-left: 22rpx;
+  border-left: 1rpx solid var(--dk-line);
+}
+.hero-cell:first-child {
+  padding-left: 0;
+  border-left: none;
+}
+.hero-n {
+  font-size: 62rpx;
+  font-weight: 800;
+  letter-spacing: -2rpx;
+  line-height: 1.05;
+  color: var(--dk-text);
+}
+.hero-n--accent {
+  color: var(--dk-accent);
+}
+.hero-k2 {
+  font-size: 19rpx;
+  letter-spacing: 1rpx;
+  color: var(--dk-text-3);
+  margin-top: 8rpx;
+}
+
+/* 列表卡：图片更圆、信息更透气 */
+.row {
+  margin: 0 24rpx 18rpx 24rpx;
+  padding: 18rpx;
+  border-radius: 30rpx;
+  background-color: var(--dk-card);
+  border: 1rpx solid var(--dk-line);
+  box-shadow: 0 2rpx 10rpx rgba(12, 95, 3, 0.035);
+}
+.row-pic,
+.row-img {
+  border-radius: 22rpx;
+}
+.row-name {
+  font-size: 40rpx;
+  letter-spacing: -0.5rpx;
+}
+.row-num {
+  font-size: 26rpx;
+}
+.row-bar {
+  height: 10rpx;
+  border-radius: 6rpx;
+}
+.row-bar-fill {
+  border-radius: 6rpx;
+  background-image: linear-gradient(90deg, rgba(12, 95, 3, 0.55), var(--dk-accent));
+}
+
+/* 校区胶囊：更克制 */
+.h-filter-item {
+  border-radius: 999rpx;
+  border: 1rpx solid var(--dk-line);
+  background-color: transparent;
+}
+.h-filter-item.active {
+  background-color: var(--dk-accent);
+  border-color: var(--dk-accent);
+  box-shadow: 0 4rpx 12rpx rgba(12, 95, 3, 0.18);
+}

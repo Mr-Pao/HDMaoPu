@@ -234,7 +234,7 @@
   margin-bottom: 20rpx;
   height: 360rpx;
   overflow: hidden;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   background: var(--color-gray-normal);
 }
 
@@ -280,7 +280,7 @@
 
 .detail-info {
   background: var(--color-primary-light);
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   padding: 15rpx 20rpx;
   margin-bottom: 25rpx;
 }
@@ -475,4 +475,18 @@
 .tl-coord {
   font-size: 22rpx;
   color: var(--color-gray-max);
+}
+
+/* =========================================================
+   v5.1 全站统一外观（二级页自动套用）
+   与首页/图库/详情页同一套：白底、细描边、大圆角、无重阴影
+   ========================================================= */
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+/* 卡片圆角统一到 20rpx 档 */
+.card, .box, .item-card, .list-item, .cell {
+  border-radius: 20rpx;
 }
