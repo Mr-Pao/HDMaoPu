@@ -1,5 +1,5 @@
 {
-  "version": "v1793531643900",
+  "version": "1793532998044",
   "items": [
     {
       "_id": "pages",
@@ -23,7 +23,7 @@
         "ctrlUser": "guest",
         "ctrlVersion": "*",
         "disabledFunc": "",
-        "limitedFunc": "reward,feedback,fullTab,comment"
+        "limitedFunc": "reward,feedback,comment"
       },
       "tabBarCtrl": {
         "ctrlTab": "news",
