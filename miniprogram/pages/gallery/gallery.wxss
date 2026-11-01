@@ -2,97 +2,296 @@ page {
   height: 100%;
   background-color: var(--dk-bg);
   color: var(--dk-text);
-}
-
-.gallery-scroll {
-  box-sizing: border-box;
-}
-
-.main {
-  display: flex;
-  align-items: flex-start;
-  padding: 0 20rpx;
-}
-
-.column {
-  width: 50%;
-  padding: 0 4rpx;
-  box-sizing: border-box;
-}
-
-.g-item {
-  margin-bottom: 20rpx;
-  background-color: var(--dk-card);
-  border: 1rpx solid var(--dk-line);
-  border-radius: var(--dk-radius);
   overflow: hidden;
 }
 
-.g-pic {
+.page {
   position: relative;
-  border-radius: var(--dk-radius) var(--dk-radius) 0 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
   overflow: hidden;
-}
-.g-pic image {
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  vertical-align: bottom;
-}
-.g-loc {
-  position: absolute;
-  top: 16rpx;
-  right: 14rpx;
-  color: rgba(255, 255, 255, 0.94);
-  background-color: rgba(16, 22, 15, 0.55);
-  border-radius: var(--dk-radius-pill);
-  font-size: 18rpx;
-  padding: 4rpx 14rpx;
-  backdrop-filter: blur(8rpx);
+  /* 顶部一层极淡的品牌绿光晕，画面之外还有一层空间 */
+  background:
+    radial-gradient(120% 50% at 50% 0%, rgba(12, 95, 3, 0.10) 0%, rgba(12, 95, 3, 0) 62%),
+    var(--dk-bg);
 }
 
-.g-info {
+/* 墙面铺满整页：从最上沿到底部，含浮岛 tabBar 后面 */
+.stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  z-index: 0;
+}
+
+.bands {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.band {
+  overflow: hidden;
+  margin-bottom: 8rpx;
+  min-height: 0;
+  flex: 232 1 0%;
+}
+/* 窄行：与宽行的高度比沿用原始节奏，铺满后仍有疏密 */
+.band-t {
+  flex: 164 1 0%;
+}
+.band:last-child {
+  margin-bottom: 0;
+}
+
+.track {
+  display: inline-flex;
+  width: max-content;
+  height: 100%;
+  will-change: transform;
+}
+/* 宽行向左漂、窄行向右漂，速度各不相同 */
+.dir-l {
+  animation: marqueeL linear infinite;
+}
+.dir-r {
+  animation: marqueeR linear infinite;
+}
+
+@keyframes marqueeL {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes marqueeR {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+
+.cell {
+  position: relative;
+  flex-shrink: 0;
+  margin-right: 8rpx;
+  border-radius: 14rpx;
+  overflow: hidden;
+  background: rgba(12, 95, 3, 0.06);
+  box-shadow: inset 0 0 0 1rpx rgba(12, 95, 3, 0.08);
+}
+/* 宽窄两档宽度差异拉大，四行节奏分明 */
+.wide {
+  width: 336rpx;
+  height: 100%;
+}
+.tall {
+  width: 232rpx;
+  height: 100%;
+}
+
+.cell-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: cellIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes cellIn {
+  from { opacity: 0; transform: scale(1.06); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 每格底部压一点暗，墙面更沉，也压住亮图的刺眼感 */
+.cell-veil {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 46%;
+  background: linear-gradient(to top, rgba(16, 22, 15, 0.22) 0%, rgba(16, 22, 15, 0) 100%);
+  pointer-events: none;
+}
+
+/* ---- 四面渐隐（渐到白底）---- */
+.fade {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+}
+.fade.top {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 24%;
+  background: linear-gradient(to bottom, rgba(245, 247, 245, 0.96) 0%, rgba(245, 247, 245, 0.55) 48%, rgba(245, 247, 245, 0) 100%);
+}
+.fade.bottom {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34%;
+  background: linear-gradient(to top, rgba(245, 247, 245, 0.98) 0%, rgba(245, 247, 245, 0.62) 42%, rgba(245, 247, 245, 0) 100%);
+}
+.fade.left {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 90rpx;
+  background: linear-gradient(to right, rgba(245, 247, 245, 0.94) 0%, rgba(245, 247, 245, 0) 100%);
+}
+.fade.right {
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 90rpx;
+  background: linear-gradient(to left, rgba(245, 247, 245, 0.94) 0%, rgba(245, 247, 245, 0) 100%);
+}
+
+/* ---- HUD：不占布局的顶部标识 ---- */
+.hud {
+  position: fixed;
+  left: 32rpx;
+  z-index: 20;
+  pointer-events: none;
+}
+.hud-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16rpx 20rpx 18rpx 20rpx;
 }
-.g-name {
+.hud-dot {
+  width: 10rpx;
+  height: 10rpx;
+  margin-right: 12rpx;
+  border-radius: 50%;
+  background: var(--dk-accent);
+  box-shadow: 0 0 14rpx rgba(12, 95, 3, 0.5);
+}
+.hud-kicker {
   color: var(--dk-text);
-  font-size: 26rpx;
+  font-size: 21rpx;
   font-weight: 700;
-  max-width: 200rpx;
+  letter-spacing: 4rpx;
 }
-.g-count {
+.hud-sep {
+  margin: 0 12rpx;
   color: var(--dk-text-3);
+  font-size: 18rpx;
+}
+.hud-count {
+  color: var(--dk-text-2);
   font-size: 20rpx;
 }
-
-.ellipsis-text {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+.hud-line {
+  margin-top: 10rpx;
+  width: 120rpx;
+  height: 2rpx;
+  background: linear-gradient(90deg, rgba(12, 95, 3, 0.9) 0%, rgba(12, 95, 3, 0) 100%);
 }
 
-.loading,
-.loadnomore {
-  opacity: 0.42;
-}
-.loading image,
-.loadnomore image {
-  filter: none;
-}
-.loading image {
-  width: 165.9rpx;
-  height: 90.3rpx;
-  margin: 10rpx 292rpx;
-}
-.loadnomore image {
-  width: 750rpx;
-  height: 100rpx;
-  margin: 10rpx 0;
+/* ---- 底部悬浮入口 ---- */
+.wall-tip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 240rpx;
+  bottom: calc(240rpx + constant(safe-area-inset-bottom));
+  bottom: calc(240rpx + env(safe-area-inset-bottom));
+  text-align: center;
+  z-index: 2;
+  pointer-events: none;
+  color: var(--dk-text-2);
+  font-size: 21rpx;
+  letter-spacing: 1rpx;
+  animation: tipBreath 3.4s ease-in-out infinite;
 }
 
-.hide {
-  display: none;
+.dock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 152rpx;
+  bottom: calc(152rpx + constant(safe-area-inset-bottom));
+  bottom: calc(152rpx + env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: none;
+}
+
+@keyframes tipBreath {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.all-btn {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 32rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1rpx solid rgba(12, 95, 3, 0.34);
+  -webkit-backdrop-filter: blur(24rpx) saturate(150%);
+  backdrop-filter: blur(24rpx) saturate(150%);
+  box-shadow: 0 14rpx 40rpx rgba(12, 95, 3, 0.16);
+  pointer-events: auto;
+}
+.all-btn-hover {
+  background: rgba(12, 95, 3, 0.08);
+}
+.all-text {
+  color: var(--dk-text);
+  font-size: 24rpx;
+  letter-spacing: 1rpx;
+}
+.all-num {
+  margin-left: 10rpx;
+  color: var(--dk-accent);
+  font-size: 25rpx;
+  font-weight: 700;
+}
+.all-arrow {
+  margin-left: 10rpx;
+  color: var(--dk-accent);
+  font-size: 30rpx;
+  line-height: 1;
+}
+
+/* ---- 加载 / 空态 ---- */
+.loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hint-text {
+  color: var(--dk-text-3);
+  font-size: 26rpx;
+}
+.empty-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 60rpx;
+}
+.empty-icon {
+  font-size: 60rpx;
+  margin-bottom: 16rpx;
+}
+.empty-text {
+  color: var(--dk-text-2);
+  font-size: 26rpx;
+}
+.empty-sub {
+  margin-top: 10rpx;
+  color: var(--dk-text-3);
+  font-size: 22rpx;
+  text-align: center;
+  line-height: 1.6;
 }

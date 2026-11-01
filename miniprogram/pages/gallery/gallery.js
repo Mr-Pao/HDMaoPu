@@ -1,150 +1,151 @@
-import { getCatItemMulti } from "../../utils/cat";
-import config from "../../config";
 import { showTab } from "../../utils/page";
 import { signCosUrl } from "../../utils/common";
 
 const app = getApp();
-
-const share_text = config.text.app_name + ' - ' + (config.text.gallery?.share_tip || '猫咪图库');
-
 const { applyNav } = require('../../utils/nav');
+
+// 8 行：宽窄交替（0,2,4,6 宽行；1,3,5,7 窄行）
+const ROWS = 8;
+// 每行取多少张（复制一份后节点数翻倍：PER_ROW*2）
+const PER_ROW = 12;
+// 宽行 / 窄行时长（秒），错开速度才像各自漂流而不是一整块在平移
+const WIDE_DUR = [52, 62, 56, 58];
+const TALL_DUR = [44, 48, 40, 46];
+// 首屏最多拉多少张照片用于铺墙
+const FETCH_LIMIT = 60;
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i];
+    a[i] = a[j];
+    a[j] = t;
+  }
+  return a;
+}
 
 Page({
   jsData: {
-    columnsHeight: [0, 0],
-    isLoading: false,
+    pool: [],
   },
   data: {
-    columns: [[], []],
-    tempPics: [],
-    loadnomore: false,
+    loading: true,
+    rows: [],
     total: 0,
     statusBarHeight: 20,
     navBarHeight: 44,
-    tabBarHeight: 80,
-    heights: {},
   },
   onShow: function () {
     applyNav(this);
     showTab(this);
   },
   onShareAppMessage: function () {
-    return { title: share_text };
+    const first = (this.jsData.pool[0] || {});
+    return {
+      title: this.data.total ? '火大猫谱 · 猫咪图库 ' + this.data.total + ' 张' : '火大猫谱 · 猫咪图库',
+      path: '/pages/gallery/gallery',
+      ...(first.thumb ? { imageUrl: first.thumb } : {})
+    };
   },
   onShareTimeline: function () {
     return this.onShareAppMessage();
   },
-  loadPic: function (e) {
-    const that = this;
-    const tempPics = that.data.tempPics;
-    const index = e.currentTarget.dataset.index;
-    if (tempPics[index]) {
-      tempPics[index].height = e.detail.height * 750 / e.detail.width;
-      tempPics[index].isLoad = true;
-    }
-    that.setData({ tempPics }, function () { that.finLoadPic(); });
+  onLoad: function () {
+    this.load();
   },
-  loadPicError: function (e) {
-    const that = this;
-    const tempPics = that.data.tempPics;
-    const index = e.currentTarget.dataset.index;
-    if (tempPics[index]) {
-      tempPics[index].height = 750;
-      tempPics[index].isLoad = true;
-    }
-    that.setData({ tempPics }, function () { that.finLoadPic(); });
+  onPullDownRefresh: function () {
+    this.load().then(() => wx.stopPullDownRefresh());
   },
-  finLoadPic: function () {
-    const tempPics = this.data.tempPics;
-    let fin = true;
-    for (let i = 0; i < tempPics.length; i++) {
-      if (!tempPics[i].isLoad) { fin = false; break; }
-    }
-    if (fin && this.jsData.isLoading) {
-      this.jsData.isLoading = false;
-      this.renderPage();
-    }
-  },
-  renderPage: function () {
-    const data = this.data;
-    const columns = data.columns;
-    const columnsHeight = this.jsData.columnsHeight;
-    for (const pic of data.tempPics) {
-      const index = columnsHeight[0] <= columnsHeight[1] ? 0 : 1;
-      columns[index].push(pic);
-      columnsHeight[index] += pic.height;
-    }
-    this.setData({
-      columns,
-      tempPics: [],
-      loadnomore: true,
-    });
-    this.jsData.columnsHeight = columnsHeight;
-  },
-  loadData: async function () {
-    if (this.jsData.isLoading) return;
-    this.jsData.isLoading = true;
-    this.setData({ loadnomore: false });
 
-    const curCount = this.data.columns[0].length + this.data.columns[1].length;
-    var { result: photos } = await app.mpServerless.db.collection('photo').find({
-      verified: true,
-    }, { sort: { mdate: -1 }, skip: curCount, limit: 10 });
+  load: async function () {
+    this.setData({ loading: true });
 
-    if (!photos || !photos.length) {
-      this.jsData.isLoading = false;
-      this.setData({ loadnomore: true });
+    let photos = [];
+    try {
+      const { result } = await app.mpServerless.db.collection('photo').find(
+        { verified: true },
+        { sort: { mdate: -1 }, limit: FETCH_LIMIT }
+      );
+      photos = result || [];
+    } catch (e) {
+      console.warn('[gallery] 照片加载失败', e);
+    }
+
+    if (!photos.length) {
+      this.setData({ loading: false, rows: [], total: 0 });
       return;
     }
 
-    const cat_res = await getCatItemMulti(photos.map(p => p.cat_id));
-    for (let i = 0; i < photos.length; i++) {
-      const p = photos[i];
-      p.pic = await signCosUrl(p.photo_compressed || p.photo_id);
-      p.pic_prev = await signCosUrl(p.photo_id);
-      p.cat = cat_res[i];
+    // 总数单独 count，墙只铺首屏用量
+    let total = photos.length;
+    try {
+      const { result } = await app.mpServerless.db.collection('photo').count({ verified: true });
+      if (typeof result === 'number') total = result;
+    } catch (e) {
+      // 计数失败不影响出图
     }
 
-    this.setData({ tempPics: photos });
-  },
-  loadTotal: async function () {
-    try {
-      var { result } = await app.mpServerless.db.collection('photo').count({ verified: true });
-      this.setData({ total: result });
-    } catch (e) {
-      console.warn('图库总数获取失败', e);
+    // 头像/图片直链：COS 公开读，signCosUrl 直接透传
+    const pool = [];
+    for (const p of photos) {
+      const thumb = await signCosUrl(p.photo_compressed || p.photo_id);
+      if (!thumb) continue;
+      pool.push({
+        thumb,
+        full: await signCosUrl(p.photo_id) || thumb,
+        name: (p.cat && p.cat.name) || '',
+      });
     }
+
+    this.jsData.pool = pool;
+    this.buildRows(shuffle(pool));
+    this.setData({ loading: false, total });
   },
-  onLoad: function () {
-    this.loadTotal();
-    this.loadData();
-    this.getHeights();
-  },
-  onReachBottom: function () {
-    this.loadData();
-  },
-  clickPhoto: function (e) {
-    const { url } = e.currentTarget.dataset;
-    wx.previewImage({ urls: [url] });
-  },
-  clickCatName: function (e) {
-    const { cat_id } = e.currentTarget.dataset;
-    wx.navigateTo({
-      url: '/pages/genealogy/detailCat/detailCat?cat_id=' + cat_id,
-    });
-  },
-  getHeights() {
-    wx.getSystemInfo({
-      success: res => {
-        const rpx2px = res.windowWidth / 750;
-        this.setData({
-          "heights.statusBarHeight": res.statusBarHeight,
-          "heights.navBarHeight": 44,
-          "heights.windowHeight": res.windowHeight,
-          "heights.rpx2px": rpx2px,
-          "heights.listHeight": res.windowHeight - res.statusBarHeight - (44 + 60) * rpx2px,
-        });
+
+  // 把图池铺成 8 行：每行取 PER_ROW 张再复制一份，靠 translateX(-50%) 无缝循环
+  buildRows: function (pool) {
+    if (!pool || !pool.length) {
+      this.setData({ rows: [] });
+      return;
+    }
+    const rows = [];
+    for (let r = 0; r < ROWS; r++) {
+      const base = [];
+      for (let i = 0; i < PER_ROW; i++) {
+        base.push(pool[(r * PER_ROW + i) % pool.length]);
       }
+      const doubled = base
+        .map((x, i) => ({ thumb: x.thumb, full: x.full, name: x.name, key: 'a' + r + '-' + i }))
+        .concat(base.map((x, i) => ({ thumb: x.thumb, full: x.full, name: x.name, key: 'b' + r + '-' + i })));
+      const isWide = r % 2 === 0;
+      const idx = Math.floor(r / 2);
+      rows.push({
+        items: doubled,
+        isWide,
+        duration: isWide ? WIDE_DUR[idx] : TALL_DUR[idx],
+      });
+    }
+    this.setData({ rows });
+  },
+
+  // 换一批：重新洗牌铺墙，每次看到的墙都不一样
+  reshuffle: function () {
+    const pool = this.jsData.pool || [];
+    if (pool.length < 2) {
+      wx.showToast({ title: '照片还不够，等等再来', icon: 'none' });
+      return;
+    }
+    this.buildRows(shuffle(pool));
+  },
+
+  preview: function (e) {
+    const { url } = e.currentTarget.dataset;
+    if (!url) return;
+    const urls = (this.jsData.pool || []).map(x => x.full).filter(Boolean);
+    wx.previewImage({
+      urls: urls.length ? urls : [url],
+      current: url,
     });
   },
 });

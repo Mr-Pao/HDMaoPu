@@ -1,5 +1,9 @@
 {
   "navigationStyle": "custom",
   "navigationBarTitleText": "猫咪图库",
-  "disableScroll": true
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark",
+  "backgroundColor": "#F5F7F5",
+  "backgroundColorTop": "#F5F7F5",
+  "backgroundColorBottom": "#F5F7F5"
 }

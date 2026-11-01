@@ -1,48 +1,54 @@
-<view class="dk-glow"></view>
-<view class="nav" style="padding-top: {{statusBarHeight}}px;">
-  <view class="nav-flex">
-    <view class="nav-l">
-      <view class="nav-sub">CAT GALLERY</view>
-      <view class="nav-title">猫咪图库</view>
-    </view>
-    <view class="nav-r">
-      <view class="nav-num">{{total || 0}}</view>
-      <view class="nav-num-k">张</view>
-    </view>
-  </view>
-</view>
-
-<scroll-view scroll-y="1" enable-flex="1" class="gallery-scroll" style="height: {{heights.listHeight}}px;" bindscrolltolower="onReachBottom">
-  <view class="main">
-    <view wx:for="{{columns}}" wx:key="null" class="column" wx:for-index="col">
-      <view wx:for="{{item}}" wx:key="_id" class="g-item" wx:for-item="pics">
-        <view class="g-pic" bindtap="clickPhoto" data-url="{{pics.pic_prev}}">
-          <image
-            src="{{pics.pic}}"
-            mode="widthFix"
-            binderror="loadPicError"
-            data-col="{{col}}"
-            data-index="{{index}}"
-          />
-          <view class="g-loc" wx:if="{{pics.cat && pics.cat.campus}}">{{pics.cat.campus}}</view>
-        </view>
-        <view class="g-info">
-          <view class="g-name ellipsis-text" bindtap="clickCatName" data-cat_id="{{pics.cat_id}}">{{pics.cat.name}}</view>
-          <view class="g-count">{{pics.like_count || 0}} 赞</view>
+<view class="page">
+  <!-- 漂流墙：从屏幕最上沿铺到底部，图片一直在横向缓慢漂移 -->
+  <view class="stage" wx:if="{{!loading && rows.length}}">
+    <view class="bands">
+      <view class="band {{item.isWide ? 'band-w' : 'band-t'}}" wx:for="{{rows}}" wx:for-item="row" wx:key="index">
+        <view class="track {{row.isWide ? 'dir-l' : 'dir-r'}}" style="animation-duration: {{row.duration}}s;">
+          <view class="cell {{row.isWide ? 'wide' : 'tall'}}" wx:for="{{row.items}}" wx:for-item="pic" wx:key="key" bindtap="preview" data-url="{{pic.full}}">
+            <image class="cell-img" src="{{pic.thumb}}" mode="aspectFill"></image>
+            <view class="cell-veil"></view>
+          </view>
         </view>
       </view>
     </view>
+
+    <!-- 四面渐隐：让图淡进淡出，不留硬边 -->
+    <view class="fade top"></view>
+    <view class="fade bottom"></view>
+    <view class="fade left"></view>
+    <view class="fade right"></view>
   </view>
 
-  <view class='loading' wx:if='{{!loadnomore}}'>
-    <image src='/pages/public/images/system/loading.gif'></image>
+  <!-- HUD：不占布局，只贴一行极轻的标识 -->
+  <view class="hud" style="top: {{statusBarHeight + 12}}px;">
+    <view class="hud-row">
+      <view class="hud-dot"></view>
+      <text class="hud-kicker">CAT GALLERY</text>
+      <text class="hud-sep">/</text>
+      <text class="hud-count">{{total}} 张</text>
+    </view>
+    <view class="hud-line"></view>
   </view>
-  <view class='loadnomore' wx:else>
-    <image src='/pages/public/images/system/nomore.png'></image>
-  </view>
-  <view class="hide">
-    <image wx:for="{{tempPics}}" wx:key="_id" src="{{item.pic}}" bindload="loadPic" binderror="loadPicError" data-index="{{index}}" />
-  </view>
-</scroll-view>
 
-<view style="height: {{tabBarHeight}}px;"></view>
+  <!-- 墙的注解 -->
+  <text class="wall-tip" wx:if="{{!loading && rows.length}}">点任意一张看大图</text>
+
+  <!-- 底部独立入口 -->
+  <view class="dock" wx:if="{{!loading && rows.length}}">
+    <view class="all-btn" hover-class="all-btn-hover" bindtap="reshuffle">
+      <text class="all-text">换一批</text>
+      <text class="all-num">{{total}}</text>
+      <text class="all-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="loading" wx:if="{{loading}}">
+    <text class="hint-text">加载中...</text>
+  </view>
+
+  <view class="empty-box" wx:elif="{{!rows.length}}">
+    <text class="empty-icon">🐾</text>
+    <text class="empty-text">还没有照片</text>
+    <text class="empty-sub">等猫友们上传之后，这里会变成一面猫猫墙</text>
+  </view>
+</view>
