@@ -580,3 +580,57 @@ page {
 
 /* 底部声明小字已按用户要求移除（2026-11-01），.foot-note 不再使用 */
 
+/* =========================================================
+   v5.6 沉浸式顶部
+   品牌区（logo / 大标题 / 标语 / 两行数据条）不再套白卡片，
+   直接压在整页浅绿渐变上；下面的友情链接 / 管理后台 / 关于仍是卡片。
+   ========================================================= */
+
+page {
+  background-color: var(--dk-bg);
+  background-image: radial-gradient(
+    160% 52% at 50% 0%,
+    rgba(12, 95, 3, 0.20) 0%,
+    rgba(12, 95, 3, 0.09) 38%,
+    rgba(12, 95, 3, 0.02) 64%,
+    rgba(12, 95, 3, 0) 82%
+  );
+  background-repeat: no-repeat;
+}
+
+/* 品牌区：彻底去掉卡片外观，留白由自己撑 */
+.mina-info {
+  margin: 0;
+  padding: 30rpx 32rpx 8rpx 32rpx;
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* logo 加一圈柔光，让它像浮在背景上而不是贴上去 */
+.mina-info image {
+  box-shadow: 0 10rpx 30rpx rgba(12, 95, 3, 0.16);
+}
+
+.mina-info .title {
+  font-size: 50rpx;
+  letter-spacing: -1.2rpx;
+  margin-top: 22rpx;
+}
+
+.mina-info .dev {
+  margin-top: 14rpx;
+}
+
+/* 数据条去掉卡片后，与下方卡片的间距靠自身补足 */
+.mina-info .num-info {
+  margin-top: 34rpx;
+}
+
+/* 第一张卡片与品牌区之间留出「分节」的距离 */
+.mina-info + .block-name {
+  margin-top: 44rpx;
+}
+
+

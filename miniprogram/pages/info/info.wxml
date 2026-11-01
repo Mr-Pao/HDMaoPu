@@ -1,5 +1,5 @@
 <!--miniprogram/pages/info/info.wxml-->
-<view class="dk-glow"></view>
+<!-- 顶部柔光已由 page 的 radial-gradient 直接铺出（v5.6 沉浸式），不再需要 .dk-glow 叠加 -->
 <view class="nav" style="padding-top: {{statusBarHeight}}px;">
   <view class="nav-flex">
     <view class="nav-l">
