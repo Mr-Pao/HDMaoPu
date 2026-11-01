@@ -13,8 +13,8 @@ import {
   sendNotifyVertifyNotice
 } from "../../../utils/msg";
 import config from "../../../config";
-import api from "../../../utils/cloudApi";
-import { uploadFile } from "../../../utils/common"
+import { getCurrentUserOpenid } from "../../../utils/common";
+import { putInbox } from "../../../utils/writeback";
 const app = getApp();
 Page({
   /**
@@ -220,33 +220,52 @@ Page({
     const tempFilePath = photo.file.path;
     //获取后缀
     const index = tempFilePath.lastIndexOf(".");
-    const ext = tempFilePath.substr(index + 1);
+    let ext = index >= 0 ? tempFilePath.substr(index + 1) : "jpg";
+    ext = (ext || "jpg").toLowerCase();
+    if (ext === "jpeg") ext = "jpg";
 
-    let upRes = await uploadFile({
-      filePath: tempFilePath,
-      cloudPath: '/' + cat.campus + '/' + generateUUID() + '.' + ext,
-    })
-    console.log("上传图片:", upRes);
-    // 返回文件 ID
-    console.log(upRes.fileUrl);
+    // 匿名直传：照片二进制 PUT 到 COS pending/ 前缀（桶策略允许匿名写 pending/*，单对象 ≤512KB）
+    const openid = (await getCurrentUserOpenid()) || "anon";
+    const ts = Date.now();
+    const key = `pending/${openid}-${ts}.${ext}`;
+    const baseUrl = String(config.data_base_url || "").replace(/\/+$/, "");
+    const objectUrl = `${baseUrl}/${key}`;
 
-    // 添加记录
-    const params = {
+    // 读取本地文件为 ArrayBuffer（wx.request 的 PUT 需要二进制 body）
+    const arrayBuffer = await new Promise((resolve, reject) => {
+      wx.getFileSystemManager().readFile({
+        filePath: tempFilePath,
+        success: (res) => resolve(res.data),
+        fail: reject,
+      });
+    });
+
+    await new Promise((resolve, reject) => {
+      wx.request({
+        url: objectUrl,
+        method: "PUT",
+        data: arrayBuffer,
+        header: {
+          "Content-Type": ext === "webp" ? "image/webp" : "image/jpeg",
+        },
+        success: (res) => {
+          if (res && res.statusCode >= 200 && res.statusCode < 300) {
+            resolve(res);
+          } else {
+            reject(new Error("PUT 返回 " + (res && res.statusCode)));
+          }
+        },
+        fail: reject,
+      });
+    });
+
+    // 写元数据到 inbox（小 JSON，不含照片二进制），由 Actions 聚合进审核队列
+    await putInbox("photo", {
+      photo_key: key,
       cat_id: cat._id,
-      photo_id: upRes.fileUrl,
-      photo_file_id: upRes.fileId,
-      user_id: this.data.user._id,
-      verified: false,
-      shooting_date: photo.shooting_date,
-      photographer: photo.pher
-    };
-
-    let dbAddRes = await api.curdOp({
-      operation: "add",
-      collection: "photo",
-      data: params
-    })
-    console.log("curdOp(add-photo) result:", dbAddRes);
+      photographer: photo.pher || "",
+      shooting_date: photo.shooting_date || "",
+    });
   },
 
   pickDate(e) {

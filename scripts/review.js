@@ -77,6 +77,26 @@ function extractKey(body) {
   return m ? m[1].trim() : null;
 }
 
+/** 从 Issue body 里取出机器可读的猫 ID 标记（新 key 格式不含 cat_id，靠这个标记补齐）。 */
+function extractCatId(body) {
+  const m = String(body || '').match(/<!--\s*photo-cat-id:\s*(.+?)\s*-->/);
+  return m ? m[1].trim() : null;
+}
+
+/** 从 Issue body 里取出 machine 可读的元信息标记，返回 {openid, photographer, shootingDate}。 */
+function extractMeta(body) {
+  const text = String(body || '');
+  const pick = (name) => {
+    const m = text.match(new RegExp(`<!--\\s*${name}:\\s*(.*?)\\s*-->`));
+    return m ? m[1].trim() : '';
+  };
+  return {
+    openid: pick('photo-openid'),
+    photographer: pick('photo-photographer'),
+    shootingDate: pick('photo-shooting-date'),
+  };
+}
+
 function decode(value) {
   if (!value) return '';
   try {
@@ -87,14 +107,44 @@ function decode(value) {
 }
 
 /**
- * 解析 pending key：
- *   pending/<catId>/<uuid>~<YYYYMMDD>~<campus>~<userHash>~<catName>.<ext>
+ * 解析 pending key，兼容两种格式：
+ *   旧格式（aggregate.js 生成）：
+ *     pending/<catId>/<uuid>~<YYYYMMDD>~<campus>~<userHash>~<catName>.<ext>
+ *   新格式（客户端匿名直传）：
+ *     pending/<openid>-<时间戳>.<ext>
+ * 新格式的 key 不含 catId，catId 由 Issue body 里的 <!-- photo-cat-id --> 标记提供，
+ * 所以这里对旧格式返回 catId，新格式返回 catId=null（由调用方补）。
  * 解析失败返回 null。
  */
 function parseKey(key) {
   if (!key || !key.startsWith(PENDING_PREFIX)) return null;
 
   const rest = key.slice(PENDING_PREFIX.length);
+  if (!rest) return null;
+
+  // 新格式：pending/<openid>-<ts>.<ext>，无 catId 段（rest 里没有 /）
+  if (rest.indexOf('/') <= 0) {
+    const dot = rest.lastIndexOf('.');
+    if (dot <= 0) return null;
+    const ext = rest.slice(dot + 1).toLowerCase();
+    if (!/^[a-z0-9]+$/.test(ext)) return null;
+    const stem = rest.slice(0, dot);
+    // 客户端 key 是 openid-时间戳，openid 形如 guest_xxxxxxxx 或 anon，
+    // 必须至少形如 <something>-<digits> 才算合法，防脏 key
+    if (!/^.+-\d+$/.test(stem)) return null;
+    return {
+      catId: null,
+      filename: rest,
+      ext,
+      uuid: null,
+      shootingDate: '',
+      campus: '',
+      userHash: '',
+      catName: '',
+    };
+  }
+
+  // 旧格式：pending/<catId>/<uuid>~<YYYYMMDD>~<campus>~<userHash>~<catName>.<ext>
   const slash = rest.indexOf('/');
   if (slash <= 0) return null;
 
@@ -128,6 +178,48 @@ function parseKey(key) {
 /** 目标 key，prefix 为 photos/ 或 rejected/，保留原文件名。 */
 function buildTargetKey(info, prefix) {
   return `${prefix}${info.catId}/${info.filename}`;
+}
+
+/** 追加照片记录到 data/photo.json。字段对齐现有记录。 */
+function appendPhotoRecord({ catId, openid, photographer, shootingDate, targetKey, ext }) {
+  const fs = require('fs');
+  const path = require('path');
+  const photoFile = path.resolve(__dirname, '..', 'data', 'photo.json');
+  let doc = { version: 'v0', items: [] };
+  if (fs.existsSync(photoFile)) {
+    doc = JSON.parse(fs.readFileSync(photoFile, 'utf8'));
+    if (!doc || !Array.isArray(doc.items)) doc = { version: 'v0', items: [] };
+  }
+  const now = Date.now();
+  const ts = now.toString(36) + Math.random().toString(36).slice(2, 8);
+  const id = `photo-${catId}-${ts}`;
+  // 域名从 COS 凭据推导，避免硬编码桶名/地域
+  const baseUrl = `https://${env.COS_BUCKET}.cos.${env.COS_REGION}.myqcloud.com`;
+  const url = `${baseUrl}/${targetKey}`;
+  const nowIso = new Date(now).toISOString();
+  doc.items.unshift({
+    _id: id,
+    cat_id: catId,
+    _openid: openid || '',
+    userInfo: { nickName: '', avatarUrl: '' },
+    photo_id: url,
+    photo_compressed: url,
+    photo_watermark: url,
+    verified: true,
+    best: false,
+    photographer: photographer || '',
+    shooting_date: shootingDate || '',
+    create_date: nowIso,
+    mdate: nowIso,
+    like_count: 0,
+    deleted: 0,
+  });
+  doc.version = 'v' + now;
+  const tmpPath = photoFile + '.tmp';
+  fs.writeFileSync(tmpPath, JSON.stringify(doc, null, 2) + '\n', 'utf8');
+  fs.renameSync(tmpPath, photoFile);
+  console.log(`[data] 已追加照片记录 ${id} 到 data/photo.json`);
+  return id;
 }
 
 function contentTypeFor(ext) {
@@ -332,7 +424,7 @@ async function main() {
         key,
         '```',
         '',
-        '期望格式：`pending/<catId>/<uuid>~<YYYYMMDD>~<校区>~<用户哈希>~<猫名>.<ext>`',
+        '期望格式：`pending/<catId>/<uuid>~<YYYYMMDD>~<校区>~<用户哈希>~<猫名>.<ext>` 或 `pending/<openid>-<时间戳>.<ext>`',
       ].join('\n')
     );
     process.exit(1);
@@ -340,10 +432,27 @@ async function main() {
 
   const approved = command === 'approve';
   const targetPrefix = approved ? APPROVED_PREFIX : REJECTED_PREFIX;
+
+  // 新 key 格式不含 catId，从 Issue body 的 <!-- photo-cat-id --> 标记补齐
+  const meta = extractMeta(body);
+  if (!info.catId) {
+    const catId = extractCatId(body);
+    if (!catId) {
+      console.error('[fail] 新格式 key 缺少 photo-cat-id 标记，无法确定归属猫');
+      await comment(
+        issueNumber,
+        '⚠️ 处理失败：对象路径不含猫 ID，且 Issue 正文里缺少 `<!-- photo-cat-id: ... -->` 标记。请手动处理。'
+      );
+      process.exit(1);
+    }
+    info.catId = catId;
+    if (!info.shootingDate && meta.shootingDate) info.shootingDate = meta.shootingDate;
+  }
+
   const targetKey = buildTargetKey(info, targetPrefix);
   console.log(
-    `[info] catId=${info.catId} uuid=${info.uuid} date=${info.shootingDate} ` +
-      `campus=${info.campus} catName=${info.catName} ext=${info.ext}`
+    `[info] catId=${info.catId} uuid=${info.uuid || '-'} date=${info.shootingDate || '-'} ` +
+      `campus=${info.campus || '-'} catName=${info.catName || '-'} ext=${info.ext}`
   );
 
   // 幂等：原件不在了说明已经处理过
@@ -364,6 +473,18 @@ async function main() {
 
   const contentType = contentTypeFor(info.ext);
   await moveObject(key, targetKey, contentType);
+
+  // 审核通过：把照片记录追加进 data/photo.json（由 review.yml 的 commit step 提交回 cos 分支）
+  if (approved) {
+    appendPhotoRecord({
+      catId: info.catId,
+      openid: meta.openid,
+      photographer: meta.photographer,
+      shootingDate: info.shootingDate || meta.shootingDate,
+      targetKey,
+      ext: info.ext,
+    });
+  }
 
   const url = await signedUrl(targetKey);
   console.log('[gh] 回评结果');
@@ -402,6 +523,8 @@ async function main() {
 module.exports = {
   parseCommand,
   extractKey,
+  extractCatId,
+  extractMeta,
   parseKey,
   buildTargetKey,
   contentTypeFor,

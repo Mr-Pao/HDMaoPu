@@ -61,6 +61,7 @@ function buildPolicy() {
   const appId = parseAppId(COS_BUCKET);
   // Resource 格式固定为 qcs::cos:<region>:uid/<APPID>:<bucket>/<path>
   const inboxResource = `qcs::cos:${COS_REGION}:uid/${appId}:${COS_BUCKET}/inbox/*`;
+  const pendingResource = `qcs::cos:${COS_REGION}:uid/${appId}:${COS_BUCKET}/pending/*`;
   return {
     version: '2.0',
     Statement: [
@@ -69,6 +70,20 @@ function buildPolicy() {
         Effect: 'Allow',
         Action: ['name/cos:PutObject'],
         Resource: [inboxResource],
+      },
+      {
+        // 照片上传口：匿名只能 PUT 到 pending/*，且单对象 ≤ 512KB（524288 字节）
+        // 条件键 cos:content-length 是 COS 桶策略的 NumericLessThanEquals 语义，
+        // 见腾讯云文档「使用存储桶策略限制上传文件大小」。
+        Principal: { qcs: ['qcs::cam::anyone:anyone'] },
+        Effect: 'Allow',
+        Action: ['name/cos:PutObject'],
+        Resource: [pendingResource],
+        condition: {
+          numeric_less_than_equal: {
+            'cos:content-length': 524288,
+          },
+        },
       },
     ],
   };
@@ -240,6 +255,7 @@ async function main() {
 
   const ts = Date.now();
   const inboxKey = `inbox/_selftest/${ts}.json`;
+  const pendingKey = `pending/_selftest/${ts}.bin`;
   const outsideKey = `_selftest/${ts}.json`;
   const probe = JSON.stringify({ v: 1, kind: 'pop', openid: 'selftest', ts, data: { cat_id: 'c0' } });
 
@@ -251,6 +267,11 @@ async function main() {
   const outsideBlocked = r2.status === 403 || r2.status === 401;
   console.log(`  写 inbox/ 以外的路径 -> HTTP ${r2.status}  ${outsideBlocked ? '被拒绝（符合预期）' : '未被拒绝（策略有漏洞！）'}`);
 
+  // 匿名写 pending/ 应被允许
+  const r4 = await anonymousPut(pendingKey, probe);
+  console.log(`  写 pending/         -> HTTP ${r4.status}  ${r4.status === 200 ? '成功' : '失败'}`);
+  if (r4.status !== 200) console.log('    响应：' + r4.body.replace(/\s+/g, ' ').slice(0, 200));
+
   // 匿名读 inbox 也必须失败
   const r3 = await anonymousGet(inboxKey);
   const readBlocked = r3.status === 403 || r3.status === 401;
@@ -258,12 +279,15 @@ async function main() {
 
   // 清理测试对象（用签名请求删，匿名删不掉是正常的）
   await deleteObject(cos, inboxKey);
+  await deleteObject(cos, pendingKey);
   await deleteObject(cos, outsideKey);
 
   console.log('----------------------------------------');
   const writeOk = r1.status === 200;
+  const pendingOk = r4.status === 200;
   console.log('结论：');
   console.log('  匿名写 inbox：' + (writeOk ? '可用 ✔' : '不可用 ✘'));
+  console.log('  匿名写 pending：' + (pendingOk ? '可用 ✔' : '不可用 ✘'));
   console.log('  越权写其他前缀：' + (outsideBlocked ? '已阻止 ✔' : '未阻止 ✘'));
   console.log('  匿名读 inbox：' + (readBlocked ? '已阻止 ✔' : '未阻止 ✘'));
 

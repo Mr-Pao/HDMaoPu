@@ -9,7 +9,7 @@ on:
 
 permissions:
   issues: write
-  contents: read
+  contents: write
 
 concurrency:
   group: review-${{ github.event.issue.number }}
@@ -26,6 +26,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: cos
 
       - uses: actions/setup-node@v4
         with:
@@ -69,3 +71,19 @@ jobs:
           COS_BUCKET: ${{ secrets.COS_BUCKET }}
           COS_REGION: ${{ secrets.COS_REGION }}
         run: node review.js
+
+      # 审核通过时 review.js 会把照片记录追加进 data/photo.json，
+      # 这里提交 data/ 变更回 cos 分支（触发 sync-data.yml 上传 COS）。
+      - name: Commit photo data
+        if: always() && steps.guard.outputs.ok == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/photo.json
+          if git diff --staged --quiet; then
+            echo "没有 photo.json 变化，跳过提交"
+            exit 0
+          fi
+          git commit -m "chore(data): 审核通过照片落库"
+          git pull --rebase origin cos || { sleep 5; git pull --rebase origin cos; }
+          git push || { sleep 5; git pull --rebase origin cos; git push; }

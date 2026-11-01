@@ -8,7 +8,7 @@ const secrets = require('./appSecret.js');
 
 module.exports = {
   // 版本号
-  app_version: "v4.0.14",
+  app_version: "v4.0.18",
   // 【离线 Demo 模式】
   // true  = 不连任何后端，使用 utils/demo.js 里的假数据（11 只猫 + 照片 + 设置）
   // false = 走下面的 data_base_url（COS 上的静态 JSON）
@@ -31,7 +31,7 @@ module.exports = {
   //       小程序端拿不到上传凭证，一点上传就报错。
   // 恢复上传有两条路：① 内置只授权 pending/* 的受限密钥 ② 接一个签发服务。
   // 定下来之后把这里改成 true 即可，页面代码不用动。
-  photo_upload_enabled: false,
+  photo_upload_enabled: true,
   // 小程序appid（从敏感配置文件加载）
   app_id: secrets.app_id,
   // EMAS空间ID（从敏感配置文件加载）
@@ -59,11 +59,6 @@ module.exports = {
   feedback_wj_img: `https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/系统/新猫问卷.png`,
   // 小程序菊花码图片
   mpcode_img: `https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/系统/菊花码.jpg`,
-
-  // 徽章排行榜的数量榜logo
-  badge_rank_count_img: `https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/系统/badge_rank_count.png`,
-  // 徽章排行榜的价值榜logo
-  badge_rank_score_img: `https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/系统/badge_rank_score.png`,
 
   // 猫猫领养状态字符串，对应数据库cat.adopt中的数字下标
   cat_status_adopt: ["未领养", "已领养", "寻找领养中"],

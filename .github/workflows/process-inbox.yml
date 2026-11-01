@@ -22,6 +22,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: process-inbox
@@ -54,6 +55,8 @@ jobs:
           COS_BUCKET: ${{ secrets.COS_BUCKET }}
           COS_REGION: ${{ secrets.COS_REGION }}
           REVIEW_PASSCODE: ${{ secrets.REVIEW_PASSCODE }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: node process-inbox.js
 
       # 仅在脚本成功 flush data/ 之后才提交（脚本会写 flush_ok=1 到 GITHUB_OUTPUT）。

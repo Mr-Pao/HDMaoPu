@@ -43,6 +43,8 @@ const {
   COS_REGION,
   REVIEW_PASSCODE,
   DRY_RUN,
+  GITHUB_TOKEN,
+  GITHUB_REPOSITORY,
 } = process.env;
 
 const DRY = DRY_RUN === '1' || DRY_RUN === 'true';
@@ -66,7 +68,7 @@ const MAX_KEY_FAILURES = 3;
 // pop 跨运行限频：同一 openid+cat 12 小时内只记一次人气
 const POP_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 
-const VALID_KINDS = ['like', 'follow', 'pop', 'rating', 'comment', 'decision', 'manage'];
+const VALID_KINDS = ['like', 'follow', 'pop', 'rating', 'comment', 'decision', 'manage', 'photo'];
 
 // ---- 写通道防刷增强（零成本，纯 Actions 脚本端校验，不引入任何服务器/SCF）----
 // openid 格式约束：微信 openid 形如 oXXXX，由字母数字组成；这里放宽允许 _ 和 -。
@@ -179,6 +181,16 @@ function validateInboxItem(key, body) {
   // data 必须是对象（且非数组/空）
   if (!payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) {
     return { ok: false, reason: 'no-data' };
+  }
+  // photo kind 字段校验：photo_key 必须是以 pending/ 开头的字符串，cat_id 必须是字符串
+  if (payload.kind === 'photo') {
+    const { photo_key, cat_id } = payload.data;
+    if (typeof photo_key !== 'string' || !photo_key.startsWith('pending/') || photo_key.length > 512) {
+      return { ok: false, reason: 'bad-photo-key' };
+    }
+    if (typeof cat_id !== 'string' || !cat_id) {
+      return { ok: false, reason: 'bad-cat-id' };
+    }
   }
   return { ok: true, payload, ts };
 }
@@ -454,6 +466,85 @@ function handleComment(p) {
   return 'ok:queue';
 }
 
+// 照片审核：photo 的 inbox 元数据是小 JSON（只有 photo_key/cat_id 等字符串字段，
+// 不含二进制），聚合后进 review_queue，并（非 DRY 且配了 GitHub 凭据时）建一个
+// 「照片审核」Issue，正文夹带机器可读标记供 review.js 消费。
+function handlePhoto(p) {
+  const { openid, data, ts } = p;
+  const photoKey = data.photo_key;
+  const catId = data.cat_id;
+  const queue = loadData('review_queue');
+  const id = genId('rv', ts);
+  queue.items.push({
+    _id: id,
+    kind: 'photo',
+    openid,
+    ts,
+    status: 'pending',
+    create_time: new Date(ts || Date.now()).toISOString(),
+    data: {
+      photo_key: photoKey,
+      cat_id: catId,
+      photographer: String(data.photographer || '').slice(0, 60),
+      shooting_date: String(data.shooting_date || '').slice(0, 20),
+    },
+  });
+  markTouched('review_queue');
+
+  // 非 DRY 且配了 GitHub 凭据时，异步建「照片审核」Issue；建单失败不阻塞聚合（数据已入队）。
+  if (!DRY && GITHUB_TOKEN && GITHUB_REPOSITORY) {
+    createPhotoIssue({ photoKey, catId, openid, data, ts, queueId: id }).catch((err) => {
+      console.error(`  [issue] 照片审核建单失败（不影响入队）：${err.message || err}`);
+    });
+  }
+
+  return 'ok:queue';
+}
+
+// 建「照片审核」Issue。正文夹带 <!-- photo-key --> 和 <!-- photo-cat-id --> 两个
+// 机器可读标记：review.js 靠它们定位 pending 对象和归属猫（新 key 格式不含 cat_id）。
+async function createPhotoIssue({ photoKey, catId, openid, data, ts, queueId }) {
+  const ext = (photoKey.split('.').pop() || 'jpg').toLowerCase();
+  const body = [
+    '待审照片（匿名直传）',
+    '',
+    '| 项 | 值 |',
+    '| --- | --- |',
+    `| 猫 ID | \`${catId}\` |`,
+    `| 摄影师 | ${data.photographer || '未填写'} |`,
+    `| 拍摄日期 | ${data.shooting_date || '未填写'} |`,
+    `| 上传者 | \`${openid}\` |`,
+    `| 对象路径 | \`${photoKey}\` |`,
+    `| 审核队列 ID | \`${queueId}\` |`,
+    '',
+    '---',
+    '评论 `/ok` 通过（移动到 photos/ 并公开），评论 `/no` 驳回（移动到 rejected/）。',
+    '',
+    `<!-- photo-key: ${photoKey} -->`,
+    `<!-- photo-cat-id: ${catId} -->`,
+    `<!-- photo-openid: ${openid} -->`,
+    `<!-- photo-photographer: ${data.photographer || ''} -->`,
+    `<!-- photo-shooting-date: ${data.shooting_date || ''} -->`,
+  ].join('\n');
+  const title = `[照片审核] ${catId} · ${ext}`;
+  const res = await fetch(`https://api.github.com/repos/${GITHUB_REPOSITORY}/issues`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${GITHUB_TOKEN}`,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+      'User-Agent': 'maopu-process-inbox',
+    },
+    body: JSON.stringify({ title, body }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`创建 Issue 失败 ${res.status}: ${text.slice(0, 300)}`);
+  }
+  const issue = await res.json();
+  console.log(`  [issue] 已建照片审核单 #${issue.number}（${title}）`);
+}
+
 function handleDecision(p) {
   const { data } = p;
   if (!tokenOk(data.token)) return 'drop:bad-token';
@@ -617,6 +708,7 @@ const HANDLERS = {
   pop: handlePop,
   rating: handleRating,
   comment: handleComment,
+  photo: handlePhoto,
   decision: handleDecision,
   manage: handleManage,
 };
@@ -804,6 +896,7 @@ function selftestObjects() {
     mk('rating', 'openid-a', { cat_id: cat, score: 5 }, 9),
     mk('rating', 'openid-a', { cat_id: cat, score: 4 }, 10), // 改分，应替换
     mk('comment', 'openid-a', { cat_id: cat, content: '自测评论', nickname: '自测' }, 11),
+    mk('photo', 'openid-a', { photo_key: 'pending/openid-a-12345.jpg', cat_id: cat, photographer: '自测', shooting_date: '2026-05-10' }, 20),
     {
       key: `inbox/decision/${now + 12}-xxxx-aaaa.json`,
       body: JSON.stringify({
