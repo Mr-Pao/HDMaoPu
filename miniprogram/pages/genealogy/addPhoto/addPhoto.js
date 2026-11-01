@@ -130,7 +130,7 @@ Page({
     })
     await requestNotice('verify');
     wx.showLoading({
-      title: config.text.add_photo.success_tip_title,
+      title: config.text.add_photo.uploading_tip,
       mask: true,
     });
     const currentIndex = e.currentTarget.dataset.index;
@@ -147,7 +147,7 @@ Page({
     wx.hideLoading();
     if (ok) {
       markPending("photo", { cat_id: (this.data.cat || {})._id, label: "照片" });
-      submittedModal(config.text.sync.delay_tip + "\n" + config.text.sync.review_tip);
+      submittedModal(config.text.sync.received_tip);
     } else {
       submittedModal(config.text.sync.offline_tip);
     }
@@ -196,7 +196,7 @@ Page({
     wx.hideLoading();
     if (allOk) {
       markPending("photo", { cat_id: (this.data.cat || {})._id, label: "照片" });
-      submittedModal(config.text.sync.delay_tip + "\n" + config.text.sync.review_tip);
+      submittedModal(config.text.sync.received_tip);
     } else {
       submittedModal(config.text.sync.offline_tip);
     }

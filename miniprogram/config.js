@@ -8,7 +8,7 @@ const secrets = require('./appSecret.js');
 
 module.exports = {
   // 版本号
-  app_version: "v4.0.31",
+  app_version: "v4.0.32",
   // 【离线 Demo 模式】
   // true  = 不连任何后端，使用 utils/demo.js 里的假数据（11 只猫 + 照片 + 设置）
   // false = 走下面的 data_base_url（COS 上的静态 JSON）
@@ -140,8 +140,6 @@ module.exports = {
     add_photo: {
       auth_tip: "设置头像昵称后上传~",
       uploading_tip: "正在上传...",
-      success_tip_title: "上传成功！",
-      success_tip_content: "审核后就会展示出来啦",
       unfinished_tip_title: "提示",
       unfinished_tip_content: "填写信息后再上传哦！",
     },

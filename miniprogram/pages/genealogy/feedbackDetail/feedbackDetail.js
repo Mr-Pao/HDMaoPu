@@ -163,7 +163,7 @@ Page({
     await sendNotifyChkFeeedback();
     // 提交后要等 Actions 聚合 + 人工审核才展示，提示里说明延迟
     wx.showToast({
-      title: ok ? '已收到，审核后展示' : text_cfg.sync.offline_tip,
+      title: ok ? text_cfg.sync.received_tip : text_cfg.sync.offline_tip,
       icon: 'none',
       duration: 2000
     })

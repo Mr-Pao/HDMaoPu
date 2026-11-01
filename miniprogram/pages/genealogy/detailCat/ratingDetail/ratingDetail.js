@@ -177,7 +177,7 @@ Page({
     if (ok) {
       markPending("rating", { cat_id, label: "评分" });
       wx.showToast({
-        title: '已提交，稍后自动汇总',
+        title: text_cfg.sync.received_tip,
         icon: 'none',
         duration: 2000,
       });

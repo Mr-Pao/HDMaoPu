@@ -317,7 +317,7 @@ Page({
       if (ok) {
         markPending("comment", { cat_id: item.cat_id, label: "便利贴" });
         wx.showToast({
-          title: '已提交，审核后展示',
+          title: config.text.sync.received_tip,
           icon: 'none',
           duration: 2000,
         });

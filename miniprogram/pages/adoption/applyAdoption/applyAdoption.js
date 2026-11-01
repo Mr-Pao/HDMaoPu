@@ -3,6 +3,7 @@ import { getCatItem, getAvatar } from "../../../utils/cat";
 import { getUser } from "../../../utils/user";
 import { formatDate } from "../../../utils/utils";
 import api from "../../../utils/cloudApi";
+import config from "../../../config";
 
 const app = getApp();
 
@@ -162,8 +163,8 @@ Page({
       wx.hideLoading();
       if (res.result) {
         wx.showModal({
-          title: '提交成功',
-          content: res.msg || '申请已提交，请等待管理员审核。你可以在「我的-我的领养」中查看进度。',
+          title: config.text.sync.submitted_title,
+          content: config.text.sync.received_tip,
           showCancel: false,
           success: () => wx.navigateBack(),
         });
