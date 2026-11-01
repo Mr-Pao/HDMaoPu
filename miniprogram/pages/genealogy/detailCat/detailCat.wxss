@@ -1081,3 +1081,78 @@ swiper-item image {
   opacity: 0.5;
   border-radius: 50%;
 }
+
+/* =========================================================
+   v5.7 猫咪详情页沉浸式（2026-11-01）
+   - 去掉顶部标题，只留悬浮返回箭头
+   - 大图（swiper）顶到屏幕上沿，宽度铺满 750rpx
+   - 信息卡上浮压住大图下沿，保持原有圆角与阴影
+   ========================================================= */
+
+/* 返回按钮改为悬浮圆片，压在照片上也能看清 */
+.dc-nav {
+  background-color: transparent;
+  border-bottom: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  /* 不再垂直居中：让返回按钮贴着状态栏下方，浮在大图上 */
+  align-items: flex-start;
+  padding-bottom: 0;
+}
+.dc-back {
+  width: 64rpx;
+  height: 64rpx;
+  margin-top: 8rpx;
+  border-radius: 50%;
+  background-color: rgba(16, 22, 15, 0.42);
+  backdrop-filter: blur(12rpx);
+  -webkit-backdrop-filter: blur(12rpx);
+}
+.dc-back-icon {
+  border-left-color: #FFFFFF;
+  border-bottom-color: #FFFFFF;
+  width: 22rpx;
+  height: 22rpx;
+  margin-left: 6rpx;
+}
+/* 标题已移除，样式一并作废 */
+.dc-nav-title {
+  display: none;
+}
+
+/* 大图铺满：轮播占满屏宽，高度按 4:3 拉满到视觉重心 */
+swiper {
+  width: 750rpx;
+  height: 750rpx;
+  margin-top: 0;
+  border-radius: 0;
+}
+.best-photo {
+  width: 750rpx;
+  height: 750rpx;
+}
+swiper-item image {
+  width: 750rpx;
+  height: 750rpx;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+/* 点赞数胶囊：挪到右下，避开返回按钮 */
+.best-photo .like-count {
+  right: 28rpx;
+  bottom: 96rpx;
+  top: auto;
+  left: auto;
+}
+
+/* 信息卡继续上浮，压住大图下沿 */
+.info {
+  margin-top: -48rpx;
+  border-radius: var(--dk-radius-lg) var(--dk-radius-lg) 0 0;
+}
+
+/* 待同步提示：图上文字容易看不清，改成常规卡片间距 */
+.sync-tip {
+  margin: 24rpx;
+}

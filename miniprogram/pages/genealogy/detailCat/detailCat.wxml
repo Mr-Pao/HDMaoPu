@@ -4,31 +4,21 @@
 <!-- 背景下拉看到黄色块 -->
 <view id='bg-yellow' style='{{hideBgBlock? "background-color: transparent;": ""}}'></view>
 
-<!-- 自绘导航栏（去标题栏后需要自己画返回） -->
+<!-- 顶部返回按钮：只留悬浮返回箭头，不再显示标题（沉浸式） -->
 <view class='dc-nav' style='height: {{statusBarHeight + navBarHeight}}px; padding-top: {{statusBarHeight}}px;'>
   <view class='dc-back' bindtap='goBack'>
     <view class='dc-back-icon'></view>
   </view>
-  <view class='dc-nav-title'>{{cat.name || "猫猫详情"}}</view>
 </view>
 
-<!-- 整个页面容器 -->
-<scroll-view id='container' scroll-y="1" bindscrolltolower='loadMoreAlbum' enable-back-to-top="true" bindscroll="bindContainerScroll" style='padding-top: {{statusBarHeight + navBarHeight}}px;'>
-  <!-- 本机待同步提示：提交后要等后台聚合，期间告诉用户别以为没提交成功 -->
-  <view class='sync-tip' wx:if="{{pendingCount > 0 && !syncTipHidden}}">
-    <view class='sync-tip-main'>
-      <view class='sync-tip-title'>{{text_cfg.sync.pending_title}}</view>
-      <view class='sync-tip-desc'>{{pendingText}}</view>
-    </view>
-    <view class='sync-tip-close' bindtap='dismissSyncTip'>×</view>
-  </view>
-
+<!-- 整个页面容器：不加 padding-top，大图直接顶到屏幕上沿（沉浸式） -->
+<scroll-view id='container' scroll-y="1" bindscrolltolower='loadMoreAlbum' enable-back-to-top="true" bindscroll="bindContainerScroll">
   <!-- 半圆形下面的白底块 -->
   <view id='bg-big-circle'></view>
   <!-- 这是黄色的半圆形 -->
   <view id='big-circle'></view>
 
-  <swiper indicator-dots='{{false}}' bindchange='swiperLast' previous-margin='60rpx' next-margin='60rpx' circular="true">
+  <swiper indicator-dots='{{false}}' bindchange='swiperLast' previous-margin='0rpx' next-margin='0rpx' circular="true">
     <swiper-item class="best-photo" wx:for='{{cat.photo}}' wx:key="_id" bindtap='bindTapPhoto' data-index="{{item.index}}" data-kind='best'>
       <image bindload='bindImageLoaded' mode='aspectFill' src='{{item.photo_compressed || item.photo_id}}'></image>
       <item class="like-count" wx:if="{{item.like_count}}">
@@ -37,6 +27,15 @@
       </item>
     </swiper-item>
   </swiper>
+
+  <!-- 本机待同步提示：提交后要等后台聚合，期间告诉用户别以为没提交成功 -->
+  <view class='sync-tip' wx:if="{{pendingCount > 0 && !syncTipHidden}}">
+    <view class='sync-tip-main'>
+      <view class='sync-tip-title'>{{text_cfg.sync.pending_title}}</view>
+      <view class='sync-tip-desc'>{{pendingText}}</view>
+    </view>
+    <view class='sync-tip-close' bindtap='dismissSyncTip'>×</view>
+  </view>
 
   <view class='info' id='info-box'>
     <view class="identity">
