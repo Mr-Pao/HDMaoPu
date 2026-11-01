@@ -64,6 +64,8 @@ function setToken(v) {
 }
 
 // 弹输入框让用户输入口令
+// 优先用自绘弹层 <passcode-modal>（原生 input，键盘右下角「完成」= 确认，不是换行）；
+// 页面没放弹层时才退回 wx.showModal —— 那个在手机上回车只会换行。
 // 注意：editable: true 时不能传 content（传了会变成弹窗说明文字，且输入框无法预填）
 function promptToken(options) {
   const opts = options || {};
@@ -72,6 +74,36 @@ function promptToken(options) {
     typeof cb === "function" && cb();
   };
 
+  let modal = null;
+  try {
+    modal = require("./passcodeModal");
+  } catch (e) {
+    modal = null;
+  }
+
+  if (modal && modal.hasModal()) {
+    modal
+      .open({
+        title: opts.title || "管理口令",
+        tip: opts.tip || "",
+        placeholder: opts.placeholder || "输入管理口令",
+        confirmText: opts.confirmText || "保存",
+        password: !!opts.password,
+        validate: opts.validate,
+        onSaved: value => {
+          setToken(value);
+          done();
+        },
+      })
+      .catch(() => legacyPrompt(done));
+    return;
+  }
+
+  legacyPrompt(done);
+}
+
+// 老路径：wx.showModal({editable:true})，回车只会换行，只能点按钮
+function legacyPrompt(done) {
   try {
     wx.showModal({
       editable: true,

@@ -1,0 +1,31 @@
+<!--miniprogram/components/passcodeModal/index.wxml-->
+<view class="pm-mask" wx:if="{{visible}}" bindtap="onCancel" catchtouchmove="noop">
+  <view class="pm-panel" catchtap="noop">
+    <view class="pm-title">{{title}}</view>
+    <view class="pm-tip" wx:if="{{tip}}">{{tip}}</view>
+
+    <input
+      class="pm-input {{error ? 'pm-input--err' : ''}}"
+      type="text"
+      value="{{value}}"
+      focus="{{visible}}"
+      password="{{password}}"
+      confirm-type="done"
+      confirm-hold="{{false}}"
+      placeholder="{{placeholder}}"
+      placeholder-class="pm-ph"
+      maxlength="64"
+      cursor-spacing="24"
+      adjust-position="{{true}}"
+      bindinput="onInput"
+      bindconfirm="onConfirm"
+    />
+
+    <view class="pm-error" wx:if="{{error}}">{{error}}</view>
+
+    <view class="pm-btns">
+      <view class="pm-btn pm-btn--cancel" hover-class="pm-btn-hover" bindtap="onCancel">{{cancelText}}</view>
+      <view class="pm-btn pm-btn--ok" hover-class="pm-btn-hover" bindtap="onConfirm">{{confirmText}}</view>
+    </view>
+  </view>
+</view>

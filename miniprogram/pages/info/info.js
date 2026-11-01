@@ -1,5 +1,5 @@
 // miniprogram/pages/info/info.js
-import { text as text_cfg, mpcode_img } from "../../config";
+import { text as text_cfg } from "../../config";
 import { showTab } from "../../utils/page";
 
 const share_text = text_cfg.app_name + ' - ' + text_cfg.info.share_tip;
@@ -348,20 +348,15 @@ Page({
       return;
     }
 
-    wx.showModal({
-      editable: true,
+    // 走自绘弹层：原生 input，键盘右下角「完成」= 确认（不是换行）。
+    // 用 promptToken 而不是 wx.showModal，口令校验由 validate 回调负责，
+    // 错了停在弹层里显示红字，不关掉重新弹。
+    passcode.promptToken({
       title: '管理口令',
-      placeholderText: '输入管理口令',
+      placeholder: '输入管理口令',
       confirmText: '进入',
-      cancelText: '取消',
-      success: res => {
-        if (!res || !res.confirm) return;
-        const input = String(res.content || "").trim();
-        if (!input) return;
-        if (input !== code) {
-          wx.showToast({ title: '口令不对', icon: 'none' });
-          return;
-        }
+      validate: input => (input === code ? '' : '口令不对'),
+      onSaved: input => {
         this.setUnlocked(true);
         // 连击时输的就是管理口令，顺手存下来：管理后台提交要用同一个值，
         // 不存的话进去还会再弹一次「还没设置管理口令」。
@@ -370,9 +365,6 @@ Page({
         wx.showToast({ title: '已进入管理后台', icon: 'none' });
         // 解锁后补拉一次待处理数量
         this.refreshManagerNums && this.refreshManagerNums();
-      },
-      fail: err => {
-        console.warn('[INFO] 口令弹窗失败', err);
       },
     });
   },
@@ -446,15 +438,6 @@ Page({
     })
   },
 
-  async showMpCode(e) {
-    wx.previewImage({
-      urls: [await signCosUrl(mpcode_img)],
-      fail: function (e) {
-        console.error(e)
-      }
-    })
-  },
-
   async showLogo(e) {
     wx.previewImage({
       urls: [await signCosUrl(logo_img)],
@@ -471,5 +454,5 @@ Page({
       content: 'laf版文档链接也在仓库md文件中',
       showCancel: true,
     })
-        }
-    })
+  },
+});

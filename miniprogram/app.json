@@ -74,5 +74,7 @@
   "embeddedAppIdList": [
     "wx5d52c6c8f098ed5e"
   ],
-  "usingComponents": {}
+  "usingComponents": {
+    "passcode-modal": "/components/passcodeModal/index"
+  }
 }

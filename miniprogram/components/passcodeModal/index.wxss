@@ -1,0 +1,102 @@
+/* miniprogram/components/passcodeModal/index.wxss */
+.pm-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 9000;
+  background-color: rgba(16, 22, 15, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 60rpx;
+  box-sizing: border-box;
+}
+
+.pm-panel {
+  width: 100%;
+  max-width: 560rpx;
+  padding: 40rpx 36rpx 28rpx 36rpx;
+  box-sizing: border-box;
+  background-color: var(--dk-card, #FFFFFF);
+  border-radius: 28rpx;
+  box-shadow: 0 18rpx 48rpx rgba(12, 95, 3, 0.18);
+}
+
+.pm-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--dk-text, #10160F);
+  text-align: center;
+}
+
+.pm-tip {
+  margin-top: 12rpx;
+  font-size: 23rpx;
+  line-height: 32rpx;
+  color: var(--dk-text-3, #8A948E);
+  text-align: center;
+}
+
+.pm-input {
+  margin-top: 28rpx;
+  width: 100%;
+  height: 88rpx;
+  padding: 0 24rpx;
+  box-sizing: border-box;
+  font-size: 32rpx;
+  letter-spacing: 6rpx;
+  color: var(--dk-text, #10160F);
+  background-color: var(--dk-bg, #F5F7F5);
+  border: 1rpx solid var(--dk-line, rgba(12, 95, 3, 0.10));
+  border-radius: 18rpx;
+}
+
+.pm-input--err {
+  border-color: #C0392B;
+}
+
+.pm-ph {
+  color: var(--dk-text-3, #8A948E);
+  letter-spacing: 0;
+  font-size: 26rpx;
+}
+
+.pm-error {
+  margin-top: 12rpx;
+  font-size: 23rpx;
+  color: #C0392B;
+  text-align: center;
+}
+
+.pm-btns {
+  display: flex;
+  align-items: center;
+  margin-top: 32rpx;
+}
+
+.pm-btn {
+  flex: 1;
+  height: 84rpx;
+  line-height: 84rpx;
+  text-align: center;
+  font-size: 30rpx;
+  border-radius: 18rpx;
+}
+
+.pm-btn--cancel {
+  color: var(--dk-text-2, #55605A);
+  background-color: var(--dk-bg, #F5F7F5);
+  margin-right: 20rpx;
+}
+
+.pm-btn--ok {
+  color: #FFFFFF;
+  background-color: var(--dk-accent, #0C5F03);
+  font-weight: 700;
+}
+
+.pm-btn-hover {
+  opacity: 0.82;
+}
