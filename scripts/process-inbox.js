@@ -27,7 +27,7 @@
  *
  * 用法：
  *   COS_SECRET_ID=xx COS_SECRET_KEY=xx COS_BUCKET=xx COS_REGION=xx \
- *   REVIEW_PASSCODE=xx node scripts/process-inbox.js
+ *   node scripts/process-inbox.js（管理口令读 data/gate.json 的 code，无需环境变量）
  *
  *   DRY_RUN=1  不发网络请求，用内置的模拟对象跑一遍聚合逻辑，不写文件
  */
@@ -205,10 +205,24 @@ function parseObject(key, body) {
   return validateInboxItem(key, body);
 }
 
+// 管理口令的唯一来源：data/gate.json 的 code 字段（和小程序「关于」页解锁用的是同一个值）。
+// 改这个文件就能同时决定「界面能不能进」和「提交能不能过」，不用再去 GitHub 配 secret。
+// 老部署若还留着 REVIEW_PASSCODE secret，只作为 gate.json 缺失/为空时的兜底。
+function currentGateCode() {
+  try {
+    const gate = loadData('gate');
+    const rec = gate.items.find(it => it && it._id === 'gate');
+    return rec && typeof rec.code === 'string' ? rec.code.trim() : '';
+  } catch (err) {
+    console.warn('读取 data/gate.json 失败，回退到 REVIEW_PASSCODE：' + (err.message || err));
+    return '';
+  }
+}
+
 function tokenOk(token) {
-  const expect = REVIEW_PASSCODE || '';
-  if (!expect) return false;
   if (typeof token !== 'string') return false;
+  const expect = currentGateCode() || REVIEW_PASSCODE || '';
+  if (!expect) return false;
   // 先各自做 sha256 摘要再 timingSafeEqual：摘要定长，消除长度侧信道
   const a = crypto.createHash('sha256').update(token, 'utf8').digest();
   const b = crypto.createHash('sha256').update(expect, 'utf8').digest();
@@ -1271,6 +1285,8 @@ function deleteKeys(cos, keys) {
 // ---------------------------------------------------------------------------
 
 function selftestObjects() {
+  // 自测口令直接取 data/gate.json 的 code（线上真校验也用同一个值），不再依赖环境变量
+  const SELFTEST_TOKEN = currentGateCode() || REVIEW_PASSCODE || 'wrong';
   const now = Date.now();
   const cat = 'demo-cat-1';
   const photo = 'demo-photo-1';
@@ -1299,25 +1315,25 @@ function selftestObjects() {
         kind: 'decision',
         openid: 'openid-a',
         ts: now + 12,
-        data: { item_id: '__NONE__', action: 'approve', token: REVIEW_PASSCODE || 'wrong' },
+        data: { item_id: '__NONE__', action: 'approve', token: SELFTEST_TOKEN },
       }),
     },
     { key: `inbox/like/${now + 13}-bad-aaaa.json`, body: 'not json at all' },
     { key: `inbox/evil/${now + 14}-bad-aaaa.json`, body: JSON.stringify({ v: 1, kind: 'evil', openid: 'x', ts: 1, data: {} }) },
-    // manage 自测：token 从环境变量注入（REVIEW_PASSCODE），代码里不出现真实口令
-    mk('manage', 'openid-a', { action: 'updateCat', token: REVIEW_PASSCODE || 'wrong', cat_id: cat, patch: { name: '大橘（自测改名）', habit: '自测晒太阳' } }, 15),
-    mk('manage', 'openid-a', { action: 'managePhoto', token: REVIEW_PASSCODE || 'wrong', photo_id: photo, hidden: true }, 16),
+    // manage 自测：token 取 data/gate.json 的 code，代码里不出现真实口令
+    mk('manage', 'openid-a', { action: 'updateCat', token: SELFTEST_TOKEN, cat_id: cat, patch: { name: '大橘（自测改名）', habit: '自测晒太阳' } }, 15),
+    mk('manage', 'openid-a', { action: 'managePhoto', token: SELFTEST_TOKEN, photo_id: photo, hidden: true }, 16),
     mk('manage', 'openid-a', { action: 'updateCat', token: 'definitely-wrong-token', cat_id: cat, patch: { name: '不该生效' } }, 17), // 口令错，应被丢弃
-    mk('manage', 'openid-a', { action: 'updateCat', token: REVIEW_PASSCODE || 'wrong', cat_id: cat, patch: { popularity: 999, name: '也不该生效' } }, 18), // 白名单外字段，整条拒绝
-    mk('manage', 'openid-a', { action: 'deleteEverything', token: REVIEW_PASSCODE || 'wrong' }, 19), // 未知 action，应被丢弃
+    mk('manage', 'openid-a', { action: 'updateCat', token: SELFTEST_TOKEN, cat_id: cat, patch: { popularity: 999, name: '也不该生效' } }, 18), // 白名单外字段，整条拒绝
+    mk('manage', 'openid-a', { action: 'deleteEverything', token: SELFTEST_TOKEN }, 19), // 未知 action，应被丢弃
     mk('manage', 'openid-a', {
       action: 'saveFriendLinks',
-      token: REVIEW_PASSCODE || 'wrong',
+      token: SELFTEST_TOKEN,
       apps: [{ appid: 'wx5bd705b2bc91c73b', name: '笃行猫谱（自测）', logo: '/pages/public/images/system/zdmp.png' }],
     }, 21),
     mk('manage', 'openid-a', {
       action: 'saveFriendLinks',
-      token: REVIEW_PASSCODE || 'wrong',
+      token: SELFTEST_TOKEN,
       apps: [{ appid: 'not-an-appid', name: '坏数据' }],
     }, 22), // 非法 appid，整条拒绝
 
@@ -1326,38 +1342,38 @@ function selftestObjects() {
     // 后面的 update/remove 才能稳定指向同一条。
     mk('manage', 'openid-a', {
       action: 'manageNews',
-      token: REVIEW_PASSCODE || 'wrong',
+      token: SELFTEST_TOKEN,
       op: 'add',
       news: { title: '自测公告 self-test', class: '活动', mainContent: '自测正文：新增' },
     }, 23),
     mk('manage', 'openid-a', {
       action: 'manageNews',
-      token: REVIEW_PASSCODE || 'wrong',
+      token: SELFTEST_TOKEN,
       op: 'update',
       news_id: 'news-self-test',
       news: { title: '自测公告（已改）', class: '其他', dateLastModify: '' },
     }, 24), // 只覆盖白名单字段
     mk('manage', 'openid-a', {
       action: 'manageNews',
-      token: REVIEW_PASSCODE || 'wrong',
+      token: SELFTEST_TOKEN,
       op: 'remove',
       news_id: 'news-self-test',
     }, 25),
     mk('manage', 'openid-a', {
       action: 'manageNews',
-      token: REVIEW_PASSCODE || 'wrong',
+      token: SELFTEST_TOKEN,
       op: 'add',
       news: { title: '自测公告（保留）', class: '救助', mainContent: '这条留在新闻表里供快照查看' },
     }, 26), // 留着，snapshot 里能看到
     mk('manage', 'openid-a', {
       action: 'manageNews',
-      token: REVIEW_PASSCODE || 'wrong',
+      token: SELFTEST_TOKEN,
       op: 'add',
       news: { title: '坏分类公告', class: '全部' }, // 「全部」是筛选假分类，应被丢弃
     }, 27),
     mk('manage', 'openid-a', {
       action: 'manageNews',
-      token: REVIEW_PASSCODE || 'wrong',
+      token: SELFTEST_TOKEN,
       op: 'update',
       news_id: 'news-does-not-exist',
       news: { title: '改不存在的公告' },
@@ -1373,7 +1389,7 @@ function selftestObjects() {
     // DRY 下不真发 COS 请求，只验证「pending/ 开头的 logo 会被改写成完整公网 URL」。
     mk('manage', 'openid-a', {
       action: 'saveFriendLinks',
-      token: REVIEW_PASSCODE || 'wrong',
+      token: SELFTEST_TOKEN,
       apps: [{ appid: 'wx5bd705b2bc91c73b', name: '带图友链', logo: 'pending/openid-a-99999.jpg' }],
     }, 30),
   ];
@@ -1435,8 +1451,8 @@ async function main() {
     console.error('缺少环境变量：' + missing.join(', '));
     process.exit(1);
   }
-  if (!REVIEW_PASSCODE) {
-    console.warn('警告：未设置 REVIEW_PASSCODE，所有 decision 都会被丢弃（审核页提交的内容不生效）。');
+  if (!currentGateCode() && !REVIEW_PASSCODE) {
+    console.warn('警告：data/gate.json 的 code 为空，所有 decision/manage 提交都会被丢弃（审核与管理提交不生效）。');
   }
 
   const cos = cosClient();

@@ -1,15 +1,8 @@
 <!--miniprogram/pages/info/info.wxml-->
 <!-- 顶部柔光已由 page 的 radial-gradient 直接铺出（v5.6 沉浸式），不再需要 .dk-glow 叠加 -->
-<view class="nav" style="padding-top: {{statusBarHeight}}px;">
-  <view class="nav-flex">
-    <view class="nav-l">
-      <view class="nav-sub">MAOPU</view>
-    </view>
-  </view>
-</view>
-
-<!-- ① 品牌头：圆形 logo → 大标题（连击 5 次解锁管理后台）→ 一行灰字副标语 -->
-<view class='mina-info'>
+<!-- 自绘导航栏整块已按用户要求移除（2026-11-01）：不再显示「关于」标题与 MAOPU 小字，
+     状态栏高度改用下方 .mina-info 的 padding-top 兜住，避免内容顶到刘海 -->
+<view class="mina-info" style="padding-top: {{statusBarHeight + 12}}px;">
   <image src='{{logo_img}}' bindtap="showMpCode" show-menu-by-longpress="1"></image>
   <view class='title' catchtap="onTitleTap" hover-class="tap-dim" hover-stay-time="80">{{text_cfg.app_name}}</view>
   <view class='dev'><text>{{text_cfg.info.slogan}}</text></view>

@@ -3,8 +3,9 @@
 // 口诀：
 //   - 口令绝不写进小程序包，也不进 config.js。
 //   - 用户在小程序里输一次，只存手机本地 storage（key: manage_passcode），永久有效。
-//   - 客户端不做对错校验，真校验在 GitHub Actions 端 scripts/process-inbox.js 的 tokenOk()
-//     （对比 REVIEW_PASSCODE）；口令不对的提交会被 drop:bad-token 直接丢弃，页面不会报错。
+//   - 客户端不做对错校验，真校验在 GitHub Actions 端 scripts/process-inbox.js 的 tokenOk()，
+//     它读的是 data/gate.json 的 code——和小程序解锁用的是同一个值，全站只有这一处口令。
+//     口令不对的提交会被 drop:bad-token 直接丢弃，页面不会报错。
 //   - 所以两个管理页在提交前都要检查本地是否已有口令，没有就引导用户先设置。
 
 const KEY = "manage_passcode";

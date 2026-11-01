@@ -54,6 +54,8 @@ jobs:
           COS_SECRET_KEY: ${{ secrets.COS_SECRET_KEY }}
           COS_BUCKET: ${{ secrets.COS_BUCKET }}
           COS_REGION: ${{ secrets.COS_REGION }}
+          # 管理口令统一读 data/gate.json 的 code（和小程序「关于」页解锁同一个值），
+          # 改 gate.json 一处即同时生效，这个 secret 只作老部署兜底，可以不配。
           REVIEW_PASSCODE: ${{ secrets.REVIEW_PASSCODE }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
