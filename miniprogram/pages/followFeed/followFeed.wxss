@@ -614,3 +614,50 @@ page {
 .selected-cat .cat-name {
   color: #FFFFFF;
 }
+
+
+/* ================= v4.7 喵友圈：白底信息型 ================= */
+page {
+  background-color: #F5F6F5;
+  color: #10160F;
+}
+.photo-block, .comment-block {
+  background-color: #FFFFFF;
+  border-bottom: 1rpx solid #E9EDE9;
+  padding: 24rpx 24rpx 20rpx 24rpx;
+}
+.cat-info .cat-avatar {
+  border-radius: 999rpx;
+  border: 1rpx solid #E9EDE9;
+  box-shadow: none;
+}
+.cat-info .cat-name {
+  color: #10160F;
+  font-weight: 700;
+}
+.cat-info .cat-campus {
+  color: #A2AAA2;
+}
+.photo-container {
+  gap: 8rpx;
+}
+.photo-img {
+  border-radius: 12rpx;
+}
+.photo-block .datetime, .photo-block .username {
+  color: #A2AAA2;
+}
+.story-item .cat-avatar {
+  border-radius: 14rpx;
+}
+.story-item .cat-name {
+  color: #6B746B;
+}
+.selected-cat {
+  background-color: rgba(12, 95, 3, 0.07);
+  border: 1rpx solid rgba(12, 95, 3, 0.18);
+  border-radius: 10rpx;
+}
+.selected-cat .cat-name {
+  color: #0C5F03;
+}

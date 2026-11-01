@@ -456,3 +456,43 @@ page {
 .pher-name, .photo-date, .like-num {
   color: rgba(255, 255, 255, 0.32);
 }
+
+
+/* ================= v4.7 榜单：白底信息型 ================= */
+page {
+  background-color: #F5F6F5;
+  color: #10160F;
+}
+.thread-item {
+  background-color: #FFFFFF;
+  border: 1rpx solid #E9EDE9;
+  border-radius: 10rpx;
+}
+.thread-item.active {
+  background-color: #0C5F03;
+  border-color: #0C5F03;
+}
+.thread-item-name {
+  color: #6B746B;
+}
+.thread-item.active .thread-item-name {
+  color: #FFFFFF;
+  font-weight: 600;
+}
+.column_item {
+  background-color: #FFFFFF;
+  border: 1rpx solid #E9EDE9;
+  border-radius: 16rpx;
+  box-shadow: none;
+}
+.location {
+  background-color: rgba(0, 0, 0, 0.42);
+  border-radius: 8rpx;
+  color: #FFFFFF;
+}
+.cat-name {
+  color: #10160F;
+}
+.pher-name, .photo-date, .like-num {
+  color: #A2AAA2;
+}

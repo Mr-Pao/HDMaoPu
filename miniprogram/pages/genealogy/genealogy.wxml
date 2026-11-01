@@ -48,22 +48,14 @@
 </view>
 
 <scroll-view enable-flex='1' class='cards' style='height: {{heights.windowHeight - heights.filters}}px;' scroll-y='true' enable-back-to-top='true' bindscrolltolower='onReachBottom' bindscroll='fScroll' lower-threshold='{{main_lower_threshold}}' refresher-enabled="{{true}}" refresher-triggered="{{refreshing}}" bindrefresherrefresh="onPullDownRefresh">
-  <!-- 品牌头 -->
-  <view class='hero'>
-    <view class='hero-row'>
-      <view class='hero-left'>
-        <text class='hero-kicker'>MAOPU / CAT INDEX</text>
-        <text class='hero-title'>火大猫谱</text>
-      </view>
-      <view class='hero-right'>
-        <text class='hero-num'>{{catsMax || cats.length}}</text>
-        <text class='hero-num-dk'>只猫在册</text>
-      </view>
+  <!-- 顶部标题 -->
+  <view class='head'>
+    <view class='head-l'>
+      <text class='head-title'>火大猫谱</text>
+      <text class='head-sub'>共 {{catsMax || cats.length}} 只在册</text>
     </view>
-    <view class='hero-stat'>
-      <view class='hs'><text class='hs-v'>{{cats.length}}</text><text class='hs-k'>当前结果</text></view>
-      <view class='hs'><text class='hs-v'>{{adopt_count || 0}}</text><text class='hs-k'>等待领养</text></view>
-      <view class='hs'><text class='hs-v'>{{catsMax || cats.length}}</text><text class='hs-k'>累计收录</text></view>
+    <view class='head-r'>
+      <text class='head-n'>{{cats.length}}</text>
     </view>
   </view>
 
@@ -78,25 +70,38 @@
   </scroll-view>
 
   <block wx:for='{{cats}}' wx:key="_id">
-    <view class='tile {{index % 3 === 0 ? "tile--wide" : "tile--half"}} {{item.to_star? "tile--star": ""}}' bindtap='clickCatCard' bindlongpress='bindManageCat' data-cat_id='{{item._id}}' data-index='{{index}}'>
-      <image class='tile-img' bindload="bindImageLoaded" mode='aspectFill' src='{{item.photo.photo_compressed || item.photo.photo_id}}' data-index="{{index}}" lazy-load="{{true}}"></image>
-      <view class='tile-veil'></view>
-      <view class='tile-no'>{{index < 9 ? '0' : ''}}{{index+1}}</view>
-      <view class='tile-flag' wx:if="{{item.mphoto_new}}">{{text_cfg.genealogy.new_photo_tip}}</view>
-      <view class='tile-flag tile-flag--empty' wx:elif='{{!item.photo_count_best || item.photo_count_best === 0}}'>{{text_cfg.genealogy.no_photo_tip}}</view>
-      <view class='tile-star' wx:if='{{item.to_star}}'>{{text_cfg.genealogy.to_star_tip}}</view>
-      <view class='tile-adopt' wx:if='{{item.adopt}}'>{{adopt_desc[item.adopt]}}</view>
-      <view class='tile-foot'>
-        <view class='tile-name-row'>
-          <text class='tile-name'>{{item.name}}</text>
-          <image mode='aspectFill' class='tile-gender' wx:if='{{item.gender === "公"}}' src="/pages/public/images/card/card/male.png"></image>
-          <image mode='aspectFill' class='tile-gender' wx:if='{{item.gender === "母"}}' src="/pages/public/images/card/card/female.png"></image>
-          <text class='tile-score'>{{item.rating.avgScoreDisp || '0.0'}}</text>
+    <view class='row {{item.to_star? "row--star": ""}}' bindtap='clickCatCard' bindlongpress='bindManageCat' data-cat_id='{{item._id}}' data-index='{{index}}'>
+      <view class='row-pic'>
+        <image class='row-img' bindload="bindImageLoaded" mode='aspectFill' src='{{item.photo.photo_compressed || item.photo.photo_id}}' data-index="{{index}}" lazy-load="{{true}}"></image>
+        <view class='row-new' wx:if="{{item.mphoto_new}}">{{text_cfg.genealogy.new_photo_tip}}</view>
+        <view class='row-new row-new--empty' wx:elif='{{!item.photo_count_best || item.photo_count_best === 0}}'>{{text_cfg.genealogy.no_photo_tip}}</view>
+      </view>
+
+      <view class='row-main'>
+        <view class='row-top'>
+          <text class='row-name'>{{item.name}}</text>
+          <image mode='aspectFill' class='row-sex' wx:if='{{item.gender === "公"}}' src="/pages/public/images/card/card/male.png"></image>
+          <image mode='aspectFill' class='row-sex' wx:if='{{item.gender === "母"}}' src="/pages/public/images/card/card/female.png"></image>
+          <view class='row-adopt' wx:if='{{item.adopt}}'>{{adopt_desc[item.adopt]}}</view>
+          <view class='row-star' wx:if='{{item.to_star}}'>{{text_cfg.genealogy.to_star_tip}}</view>
         </view>
-        <view class='tile-meta'>
-          <text class='tile-where'>{{(item.campus + item.area) || '-'}}</text>
-          <text class='tile-dot'>·</text>
-          <text class='tile-cmt'>{{item.comment_count || 0}} 便利贴</text>
+
+        <view class='row-score'>
+          <text class='row-score-v'>{{item.rating.avgScoreDisp || '0.0'}}</text>
+          <view class='row-bar'>
+            <view class='row-bar-fill' style='width: {{(item.rating.avgScore || 0) / 5 * 100}}%'></view>
+          </view>
+          <text class='row-score-k'>猫德</text>
+        </view>
+
+        <view class='row-where'>{{(item.campus + item.area) || '-'}}</view>
+
+        <view class='row-nums'>
+          <text class='row-num'>{{item.comment_count || 0}}<text class='row-num-k'>便利贴</text></text>
+          <text class='row-sep'>|</text>
+          <text class='row-num'>{{item.photo_count_total || 0}}<text class='row-num-k'>照片</text></text>
+          <text class='row-sep'>|</text>
+          <text class='row-num'>{{item.popularity + (item.photo_count_total? item.photo_count_total * photoPopWeight: 0)}}<text class='row-num-k'>热度</text></text>
         </view>
       </view>
     </view>

@@ -295,3 +295,17 @@ page {
   background-color: #07090A;
   color: #FFFFFF;
 }
+
+
+/* ================= v4.7 信息型主题 ================= */
+page {
+  --f-bg: #F5F6F5;
+  --f-surface: #FFFFFF;
+  --f-line: #E9EDE9;
+  --f-text: #10160F;
+  --f-text-2: #6B746B;
+  --f-text-3: #A2AAA2;
+  --f-accent: #0C5F03;
+  background-color: #F5F6F5;
+  color: #10160F;
+}

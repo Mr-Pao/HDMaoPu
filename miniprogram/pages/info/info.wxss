@@ -740,3 +740,92 @@ page {
   border-radius: 22rpx;
   box-shadow: none;
 }
+
+
+/* ================= v4.7 我的页：白底信息型 ================= */
+page {
+  background-color: #F5F6F5;
+  color: #10160F;
+}
+.mina-info {
+  background-color: #FFFFFF;
+  background-image: none;
+  margin: 0;
+  padding: 44rpx 32rpx 30rpx 32rpx;
+  border-bottom: 1rpx solid #E9EDE9;
+  box-shadow: none;
+  border-radius: 0;
+}
+.mina-info .kicker {
+  color: #A2AAA2;
+}
+.mina-info image {
+  border-radius: 999rpx;
+  border: 1rpx solid #E9EDE9;
+  box-shadow: none;
+}
+.mina-info .title {
+  color: #10160F;
+  font-size: 44rpx;
+  font-weight: 800;
+}
+.mina-info .dev {
+  color: #A2AAA2;
+}
+.num-info {
+  border-top: 1rpx solid #EDF0ED;
+  background-color: transparent;
+  padding: 20rpx 0 0 0;
+  margin-top: 26rpx;
+}
+.num-title {
+  color: #10160F;
+  font-size: 42rpx;
+  font-weight: 800;
+}
+.small-title {
+  color: #A2AAA2;
+}
+.card-container {
+  margin: 18rpx 24rpx 0 24rpx;
+  row-gap: 14rpx;
+}
+.card {
+  height: 180rpx;
+  background-color: #FFFFFF;
+  border: 1rpx solid #E9EDE9;
+  border-radius: 18rpx;
+  box-shadow: none;
+}
+.card .card-text {
+  color: #303830;
+  font-weight: 600;
+}
+.card .icon {
+  filter: none;
+  opacity: 1;
+}
+.tool {
+  background-color: #FFFFFF;
+  border: 1rpx solid #E9EDE9;
+  border-radius: 18rpx;
+  box-shadow: none;
+}
+.block-name {
+  color: #6B746B;
+  font-size: 24rpx;
+  letter-spacing: 2rpx;
+  font-weight: 600;
+  padding-left: 0;
+  margin: 34rpx 26rpx 12rpx 26rpx;
+}
+.block-name::before {
+  display: none;
+}
+.block {
+  background-color: #FFFFFF;
+  border: 1rpx solid #E9EDE9;
+  border-radius: 18rpx;
+  box-shadow: none;
+  margin: 0 24rpx;
+}

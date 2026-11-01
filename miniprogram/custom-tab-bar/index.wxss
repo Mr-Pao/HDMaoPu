@@ -1,16 +1,15 @@
 .tab-bar {
   position: fixed;
-  left: 22rpx;
-  right: 22rpx;
-  bottom: calc(14rpx + env(safe-area-inset-bottom));
-  height: 112rpx;
-  background-color: rgba(14, 18, 17, 0.86);
-  backdrop-filter: blur(28rpx);
-  border: 1rpx solid rgba(255, 255, 255, 0.09);
-  border-radius: 32rpx;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 108rpx;
+  background-color: #FFFFFF;
+  border-top: 1rpx solid #E9EDE9;
   display: flex;
   align-items: center;
-  box-shadow: 0 14rpx 44rpx rgba(0, 0, 0, 0.6);
+  padding-bottom: env(safe-area-inset-bottom);
+  box-sizing: content-box;
   z-index: 100;
 }
 
@@ -24,9 +23,7 @@
 
 .tab-bar-item {
   flex: 1;
-  height: 88rpx;
-  margin: 12rpx;
-  border-radius: 24rpx;
+  height: 104rpx;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -34,30 +31,24 @@
   position: relative;
 }
 
-.tab-bar-item.active {
-  background-color: rgba(255, 255, 255, 0.09);
-}
-
 .tab-bar-img {
   width: 42rpx;
   height: 42rpx;
-  filter: brightness(0) invert(1);
-  opacity: 0.42;
+  opacity: 0.4;
 }
 
 .tab-bar-item.active .tab-bar-img {
-  filter: none;
   opacity: 1;
 }
 
 .tab-bar-title {
   font-size: 19rpx;
   margin-top: 5rpx;
-  letter-spacing: 1rpx;
-  color: rgba(255, 255, 255, 0.36);
+  letter-spacing: 0.5rpx;
+  color: #9BA49B;
 }
 
 .tab-bar-item.active .tab-bar-title {
-  color: #FFFFFF;
-  font-weight: 600;
+  color: #0C5F03;
+  font-weight: 700;
 }

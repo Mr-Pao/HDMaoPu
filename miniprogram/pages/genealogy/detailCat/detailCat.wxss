@@ -1483,3 +1483,84 @@ swiper-item image {
 .card-title .iconfont {
   color: #4ADE80;
 }
+
+
+/* ================= v4.7 详情页：白底信息型 ================= */
+page {
+  background-color: #F5F6F5;
+  color: #10160F;
+}
+#bg-yellow {
+  background-color: #0C5F03;
+  background-image: none;
+}
+#bg-big-circle {
+  display: none;
+}
+#big-circle {
+  display: none;
+}
+swiper {
+  height: 520rpx;
+}
+swiper-item image {
+  width: 660rpx;
+  height: 460rpx;
+  border-radius: 20rpx;
+  border: none;
+  box-shadow: none;
+}
+.best-photo .like-count {
+  border-radius: 10rpx;
+  background-color: rgba(0, 0, 0, 0.45);
+  color: #FFFFFF;
+}
+.info {
+  background-color: #F5F6F5;
+  padding: 30rpx 24rpx 18rpx 24rpx;
+  box-shadow: none;
+}
+.info .name {
+  color: #10160F;
+  font-size: 66rpx;
+  line-height: 70rpx;
+  font-weight: 800;
+  letter-spacing: -1rpx;
+}
+.identity .count {
+  background-color: #FFFFFF;
+  border: 1rpx solid #E9EDE9;
+  border-radius: 10rpx;
+  color: #6B746B;
+}
+.identity .count .iconfont {
+  color: #0C5F03;
+}
+.tags .tag {
+  background-color: #FFFFFF;
+  border: 1rpx solid #E9EDE9;
+  border-radius: 10rpx;
+  color: #6B746B;
+}
+.tags .to_star {
+  background-color: rgba(12, 95, 3, 0.07);
+  border-color: rgba(12, 95, 3, 0.22);
+  color: #0C5F03;
+}
+.details .card {
+  background-color: #FFFFFF;
+  border: 1rpx solid #E9EDE9;
+  border-radius: 20rpx;
+  box-shadow: none;
+}
+.details .card-header,
+.card-header {
+  border-bottom: 1rpx solid #EDF0ED;
+}
+.card-title {
+  color: #10160F;
+  font-weight: 700;
+}
+.card-title .iconfont {
+  color: #0C5F03;
+}

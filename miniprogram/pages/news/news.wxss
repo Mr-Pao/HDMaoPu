@@ -540,3 +540,58 @@ swiper {
 .cover-image {
   border-radius: 16rpx;
 }
+
+
+/* ================= v4.7 猫抓板：白底信息型 ================= */
+page {
+  background-color: #F5F6F5;
+  color: #10160F;
+}
+swiper {
+  border-radius: 18rpx;
+  box-shadow: none;
+  border: 1rpx solid #E9EDE9;
+}
+.normal_button {
+  color: #8A928A;
+  background-color: transparent;
+  border-radius: 10rpx;
+}
+.checked_button {
+  background-color: rgba(12, 95, 3, 0.08);
+  color: #0C5F03;
+}
+.tab-logo {
+  filter: none;
+  opacity: 0.36;
+}
+.checked_button .tab-logo {
+  filter: none;
+  opacity: 1;
+}
+.news-box {
+  background-color: #FFFFFF;
+  border: 1rpx solid #E9EDE9;
+  border-radius: 18rpx;
+  box-shadow: none;
+}
+.news.title {
+  color: #10160F;
+  font-size: 33rpx;
+  font-weight: 700;
+}
+.news.content {
+  color: #7A837A;
+}
+.news.tag {
+  background-color: rgba(12, 95, 3, 0.08);
+  color: #0C5F03;
+  border-radius: 8rpx;
+  font-weight: 600;
+}
+.news.user, .news.time {
+  color: #A2AAA2;
+}
+.cover-image {
+  border-radius: 12rpx;
+}
