@@ -8,7 +8,7 @@ const secrets = require('./appSecret.js');
 
 module.exports = {
   // 版本号
-  app_version: "v4.0.35",
+  app_version: "v4.0.36",
   // 【离线 Demo 模式】
   // true  = 不连任何后端，使用 utils/demo.js 里的假数据（11 只猫 + 照片 + 设置）
   // false = 走下面的 data_base_url（COS 上的静态 JSON）
@@ -85,6 +85,21 @@ module.exports = {
     info: {
       share_tip: "关于",
       slogan: "猫不提供服务，猫只提供它本身。",
+      // 分节标题
+      explore: "探索",
+      friends: "友情链接",
+      about: "关于",
+      // 数据审核/同步延迟提示卡（口径与 utils/syncTip.js 一致）
+      tip_title: "照片和便利贴会在审核后展示",
+      tip_desc: "后台每几分钟自动汇总一次，稍后刷新就能看到啦",
+      // 「关于」竖列表行
+      row_version: "版本",
+      row_feedback: "信息反馈",
+      row_feedback_value: "去反馈",
+      row_contact: "联系作者",
+      row_contact_value: "发消息",
+      // 底部声明
+      footer: "火大猫谱 · 中山大学校园流浪猫谱系",
     },
     // 猫猫详情页，pages/genealogy/detailCat/detailCat
     detail_cat: {
