@@ -23,7 +23,7 @@
         "ctrlUser": "guest",
         "ctrlVersion": "*",
         "disabledFunc": "",
-        "limitedFunc": "reward,feedback,fullTab,uploadPhoto,comment"
+        "limitedFunc": "reward,feedback,fullTab,comment"
       },
       "tabBarCtrl": {
         "ctrlTab": "news",
