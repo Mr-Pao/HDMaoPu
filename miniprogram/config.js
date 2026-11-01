@@ -8,7 +8,7 @@ const secrets = require('./appSecret.js');
 
 module.exports = {
   // 版本号
-  app_version: "v4.0.32",
+  app_version: "v4.0.33",
   // 【离线 Demo 模式】
   // true  = 不连任何后端，使用 utils/demo.js 里的假数据（11 只猫 + 照片 + 设置）
   // false = 走下面的 data_base_url（COS 上的静态 JSON）
@@ -26,6 +26,7 @@ module.exports = {
   writeback_enabled: true,
   // 【管理口令】已移出小程序包：管理员在小程序内手动输入，只存手机本地 storage，
   // 真正的校验在 GitHub Actions 端（REVIEW_PASSCODE），口令不对的提交会被丢弃
+  // v4.0.33 起不再有锁屏口令门，右上角「口令」按钮输一次永久保存
   // 【照片上传开关】v4.0 暂时关闭
   // 原因：原来靠云函数 unionOp/getURL 签发 COS 临时密钥，现在没有云函数了，
   //       小程序端拿不到上传凭证，一点上传就报错。

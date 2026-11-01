@@ -2,11 +2,11 @@
 //   猫资料编辑 ?tab=cat / 照片审核 ?tab=photo / 友情链接 ?tab=link
 //   入口都在「关于 → 管理后台」的菜单列表里，页面内没有 tab 切换。
 //
-// 口令模型：
-//   - 小程序包里不再内置口令（config.review_passcode 已删除）。
-//   - 用户手动输入口令，只存在手机本地 storage，客户端不做对错校验（非空即放行）。
+// 口令模型（v4.0.33 起不再有锁屏口令门）：
+//   - 本页没有锁屏，进来直接能用；右上角「口令」按钮输一次，永久存本机 storage。
+//   - 小程序包里不内置口令（config.review_passcode 已删除），口令绝不写进小程序包。
 //   - 真正的校验在 GitHub Actions 聚合端（process-inbox.js 的 tokenOk），
-//     口令不对的 manage 提交会被自动丢弃。
+//     口令不对的 manage 提交会被自动丢弃，页面不会有任何报错——所以提交前必须确认本机已存口令。
 //
 // 数据流（与 review 页共用 storage 口令）：
 //   表单/开关 → putInbox('manage', { action, token, ... }) → COS inbox/manage/
@@ -15,11 +15,9 @@
 import { putInbox } from "../../../utils/writeback";
 import { text as text_cfg } from "../../../config";
 
-const app = getApp();
+const passcode = require("../../../utils/passcode");
 
-const PASSCODE_KEY = "manage_passcode";
-const PASSCODE_TS_KEY = "manage_passcode_ts";
-const PASSCODE_TTL = 24 * 60 * 60 * 1000; // 24 小时免输入
+const app = getApp();
 
 // 与聚合端 MANAGE_CAT_PATCH_FIELDS 保持一致的字段口径
 const GENDER_OPTIONS = ["公", "母", "未知"];
@@ -43,8 +41,7 @@ function formatDate(iso) {
 
 Page({
   data: {
-    unlocked: false,
-    passcode: "",
+    hasToken: false, // 本机是否已存管理口令（只控制右上角提示条显隐）
 
     tab: "cat", // cat | photo | link，由 onLoad 的 ?tab= 决定
     pageTitle: TAB_META.cat,
@@ -96,16 +93,21 @@ Page({
   onLoad(options) {
     // 「关于 → 管理后台」的三个菜单项分别带 ?tab=cat|photo|link 进来
     const tab = TAB_META[(options && options.tab) || ""] ? options.tab : "cat";
-    this.setData({ tab, pageTitle: TAB_META[tab] });
+    this.setData({ tab, pageTitle: TAB_META[tab], hasToken: passcode.hasToken() });
     wx.setNavigationBarTitle({ title: TAB_META[tab] });
 
-    if (this.hasValidPasscode()) {
-      this.afterUnlock();
-    }
+    // 本页没有口令门，进来直接加载当前 tab
+    this.loadCurrentTab();
   },
 
-  // 解锁后按当前 tab 做一次首次加载
-  afterUnlock() {
+  onShow() {
+    // 用户可能在其他页/其他入口刚存过口令，每次回来同步一次
+    const hasToken = passcode.hasToken();
+    if (hasToken !== this.data.hasToken) this.setData({ hasToken });
+  },
+
+  // 按当前 tab 做一次首次加载
+  loadCurrentTab() {
     if (this.data.tab === "link") {
       this.loadLinks();
     } else {
@@ -113,42 +115,32 @@ Page({
     }
   },
 
-  // ---------- 口令门 ----------
+  // ---------- 口令 ----------
 
-  hasValidPasscode() {
-    const ts = Number(wx.getStorageSync(PASSCODE_TS_KEY) || 0);
-    return !!wx.getStorageSync(PASSCODE_KEY) && ts && Date.now() - ts < PASSCODE_TTL;
-  },
-
-  onPasscodeInput(e) {
-    this.setData({ passcode: e.detail.value });
-  },
-
-  unlock() {
-    const input = String(this.data.passcode || "").trim();
-    if (!input) {
-      wx.showToast({ title: "请输入口令", icon: "none" });
-      return;
-    }
-    // 不做对错校验：真校验在 Actions 端，错口令的提交会被自动丢弃
-    wx.setStorageSync(PASSCODE_KEY, input);
-    wx.setStorageSync(PASSCODE_TS_KEY, Date.now());
-    this.setData({ unlocked: true, passcode: "" });
-    this.afterUnlock();
-  },
-
-  lock() {
-    wx.removeStorageSync(PASSCODE_KEY);
-    wx.removeStorageSync(PASSCODE_TS_KEY);
-    this.setData({
-      unlocked: false,
-      photos: [],
-      photoCatIndex: -1,
-      catIndex: -1,
-      links: [],
-      linkDirty: false,
-      draft: { appid: "", name: "", logo: "" },
+  // 右上角「口令」按钮：输一次永久存本机（提交时随请求上传，真校验在 Actions 端）
+  editToken() {
+    passcode.promptToken({
+      onSaved: () => {
+        const hasToken = passcode.hasToken();
+        this.setData({ hasToken });
+        wx.showToast({ title: hasToken ? "口令已保存" : "已清除口令", icon: "none" });
+      },
     });
+  },
+
+  // 提交前检查：没有口令就不让提交（否则后台会静默丢弃）
+  // 返回 true 表示可以继续，false 表示已拦下
+  ensureToken(token) {
+    if (token) return true;
+    wx.showModal({
+      title: "还没设置管理口令",
+      content: "提交需要管理口令，否则后台会直接丢弃。现在设置吗？",
+      confirmText: "去设置",
+      success: r => {
+        if (r.confirm) this.editToken();
+      },
+    });
+    return false;
   },
 
   // ---------- 公共 ----------
@@ -168,7 +160,7 @@ Page({
   },
 
   getToken() {
-    return String(wx.getStorageSync(PASSCODE_KEY) || "");
+    return passcode.getToken();
   },
 
   submitToast() {
@@ -243,6 +235,11 @@ Page({
       return;
     }
     if (this.data.saving) return;
+
+    // 提交前先确认本机有口令，否则后台会静默丢弃
+    const token = this.getToken();
+    if (!this.ensureToken(token)) return;
+
     this.setData({ saving: true });
 
     const patch = {};
@@ -264,7 +261,7 @@ Page({
 
     const ok = await putInbox("manage", {
       action: "updateCat",
-      token: this.getToken(),
+      token,
       cat_id: this.jsData.currentCatId,
       patch,
     });
@@ -313,10 +310,13 @@ Page({
     const hidden = e.currentTarget.dataset.hidden === true;
     if (!id) return;
 
+    const token = this.getToken();
+    if (!this.ensureToken(token)) return;
+
     wx.showLoading({ title: "提交中", mask: true });
     const ok = await putInbox("manage", {
       action: "managePhoto",
-      token: this.getToken(),
+      token,
       photo_id: id,
       hidden: !hidden,
     });
@@ -430,6 +430,10 @@ Page({
 
   async saveLinks() {
     if (this.data.linkSaving) return;
+
+    const token = this.getToken();
+    if (!this.ensureToken(token)) return;
+
     this.setData({ linkSaving: true });
 
     const apps = this.data.links.map(l => ({
@@ -440,7 +444,7 @@ Page({
 
     const ok = await putInbox("manage", {
       action: "saveFriendLinks",
-      token: this.getToken(),
+      token,
       apps,
     });
     this.setData({ linkSaving: false });

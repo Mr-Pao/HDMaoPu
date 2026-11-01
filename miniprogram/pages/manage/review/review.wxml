@@ -1,65 +1,45 @@
 <!--pages/manage/review/review.wxml-->
 <view class="container">
 
-  <!-- 未解锁：口令门 -->
-  <view class="gate" wx:if="{{!unlocked}}">
-    <view class="gate-icon">🔒</view>
-    <view class="gate-title">审核队列</view>
-    <view class="gate-tip">请输入管理口令</view>
-    <input
-      class="gate-input"
-      type="text"
-      password="{{true}}"
-      value="{{passcode}}"
-      placeholder="口令"
-      bindinput="onPasscodeInput"
-      confirm-type="done"
-      bindconfirm="unlock"
-    />
-    <view class="gate-error" wx:if="{{error}}">{{error}}</view>
-    <button class="gate-btn" bindtap="unlock">进入</button>
+  <!-- 本页没有口令锁屏：右上角「口令」输一次永久存本机 -->
+  <view class="head">
+    <view class="head-title">待审核 {{items.length}} 条</view>
+    <view class="head-lock" bindtap="editToken">口令</view>
+  </view>
+  <view class="head-tip">提交后将在下一次聚合（1 小时内）生效</view>
+  <view class="token-tip" wx:if="{{!hasToken}}" bindtap="editToken">还没设置管理口令，点这里设置一次（审核提交需要）</view>
+
+  <view class="loading" wx:if="{{loading}}">加载中…</view>
+
+  <view class="empty" wx:elif="{{!items.length}}">
+    <view class="empty-icon">🌿</view>
+    <view>暂无待审核内容</view>
+    <view class="empty-sub">{{error || '有新内容时会出现在这里'}}</view>
   </view>
 
-  <!-- 已解锁：队列 -->
-  <block wx:else>
-    <view class="head">
-      <view class="head-title">待审核 {{items.length}} 条</view>
-      <view class="head-lock" bindtap="lock">锁定</view>
-    </view>
-    <view class="head-tip">提交后将在下一次聚合（1 小时内）生效</view>
-
-    <view class="loading" wx:if="{{loading}}">加载中…</view>
-
-    <view class="empty" wx:elif="{{!items.length}}">
-      <view class="empty-icon">🌿</view>
-      <view>暂无待审核内容</view>
-      <view class="empty-sub">{{error || '有新内容时会出现在这里'}}</view>
+  <view class="card" wx:for="{{items}}" wx:key="_id">
+    <view class="card-top">
+      <view class="tag tag-{{item.kind}}">{{item.kindLabel}}</view>
+      <view class="cat">{{item.catName}}</view>
+      <view class="time">{{item.timeText}}</view>
     </view>
 
-    <view class="card" wx:for="{{items}}" wx:key="_id">
-      <view class="card-top">
-        <view class="tag tag-{{item.kind}}">{{item.kindLabel}}</view>
-        <view class="cat">{{item.catName}}</view>
-        <view class="time">{{item.timeText}}</view>
-      </view>
+    <image
+      class="photo"
+      wx:if="{{item.url}}"
+      src="{{item.url}}"
+      mode="aspectFill"
+      lazy-load
+    />
 
-      <image
-        class="photo"
-        wx:if="{{item.url}}"
-        src="{{item.url}}"
-        mode="aspectFill"
-        lazy-load
-      />
+    <view class="content" wx:if="{{item.content}}">{{item.content}}</view>
 
-      <view class="content" wx:if="{{item.content}}">{{item.content}}</view>
+    <view class="meta">来自 {{item.nickname}}</view>
 
-      <view class="meta">来自 {{item.nickname}}</view>
-
-      <view class="actions">
-        <view class="btn btn-reject" data-id="{{item._id}}" data-action="reject" bindtap="decide">拒绝</view>
-        <view class="btn btn-approve" data-id="{{item._id}}" data-action="approve" bindtap="decide">通过</view>
-      </view>
+    <view class="actions">
+      <view class="btn btn-reject" data-id="{{item._id}}" data-action="reject" bindtap="decide">拒绝</view>
+      <view class="btn btn-approve" data-id="{{item._id}}" data-action="approve" bindtap="decide">通过</view>
     </view>
-  </block>
+  </view>
 
 </view>

@@ -1,20 +1,20 @@
-// 审核队列：管理员入口，口令解锁后处理 inbox 待审内容
+// 审核队列：管理员入口，处理 inbox 待审内容（本页无锁屏，口令只在本机存一次）
 //
 // 数据流：
 //   用户提交评论 → COS inbox/comment/ → Action 每小时聚合 → data/review_queue.json
 //   这里读 review_queue 里 status=pending 的项，点通过/拒绝 → 写 inbox/decision/
 //   下一次聚合时落库（通过）或只标状态（拒绝）
 //
-// 注意：口令不内置在小程序包里。用户手动输入，只存手机本地 storage（与管理后台共用），
-// 客户端只做非空校验。真正的把关在 GitHub Actions 端，
-// 口令不对的 decision 会被直接丢弃，所以即使有人逆向出这个页面也改不了审核结果。
+// 注意：口令不内置在小程序包里。v4.0.33 起本页已无锁屏口令门，
+// 右上角「口令」按钮输一次，永久存手机本地 storage（与管理后台共用），客户端只做非空校验。
+// 真正的把关在 GitHub Actions 端，口令不对的 decision 会被直接丢弃，
+// 所以即使有人逆向出这个页面也改不了审核结果。
 
 import { putInbox } from "../../../utils/writeback";
 
+const passcode = require("../../../utils/passcode");
+
 const app = getApp();
-const PASSCODE_KEY = "manage_passcode";       // 与管理后台共用
-const PASSCODE_TS_KEY = "manage_passcode_ts"; // 与管理后台共用
-const PASSCODE_TTL = 24 * 60 * 60 * 1000; // 24 小时免输入
 
 const KIND_LABEL = {
   comment: "评论",
@@ -31,8 +31,7 @@ function formatTime(iso) {
 
 Page({
   data: {
-    unlocked: false,
-    passcode: "",
+    hasToken: false, // 本机是否已存管理口令（只控制顶部提示条显隐）
     loading: false,
     items: [],
     error: "",
@@ -44,42 +43,28 @@ Page({
   },
 
   onLoad() {
-    const ts = Number(wx.getStorageSync(PASSCODE_TS_KEY) || 0);
-    if (wx.getStorageSync(PASSCODE_KEY) && ts && Date.now() - ts < PASSCODE_TTL) {
-      this.setData({ unlocked: true });
-      this.loadQueue();
-    }
-  },
-
-  onPullDownRefresh() {
-    if (!this.data.unlocked) {
-      wx.stopPullDownRefresh();
-      return;
-    }
-    this.loadQueue().then(() => wx.stopPullDownRefresh());
-  },
-
-  onPasscodeInput(e) {
-    this.setData({ passcode: e.detail.value, error: "" });
-  },
-
-  unlock() {
-    const input = String(this.data.passcode || "").trim();
-    if (!input) {
-      this.setData({ error: "请输入口令" });
-      return;
-    }
-    // 不做对错校验：口令只存本地，真校验在 Actions 端
-    wx.setStorageSync(PASSCODE_KEY, input);
-    wx.setStorageSync(PASSCODE_TS_KEY, Date.now());
-    this.setData({ unlocked: true, passcode: "", error: "" });
+    this.setData({ hasToken: passcode.hasToken() });
     this.loadQueue();
   },
 
-  lock() {
-    wx.removeStorageSync(PASSCODE_KEY);
-    wx.removeStorageSync(PASSCODE_TS_KEY);
-    this.setData({ unlocked: false, items: [] });
+  onShow() {
+    const hasToken = passcode.hasToken();
+    if (hasToken !== this.data.hasToken) this.setData({ hasToken });
+  },
+
+  onPullDownRefresh() {
+    this.loadQueue().then(() => wx.stopPullDownRefresh());
+  },
+
+  // 右上角「口令」按钮：输一次永久存本机（审核提交时随请求上传，真校验在 Actions 端）
+  editToken() {
+    passcode.promptToken({
+      onSaved: () => {
+        const hasToken = passcode.hasToken();
+        this.setData({ hasToken });
+        wx.showToast({ title: hasToken ? "口令已保存" : "已清除口令", icon: "none" });
+      },
+    });
   },
 
   async loadQueue() {
@@ -125,15 +110,32 @@ Page({
     }
   },
 
+  // 提交前检查：没有口令就不让提交（否则后台会静默丢弃这条 decision）
+  ensureToken(token) {
+    if (token) return true;
+    wx.showModal({
+      title: "还没设置管理口令",
+      content: "提交需要管理口令，否则后台会直接丢弃。现在设置吗？",
+      confirmText: "去设置",
+      success: r => {
+        if (r.confirm) this.editToken();
+      },
+    });
+    return false;
+  },
+
   async decide(e) {
     const { id, action } = e.currentTarget.dataset;
     if (!id || !action) return;
+
+    const token = passcode.getToken();
+    if (!this.ensureToken(token)) return;
 
     wx.showLoading({ title: "提交中", mask: true });
     const ok = await putInbox("decision", {
       item_id: id,
       action: action === "approve" ? "approve" : "reject",
-      token: String(wx.getStorageSync(PASSCODE_KEY) || ""),
+      token,
     });
     wx.hideLoading();
 

@@ -141,7 +141,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.32`），commit message 末尾带版本号。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.33`），commit message 末尾带版本号。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -158,7 +158,17 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-01）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.32`
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.33`
+- **v4.0.33：去掉管理口令锁屏门（2026-11-01）**
+  - **用户要求（m00463）：「可以去掉口令吗」**，追问后用户选择**「只去掉客户端的口令输入」**——页面不再有锁屏门，进页面直接可用；**提交仍带口令**，服务端 `scripts/process-inbox.js` 的 `tokenOk()` 与 `REVIEW_PASSCODE` 一字未动（那是唯一真权限边界）。**明确否决的方案**：把口令写死进 `config.js`（小程序包可解，等于公开管理权）、服务端也去掉校验。
+  - **新增 `miniprogram/utils/passcode.js`（76 行，CommonJS）**：`KEY = "manage_passcode"`；导出 `getToken() / hasToken() / setToken(v) / promptToken(options)`。`setToken` 传空串 = `wx.removeStorageSync`。`promptToken` 用 `wx.showModal({ editable: true, ... })`，**绝不能传 `content`**（editable 模式下 content 会变成弹窗说明文字且输入框无法预填），用户输入在 `res.content`；确认后非空保存、空串清除，两种都回调 `options.onSaved`；全程 try/catch 不 throw。
+  - **口令改为永久有效**：删掉了 `PASSCODE_TS_KEY = "manage_passcode_ts"` / `PASSCODE_TTL = 24*60*60*1000` 与 `hasValidPasscode()`，不再有 24 小时过期。storage key 仍是 `manage_passcode`（与 review 页共用）。
+  - **`miniprogram/pages/manage/admin/admin.js`（457 行）**：删 `PASSCODE_KEY/TS_KEY/TTL`、`hasValidPasscode/onPasscodeInput/unlock/lock`、`data.unlocked/passcode`；改 `const passcode = require("../../../utils/passcode");`（:18）。`onLoad:93` 设完 tab 后**无条件** `this.loadCurrentTab()`（:110，原 `afterUnlock` 改名）；新增 `onShow:103` 只同步 `hasToken` 不重载数据；`getToken:162` → `passcode.getToken()`；新增 `editToken:121`（右上角按钮，成功 toast「口令已保存」/「已清除口令」）与 `ensureToken(token):133`（无口令时弹「还没设置管理口令 / 提交需要管理口令，否则后台会直接丢弃。现在设置吗？」confirmText「去设置」）。三个提交点 `saveCat:231`/`togglePhoto:308`/`saveLinks:431` 都是先 `const token = this.getToken();` → `if (!this.ensureToken(token)) return;` → `putInbox` **复用同一 token 变量**（不再二次 getToken）。`saveCat` 的检查放在「请先选择猫猫」之后，保持原提示优先级。
+  - **`miniprogram/pages/manage/admin/admin.wxml`（170 行）**：`.gate` 整块删掉、`<block wx:else>` 拆包；`.head-lock:7` 由 `bindtap="lock"`「退出管理」改成 `bindtap="editToken"`「口令」；`.head-tip:9` 换新文案；新增 `.token-tip:10`（`wx:if="{{!hasToken}}"`，bindtap=editToken）。`admin.wxss`（296 行）删 `.gate` 整组（原 :11–68 含 `.gate-btn::after`），新增 `.token-tip:39`（`--dk-accent-soft` 底 / `--dk-accent` 字，无新增 hex）。
+  - **`miniprogram/pages/manage/review/review.js`（159 行）与 `.wxml`（18 行）**同样处理：`onLoad:45` 直接 `loadQueue()`，`onShow:50`，`onPullDownRefresh:55` 去掉 unlocked 判断，`editToken:60`，`ensureToken:114`，`decide:127` 前置检查 + `passcode.getToken():131`。`.head-lock:7` 文案「锁定」→「口令」。`review.wxss` 删 `.gate` 整组（含 `.gate-error`）。
+  - ⚠️ **`review.wxml` 从 65 行缩到 18 行**（gate 块占了大头），别以为文件被截断了。
+  - 自检口径：`grep -E 'hasValidPasscode|onPasscodeInput|PASSCODE_TS_KEY|PASSCODE_TTL|PASSCODE_KEY|gate-|afterUnlock|unlocked'` 在 `miniprogram/pages/manage/` 下 **0 命中**；`hidden` 属性 **0 处**（全部 wx:if/wx:elif/wx:else，避开 v4.0.27 记的坑）；wxml 标签平衡 admin 49/49 view、4/4 block、6/6 picker，review 21/21 view；wxss 花括号 41/41、25/25。
+  - `scripts/`、`.github/`、`data/`、`app.json`、`project.config.json`、`miniprogram/app.wxss` **零改动**。
 - **v5.4 主题色强化：首页 + tabBar 加大绿色面积与对比度（2026-11-01，未单独占版本号，代码已随 `e9689bf` 上库）**
   - **用户原始诉求（2026-11-01）：「主题色不够突出」**。澄清后用户拍板走 **「绿色存在感不够：不改色值，加大绿色面积和对比」**——`#0C5F03` 品牌色号**一个字都不许改**（呼应本文件「坑 7」）。手段只有三条：①加大绿色面积；②大面积填充改用**已存在**的亮绿 `--dk-accent-2: #14801F`；③提高对比度/阴影。
   - **只改了 2 个文件，都走「末尾追加覆盖块」范式，旧样式一行未回改**：`miniprogram/pages/genealogy/genealogy.wxss`（1201→1260 行，v5.4 块从 **第 1204 行**起）+ `miniprogram/custom-tab-bar/index.wxss`（66→84 行，v5.4 块从 **第 69 行**起）。**没碰 `app.wxss` token、没碰任何 js/wxml/json、没用 `!important`、没加图片**。
@@ -243,7 +253,7 @@ cos-version  从上游错误派生，废弃
   - COS 上曾出现过一条 `relink-photo-1`（指向 `photos/demo-cat-12/0001.jpg`，猫 `demo-cat-12 奶盖`），是误把 `photos/demo-cat-1/cover.jpg` 复制过来当新照片的假数据。**2026-11-01 已彻底清除**（远端只剩 11 条 photo、11 只 cat，孤儿对象 `photos/demo-cat-12/0001.jpg` 已删）。
 - 其余演示规模：comment 48 / rating 48 / user 9 / news 8 …
 - UI 已全站统一白底大圆角（v5.2），图库是横向漂流墙（8 行宽窄交替 marquee）
-- 审核/管理走口令门（本地 storage `manage_passcode` 24h），真正校验在 `process-inbox.js` 的 `REVIEW_PASSCODE`
+- 审核/管理**已无口令锁屏门**（v4.0.33）：右上角「口令」按钮输一次永久存本地 storage `manage_passcode`，`utils/passcode.js` 统一读写；真正校验仍在 `process-inbox.js` 的 `REVIEW_PASSCODE`（token 不对的提交直接 `drop:bad-token` 静默丢弃）
 - **徽章（勋章）功能已全站删除**（v4.0.17）：10 个页面 40 个文件、`components/badgeModal`、`components/badgeRank`（只有死页 leaderboard 引用）、`utils/badge.js`、`cloudApi.js` 的 `getBadge/giveBadge/genBadgeCode/loadBadgeCode`、`data/{badge,badge_def,badge_rank}.json`、11 张图片、`config.badge_rank_*_img` 常量、`gen-demo-data.js` 的 BADGE_DEFS 段、`verify-demo-data.js` 的 8 个校验项全部清除。`app.json` 页面 38→34、分包 3→1。`info` 页删「徽章口袋」card 与「徽章管理」菜单。`ratingDetail.wxss` 原有 `@import "../badgeDetail/badgeDetail.wxss"`，已内联所需的 `.bd-block`/`.bd-title`；`app.wxss` 里零引用的 `--color-badge-A/B/C` 三个 token 也已删（文件其余 token 不动）
 - **「猫际关系」卡按数据显隐**（v4.0.18）：外层条件改为 `{{cat.relations && cat.relations.length}}`（不再对管理员单向开放），没有关系时整张卡不显示；卡内「+ 添加关系」入口删除，`detailCat.js` 的 `toAddRelation()` 一并删除，**改到「猫咪信息纠错」页**（`feedbackDetail`）——仅管理员可见（`isManagerAsync(3)`），`.adminEntry` 块在 `.userInfo` 之后
 - 详情页整体信息架构（v4.0.17 重构）：猫猫档案卡（去绿条 label-block、扁平两列）→ 猫友评价卡 → 疫苗卡 → 猫际关系卡 → 相册；卡片间距统一 24rpx

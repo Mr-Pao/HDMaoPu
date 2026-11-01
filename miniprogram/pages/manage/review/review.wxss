@@ -7,64 +7,6 @@
   box-sizing: border-box;
 }
 
-/* ==================== 口令门 ==================== */
-.gate {
-  margin-top: 120rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.gate-icon {
-  font-size: 80rpx;
-  margin-bottom: 20rpx;
-}
-
-.gate-title {
-  font-size: 40rpx;
-  font-weight: 600;
-  color: var(--color-primary, #0C5F03);
-}
-
-.gate-tip {
-  margin-top: 12rpx;
-  font-size: 26rpx;
-  color: var(--color-gray-max);
-}
-
-.gate-input {
-  margin-top: 50rpx;
-  width: 520rpx;
-  height: 88rpx;
-  padding: 0 28rpx;
-  background: var(--color-surface);
-  border-radius: 20rpx;
-  font-size: 30rpx;
-  text-align: center;
-  box-sizing: border-box;
-}
-
-.gate-error {
-  margin-top: 16rpx;
-  font-size: 24rpx;
-  color: #D93025;
-}
-
-.gate-btn {
-  margin-top: 40rpx;
-  width: 520rpx;
-  height: 88rpx;
-  line-height: 88rpx;
-  border-radius: 44rpx;
-  background: var(--color-primary, #0C5F03);
-  color: var(--color-surface);
-  font-size: 32rpx;
-}
-
-.gate-btn::after {
-  border: none;
-}
-
 /* ==================== 头部 ==================== */
 .head {
   display: flex;
@@ -91,6 +33,17 @@
   font-size: 24rpx;
   color: var(--color-gray-max);
   margin-bottom: 26rpx;
+}
+
+/* 没设口令时的醒目提示条（点一下直接弹输入框） */
+.token-tip {
+  margin: 0 24rpx 16rpx;
+  padding: 14rpx 20rpx;
+  border-radius: 16rpx;
+  background: var(--dk-accent-soft);
+  color: var(--dk-accent);
+  font-size: 24rpx;
+  line-height: 1.5;
 }
 
 /* ==================== 状态 ==================== */
