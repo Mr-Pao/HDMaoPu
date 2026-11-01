@@ -129,7 +129,8 @@ Page({
           {
             name: "特邀用户",
             path: "/pages/tools/inviteUser/inviteUser",
-            icon: "icon-star-o"
+            icon: "icon-star-o",
+            disabled: true
           },
           {
             name: "徽章管理",
@@ -180,13 +181,6 @@ Page({
     this.setData({
       friendApps: apps,
     });
-
-    // 设置为特邀用户
-    const {query} = wx.getLaunchOptionsSync();
-    console.log("query", query);
-    if (query.inviteRole) {
-      this.doInviteRole(options);
-    }
   },
 
   // 用 onShow 不用 onLoad，为了在返回这个页面时也能重新加载
