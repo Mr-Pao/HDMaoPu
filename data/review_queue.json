@@ -1,5 +1,5 @@
 {
-  "version": "v1793526262852",
+  "version": "v1793550413474",
   "items": [
     {
       "_id": "rv-1793523110816-mvxn89c2ujk8cp",
@@ -26,6 +26,33 @@
         "cat_id": "cat-daimao",
         "photographer": "",
         "shooting_date": "2026-11"
+      }
+    },
+    {
+      "_id": "rv-1793548639600-mvy1lw2o0ydn8g",
+      "kind": "comment",
+      "openid": "guest_2d5041ef",
+      "ts": 1793548639600,
+      "status": "pending",
+      "create_time": "2026-11-01T15:57:19.600Z",
+      "data": {
+        "cat_id": "cat-naigai",
+        "content": "可爱",
+        "nickname": "匿名猫友"
+      }
+    },
+    {
+      "_id": "rv-1793541691002-mvy1lw2psdhjk8",
+      "kind": "photo",
+      "openid": "guest_2d5041ef",
+      "ts": 1793541691002,
+      "status": "pending",
+      "create_time": "2026-11-01T14:01:31.002Z",
+      "data": {
+        "photo_key": "pending/guest_2d5041ef-1793541690633.png",
+        "cat_id": "cat-naigai",
+        "photographer": "一只狍",
+        "shooting_date": "2026-02"
       }
     }
   ]

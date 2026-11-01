@@ -1,5 +1,5 @@
 {
-  "version": "v1793531243693",
+  "version": "v1793550413474",
   "items": [
     {
       "_id": "follow|guest_908baf6f|cat-jinbeiyinchuang",
@@ -221,6 +221,104 @@
       "target": "inbox/manage/1793531205457-guest_36-li04.json",
       "state": 1,
       "ts": 1793531205457
+    },
+    {
+      "_id": "catlike|guest_908baf6f|cat-jinbeiyinchuang",
+      "k": "catlike|guest_908baf6f|cat-jinbeiyinchuang",
+      "kind": "catlike",
+      "openid": "guest_908baf6f",
+      "target": "cat-jinbeiyinchuang",
+      "state": true,
+      "ts": 1793532912076
+    },
+    {
+      "_id": "catlike|guest_2d5041ef|cat-kele",
+      "k": "catlike|guest_2d5041ef|cat-kele",
+      "kind": "catlike",
+      "openid": "guest_2d5041ef",
+      "target": "cat-kele",
+      "state": true,
+      "ts": 1793548625687
+    },
+    {
+      "_id": "rating|guest_3b7acde5|cat-guayintuoqiang",
+      "k": "rating|guest_3b7acde5|cat-guayintuoqiang",
+      "kind": "rating",
+      "openid": "guest_3b7acde5",
+      "target": "cat-guayintuoqiang",
+      "state": 5,
+      "ts": 1793535446472,
+      "dims": {
+        "r1": 5,
+        "r2": 5,
+        "r3": 5,
+        "r4": 5,
+        "r5": 4
+      }
+    },
+    {
+      "_id": "rating|guest_3b7acde5|cat-songzi",
+      "k": "rating|guest_3b7acde5|cat-songzi",
+      "kind": "rating",
+      "openid": "guest_3b7acde5",
+      "target": "cat-songzi",
+      "state": 5,
+      "ts": 1793535473147,
+      "dims": {
+        "r1": 5,
+        "r2": 5,
+        "r3": 5,
+        "r4": 5,
+        "r5": 5
+      }
+    },
+    {
+      "_id": "rating|guest_2d5041ef|cat-meiqiu",
+      "k": "rating|guest_2d5041ef|cat-meiqiu",
+      "kind": "rating",
+      "openid": "guest_2d5041ef",
+      "target": "cat-meiqiu",
+      "state": 5,
+      "ts": 1793535700906,
+      "dims": {
+        "r1": 5,
+        "r2": 5,
+        "r3": 5,
+        "r4": 5,
+        "r5": 5
+      }
+    },
+    {
+      "_id": "rating|guest_68f2447f|cat-jiyue",
+      "k": "rating|guest_68f2447f|cat-jiyue",
+      "kind": "rating",
+      "openid": "guest_68f2447f",
+      "target": "cat-jiyue",
+      "state": 4,
+      "ts": 1793546051054,
+      "dims": {
+        "r1": 5,
+        "r2": 5,
+        "r3": 4,
+        "r4": 4,
+        "r5": 4
+      }
+    },
+    {
+      "_id": "rating|guest_68f2447f|cat-mangguo",
+      "k": "rating|guest_68f2447f|cat-mangguo",
+      "kind": "rating",
+      "openid": "guest_68f2447f",
+      "target": "cat-mangguo",
+      "state": 4,
+      "ts": 1793546067111,
+      "dims": {
+        "r1": 4,
+        "r2": 4,
+        "r3": 4,
+        "r4": 4,
+        "r5": 4
+      }
     }
   ]
 }
