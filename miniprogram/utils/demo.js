@@ -142,7 +142,7 @@ const MOCK_SETTINGS = {
     _id: 'pages',
     genealogy: { catsStep: 1 },
     tabBarCtrl: {
-      fullTab: 'genealogy,followFeed,news,leaderboard,info,map',
+      fullTab: 'genealogy,followFeed,news,gallery,info,map',
       ctrlTab: ''
     },
     accessCtrl: {

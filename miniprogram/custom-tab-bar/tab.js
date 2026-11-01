@@ -17,11 +17,11 @@ module.exports = {
     "selectedIconPath": "/pages/public/images/tabs/active/sci.png",
     "text": "猫抓板"
   },
-  leaderboard: {
-    "pagePath": "pages/leaderboard/leaderboard",
-    "iconPath": "/pages/public/images/tabs/default/org.png",
-    "selectedIconPath": "/pages/public/images/tabs/active/org.png",
-    "text": "榜单"
+  gallery: {
+    "pagePath": "pages/gallery/gallery",
+    "iconPath": "/pages/public/images/tabs/default/gallery.png",
+    "selectedIconPath": "/pages/public/images/tabs/active/gallery.png",
+    "text": "图库"
   },
   info: {
     "pagePath": "pages/info/info",

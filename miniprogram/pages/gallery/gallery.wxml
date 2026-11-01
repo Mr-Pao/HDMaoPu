@@ -1,0 +1,48 @@
+<view class="dk-glow"></view>
+<view class="nav" style="padding-top: {{statusBarHeight}}px;">
+  <view class="nav-flex">
+    <view class="nav-l">
+      <view class="nav-sub">CAT GALLERY</view>
+      <view class="nav-title">猫咪图库</view>
+    </view>
+    <view class="nav-r">
+      <view class="nav-num">{{total || 0}}</view>
+      <view class="nav-num-k">张</view>
+    </view>
+  </view>
+</view>
+
+<scroll-view scroll-y="1" enable-flex="1" class="gallery-scroll" style="height: {{heights.listHeight}}px;" bindscrolltolower="onReachBottom">
+  <view class="main">
+    <view wx:for="{{columns}}" wx:key="null" class="column" wx:for-index="col">
+      <view wx:for="{{item}}" wx:key="_id" class="g-item" wx:for-item="pics">
+        <view class="g-pic" bindtap="clickPhoto" data-url="{{pics.pic_prev}}">
+          <image
+            src="{{pics.pic}}"
+            mode="widthFix"
+            binderror="loadPicError"
+            data-col="{{col}}"
+            data-index="{{index}}"
+          />
+          <view class="g-loc" wx:if="{{pics.cat && pics.cat.campus}}">{{pics.cat.campus}}</view>
+        </view>
+        <view class="g-info">
+          <view class="g-name ellipsis-text" bindtap="clickCatName" data-cat_id="{{pics.cat_id}}">{{pics.cat.name}}</view>
+          <view class="g-count">{{pics.like_count || 0}} 赞</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class='loading' wx:if='{{!loadnomore}}'>
+    <image src='/pages/public/images/system/loading.gif'></image>
+  </view>
+  <view class='loadnomore' wx:else>
+    <image src='/pages/public/images/system/nomore.png'></image>
+  </view>
+  <view class="hide">
+    <image wx:for="{{tempPics}}" wx:key="_id" src="{{item.pic}}" bindload="loadPic" binderror="loadPicError" data-index="{{index}}" />
+  </view>
+</scroll-view>
+
+<view style="height: {{tabBarHeight}}px;"></view>

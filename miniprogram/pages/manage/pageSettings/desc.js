@@ -82,7 +82,7 @@ module.exports = {
     fullTab: {
       type: "multi-select",
       tip: "完整的底部TabBar，勾选顺序将影响展示顺序。",
-      default: "genealogy,recognize,news,leaderboard,info",
+      default: "genealogy,recognize,news,gallery,info",
       choices: tabBarTypes,
       order: true,
     },

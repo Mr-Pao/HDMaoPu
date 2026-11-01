@@ -1,0 +1,98 @@
+page {
+  height: 100%;
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+.gallery-scroll {
+  box-sizing: border-box;
+}
+
+.main {
+  display: flex;
+  align-items: flex-start;
+  padding: 0 20rpx;
+}
+
+.column {
+  width: 50%;
+  padding: 0 4rpx;
+  box-sizing: border-box;
+}
+
+.g-item {
+  margin-bottom: 20rpx;
+  background-color: var(--dk-card);
+  border: 1rpx solid var(--dk-line);
+  border-radius: var(--dk-radius);
+  overflow: hidden;
+}
+
+.g-pic {
+  position: relative;
+  border-radius: var(--dk-radius) var(--dk-radius) 0 0;
+  overflow: hidden;
+}
+.g-pic image {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  vertical-align: bottom;
+}
+.g-loc {
+  position: absolute;
+  top: 16rpx;
+  right: 14rpx;
+  color: rgba(255, 255, 255, 0.94);
+  background-color: rgba(16, 22, 15, 0.55);
+  border-radius: var(--dk-radius-pill);
+  font-size: 18rpx;
+  padding: 4rpx 14rpx;
+  backdrop-filter: blur(8rpx);
+}
+
+.g-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 20rpx 18rpx 20rpx;
+}
+.g-name {
+  color: var(--dk-text);
+  font-size: 26rpx;
+  font-weight: 700;
+  max-width: 200rpx;
+}
+.g-count {
+  color: var(--dk-text-3);
+  font-size: 20rpx;
+}
+
+.ellipsis-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.loading,
+.loadnomore {
+  opacity: 0.42;
+}
+.loading image,
+.loadnomore image {
+  filter: none;
+}
+.loading image {
+  width: 165.9rpx;
+  height: 90.3rpx;
+  margin: 10rpx 292rpx;
+}
+.loadnomore image {
+  width: 750rpx;
+  height: 100rpx;
+  margin: 10rpx 0;
+}
+
+.hide {
+  display: none;
+}

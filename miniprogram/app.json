@@ -23,7 +23,7 @@
     "pages/news/modifyNews/modifyNews",
     "pages/news/createNews/createNews",
     "pages/news/sciDetail/sciDetail",
-    "pages/leaderboard/leaderboard",
+    "pages/gallery/gallery",
     "pages/manage/imProcess/imProcess",
     "pages/manage/checkPhotos/checkPhotos",
     "pages/manage/filters/filters",
@@ -66,7 +66,7 @@
         "pagePath": "pages/news/news"
       },
       {
-        "pagePath": "pages/leaderboard/leaderboard"
+        "pagePath": "pages/gallery/gallery"
       },
       {
         "pagePath": "pages/info/info"

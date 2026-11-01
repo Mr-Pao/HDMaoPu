@@ -27,7 +27,7 @@
       },
       "tabBarCtrl": {
         "ctrlTab": "news",
-        "fullTab": "genealogy,recognize,news,leaderboard,info"
+        "fullTab": "genealogy,recognize,news,gallery,info"
       },
       "subscribe": {
         "feedback#ID": "",

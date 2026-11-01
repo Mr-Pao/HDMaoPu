@@ -167,24 +167,22 @@ App({
         }
       };
 
-      // 预加载排行榜数据
-      const preloadLeaderboardData = async () => {
+      // 预加载图库数据
+      const preloadGalleryData = async () => {
         try {
-          const { result: cats } = await app.mpServerless.db.collection('cat').find({
-            adopt: { $ne: 1 },
-            to_star: { $ne: true },
-            missing: { $ne: true }
+          const { result: photos } = await app.mpServerless.db.collection('photo').find({
+            verified: true
           }, {
-            sort: { popularity: -1 },
-            limit: 20
+            sort: { mdate: -1 },
+            limit: 10
           });
 
-          wx.setStorageSync('leaderboardPagePreload', {
-            cats,
+          wx.setStorageSync('galleryPagePreload', {
+            photos,
             timestamp: Date.now()
           });
         } catch (e) {
-          console.warn('预加载排行榜数据失败:', e);
+          console.warn('预加载图库数据失败:', e);
         }
       };
 
@@ -192,7 +190,7 @@ App({
       await Promise.all([
         preloadInfoData(),
         preloadNewsData(),
-        preloadLeaderboardData()
+        preloadGalleryData()
       ]);
 
       this.globalData.tabDataPreloaded = true;
