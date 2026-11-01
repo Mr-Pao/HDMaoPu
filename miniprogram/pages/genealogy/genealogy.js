@@ -47,6 +47,8 @@ Page({
     filters: [],
     filters_legal: true,
     filters_input: '',
+    // v4.0.50 搜索框焦点开关（只用于主动失焦，不改搜索行为）
+    search_focus: false,
     filters_show_shadow: false,
     filters_empty: true,
     heights: { filters: 140, statusBarHeight: 20, navBarHeight: 44 },
@@ -254,6 +256,28 @@ Page({
 
   onShow: function () {
     showTab(this);
+    // v4.0.50 修「返回首页自动弹键盘」：tab 页只 onHide 不销毁，
+    // 上次留在搜索框的原生焦点会被微信带回来，这里主动收一次。
+    this.blurSearch();
+  },
+
+  onHide: function () {
+    this.blurSearch();
+  },
+
+  // 收起首页搜索框的键盘与焦点（焦点属性是确定性失焦，定时器只做兜底）
+  blurSearch: function () {
+    if (this.data.search_focus) {
+      this.setData({ search_focus: false });
+    }
+    const hide = () => {
+      if (typeof wx.hideKeyboard === 'function') {
+        wx.hideKeyboard({ fail() { } });
+      }
+    };
+    hide();
+    // 个别机型 onShow 时焦点还没恢复，稍后再收一次
+    setTimeout(hide, 80);
   },
 
   loadRecognize: async function () {

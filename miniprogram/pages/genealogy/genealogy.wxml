@@ -15,7 +15,7 @@
       <view class='input-icon'>
         <image mode='aspectFit' src="/pages/public/images/filter/search.png"></image>
       </view>
-      <input class='name' placeholder='{{text_cfg.genealogy.search_tip}}' placeholder-class='searchPlaceholderStyle' value='{{filters_input}}' maxlength='20' confirm-type='search' bindinput='fSearchInput' bindconfirm='fSearch'></input>
+      <input class='name' placeholder='{{text_cfg.genealogy.search_tip}}' placeholder-class='searchPlaceholderStyle' value='{{filters_input}}' focus='{{search_focus}}' maxlength='20' confirm-type='search' bindinput='fSearchInput' bindconfirm='fSearch'></input>
     </view>
 
     <view class='filter-btn {{filters_active? "on": ""}}' bindtap='fToggle'>
