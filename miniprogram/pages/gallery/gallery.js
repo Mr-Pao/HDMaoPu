@@ -51,7 +51,7 @@ Page({
   onShareAppMessage: function () {
     const first = (this.jsData.pool[0] || {});
     return {
-      title: this.data.total ? '火大猫谱 · 猫咪图库 ' + this.data.total + ' 张' : '火大猫谱 · 猫咪图库',
+      title: this.data.total ? '火大猫谱 · 猫图 ' + this.data.total + ' 张' : '火大猫谱 · 猫图',
       path: '/pages/gallery/gallery',
       ...(first.thumb ? { imageUrl: first.thumb } : {})
     };

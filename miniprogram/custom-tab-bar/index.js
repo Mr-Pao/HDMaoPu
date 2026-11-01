@@ -54,10 +54,9 @@ Component({
     // 这里做别名映射，无论缓存新旧都能正确显示图库 tab。
     const alias = { leaderboard: 'gallery' };
     const normalize = k => { const t = (k || '').trim(); return alias[t] || t; };
-    const fullTab = settings.fullTab.split(',').map(normalize);
+    let fullTab = settings.fullTab.split(',').map(normalize);
     const ctrlTab = new Map(settings.ctrlTab.split(',').map(i => [normalize(i), true]));
     var minTab = fullTab.filter(x => ctrlTab.get(x) === undefined);
-    // console.log("tabBar", ctrlTab, minTab, fullTab);
     // 根据用户类型来确定底Tab
     var order = minTab;
     if (await checkCanFullTabBar() || !order) {
@@ -72,6 +71,17 @@ Component({
         showCancel: false
       });
       return;
+    }
+
+    // 下线 tab 兜底：v4.0.23 起去掉「喵友圈」(followFeed)，旧缓存里的
+    // fullTab 仍含它、顺序也过期。只要 setting 里出现已下线/从未上线的 key，
+    // 就丢弃它的顺序，改按 tab.js 的权威顺序重排（权限过滤照旧生效）。
+    const RETIRED_TAB_KEYS = ['followFeed', 'recognize', 'leaderboard', 'map'];
+    const staleOrder = fullTab.some(k => RETIRED_TAB_KEYS.indexOf(k) !== -1);
+    if (staleOrder) {
+      const authoritative = Object.keys(tab);
+      fullTab = authoritative;
+      order = (await checkCanFullTabBar()) ? authoritative : authoritative.filter(x => ctrlTab.get(x) === undefined);
     }
 
     // 存起来其他地方可以查看
