@@ -3,6 +3,8 @@ import { formatDate } from "../../../utils/utils";
 import { requestNotice, getMsgTplId } from "../../../utils/msg";
 import { checkAuth, fillUserInfo } from "../../../utils/user";
 import api from "../../../utils/cloudApi";
+import passcode from "../../../utils/passcode";
+import { putInbox } from "../../../utils/writeback";
 
 const step = 6;
 const app = getApp();
@@ -29,7 +31,6 @@ Page({
     }
   },
   handleFeedbackUpdate: function(payload) {
-    console.log('收到反馈更新事件:', payload);
     
     // 更新特定反馈项
     const feedbacks = this.data.feedbacks.map(fb => {
@@ -53,7 +54,6 @@ Page({
   async loadFeedbacks() {
     const nowLoaded = this.data.feedbacks.length;
     var { result: feedbacks } = await app.mpServerless.db.collection('feedback').find({ dealed: this.data.checkHistory }, { sort: { openDate: -1 }, skip: nowLoaded, limit: step })
-    console.log("[loadFeedbacks] -", feedbacks);
     // 填充userInfo
     await fillUserInfo(feedbacks, "openid", "userInfo");
     // 获取对应猫猫信息；将Date对象转化为字符串；判断是否已回复
@@ -89,7 +89,6 @@ Page({
       dealed: this.data.checkHistory
     });
 
-    console.log("[reload] - feedbacks: ", fbRes);
     this.setData({
       total: fbRes.total,
     });
@@ -103,7 +102,6 @@ Page({
     wx.getSetting({
       withSubscriptions: true,
       success: res => {
-        console.log("[requestSubscribeMessage] - subscribeSet:", res);
         if ('subscriptionsSetting' in res) {
           if (!(notifyChkFeedbackTplId in res['subscriptionsSetting'])) {
             // 第一次请求
@@ -113,13 +111,11 @@ Page({
             // console.log("已拒绝");// 不再请求/重复弹出toast
             // requestNotice('notifyChkFeedback');
           } else if (res.subscriptionsSetting[notifyChkFeedbackTplId] === 'accept') {
-            console.log('[requestSubscribeMessage] - 重新请求下个一次性订阅');
             requestNotice('notifyChkFeedback');
           }
         }
       },
       complete: res => {
-        console.log("[requestSubscribeMessage] - complete:", res);
       }
     })
   },
@@ -151,18 +147,15 @@ Page({
       return;
     }
 
-    console.log('[bindCheck] - 确认反馈处理');
-    await api.curdOp({
-      operation: 'update',
-      collection: "feedback",
-      item_id: feedback._id,
-      data: {
-        dealed: true,
-        dealDate: api.getDate()
-      }
+    const token = passcode.getToken();
+    if (!this.ensureToken(token)) return;
+    await putInbox('manage', {
+      action: 'manageFeedback',
+      token: token,
+      feedback_id: feedback._id,
+      patch: { status: 'done' },
     });
 
-    console.log("[bindCheck] - 反馈已处理：" + feedback._id);
     // 直接从列表里去掉这个反馈，不完全加载了
     const feedbacks = this.data.feedbacks;
     const new_feedbacks = feedbacks.filter((fb) => {
@@ -214,5 +207,27 @@ Page({
     this.setData({
       checkHistory: this.data.checkHistory
     });
-  }
+  },
+
+  // 提交前检查：没有口令就不让提交（否则后台会静默丢弃）
+  ensureToken(token) {
+    if (token) return true;
+    wx.showModal({
+      title: "还没设置管理口令",
+      content: "提交需要管理口令，否则后台会直接丢弃。现在设置吗？",
+      confirmText: "去设置",
+      success: r => {
+        if (r.confirm) this.editToken();
+      },
+    });
+    return false;
+  },
+
+  editToken() {
+    passcode.promptToken({
+      onSaved: () => {
+        wx.showToast({ title: passcode.hasToken() ? "口令已保存" : "已清除口令", icon: "none" });
+      },
+    });
+  },
 })

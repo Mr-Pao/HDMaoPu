@@ -7,7 +7,6 @@ import { getCacheItem, setCacheItem } from "./cache";
 async function getCurrentUserOpenid() {
   try {
     const app = getApp();
-    console.log("App instance:", app);
     const res = await app.mpServerless.user.getInfo({
       authProvider: 'wechat_openapi'
     });
@@ -16,7 +15,6 @@ async function getCurrentUserOpenid() {
     }
     return null;
   } catch (error) {
-    console.log("getCurrentUserOpenid error:", error);
     return null;
   }
 }
@@ -26,7 +24,6 @@ async function downloadFile(filePath) {
     wx.downloadFile({
       url: filePath,
       success(res) {
-        console.log('cloud.downloadFile success', res);
         resolve(res);
       },
       fail: res => reject(res)
@@ -60,13 +57,11 @@ async function uploadFile(options) {
       name: "file",
       formData: formData,
       success(res) {
-        console.log('cloud.uploadFile success', res);
         // wx.uploadFile 和 wx.cloud.uplaodFile 返回值不一样
         // TODO 生成 fileID 按wxcloud生成的是图片的地址
         const cleanKey = formData.key.startsWith("/") ? formData.key.slice(1) : formData.key;
         res.fileUrl = postURL + cleanKey;
         res.fileId = '';
-        console.log("res.fileID", res.fileUrl);
         resolve(res);
       },
       fail(err) {
@@ -81,46 +76,6 @@ async function signCosUrl(inputUrl) {
 }
 
 
-
-/**
- * 将图片URL转换为WebP格式（如果支持的话）
- * @param {string} url - 原始图片URL
- * @returns {string} - WebP格式的图片URL
- */
-function convertToWebP(url) {
-  if (!url) return url;
-  
-  // 已经是webp格式，直接返回
-  if (url.toLowerCase().endsWith('.webp')) {
-    return url;
-  }
-  
-  // 替换常见图片格式为webp
-  const extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp'];
-  for (const ext of extensions) {
-    if (url.toLowerCase().endsWith(ext)) {
-      return url.slice(0, -ext.length) + '.webp';
-    }
-  }
-  
-  return url;
-}
-
-/**
- * 获取支持的图片格式URL（优先WebP）
- * @param {string} url - 原始图片URL
- * @param {boolean} [preferWebP=true] - 是否优先使用WebP
- * @returns {string} - 优化后的图片URL
- */
-function getOptimizedImageUrl(url, preferWebP = true) {
-  if (!url) return url;
-  
-  if (preferWebP) {
-    return convertToWebP(url);
-  }
-  
-  return url;
-}
 
 /**
  * 批量签名照片URL
@@ -161,7 +116,5 @@ module.exports = {
   downloadFile,
   uploadFile,
   signCosUrl,
-  signPhotoUrls,
-  convertToWebP,
-  getOptimizedImageUrl
+  signPhotoUrls
 }

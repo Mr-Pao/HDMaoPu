@@ -203,9 +203,10 @@ Component({
                 [`photos[${current}].like_count`]: like_count,
             });
 
-            // 执行数据库写入
+            // 执行 inbox 写入（聚合回传服务端，本地乐观计数已在上面 setData 完成）
             if (liked) {
-                likeAdd(this.data.photos[current]._id, "photo");
+                const photo = this.data.photos[current];
+                likeAdd(photo._id, "photo", photo.cat_id);
             } else {
                 // todo
             }

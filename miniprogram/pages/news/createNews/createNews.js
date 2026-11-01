@@ -124,7 +124,6 @@ Page({
     this.setData({
       photos: photos
     });
-    console.log("[chooseImg] -", this.data.photos);
   },
 
   deleteImg(event) {
@@ -144,7 +143,6 @@ Page({
   },
 
   previewImg: function (event) {
-    console.log("[previewImg] -", event);
     wx.previewImage({
       urls: [event.currentTarget.dataset.url]
     })
@@ -174,7 +172,6 @@ Page({
         }
       });
     }
-    console.log("[chooseCover] -", this.data.photos);
   },
 
   deleteCover(event) {
@@ -254,7 +251,6 @@ Page({
       cloudPath: '/news' + '/' + generateUUID() + '.' + ext, // 上传至云端的路径
     })
 
-    console.log("[uploadImg] - upload Result: ", upRes);
     if (type == 0) { 
       that.data.photos_path.push(upRes.fileUrl);
       that.data.photos_pathId.push(upRes.fileId);
@@ -271,7 +267,6 @@ Page({
   },
 
   radioButtonTap: function (e) {
-    console.log("[radioButtonTap] -", e);
     let id = e.currentTarget.dataset.id;
     for (let i = 0; i < this.data.buttons.length; i++) {
       if (this.data.buttons[i].id == id) {
@@ -303,7 +298,6 @@ Page({
   async bindSubmit(e) {
     var submitData = e.detail.value;
     const that = this;
-    console.log("[bindSubmit] - submit data: ", submitData);
     if (!submitData.title) {
       wx.showToast({
         title: '请填写标题后再发布哦',
@@ -346,7 +340,6 @@ Page({
       class: classBelongto,
       setNewsModal: setNewsModal
     };
-    console.log("[bindSubmit] - data: ", data);
 
     // 写 inbox/manage/，由 process-inbox.yml 聚合成 data/news.json 再推 COS。
     // putInbox 永远不 reject，返回 false 只代表这次没传上去。
@@ -356,7 +349,6 @@ Page({
       token: token,
       news: data
     });
-    console.log("[bindSubmit] - putInbox ok: ", ok);
 
     if (ok) {
       wx.showToast({

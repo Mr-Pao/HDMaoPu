@@ -529,7 +529,7 @@ function createJsonServerless(options) {
     const photos = await _load('photo');
     const valid = photos.filter(p => p
       && p.verified === true
-      && p.deleted !== 1
+      && !p.hidden && !p.deleted
       && p.latitude !== null && p.latitude !== undefined
       && p.longitude !== null && p.longitude !== undefined);
 

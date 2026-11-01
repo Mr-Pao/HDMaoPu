@@ -482,24 +482,39 @@ Page({
     const cat2photos = {};
     const cat2commentCount = {};
     
-    await Promise.all(cats.map(async cat => {
-      if (cat.photo === default_png) {
-        const photo = await getAvatar(cat._id, cat.photo_count_best);
-        if (photo) {
-          if (!photo.userInfo) {
-            try {
-              const userInfoRes = await getUserInfo(photo._openid);
-              photo.userInfo = userInfoRes.userInfo;
-            } catch (e) {
-              console.error("获取用户信息失败:", e);
+    // 并发限流：首页 21 只猫若一次性 Promise.all 拉头像，瞬时并发请求
+    // 会打爆请求数（每只猫约 2 次 db 查询）。这里用固定大小的 worker 池
+    // 把瞬时并发限制在 ≤5，结果顺序与入参一致，展示结果不变。
+    const CONCURRENCY = 5;
+    let cursor = 0;
+    const worker = async () => {
+      while (cursor < cats.length) {
+        const i = cursor++;
+        const cat = cats[i];
+        if (cat.photo === default_png) {
+          const photo = await getAvatar(cat._id, cat.photo_count_best);
+          if (photo) {
+            if (!photo.userInfo) {
+              try {
+                const userInfoRes = await getUserInfo(photo._openid);
+                photo.userInfo = userInfoRes.userInfo;
+              } catch (e) {
+                console.error("获取用户信息失败:", e);
+              }
             }
+            cat2photos[cat._id] = photo;
+            cat2commentCount[cat._id] = await getCatCommentCount(cat._id);
           }
-          cat2photos[cat._id] = photo;
-          cat2commentCount[cat._id] = await getCatCommentCount(cat._id);
         }
       }
-    }));
+    };
+    const pool = [];
+    for (let k = 0; k < Math.min(CONCURRENCY, cats.length); k++) {
+      pool.push(worker());
+    }
+    await Promise.all(pool);
     
+
     if (this.jsData.loadingLock !== nowLoadingLock) return false;
     
     const updatedCats = cats.map(c => {

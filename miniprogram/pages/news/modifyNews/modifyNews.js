@@ -5,6 +5,7 @@ import {
   getCurrentUserOpenid
 } from "../../../utils/common";
 import { putInbox } from "../../../utils/writeback";
+import { getNickname, saveNickname } from "../../../utils/nickname";
 import { text as text_cfg } from "../../../config";
 const passcode = require("../../../utils/passcode");
 const app = getApp();
@@ -71,14 +72,14 @@ Page({
   },
 
   // 昵称改为选填：不拦提交，只用于展示与记录最后修改人
-  // 每次就地填，本机记住上一次填的（last_nickname），换设备自然丢失
+  // 每次就地填，本机记住上一次填的（utils/nickname 的 last_nickname），换设备自然丢失
   async loadUserInfo() {
     const user = (await getUser()) || {};
     this.setData({
       user: Object.assign({}, user, {
         userInfo: user.userInfo || {},
       }),
-      nickname: wx.getStorageSync('last_nickname') || '',
+      nickname: getNickname(),
     });
   },
 
@@ -87,7 +88,6 @@ Page({
     const { result } = await app.mpServerless.db.collection('news').findOne({
       _id: this.data.news_id
     })
-    console.log("[loadNews] - NewsDetail:", result);
     for (var i = 0; i < that.data.buttons.length; i++) {
       if (that.data.buttons[i].name == result.class) {
         that.data.buttons[i].checked = true;
@@ -125,7 +125,6 @@ Page({
 
   previewImg: function (event) {
     const that = this;
-    console.log("[previewImg] -", event);
     wx.previewImage({
       current: that.data.photos_path[event.currentTarget.dataset.index],
       urls: that.data.photos_path
@@ -133,7 +132,6 @@ Page({
   },
 
   previewCover: function (event) {
-    console.log("[previewCover] -", event);
     wx.previewImage({
       urls: [event.currentTarget.dataset.url]
     })
@@ -172,7 +170,6 @@ Page({
   },
 
   radioButtonTap: function (e) {
-    console.log("[radioButtonTap] -", e);
     let id = e.currentTarget.dataset.id;
     for (let i = 0; i < this.data.buttons.length; i++) {
       if (this.data.buttons[i].id == id) {
@@ -203,7 +200,6 @@ Page({
 
   async bindSubmit(e) {
     var submitData = e.detail.value;
-    console.log(submitData);
     if (!submitData.title) {
       wx.showToast({
         title: '标题不能为空',
@@ -226,7 +222,7 @@ Page({
 
     // 昵称取输入框的值，空则匿名；顺手记到本机（换设备自然丢失）
     if (this.data.nickname) {
-      wx.setStorageSync('last_nickname', this.data.nickname);
+      saveNickname(this.data.nickname);
     }
     var data = {
       openidLastModify: (this.data.user && this.data.user.openid) || (await getCurrentUserOpenid()),
@@ -248,7 +244,6 @@ Page({
   },
 
   async doModify(item_id, item_data) {
-    console.log(item_id, item_data);
     // 没有口令就别提交：服务端 tokenOk() 会直接 drop:bad-token，用户以为改成功了
     const token = this.getToken();
     if (!this.ensureToken(token)) return;
@@ -262,7 +257,6 @@ Page({
       news_id: item_id,
       news: item_data
     });
-    console.log("[doModify] - putInbox ok", ok);
 
     if (ok) {
       wx.showToast({

@@ -57,7 +57,6 @@ Page({
 
   async onLoad() {
     var res = await loadFilter();
-    console.log('filterRes:', res);
     this.setData({
       campusList: ['所有位置'].concat(res.campuses),
       colourList: ['所有花色'].concat(res.colour)
@@ -76,7 +75,6 @@ Page({
 
   async onShow() {
     if (!this.jsData.interfaceURL || !this.jsData.secretKey) {
-      console.log('__wxConfig.envVersion: ', __wxConfig.envVersion);
       var settings = await getGlobalSettings(__wxConfig.envVersion === 'release' ? 'recognize' : 'recognize_test') || {};
       this.jsData.interfaceURL = settings.interfaceURL;
       this.jsData.secretKey = settings.secretKey;
@@ -89,7 +87,6 @@ Page({
 
   recognizeChatImage() {
     var launchOptions = wx.getEnterOptionsSync();
-    console.log("lanOpt:", launchOptions);
     if (launchOptions.scene !== 1173) {
       return;
     }
@@ -109,7 +106,6 @@ Page({
 
   async checkAuth() {
     let setting = await wx.getSetting();
-    console.log('auth setting:', setting.authSetting);
     this.setData({
       cameraAuth: setting.authSetting['scope.camera'] || false
     });
@@ -154,7 +150,6 @@ Page({
         icon: 'error',
         title: '出错了'
       });
-      console.log("no interfaceURL || secretKey");
       return;
     }
     wx.showLoading({
@@ -168,7 +163,6 @@ Page({
       src: compressPhotoPath,
     });
     this.jsData.compressPhotoInfo = compressPhotoInfo;
-    console.log("compressPhotoInfo", compressPhotoInfo);
 
     // 计算签名
     const photoBase64 = wx.getFileSystemManager().readFileSync(compressPhotoPath, 'base64');
@@ -201,7 +195,6 @@ Page({
             throw res;
           }
         } catch (err) {
-          console.log('get error from interface:', err);
           wx.hideLoading();
           wx.showToast({
             icon: 'error',
@@ -211,7 +204,6 @@ Page({
         }
       },
       fail(err) {
-        console.log(err);
         wx.hideLoading();
         wx.showToast({
           icon: 'error',
@@ -227,7 +219,6 @@ Page({
     const photoInfo = await wx.getImageInfo({
       src: this.data.photoPath,
     });
-    console.log('photo info:', photoInfo);
     // 记录图片长宽比。用于重新映射后端返回的catBox位置信息。
     this.jsData.widthHeightRatio = photoInfo.width / photoInfo.height;
     // 使用canvas方法压缩图片
@@ -270,7 +261,6 @@ Page({
       } else {
         yOffset = previewSideLen * ((1 - 1 / this.jsData.widthHeightRatio) / 2);
       }
-      console.log(catBox, ratio, xOffset, yOffset, previewSideLen);
 
       // PC端压缩后的照片，尺寸不一定是500
       const realDrawRate = compressSideLen / Math.max(compressPhotoInfo.width, compressPhotoInfo.height);
@@ -282,7 +272,6 @@ Page({
         height: (catBox.ymax - catBox.ymin) * realDrawRate * ratio
       });
     }
-    console.log("cat box list:", catBoxList);
     this.setData({
       catBoxList: catBoxList
     });
@@ -316,7 +305,6 @@ Page({
     })
 
     const that = this;
-    console.log("recognizeResults:", this.jsData.recognizeResults);
     const choseCampus = that.data.campusList[that.data.campusIndex];
     const choseColour = that.data.colourList[that.data.colourIndex];
     const catList = this.jsData.recognizeResults.filter(cat => {
@@ -325,7 +313,6 @@ Page({
       }
     });
 
-    console.log("catList:", catList);
     if (catList.length === 0) {
       wx.hideLoading();
       this.setData({
@@ -497,19 +484,16 @@ Page({
   },
 
   adLoad() {
-    console.log('Banner 广告加载成功')
     this.setData({
       showAdBox: true
     });
   },
   adError(err) {
-    console.log('Banner 广告加载失败', err)
     this.setData({
       showAdBox: false
     });
   },
   adClose() {
-    console.log('Banner 广告关闭')
     this.setData({
       showAdBox: false
     });

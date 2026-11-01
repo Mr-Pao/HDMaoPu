@@ -99,9 +99,7 @@ Page({
     if (this.data.role1Only) {
       query["role"] = { $gt: 0 }
     }
-    console.log("query", query);
     var { result: userRes } = await app.mpServerless.db.collection('user').find(query, { skip: users.length, limit: 10 })
-    console.log(userRes);
     wx.hideLoading();
     if (reload) {
       users = userRes;
@@ -169,7 +167,6 @@ Page({
       // 最后一个是99管理员
       level = 99;
     }
-    console.log("#" + index, _id, level);
 
     const res = await api.curdOp({
       operation: "update",
@@ -180,7 +177,6 @@ Page({
       }
     })
 
-    console.log("updateManager Result:", res);
     if (res.ok && res.n == 1) {
       wx.showToast({
         title: '更新成功',

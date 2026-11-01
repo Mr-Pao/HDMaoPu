@@ -3,6 +3,8 @@ import { formatDate } from "../../../utils/utils";
 import { sendReplyNotice } from "../../../utils/msg";
 import { checkAuth, getUserInfo } from "../../../utils/user";
 import api from "../../../utils/cloudApi";
+import passcode from "../../../utils/passcode";
+import { putInbox } from "../../../utils/writeback";
 
 const app = getApp();
 Page({
@@ -65,28 +67,28 @@ Page({
     });
 
     if (res.confirm) {
-      console.log('确认提交回复');
       wx.showLoading({
         title: '正在提交...',
         mask: true
       });
-      console.log("open_id:", this.data.feedback._openid)
-      console.log("feedback_id:",  this.data.feedback._id)
       let res = await sendReplyNotice(this.data.feedback._openid, this.data.feedback._id);
-      console.log("res:", res)
-      console.log("[bindReply] - sendReplyNotice res", res);
-      console.log("code:", res.apiResponse.errCode)
       const that = this;
       if (res.apiResponse.errCode == 0) {
-        // 记录一下回复的内容和时间
-        await api.curdOp({
-          operation: 'update',
-          collection: "feedback",
-          item_id: that.data.feedback._id,
-          data: {
-            replyDate: api.getDate(),
+        // 记录一下回复的内容和时间（真实写入：走 COS inbox 聚合链路）
+        const token = passcode.getToken();
+        if (!this.ensureToken(token)) {
+          wx.hideLoading();
+          return;
+        }
+        await putInbox('manage', {
+          action: 'manageFeedback',
+          token: token,
+          feedback_id: that.data.feedback._id,
+          patch: {
+            status: 'done',
             replyInfo: submitData.replyInfo,
-          }
+            replyDate: api.getDate(),
+          },
         });
 
         // 直接调用标记为已处理函数，避免网络延迟导致的重回复bug   
@@ -136,20 +138,38 @@ Page({
 
   async bindCheck() {
     const feedback = this.data.feedback;
-    
-    console.log('[bindCheck] - 确认反馈处理');
-    
-    // 更新反馈状态为已处理
-    await api.curdOp({
-      operation: 'update',
-      collection: "feedback",
-      item_id: feedback._id,
-      data: {
-        dealed: true,
-        dealDate: api.getDate()
-      }
-    });
+    const token = passcode.getToken();
+    if (!this.ensureToken(token)) return;
 
-  }
+    // 更新反馈状态为已处理（真实写入：走 COS inbox 聚合链路）
+    await putInbox('manage', {
+      action: 'manageFeedback',
+      token: token,
+      feedback_id: feedback._id,
+      patch: { status: 'done' },
+    });
+  },
+
+  // 提交前检查：没有口令就不让提交（否则后台会静默丢弃）
+  ensureToken(token) {
+    if (token) return true;
+    wx.showModal({
+      title: "还没设置管理口令",
+      content: "提交需要管理口令，否则后台会直接丢弃。现在设置吗？",
+      confirmText: "去设置",
+      success: r => {
+        if (r.confirm) this.editToken();
+      },
+    });
+    return false;
+  },
+
+  editToken() {
+    passcode.promptToken({
+      onSaved: () => {
+        wx.showToast({ title: passcode.hasToken() ? "口令已保存" : "已清除口令", icon: "none" });
+      },
+    });
+  },
 })
 

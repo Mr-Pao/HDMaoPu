@@ -35,7 +35,6 @@ Page({
   async onShow() {
     // 设置为特邀用户
     const {query} = wx.getLaunchOptionsSync();
-    console.log("query", query);
     if (query.inviteRole) {
       this.setData({
         invited: true
@@ -82,7 +81,6 @@ Page({
    */
   onShareAppMessage() {
     if (!this.data.isManager) {
-      console.log("not a manager share.");
       return {
         title: share_text,
       }
@@ -93,7 +91,6 @@ Page({
     var expire_date = new Date();
     expire_date.setHours(expire_date.getHours() + 6);
     const query = `${path}inviteRole=1&expire=${encodeURIComponent(expire_date)}`;
-    console.log(query);
     return {
       title: text_cfg.inviteUser.share_title,
       path: query,
@@ -105,10 +102,8 @@ Page({
   async doInviteRole(options) {
     var role = parseInt(options.inviteRole);
     var expire = new Date(options.expire);
-    console.log("expire at", expire);
     // 过期了
     if (new Date() > expire) {
-      console.log(`invite ${role} expired.`);
       await wx.showModal({
         title: text_cfg.inviteUser.expired_title,
         content: text_cfg.inviteUser.expired_tip,
@@ -117,7 +112,6 @@ Page({
       return;
     }
     var user = await getUser();
-    console.log(user);
     if (user.role >= role) {
       // 已经是了
       await wx.showModal({
@@ -135,7 +129,6 @@ Page({
     });
   },
   toGenealogy(e) {
-    console.log(e);
     wx.switchTab({
       url: '/pages/genealogy/genealogy',
     })

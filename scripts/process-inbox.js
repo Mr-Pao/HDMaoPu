@@ -73,7 +73,7 @@ const MAX_KEY_FAILURES = 3;
 // pop 跨运行限频：同一 openid+cat 12 小时内只记一次人气
 const POP_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 
-const VALID_KINDS = ['like', 'follow', 'pop', 'rating', 'comment', 'decision', 'manage', 'photo'];
+const VALID_KINDS = ['like', 'follow', 'pop', 'rating', 'comment', 'decision', 'manage', 'photo', 'deleteComment'];
 
 // ---- 写通道防刷增强（零成本，纯 Actions 脚本端校验，不引入任何服务器/SCF）----
 // openid 格式约束：微信 openid 形如 oXXXX，由字母数字组成；这里放宽允许 _ 和 -。
@@ -508,6 +508,23 @@ function handleComment(p) {
   return 'ok:queue';
 }
 
+// 普通用户删除自己的评论（作者删自己的，软删，不需要管理员口令）。
+// 与 handleDecision 的 delete 分支（管理员针对 review_queue 项的操作）区分开：
+// 这里走普通 inbox kind，openid 即提交者本人，只校验「评论作者 == 提交 openid」。
+async function handleDeleteComment(p) {
+  const { openid, data } = p;
+  if (!data || !data.comment_id) return 'drop:no-comment-id';
+  const comment = findItem('comment', data.comment_id);
+  if (!comment) return 'drop:no-comment';
+  // 仅作者可删自己发布的评论（管理员删除不在本任务范围）。
+  if (comment._openid !== openid) return 'drop:not-owner';
+  // 幂等：已软删则不重复标记（duplicate delete 视为成功，不报错）。
+  if (comment.deleted) return 'ok:comment-deleted';
+  comment.deleted = true;
+  markTouched('comment');
+  return 'ok:comment-deleted';
+}
+
 // 照片审核：photo 的 inbox 元数据是小 JSON（只有 photo_key/cat_id 等字符串字段，
 // 不含二进制），聚合后进 review_queue，并（非 DRY 且配了 GitHub 凭据时）建一个
 // 「照片审核」Issue，正文夹带机器可读标记供 review.js 消费。
@@ -587,27 +604,37 @@ async function createPhotoIssue({ photoKey, catId, openid, data, ts, queueId }) 
   console.log(`  [issue] 已建照片审核单 #${issue.number}（${title}）`);
 }
 
-function handleDecision(p) {
+async function handleDecision(p) {
   const { data } = p;
   if (!tokenOk(data.token)) return 'drop:bad-token';
   const itemId = data.item_id;
   const action = data.action;
   if (!itemId) return 'drop:no-item-id';
-  if (action !== 'approve' && action !== 'reject') return 'drop:bad-action';
+  // 允许 approve / reject / delete（评论删除）；未知 action 仍丢弃。
+  if (action !== 'approve' && action !== 'reject' && action !== 'delete') return 'drop:bad-action';
 
   const queue = loadData('review_queue');
   const item = queue.items.find(it => it && it._id === itemId);
   if (!item) return 'drop:item-not-found';
-  if (item.status !== 'pending') return 'skip:already-decided';
+  // approve/reject 只能作用于待审项；delete 是针对已落库记录的软删，允许在已 approve 的
+  // 项上执行（避免 approve 把状态改成 approved 后 delete 永远被 skip:already-decided 卡住）。
+  if (action === 'approve' || action === 'reject') {
+    if (item.status !== 'pending') return 'skip:already-decided';
+  }
 
-  item.status = action === 'approve' ? 'approved' : 'rejected';
-  item.decide_time = new Date().toISOString();
+  // approve/reject 才会改变审核状态；delete 只是对已落库记录做服务端软删，
+  // 不改变 review_queue item 的审核状态（避免把 pending 标记成已决定、变成 skip）。
+  if (action === 'approve' || action === 'reject') {
+    item.status = action === 'approve' ? 'approved' : 'rejected';
+    item.decide_time = new Date().toISOString();
+  }
 
   if (action === 'approve') {
     if (item.kind === 'comment') {
       const comments = loadData('comment');
+      const cmId = genId('cm', item.ts);
       comments.items.unshift({
-        _id: genId('cm', item.ts),
+        _id: cmId,
         cat_id: item.data.cat_id,
         content: item.data.content,
         nickname: item.data.nickname,
@@ -615,16 +642,101 @@ function handleDecision(p) {
         create_date: new Date(item.ts || Date.now()).toISOString(),
         deleted: false,
       });
+      // 落库后把生成的 comment _id 回写 item，供后续的 delete 动作定位并软删。
+      item.applied_comment_id = cmId;
       markTouched('comment');
     } else if (item.kind === 'photo') {
-      // 照片落库依赖 photo 对象的字段结构，上传入口目前关闭，
-      // 真开启时在这里按 photo.json 的字段补齐。
-      console.log(`  [warn] 照片审核通过暂未落库（item ${itemId}），需要补齐 photo 字段映射`);
+      // 照片审核通过：把 pending 私有图复制到 catimg 公开目录，并落库一条 photo 记录。
+      // 真实 COS 复制只在非 DRY_RUN 且配了 COS 凭据时执行；DRY 下只做内存 append，
+      // 保证自测能验证落库逻辑不崩。
+      await approvePhoto(item);
+    }
+  } else if (action === 'delete') {
+    // 评论删除：落库通过的评论（review_queue 的 comment item 已带 applied_comment_id）
+    // 在 comment.json 里软删；pending/已拒的 review item 没有可删的落库记录，直接放行。
+    if (item.kind === 'comment' && item.applied_comment_id) {
+      const comments = loadData('comment');
+      const target = comments.items.find(it => it && it._id === item.applied_comment_id);
+      if (target) target.deleted = true; // 幂等：重复 delete 不报错
+      markTouched('comment');
     }
   }
 
   markTouched('review_queue');
   return 'ok:decided';
+}
+
+// campus（中文）转 catimg 路径里用到的 area-slug（拼音小写），与 data/photo.json 实际
+// 路径保持一致：校内→xiaonei，校外→xiaowai，其它→qita。
+function campusSlug(campus) {
+  if (campus === '校内') return 'xiaonei';
+  if (campus === '校外') return 'xiaowai';
+  return 'qita';
+}
+
+// 照片审核通过落库：把 pending/<openid>-<ts>.<ext> 复制到 catimg/<area-slug>/<cat-slug>/<nnn>.<ext>
+// （公开读），再 append 一条 photo.json 记录。三 URL 同源指向 catimg 目标。
+// ⚠️ 真实 COS 复制只在非 DRY_RUN 且配了 COS 凭据时执行；pending 源不存在时参考
+// moveLogoToPublic 的幂等写法（先看目标在不在，在就当已复制）。
+async function approvePhoto(item) {
+  const catId = item.data.cat_id;
+  const cat = findItem('cat', catId);
+  const catSlug = catId.startsWith('cat-') ? catId.slice('cat-'.length) : catId;
+  const areaSlug = campusSlug(cat && cat.campus);
+  const ext = extOfKey(item.data.photo_key);
+  const nnn = '000'; // 真实序号由 relink/编号工具管理；聚合只负责首次落库占位
+  const targetKey = `catimg/${areaSlug}/${catSlug}/${nnn}.${ext}`;
+  const photoUrl = publicUrlOf(targetKey);
+
+  if (!DRY && COS_SECRET_ID && COS_SECRET_KEY) {
+    const cos = cosClient();
+    // 幂等：目标已存在说明这轮之前已经复制过（pending 源可能已被消费），直接当成功。
+    if (!(await objectExists(cos, item.data.photo_key)) && (await objectExists(cos, targetKey))) {
+      // already-copied
+    } else {
+      await putObjectCopy(cos, item.data.photo_key, targetKey);
+    }
+  }
+
+  const photoId = genId('ph', item.ts);
+  const nowIso = new Date().toISOString();
+  const photos = loadData('photo');
+  // marker_type 复用该猫现有值：cat 本身不存该字段，从它已落库的照片里取；没有则默认 'orange'。
+  const existing = photos.items.find(it => it && it.cat_id === catId && it.marker_type);
+  const markerType = (existing && existing.marker_type) || 'orange';
+  photos.items.push({
+    _id: photoId,
+    cat_id: catId,
+    _openid: 'system',
+    userInfo: {
+      nickName: '猫谱管理员',
+      avatarUrl: '/pages/public/images/info/default_avatar.png',
+    },
+    photo_id: photoUrl,
+    photo_compressed: photoUrl,
+    photo_watermark: photoUrl,
+    verified: true,
+    best: false,
+    photographer: String(item.data.photographer || ''),
+    shooting_date: String(item.data.shooting_date || '2026-01-01'),
+    create_date: nowIso,
+    mdate: nowIso,
+    like_count: 0,
+    latitude: null,
+    longitude: null,
+    // marker_type 复用该猫现有值（取该猫任意已落库照片的 marker_type），缺省 'orange'。
+    marker_type: markerType,
+    deleted: 0,
+  });
+  markTouched('photo');
+
+  // 累加该猫 cat.json 的 photo_count_total（若存在）。
+  if (cat && typeof cat.photo_count_total === 'number') {
+    cat.photo_count_total += 1;
+    markTouched('cat');
+  }
+
+  return photoId;
 }
 
 function trimQueue() {
@@ -663,11 +775,13 @@ const MANAGE_CAT_PATCH_FIELDS = [
   'missing_time',
   'to_star',
   'deceased_time',
+  'relations',
 ];
 
 // 每个字段的类型约束（与 data/cat.json 实际值类型对齐）。
 // missing_time / deceased_time 在数据里可为 null（表示未走失/未离世），
 // 所以这两个字段额外允许 null。
+// relations 是猫际关系数组（[{type, cat_id}] 的轻量形式），单独在 patchValueOk 里判定。
 const MANAGE_CAT_PATCH_TYPES = {
   name: 'string',
   nickname: 'string',
@@ -691,6 +805,11 @@ const MANAGE_CAT_PATCH_TYPES = {
 function patchValueOk(field, value) {
   const type = MANAGE_CAT_PATCH_TYPES[field];
   if (!type) return false;
+  if (field === 'relations') {
+    // 猫际关系：必须是数组；空数组允许（表示清空关系）。元素不在此处深校验，
+    // 直接整段赋值 cat.relations（manageUpdateCat 的赋值循环用 cat[k] = patch[k]）。
+    return Array.isArray(value);
+  }
   if (value === null && (field === 'missing_time' || field === 'deceased_time')) return true;
   if (type === 'string') return typeof value === 'string' && value.length <= 500;
   if (type === 'number') return typeof value === 'number' && Number.isFinite(value);
@@ -705,6 +824,10 @@ function handleManage(p) {
   if (data.action === 'managePhoto') return managePhoto(data);
   if (data.action === 'saveFriendLinks') return manageSaveFriendLinks(data);
   if (data.action === 'manageNews') return manageNews(data);
+  if (data.action === 'manageFeedback') return manageFeedback(data);
+  if (data.action === 'managePageSettings') return managePageSettings(data);
+  if (data.action === 'saveFilter') return manageSaveFilter(data);
+  if (data.action === 'movePhoto') return manageMovePhoto(data);
   return 'drop:bad-action';
 }
 
@@ -1141,6 +1264,150 @@ function manageNews(data) {
   return 'ok:news-update';
 }
 
+// ---------------------------------------------------------------------------
+// 反馈处理（feedback）：客户端 manageFeedback → inbox/manage/ → 这里
+//   - 按 feedback_id 定位 feedback 记录
+//   - 白名单字段 status / handled_by，未知字段忽略或 drop:bad-patch-field
+//   - 找不到 → drop:no-feedback；成功 → ok:feedback-updated
+//   永不 throw。
+// ---------------------------------------------------------------------------
+
+// feedback 允许被服务端覆写的字段
+const FEEDBACK_PATCH_FIELDS = ['status', 'handled_by'];
+
+function manageFeedback(data) {
+  const feedbackId = data.feedback_id;
+  if (!feedbackId) return 'drop:no-feedback-id';
+
+  const patch = data.patch;
+  if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return 'drop:no-patch';
+
+  const keys = Object.keys(patch);
+  if (!keys.length) return 'drop:no-patch';
+  for (const k of keys) {
+    if (!FEEDBACK_PATCH_FIELDS.includes(k)) return 'drop:bad-patch-field';
+  }
+
+  const feedbacks = loadData('feedback');
+  const item = feedbacks.items.find(it => it && it._id === feedbackId);
+  if (!item) return 'drop:no-feedback';
+
+  // 基本校验：status 必须是非空字符串
+  if (patch.status !== undefined) {
+    if (typeof patch.status !== 'string' || !patch.status) return 'drop:bad-patch-type';
+    item.status = patch.status;
+  }
+  if (patch.handled_by !== undefined) {
+    if (typeof patch.handled_by !== 'string') return 'drop:bad-patch-type';
+    item.handled_by = patch.handled_by;
+  }
+
+  markTouched('feedback');
+  return 'ok:feedback-updated';
+}
+
+// ---------------------------------------------------------------------------
+// 页面设置（setting _id='pages'）：客户端 managePageSettings → inbox/manage/ → 这里
+//   - 整体覆盖 setting _id='pages'
+//   - 基本校验为对象；未知字段忽略或 drop:bad-patch-field（覆盖式，没有白名单逐项）
+//   - 成功 → ok:page-settings
+//   永不 throw。
+// ---------------------------------------------------------------------------
+
+function managePageSettings(data) {
+  const setting = data.setting;
+  if (!setting || typeof setting !== 'object' || Array.isArray(setting)) {
+    return 'drop:bad-pages-setting';
+  }
+
+  const settings = loadData('setting');
+  const record = settings.items.find(it => it && it._id === 'pages');
+  if (record) {
+    // 保留式合并：只把客户端传来的字段覆盖上去，不动 setting 里的其它键（如 friendLink、filter）
+    for (const k of Object.keys(setting)) {
+      record[k] = setting[k];
+    }
+  } else {
+    settings.items.push(Object.assign({ _id: 'pages' }, setting));
+  }
+
+  markTouched('setting');
+  return 'ok:page-settings';
+}
+
+// ---------------------------------------------------------------------------
+// 筛选配置（setting _id='filter'）：客户端 saveFilter → inbox/manage/ → 这里
+//   - 读 setting 集合 _id='filter'（loadFilter 读的是 setting 不是 data/filter.json）
+//   - 整体替换 campuses / area / colour
+//   - 校验非空前对象 + campus 分类合法（area 每项含 campus 且 ∈ campuses）
+//   - 成功 → ok:filter-saved；非法 → drop:bad-filter
+//   永不 throw。
+// ---------------------------------------------------------------------------
+
+function manageSaveFilter(data) {
+  const filter = data.filter;
+  if (!filter || typeof filter !== 'object' || Array.isArray(filter)) {
+    return 'drop:bad-filter';
+  }
+  const campuses = filter.campuses;
+  const area = filter.area;
+  const colour = filter.colour;
+
+  if (!Array.isArray(campuses) || !Array.isArray(area) || !Array.isArray(colour)) {
+    return 'drop:bad-filter';
+  }
+  if (!campuses.length) return 'drop:bad-filter';
+
+  // campus 分类合法性：area 每项必须含 campus 字段且其值 ∈ campuses
+  for (const a of area) {
+    if (!a || typeof a !== 'object') return 'drop:bad-filter';
+    if (typeof a.campus !== 'string' || !campuses.includes(a.campus)) {
+      return 'drop:bad-filter';
+    }
+    if (typeof a.name !== 'string' || !a.name) return 'drop:bad-filter';
+  }
+  for (const c of colour) {
+    if (typeof c !== 'string' || !c) return 'drop:bad-filter';
+  }
+
+  const settings = loadData('setting');
+  const record = settings.items.find(it => it && it._id === 'filter');
+  const next = { _id: 'filter', campuses, area, colour };
+  if (record) {
+    record.campuses = campuses;
+    record.area = area;
+    record.colour = colour;
+  } else {
+    settings.items.push(next);
+  }
+
+  markTouched('setting');
+  return 'ok:filter-saved';
+}
+
+// ---------------------------------------------------------------------------
+// 照片移动到另一只猫：客户端 movePhoto → inbox/manage/ → 这里
+//   - photo_id 定位 photo
+//   - 设 photo.cat_id = data.cat_id
+//   - 找不到 → drop:no-photo；成功 → ok:photo-moved
+//   - photo_count 不自动重算（可接受）
+//   永不 throw。
+// ---------------------------------------------------------------------------
+
+function manageMovePhoto(data) {
+  const photoId = data.photo_id;
+  if (!photoId) return 'drop:no-photo-id';
+  const catId = data.cat_id;
+  if (!catId) return 'drop:no-cat-id';
+
+  const photo = findItem('photo', photoId);
+  if (!photo) return 'drop:no-photo';
+
+  photo.cat_id = catId;
+  markTouched('photo');
+  return 'ok:photo-moved';
+}
+
 const HANDLERS = {
   like: handleLike,
   follow: handleFollow,
@@ -1150,6 +1417,7 @@ const HANDLERS = {
   photo: handlePhoto,
   decision: handleDecision,
   manage: handleManage,
+  deleteComment: handleDeleteComment,
 };
 
 // ---------------------------------------------------------------------------
@@ -1326,7 +1594,7 @@ function selftestObjects() {
     body: JSON.stringify({ v: 1, kind, openid, ts: now + offset, data }),
   });
 
-  return [
+  const objects = [
     mk('pop', 'openid-a', { cat_id: cat }, 1),
     mk('pop', 'openid-a', { cat_id: cat }, 2), // 同批重复，应被 pop 去重
     mk('pop', 'openid-b', { cat_id: cat }, 3),
@@ -1416,6 +1684,61 @@ function selftestObjects() {
       news: { title: '口令错不该写入', class: '其他' },
     }, 29), // 口令错，整条丢弃
 
+    // ---- manageFeedback / managePageSettings / saveFilter / movePhoto 自测 ----
+    // 预先塞一条固定 _id 的 feedback fixture 供 manageFeedback 指向。
+    mk('manage', 'openid-a', {
+      action: 'manageFeedback',
+      token: SELFTEST_TOKEN,
+      feedback_id: 'fb-selftest-1',
+      patch: { status: 'done', handled_by: 'openid-a' },
+    }, 31), // 合法：标记已处理
+    mk('manage', 'openid-a', {
+      action: 'manageFeedback',
+      token: SELFTEST_TOKEN,
+      feedback_id: 'fb-selftest-1',
+      patch: { status: 'done', evil_field: 'x' }, // 未知字段 → drop:bad-patch-field
+    }, 32),
+    mk('manage', 'openid-a', {
+      action: 'managePageSettings',
+      token: SELFTEST_TOKEN,
+      setting: { fullTab: ['genealogy', 'gallery', 'news', 'info'] },
+    }, 33), // 合法：整体覆盖 setting _id='pages'
+    mk('manage', 'openid-a', {
+      action: 'managePageSettings',
+      token: SELFTEST_TOKEN,
+      setting: 'not-an-object', // 非法类型 → drop:bad-pages-setting
+    }, 34),
+    mk('manage', 'openid-a', {
+      action: 'saveFilter',
+      token: SELFTEST_TOKEN,
+      filter: {
+        campuses: ['校内', '校外', '其它'],
+        area: [{ name: '东区', campus: '校内' }],
+        colour: ['橘色', '黑色'],
+      },
+    }, 35), // 合法：campus 分类合法
+    mk('manage', 'openid-a', {
+      action: 'saveFilter',
+      token: SELFTEST_TOKEN,
+      filter: {
+        campuses: ['校内'],
+        area: [{ name: '东区', campus: '校外' }], // campus 不在 campuses 内 → drop:bad-filter
+        colour: ['橘色'],
+      },
+    }, 36),
+    mk('manage', 'openid-a', {
+      action: 'movePhoto',
+      token: SELFTEST_TOKEN,
+      photo_id: 'ph-selftest-1',
+      cat_id: cat,
+    }, 37), // 合法：移动照片到当前猫
+    mk('manage', 'openid-a', {
+      action: 'movePhoto',
+      token: SELFTEST_TOKEN,
+      photo_id: 'photo-does-not-exist',
+      cat_id: cat,
+    }, 38), // 找不到照片 → drop:no-photo
+
     // ---- 友情链接 Logo 选图上传（pending/ → photos/friendlink/）----
     // DRY 下不真发 COS 请求，只验证「pending/ 开头的 logo 会被改写成完整公网 URL」。
     mk('manage', 'openid-a', {
@@ -1424,6 +1747,106 @@ function selftestObjects() {
       apps: [{ appid: 'wx5bd705b2bc91c73b', name: '带图友链', logo: 'pending/openid-a-99999.jpg' }],
     }, 30),
   ];
+
+  // ---- B3 评论删除 / B4 照片审核通过 落库 自测 ----
+  // review_queue 的 _id 由 genId 随机生成，decision 无法直接引用，所以这里预先塞两条
+  // 固定 _id 的审核项（comment / photo 各一），供下面的 decision 指向。
+  // 注意：必须在塞入 B3/B4 的 decision 用例之前就入队（内存），否则会 drop:item-not-found。
+  loadData('review_queue').items.push({
+    _id: 'rv-selftest-cm',
+    kind: 'comment',
+    openid: 'openid-a',
+    ts: now + 31,
+    status: 'pending',
+    create_time: new Date(now + 31).toISOString(),
+    data: { cat_id: cat, content: '待删评论（自测）', nickname: '自测' },
+  });
+  loadData('review_queue').items.push({
+    _id: 'rv-selftest-ph',
+    kind: 'photo',
+    openid: 'openid-a',
+    ts: now + 32,
+    status: 'pending',
+    create_time: new Date(now + 32).toISOString(),
+    data: { photo_key: 'pending/openid-a-99999.jpg', cat_id: cat, photographer: '自测', shooting_date: '2026-05-10' },
+  });
+
+  // 把 B3/B4 的 decision 用例追加进自测数组（在 review item 入队之后）。
+  objects.push(
+    {
+      key: `inbox/decision/${now + 31}-cm-appr-aaaa.json`,
+      body: JSON.stringify({
+        v: 1, kind: 'decision', openid: 'openid-a', ts: now + 31,
+        data: { item_id: 'rv-selftest-cm', action: 'approve', token: SELFTEST_TOKEN },
+      }),
+    },
+    {
+      key: `inbox/decision/${now + 32}-ph-appr-aaaa.json`,
+      body: JSON.stringify({
+        v: 1, kind: 'decision', openid: 'openid-a', ts: now + 32,
+        data: { item_id: 'rv-selftest-ph', action: 'approve', token: SELFTEST_TOKEN },
+      }),
+    },
+    {
+      key: `inbox/decision/${now + 33}-cm-del-aaaa.json`,
+      body: JSON.stringify({
+        v: 1, kind: 'decision', openid: 'openid-a', ts: now + 33,
+        data: { item_id: 'rv-selftest-cm', action: 'delete', token: SELFTEST_TOKEN },
+      }),
+    },
+    {
+      key: `inbox/decision/${now + 34}-cm-del2-aaaa.json`,
+      body: JSON.stringify({
+        v: 1, kind: 'decision', openid: 'openid-a', ts: now + 34,
+        data: { item_id: 'rv-selftest-cm', action: 'delete', token: SELFTEST_TOKEN },
+      }),
+    }, // 幂等：重复 delete 不报错
+  );
+
+  // ---- B3 评论删除（普通用户删自己的评论）自测 ----
+  // 预先塞一条固定 _id / _openid 的评论 fixtures，供 deleteComment 指向。
+  loadData('comment').items.push({
+    _id: 'cm-selftest-1',
+    cat_id: cat,
+    content: '待删便利贴（自测）',
+    nickname: '自测',
+    _openid: 'openid-a',
+    create_date: new Date(now + 40).toISOString(),
+    deleted: false,
+  });
+
+  objects.push(
+    // 作者本人删除自己的评论 → 期望 ok:comment-deleted 且 deleted 变 true
+    mk('deleteComment', 'openid-a', { comment_id: 'cm-selftest-1' }, 40),
+    // 非作者（openid-b）删同一条 → 期望 drop:not-owner
+    mk('deleteComment', 'openid-b', { comment_id: 'cm-selftest-1' }, 41),
+    // 重复删除（已软删）→ 期望 ok:comment-deleted（幂等，不报错）
+    mk('deleteComment', 'openid-a', { comment_id: 'cm-selftest-1' }, 42),
+    // 删除不存在的评论 → 期望 drop:no-comment
+    mk('deleteComment', 'openid-a', { comment_id: 'cm-does-not-exist' }, 43),
+  );
+
+  // ---- 反馈 fixture（供 manageFeedback 自测指向）----
+  loadData('feedback').items.push({
+    _id: 'fb-selftest-1',
+    cat_id: cat,
+    feedbackInfo: '自测反馈',
+    openid: 'openid-a',
+    status: 'pending',
+    create_date: new Date(now + 45).toISOString(),
+  });
+
+  // ---- 照片 fixture（供 movePhoto 自测指向）----
+  loadData('photo').items.push({
+    _id: 'ph-selftest-1',
+    cat_id: 'old-cat',
+    url: 'https://example.com/ph-selftest-1.jpg',
+    compressed_url: 'https://example.com/ph-selftest-1.jpg',
+    watermark_url: 'https://example.com/ph-selftest-1.jpg',
+    best: false,
+  });
+
+  return objects;
 }
 
 function snapshot() {

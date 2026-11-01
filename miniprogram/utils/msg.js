@@ -20,7 +20,6 @@ let msgConfig = null;
 _getMsgConfig().then(x => { msgConfig = x });
 
 function getMsgTplId(template) {
-  console.log(template, msgConfig)
   const cfg = msgConfig && msgConfig[template];
   return cfg ? cfg.ID : '';
 }
@@ -28,14 +27,12 @@ function getMsgTplId(template) {
 // 订阅请求
 async function requestNotice(template) {
   const cfg = msgConfig && msgConfig[template];
-  console.log(template, cfg);
 
   // 未配置模板 ID 时静默跳过。
   // 本架构是纯静态（数据走 COS、没有服务端发消息的能力），
   // data/setting.json 的 pages.subscribe 里四个模板 ID 全是空串，
   // 硬发 wx.requestSubscribeMessage({tmplIds:['']}) 只会得到 20001 并弹出报错弹窗。
   if (!cfg || !cfg.ID) {
-    console.log('[requestNotice] 未配置订阅消息模板 ID，跳过：' + template);
     return false;
   }
 
@@ -43,10 +40,8 @@ async function requestNotice(template) {
     let res = await wx.requestSubscribeMessage({
       tmplIds: [cfg.ID],
     });
-    console.log("requestSubMsgRes:", res);
 
     if (!res || res.errMsg != 'requestSubscribeMessage:ok') {
-      console.log('调用消息订阅请求接口失败' + res.errCode);
       await wx.showToast({
         title: '消息订阅好像出了点问题',
         icon: 'none',
@@ -72,7 +67,6 @@ async function requestNotice(template) {
     }
 
   } catch (error) { // 订阅消息错误处理
-    console.log("request SubMsg error:", error);
     // 20001 = 模板 ID 无效，属于配置缺失而非用户能处理的问题，不再打扰用户
     if (error && error.errCode === 20001) {
       return false;
@@ -212,7 +206,6 @@ async function sendNotifyChkFeeedback() {
     dealed: false,
     replyInfo: { $exists: false }
   }, { sort: { openDate: 1 } });
-  console.log("unreplyFeedback:", uploadTimeList);
 
   if (uploadTimeList.length === 0) {
     return false;

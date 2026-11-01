@@ -1,6 +1,8 @@
 import { checkAuth } from "../../../utils/user";
 import { loadFilter } from "../../../utils/page";
 import api from "../../../utils/cloudApi";
+import passcode from "../../../utils/passcode";
+import { putInbox } from "../../../utils/writeback";
 const app = getApp();
 Page({
 
@@ -62,9 +64,10 @@ Page({
       }]
     }
     filters.push(colour_item);
-    console.log("[reloadFilter] -", filters);
     this.setData({
-      filters: filters
+      filters: filters,
+      // 缓存当前 campuses，上传筛选配置时一并回传（服务端整体覆盖 setting _id='filter'）
+      campuses: filterRes.campuses,
     })
     wx.hideLoading();
   },
@@ -129,7 +132,6 @@ Page({
     if (new_index < 0 || new_index >= len) {
       return false;
     }
-    console.log("[moveOption] -", direct);
     const temp = category.items[index];
     category.items[index] = category.items[new_index];
     category.items[new_index] = temp;
@@ -158,7 +160,6 @@ Page({
       qf[mainF.cateKey] = category.name;
     }
     var { result: catCountRes } = await app.mpServerless.db.collection('cat').count(qf)
-    console.log("[deleteOption] -", catCountRes);
     if (catCountRes) {
       wx.showToast({
         title: '无法删除有猫猫的选项',
@@ -177,15 +178,9 @@ Page({
     await this.uploadFilters();
   },
 
-  // 确定上传
-  async uploadFilters() {
+  // 从 this.data.filters 还原成 setting _id='filter' 的原始 {area, colour} 结构
+  _buildAreaColour() {
     var filters = this.data.filters;
-    // 开始上传
-    wx.showLoading({
-      title: '正在上传...',
-    });
-    console.log("[uploadFilters] -", filters);
-    // 处理回数据库中的原始格式
     var area = [];
     var colour = [];
     for (const mainF of filters) {
@@ -202,14 +197,26 @@ Page({
         }
       }
     }
-    await api.curdOp({
-      operation: "update",
-      collection: "setting",
-      item_id: "filter",
-      data: {
-        area: area,
-        colour: colour
-      }
+    return { area, colour };
+  },
+
+  // 确定上传：合并 area/colour/campuses 为一条 saveFilter 写入（走 COS inbox 聚合链路）
+  async uploadFilters() {
+    // 开始上传
+    wx.showLoading({
+      title: '正在上传...',
+    });
+    const { area, colour } = this._buildAreaColour();
+    const campuses = this.data.campuses || [];
+    const token = passcode.getToken();
+    if (!this.ensureToken(token)) {
+      wx.hideLoading();
+      return;
+    }
+    await putInbox('manage', {
+      action: 'saveFilter',
+      token: token,
+      filter: { campuses, area, colour },
     });
     await this.reloadFilter();
   },
@@ -253,8 +260,6 @@ Page({
   async deleteCampus(e) {
     const category = this.data.filters[0].category;
     const { cateindex } = e.currentTarget.dataset;
-console.log("删除111", category);
-console.log("删除", cateindex);
     let uploadCampus = [];
     for (let k = 0; k < category.length; ++k) {
       if (k == cateindex) {
@@ -273,7 +278,6 @@ console.log("删除", cateindex);
     }
 
     // 上传
-    console.log("删除", uploadCampus);
     await this.doUploadCampus(uploadCampus);
   },
 
@@ -282,14 +286,41 @@ console.log("删除", cateindex);
       title: '更新中...',
     });
 
-    await api.curdOp({
-      operation: "update",
-      collection: "setting",
-      item_id: "filter",
-      data: {
-        campuses: data,
-      }
+    // 真实写入：合并 campuses + 现有 area/colour 为一条 saveFilter（走 COS inbox 聚合链路）
+    const { area, colour } = this._buildAreaColour();
+    const campuses = data || [];
+    const token = passcode.getToken();
+    if (!this.ensureToken(token)) {
+      wx.hideLoading();
+      return;
+    }
+    await putInbox('manage', {
+      action: 'saveFilter',
+      token: token,
+      filter: { campuses, area, colour },
     });
     await this.reloadFilter();
-  }
+  },
+
+  // 提交前检查：没有口令就不让提交（否则后台会静默丢弃）
+  ensureToken(token) {
+    if (token) return true;
+    wx.showModal({
+      title: "还没设置管理口令",
+      content: "提交需要管理口令，否则后台会直接丢弃。现在设置吗？",
+      confirmText: "去设置",
+      success: r => {
+        if (r.confirm) this.editToken();
+      },
+    });
+    return false;
+  },
+
+  editToken() {
+    passcode.promptToken({
+      onSaved: () => {
+        wx.showToast({ title: passcode.hasToken() ? "口令已保存" : "已清除口令", icon: "none" });
+      },
+    });
+  },
 })

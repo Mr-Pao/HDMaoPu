@@ -76,7 +76,6 @@ Page({
   async loadReward() {
     var { result: rewardRes } = await app.mpServerless.db.collection('reward').find({}, { sort: { mdate: -1 } })
 
-    console.log(rewardRes);
     for (var r of rewardRes) {
       const tmp = r.recordDate ? new Date(r.recordDate) : new Date(r.mdate);
       r.mdate = tmp.getFullYear() + '年' + (tmp.getMonth() + 1) + '月';
@@ -93,13 +92,10 @@ Page({
     wx.previewImage({
       urls: [src],
       success: (res) => {
-        console.log(res);
       },
       fail: (res) => {
-        console.log(res);
       },
       complete: (res) => {
-        console.log(res);
       },
     });
   },
@@ -123,7 +119,6 @@ Page({
         this.jsData.videoAd.load()
           .then(() => this.jsData.videoAd.show())
           .catch(err => {
-            console.log('激励视频 广告显示失败')
           })
       })
     }

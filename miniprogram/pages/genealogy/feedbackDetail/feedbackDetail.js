@@ -3,6 +3,7 @@ import { getUser, checkCanFeedback } from "../../../utils/user";
 import { requestNotice, sendNotifyChkFeeedback } from "../../../utils/msg";
 import { putInbox } from "../../../utils/writeback";
 import { markPending } from "../../../utils/syncTip";
+import { getNickname, saveNickname } from "../../../utils/nickname";
 import { text as text_cfg } from "../../../config";
 import { getCurrentUserOpenid } from "../../../utils/common";
 import api from "../../../utils/cloudApi";
@@ -42,7 +43,7 @@ Page({
     // 昵称就地填，本机记住上一次填的（换设备自然丢失）
     this.setData({
       user: user || {},
-      nickname: wx.getStorageSync('last_nickname') || '',
+      nickname: getNickname(),
     });
   },
 
@@ -94,9 +95,7 @@ Page({
       return;
     }
     // 安全检查
-    console.log(submitData);
     const checkRes = await api.contentSafeCheck(submitData.feedbackInfo + submitData.contactInfo, "");
-    console.log(checkRes);
     if (checkRes) {
       // 检测出问题
       wx.showModal(checkRes);
@@ -126,9 +125,7 @@ Page({
       data: data
     });
 
-    console.log("curdOp(add-feedback) result:", res);
     if (!res.ok) {
-      console.log('repliable record fail:\n');
       return;
     }
 
@@ -136,7 +133,7 @@ Page({
     // handleComment 要求 cat_id 非空，无关联猫猫时用占位标记，审核页可见即可）
     // 昵称取输入框的值，空则匿名；顺手记到本机（换设备自然丢失）
     if (this.data.nickname) {
-      wx.setStorageSync('last_nickname', this.data.nickname);
+      saveNickname(this.data.nickname);
     }
     const inboxCatId = data.cat_id || '(feedback)';
     const ok = await putInbox('comment', {
@@ -173,17 +170,14 @@ Page({
       data: { repliable: repliable },
     });
 
-    console.log("curdOp(feedback-update) result:", res);
     if (res.ok) {
       wx.navigateBack();
     } else {
-      console.log('repliable record fail:\n', res);
     }
 
   },
 
   async changeAgreement(e) {
-    console.log(e);
     const checked = e.detail.value.length > 0;
     this.setData({
       agreementChecked: checked,

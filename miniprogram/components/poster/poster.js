@@ -123,7 +123,6 @@ Component({
             wx.showLoading({ title: '生成ing...', mask: true });
 
             const { cat, coverImg } = this.properties;
-            console.log('Cat:', cat);
 
             // 检查缓存
             if (this.checkCache(cat.id, coverImg._id)) {
@@ -155,7 +154,6 @@ Component({
                         wx.showToast({ title: '搞定(^・ω・^ )', icon: 'success' });
                     },
                     fail: (err) => {
-                        console.log(err);
                     }
                 });
                 return true;

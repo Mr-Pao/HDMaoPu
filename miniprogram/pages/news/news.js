@@ -53,7 +53,6 @@ Page({
     // 尝试使用预加载数据
     const preloadedData = wx.getStorageSync('newsPagePreload');
     if (preloadedData && preloadedData.timestamp && now - preloadedData.timestamp < 5 * 60 * 1000) {
-      console.log('[NEWS] 使用预加载数据');
       result = preloadedData.newsList || [];
     } else {
       // 从数据库查询
@@ -146,12 +145,6 @@ Page({
     });
   },
 
-  clickScience() {
-    wx.navigateTo({
-      url: '/pages/science/science'
-    });
-  },
-
   clickCreateBtn(e) {
     wx.navigateTo({
       url: '/pages/news/createNews/createNews',
@@ -181,12 +174,10 @@ Page({
       this.setData({
         newsList_show: newsList_show,
       })
-      console.log("[filterNews] -", newsList_show);
     }
   },
 
   radioButtonTap: function (e) {
-    console.log("[radioButtonTap] -", e);
     let id = e.currentTarget.dataset.id;
     for (let i = 0; i < this.data.buttons.length; i++) {
       if (this.data.buttons[i].id == id) {
@@ -254,7 +245,6 @@ Page({
 
     var res = await Promise.all(promiseAll);
 
-    console.log("[cacheCloudImg] -", res);
     for (let i = 0; i < res.length; i++) {
       var savedFilePath = fileSystem.saveFileSync(res[i].tempFilePath);
       cachePathList.push(savedFilePath);

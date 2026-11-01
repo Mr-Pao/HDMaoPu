@@ -85,7 +85,6 @@ Page({
           this.jsData.waitingList = cachedData.jsData.waitingList || { photo: [], comment: [] };
         }
 
-        console.log('从缓存加载Feed数据，缓存时间：', new Date(cachedData.timestamp).toLocaleString());
 
         // 如果缓存有效且有数据，则使用增量更新模式
         if (cachedData.feed && cachedData.feed.length > 0) {
@@ -93,7 +92,6 @@ Page({
           needIncrementalUpdate = true;
         }
       } else {
-        console.log('缓存已过期，将重新加载数据');
         // 清除过期的缓存数据，重置feed
         this.resetFeedData();
       }
@@ -209,7 +207,6 @@ Page({
       }
     })).result.followCats;
 
-    console.log(followCats);
     // 重置一下，便于下拉刷新用
     this.setData({ followCats, feed: [], loadnomore: false });
     this.jsData.waitingList = {
@@ -297,7 +294,6 @@ Page({
 
     // 按最新动态时间排序
     followCatsList.sort((a, b) => b.latestTime - a.latestTime);
-    console.log('关注列表', followCatsList);
     this.setData({ followCatsList: followCatsList });
   },
 
@@ -459,7 +455,6 @@ Page({
         loadedCount.comment += commentRes.length;
       }
 
-      console.log(waitingList, loadnomore);
       this.setData({ loadnomore });
 
       // 归并排序，合并数据
@@ -637,7 +632,6 @@ Page({
   // 打开大图
   clickPhoto(e) {
     const { photoIndex, feedIndex } = e.currentTarget.dataset;
-    console.log(photoIndex, feedIndex);
     const currentItems = this.data.feed[feedIndex].items;
 
     const urls = currentItems.map(item => item.pic_prev);
@@ -847,7 +841,6 @@ Page({
     };
     try {
       wx.setStorageSync('followFeedCache', cacheData);
-      console.log('已保存Feed数据到缓存');
     } catch (e) {
       console.error('缓存Feed数据失败:', e);
     }
@@ -876,7 +869,6 @@ Page({
       return this.loadMoreFeed();
     }
 
-    console.log('加载晚于以下时间的新动态:', new Date(latestTimestamp).toLocaleString());
 
     // 防止重复加载
     if (this.jsData.loadingLock) {
@@ -915,7 +907,6 @@ Page({
       let newPhotos = photoRes.result || [];
       let newComments = commentRes.result || [];
 
-      console.log(`发现${newPhotos.length}张新照片，${newComments.length}条新评论`);
 
       // 如果没有新内容，直接返回
       if (newPhotos.length === 0 && newComments.length === 0) {

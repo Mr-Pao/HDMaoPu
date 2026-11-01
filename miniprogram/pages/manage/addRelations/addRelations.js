@@ -307,7 +307,6 @@ Page({
       relation.cat.avatar = await getAvatar(relation.cat_id, relation.cat.photo_count_best);
     }
 
-    console.log("[loadRelations] -", relations);
 
     this.setData({
       "cat.relations": relations,

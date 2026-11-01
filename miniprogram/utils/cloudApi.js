@@ -76,17 +76,6 @@ async function sendMsgV2(options) {
   return await callUnionOp('sendMsgV2', options);
 }
 
-async function getMpCode(options) {
-  const params = {
-    _id: options._id,
-    scene: options.scene,
-    page: options.page,
-    width: 500,
-    use_private_tencent_cos: config.use_private_tencent_cos
-  }
-  return await callUnionOp('getMpCode', params);
-}
-
 async function managePhoto(options) {
   const openid = await getCurrentUserOpenid();
   return await callUnionOp('managePhoto', {
@@ -122,7 +111,6 @@ async function contentSafeCheck(content, nickname) {
     21000: "其他",
   }
   var res = await callUnionOp('commentCheck', { openid: openid, content: content, nickname: nickname });
-  console.log("contentSafeCheck", res);
   // cos 静态数据源下 commentCheck 是 no-op（data 为 null），直接放行，不能误判为检测失败
   if (!res || res.data === null || res.data === undefined) {
     return;
@@ -149,7 +137,6 @@ async function contentSafeCheck(content, nickname) {
 
 async function getUserStats(options) {
   const openid = await getCurrentUserOpenid();
-  console.log("openid", openid);
   return await callUnionOp('getUserStats', {
     ...options,
     openid: openid
@@ -212,7 +199,6 @@ module.exports = {
   curdOp,
   userOp,
   sendMsgV2,
-  getMpCode,
   managePhoto,
   getAllSci,
   contentSafeCheck,

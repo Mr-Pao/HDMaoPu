@@ -69,7 +69,6 @@ Page({
       }
     ])
     totalCount = total.length;
-    console.log(totalCount);
     this.setData({
       totalCount
     })
@@ -86,7 +85,6 @@ Page({
           $skip: count
         },
       ])
-      console.log(count, users)
       if (!users.length) {
         break;
       }
@@ -94,7 +92,6 @@ Page({
       count += users.length;
       var reqs = [];
       for (const u of users) {
-        console.log(u._id);
         reqs.push(api.userOp({
           "op": "updateRole",
           "user": {

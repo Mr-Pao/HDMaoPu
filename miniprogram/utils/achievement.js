@@ -75,7 +75,6 @@ async function _getUnlocked() {
       _unlockedCache.add(mapped);
     });
   } catch (e) {
-    console.log('读取成就失败', e);
   }
   return _unlockedCache;
 }
@@ -122,7 +121,6 @@ async function unlock(key) {
     });
     return true;
   } catch (e) {
-    console.log('解锁成就失败', e);
     return false;
   }
 }
@@ -157,7 +155,6 @@ async function trackViewCat(cat_id) {
     wx.setStorageSync('achv_viewed_cats', viewed);
     await _trackCount('view', viewed.length);
   } catch (e) {
-    console.log('trackViewCat fail', e);
   }
 }
 
@@ -171,7 +168,6 @@ async function trackAddPhoto() {
     const { result: count } = await app.mpServerless.db.collection('photo').count({ _openid: user.openid });
     await _trackCount('photo', count);
   } catch (e) {
-    console.log('trackAddPhoto fail', e);
   }
 }
 
@@ -185,7 +181,6 @@ async function trackComment() {
     const { result: count } = await app.mpServerless.db.collection('comment').count({ user_openid: user.openid });
     await _trackCount('comment', count);
   } catch (e) {
-    console.log('trackComment fail', e);
   }
 }
 
@@ -199,7 +194,6 @@ async function trackLike() {
     const { result: count } = await app.mpServerless.db.collection('inter').count({ type: 10000, uid: user.openid });
     await _trackCount('like', count);
   } catch (e) {
-    console.log('trackLike fail', e);
   }
 }
 
@@ -208,7 +202,6 @@ async function trackFollow(followCount) {
   try {
     await _trackCount('follow', followCount);
   } catch (e) {
-    console.log('trackFollow fail', e);
   }
 }
 
@@ -230,7 +223,6 @@ async function getMyAchievements() {
       });
     }
   } catch (e) {
-    console.log('读取成就时间失败', e);
   }
   return CATEGORIES.map(cat => ({
     id: cat.id,
@@ -283,7 +275,6 @@ async function getShowcase(openid) {
     if (!user || !user.showcase_achievements) return null;
     return user.showcase_achievements.map(k => _defOfKey(k)).filter(Boolean);
   } catch (e) {
-    console.log('读取展示位失败', e);
     return null;
   }
 }
@@ -304,7 +295,6 @@ async function setShowcase(keys) {
     });
     return true;
   } catch (e) {
-    console.log('保存展示位失败', e);
     return false;
   }
 }

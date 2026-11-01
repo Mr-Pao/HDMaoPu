@@ -151,16 +151,13 @@ Component({
         const { result: settingDoc } = await app.mpServerless.db.collection('setting').findOne({ _id: 'vaccine_types' })
 
         if (settingDoc && settingDoc && settingDoc.types && settingDoc.types.length > 0) {
-          console.log("成功获取疫苗类型:", settingDoc.types);
           globalVaccineTypes = settingDoc.types;
           this.setData({ vaccineTypes: globalVaccineTypes });
           return;
         }
 
-        console.log("未找到疫苗类型，初始化并使用默认值");
         const user = await getUser();
         app.mpServerless.function.invoke('initVaccineTypes', { openid: user.openid }).catch(err => console.error("初始化疫苗类型失败:", err));
-        console.log("使用默认值");
         globalVaccineTypes = DEFAULT_VACCINE_TYPES;
         this.setData({ vaccineTypes: globalVaccineTypes });
 

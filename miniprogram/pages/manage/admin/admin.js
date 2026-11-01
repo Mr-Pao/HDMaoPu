@@ -460,7 +460,6 @@ Page({
         logoUploading: false,
       });
       wx.showToast({ title: "已选好，点下面添加", icon: "none" });
-      console.log("[admin] 友链 logo 已上传到", key, size ? `${size} 字节` : "");
     } catch (e) {
       wx.hideLoading();
       this.setData({ logoUploading: false });

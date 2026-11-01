@@ -93,7 +93,6 @@ Page({
       }
       this.setData({ campusButtons: buttons });
     } catch (e) {
-      console.log('加载位置中心坐标失败:', e.message);
     }
   },
 
@@ -133,7 +132,6 @@ Page({
       });
       this.jsData.userLocated = true;
     } catch (e) {
-      console.log('获取用户定位失败，使用默认中心点:', e.message);
       this.setData({
         latitude: CAMPUS_CENTER.latitude,
         longitude: CAMPUS_CENTER.longitude
@@ -151,7 +149,6 @@ Page({
       wx.requirePrivacyAuthorize({
         success: resolve,
         fail: () => {
-          console.log('用户未同意隐私协议');
           resolve(); // 即使用户拒绝也继续，让 getFuzzyLocation 自己报错
         }
       });

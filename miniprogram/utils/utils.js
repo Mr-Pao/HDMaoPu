@@ -66,7 +66,6 @@ function userInfoEq(a, b) {
   try {
     for (const k in a) {
       if (a[k] != b[k]) {
-        console.log('找到不同了', k, a[k], b[k]);
         return false;
       }
     }
@@ -112,7 +111,6 @@ function checkUpdateVersion() {
 
   updateManager.onCheckForUpdate(function (res) {
     // 请求完新版本信息的回调
-    console.log(res.hasUpdate)
   })
 
   updateManager.onUpdateReady(function () {
@@ -130,7 +128,6 @@ function checkUpdateVersion() {
 
   updateManager.onUpdateFailed(function () {
     // 新版本下载失败
-    console.log("新版本下载失败");
   })
 }
 
@@ -150,7 +147,6 @@ function checkMultiClick(cat_id) {
     return false;
   }
   const deltaHours = getDeltaHours(last_click);
-  console.log("last click: " + deltaHours);
   // 小于2小时就返回true，说明是一个multi-click
   return deltaHours < 2;
 }

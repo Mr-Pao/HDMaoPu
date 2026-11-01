@@ -196,7 +196,6 @@ Page({
   async loadCurrentUserPhotosCount() {
     try {
       if (!this.data.currentUser || !this.data.currentUser._id) {
-        console.log("无法获取用户ID，跳过加载用户照片统计");
         return;
       }
       const openid = this.data.currentUser.openid;
@@ -216,7 +215,6 @@ Page({
   async loadTotalStats() {
     try {
       const result = await api.getCatStats();
-      console.log('获取统计数据:', result);
       
       if (result.success && result.data) {
         const statsData = result.data;
@@ -419,7 +417,6 @@ Page({
     try {
       // 1. 加载该猫猫的所有照片
       const photos = await DbHelper.getPhotosByCatId(catId);
-      console.log(`加载到${catId}的照片数量:`, photos.length);
       
       // 缓存当前猫猫的所有照片
       const bestCount = photos.filter(p => p.best).length;
@@ -455,7 +452,6 @@ Page({
   // 加载上传者列表
   async loadUploadersForCat(catId, photos) {
     try {
-      console.log("处理上传者，照片数量:", photos.length);
       
       if (photos.length === 0) {
         this.setData({ uploaders: [] });
@@ -482,7 +478,6 @@ Page({
               userInfo = userResult.result.userInfo;
             }
           } catch (userError) {
-            console.log(`用户${userId}信息获取失败，使用默认信息`);
           }
 
           const userPhotos = photos.filter(p => p.user_id === userId);
@@ -600,7 +595,6 @@ Page({
 
     const photoId = e.currentTarget.dataset.photoId;
 
-    console.log("当前照片信息： ", e.currentTarget.dataset)
     const selectedPhotos = [...this.data.selectedPhotos];
 
     
@@ -610,7 +604,6 @@ Page({
     } else {
       selectedPhotos.push(photoId);
     }
-    console.log("当前已选择：", selectedPhotos)
 
     this.setData({ selectedPhotos });
   },

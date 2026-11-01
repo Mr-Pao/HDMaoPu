@@ -29,7 +29,6 @@ async function getUser(options) {
   const key = "current-user";
   let userRes = await getCacheItem(key, options);
   if (userRes) {
-    console.log(`cached ${key}`);
     return userRes;
   }
 
@@ -58,7 +57,6 @@ async function getUserInfo(openid, options) {
   // 重新获取
   const { result } = await app.mpServerless.db.collection('user').findOne({ openid: openid });
   if (!result) {
-    console.log("user " + openid + " not existed.");
     return null;
   }
 
@@ -172,7 +170,6 @@ async function getPageUserInfo(page) {
   // 检查用户信息有没有拿到，如果有就更新this.data
   const userRes = await getUser();
   if (!userRes.userInfo || !Object.keys(userRes.userInfo).length) {
-    console.log('无用户信息');
     return false;
   }
   page.setData({
@@ -246,7 +243,6 @@ async function fillUserInfo(items, openidKey, userInfoKey, cacheOptions) {
     }
     const openid = item[openidKey];
     item[userInfoKey] = res[openid]?.userInfo;
-    console.log(item[userInfoKey]);
     if (item[userInfoKey]?.avatarUrl) {
       item[userInfoKey].avatarUrl = await signCosUrl(item[userInfoKey].avatarUrl);
     }

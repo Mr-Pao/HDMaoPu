@@ -2,6 +2,8 @@
 import { checkAuth } from "../../../utils/user";
 import { getGlobalSettings } from "../../../utils/page";
 import api from "../../../utils/cloudApi";
+import passcode from "../../../utils/passcode";
+import { putInbox } from "../../../utils/writeback";
 import desc from "./desc";
 
 
@@ -83,7 +85,6 @@ Page({
   // 加载数据库设置
   async reloadSettings() {
     let settings = await getGlobalSettings(null, { nocache: true });
-    console.log(JSON.stringify(settings));
     delete settings._id;
     delete settings.openid;
     delete settings.mdate;
@@ -167,19 +168,45 @@ Page({
 
     const { settings } = this.data;
 
-    const res = await api.curdOp({
-      operation: "update",
-      collection: "setting",
-      item_id: "pages",
-      data: settings
-    })
-    if (res.ok) {
+    // 真实写入：走 COS inbox 聚合链路，整体覆盖 setting _id='pages'。
+    // 不再假写本地覆盖层——本地覆盖层只写不回传，页面设置改动线上永远看不到。
+    const token = passcode.getToken();
+    if (!this.ensureToken(token)) return false;
+
+    const ok = await putInbox('manage', {
+      action: 'managePageSettings',
+      token: token,
+      setting: settings,
+    });
+    if (ok) {
       wx.showToast({
         title: '保存成功',
         icon: "success"
       });
       await this.reloadSettings();
     }
+  },
+
+  // 提交前检查：没有口令就不让提交（否则后台会静默丢弃）
+  ensureToken(token) {
+    if (token) return true;
+    wx.showModal({
+      title: "还没设置管理口令",
+      content: "提交需要管理口令，否则后台会直接丢弃。现在设置吗？",
+      confirmText: "去设置",
+      success: r => {
+        if (r.confirm) this.editToken();
+      },
+    });
+    return false;
+  },
+
+  editToken() {
+    passcode.promptToken({
+      onSaved: () => {
+        wx.showToast({ title: passcode.hasToken() ? "口令已保存" : "已清除口令", icon: "none" });
+      },
+    });
   },
 
 })

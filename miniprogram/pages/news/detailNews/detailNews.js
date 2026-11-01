@@ -37,7 +37,6 @@ Page({
     const pagesStack = getCurrentPages();
     const path = getCurrentPath(pagesStack);
     const share_text = `${this.data.news.title}`;
-    console.log("[onShareAppMessage] -", shareTo(share_text, path))
     return shareTo(share_text, path);
   },
 
@@ -46,7 +45,6 @@ Page({
     var { result } = await app.mpServerless.db.collection('news').findOne({
       _id: this.data.news_id
     })
-    console.log("[loadNews] - NewsDetail:", result);
     if (!result) {
       that.setData({
         err: true,
@@ -76,7 +74,6 @@ Page({
 
   previewImg: function (event) {
     const that = this;
-    console.log("[previewImg] -", event);
     wx.previewImage({
       current: that.data.photos_path[event.currentTarget.dataset.index],
       urls: that.data.photos_path

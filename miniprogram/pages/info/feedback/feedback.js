@@ -21,13 +21,10 @@ Page({
     wx.previewImage({
       urls: [src],
       success: (res) => {
-        console.log(res);
       },
       fail: (res) => {
-        console.log(res);
       },
       complete: (res) => {
-        console.log(res);
       },
     });
   },

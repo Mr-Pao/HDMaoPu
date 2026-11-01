@@ -104,7 +104,6 @@ Page({
       // 需要压缩
       if (file.size > 512 * 1024) {
         file.path = await compressImage(file.tempFilePath, 30);
-        console.log("compressed path:", file.path);
       } else {
         file.path = file.tempFilePath;
       }
@@ -122,7 +121,6 @@ Page({
   // 点击单个上传
   async uploadSingleClick(e) {
     if (this.data.uploading) {
-      console.log("uploading lock.");
       return;
     }
     this.setData({
@@ -156,7 +154,6 @@ Page({
   // 点击多个上传
   async uploadAllClick(e) {
     if (this.data.uploading) {
-      console.log("uploading lock.");
       return;
     }
     const photos = []; // 这里只会保存可以上传的照片
@@ -212,7 +209,6 @@ Page({
 
     if (numUnchkPhotos >= triggerNum) {
       await sendNotifyVertifyNotice(numUnchkPhotos);
-      console.log("toSendNVMsg");
     }
   },
 
@@ -275,7 +271,6 @@ Page({
   },
 
   pickDate(e) {
-    console.log(e);
     const index = e.currentTarget.dataset.index;
     this.setData({
       ["photos[" + index + "].shooting_date"]: e.detail.value
@@ -292,7 +287,6 @@ Page({
   setAllDate(e) {
     const value = e.detail.value;
     var photos = this.data.photos;
-    console.log(photos);
     for (var ph of photos) {
       ph.shooting_date = value;
     }

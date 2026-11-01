@@ -108,7 +108,6 @@ Page({
     }
 
     var cat = (await getCatItemMulti([this.jsData.cat_id], {nocache: true}))[0];
-    console.log("[loadCat] -", cat);
     cat.mphoto = String(new Date(cat.mphoto));
     // 处理一下picker
     var picker_selected = {};
@@ -153,7 +152,6 @@ Page({
         bottomText: "-- 没有更多猫图了 --",
         noMorePhoto: true,
       });
-      console.log("[checkNeedLoad] - Check no more");
       return false;
     } else {
       this.setData({
@@ -189,7 +187,6 @@ Page({
     var newPhotos = await db.collection('photo').where(qf).orderBy('mdate', 'desc').skip(now).limit(photoStep).get();
     await fillUserInfo(newPhotos.data, "_openid", "userInfo");
     
-    console.log("[loadMorePhotos] -", newPhotos);
     photo = photo.concat(newPhotos.data);
     this.setData({
       photo: photo
@@ -280,7 +277,6 @@ Page({
   },
   async loadPickers() {
     var filterRes = await loadFilter();
-    console.log(filterRes);
     // 把area按campus分类
     var area_category = {};
     for (const campus of filterRes.campuses) {
@@ -325,7 +321,6 @@ Page({
       cat: this.data.cat,
       cat_id: this.jsData.cat_id
     })).result;
-    console.log("updateCat res:", res);
     // cos 静态数据源下 updateCat 是 no-op（data 为 null），明确提示而不是假成功
     if (!res || res.data === null || res.ok === false) {
       wx.hideLoading();
@@ -346,7 +341,6 @@ Page({
     await getCatItemMulti([this.jsData.cat_id], {nocache: true});
   },
   async deletePhoto(e) {
-    console.log("[deletePhoto] -", e);
     const photo = e.currentTarget.dataset.photo;
     const ActionRes = await wx.showActionSheet({
       itemList: ['删除照片', '移动到其他猫猫']
@@ -375,7 +369,6 @@ Page({
       return;
     }
 
-    console.log('开始删除');
     const delRes = await api.managePhoto({
       type: "delete",
       photo: photo
@@ -390,7 +383,6 @@ Page({
       return;
     }
 
-    console.log("删除照片记录：" + photo._id);
     wx.showToast({
       title: '删除成功',
     })

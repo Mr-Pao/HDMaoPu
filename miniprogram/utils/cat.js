@@ -42,7 +42,9 @@ async function getBestPhoto(cat_id) {
     const { result: photos } = await app.mpServerless.db.collection('photo').find({
       cat_id: cat_id,
       verified: true,
-      best: true
+      best: true,
+      hidden: { $ne: true },
+      deleted: { $ne: 1 }
     }, {
       sort: { mdate: -1 },
       limit: 1
@@ -59,7 +61,9 @@ async function getLatestPhoto(cat_id) {
   try {
     const { result: photos } = await app.mpServerless.db.collection('photo').find({
       cat_id: cat_id,
-      verified: true
+      verified: true,
+      hidden: { $ne: true },
+      deleted: { $ne: 1 }
     }, {
       sort: { mdate: -1 },
       limit: 1

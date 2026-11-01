@@ -7,7 +7,11 @@ const { applyNav } = require('../../utils/nav');
 // 8 行，按 4 行一个循环做三档行高：hero / tall / wide / tall
 const ROWS = 8;
 // 每行取多少张（复制一份后节点数翻倍）
-const PER_ROW = 12;
+// PER_ROW 直接决定常驻 <image> 节点数：8 行 × (PER_ROW×2) 张。
+// 从 12 降到 8，墙的节点数从 192 降到 128（-33%），低端机掉帧明显缓解；
+// 因为拼了一份副本做无缝循环，PER_ROW 只影响“循环前展示多少张不同照片”，
+// 不影响铺满屏幕，观感几乎不变。
+const PER_ROW = 8;
 // 首屏最多拉多少张照片用于铺墙
 const FETCH_LIMIT = 60;
 
@@ -112,7 +116,7 @@ Page({
     let photos = [];
     try {
       const { result } = await app.mpServerless.db.collection('photo').find(
-        { verified: true },
+        { verified: true, hidden: { $ne: true } },
         { sort: { mdate: -1 }, limit: FETCH_LIMIT }
       );
       photos = result || [];
@@ -139,7 +143,7 @@ Page({
 
     let total = photos.length;
     try {
-      const { result } = await app.mpServerless.db.collection('photo').count({ verified: true });
+      const { result } = await app.mpServerless.db.collection('photo').count({ verified: true, hidden: { $ne: true } });
       if (typeof result === 'number') total = result;
     } catch (e) {
       // 计数失败不影响出图

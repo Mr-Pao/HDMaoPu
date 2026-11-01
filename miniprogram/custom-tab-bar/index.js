@@ -4,7 +4,6 @@ import { checkCanFullTabBar } from "../utils/user";
 import tab from "./tab";
 
 function getTabBarList() {
-  console.log(tab);
   var list = [];
   for (var key in tab) {
     list.push(tab[key]);
@@ -33,7 +32,6 @@ Component({
     }
     const settings = await this.getSettings();
     if (settings == undefined) {
-      console.log("no settings, currentPath:", currentPath);
       if (isTabPath(currentPath)) {
         wx.showModal({
           title: 'TabBar错误001',
@@ -64,7 +62,6 @@ Component({
     }
 
     if (!order && isTabPath(currentPath)) {
-      console.log("no order");
       wx.showModal({
         title: 'TabBar错误002',
         content: `请重进小程序。当前页面：${currentPath}`,
@@ -104,7 +101,6 @@ Component({
   attached() {
     var obj = this.createSelectorQuery();
     obj.select('.tab-bar').boundingClientRect(function (rect) {
-      console.log('获取tabBar元素的高度', rect.height);
       wx.setStorageSync('tabBarHeight', rect.height)     // 将获取到的高度设置缓存，以便之后使用
     }).exec();
   },

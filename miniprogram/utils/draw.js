@@ -4,12 +4,10 @@ import {compressImage, sleep} from "./utils";
 // 初始化canvas接口
 function initCanvas(canvasId) {
   return new Promise((resolve) => {
-    console.log("initCanvas start");
     wx.createSelectorQuery()
     .select(canvasId) // 在 WXML 中填入的 id
     .fields({ node: true, size: true })
     .exec((res) => {
-        console.log("initCanvas res", res);
         // Canvas 对象
         const canvas = res[0].node
         // Canvas 画布的实际绘制宽高
@@ -34,7 +32,6 @@ function initCanvas(canvasId) {
 
 // 包装一个画图接口
 function drawImage(gCtx, gCanvas, imgSrc, dx, dy, weight, height) {
-  console.log("drawImage", gCtx, imgSrc);
   return new Promise((resolve) => {
     const image = gCanvas.createImage()
     image.onload = () => {

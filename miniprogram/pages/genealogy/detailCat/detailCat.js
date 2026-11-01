@@ -131,7 +131,6 @@ Page({
     // 获取一下屏幕高度
     wx.getSystemInfo({
       success: res => {
-        console.log("[onReady] -", res);
         this.jsData.heights = {
           "screenHeight": res.screenHeight,
           "windowHeight": res.windowHeight,
@@ -210,7 +209,6 @@ Page({
     const pagesStack = getCurrentPages();
     const path = getCurrentPath(pagesStack);
     const share_text = `${this.data.cat.name} - ${config.text.app_name}`;
-    console.log("[onShareAppMessage] -", shareTo(share_text, path))
     return shareTo(share_text, path);
   },
   onShareTimeline: function () {
@@ -277,7 +275,6 @@ Page({
     var query = wx.createSelectorQuery();
     query.select('#info-box').boundingClientRect();
     query.exec((res) => {
-      console.log("[loadCat] - ", res[0]);
       if (!res[0]) {
         return;
       }
@@ -289,7 +286,6 @@ Page({
   async loadRelations() {
     var cat = this.data.cat;
     var relations = this.data.cat.relations;
-    console.log("[loadRelations] - ", cat);
     if (!cat._id || !relations) {
       return false;
     }
@@ -299,7 +295,6 @@ Page({
       relation.cat.avatar = await getAvatar(relation.cat_id, relation.cat.photo_count_best);
     }
 
-    console.log("[loadRelations] - ", relations);
 
     const parentCats = [];
     const childCats = [];
@@ -389,7 +384,6 @@ Page({
         qf,
         { skip: now, limit: step }
       )
-      console.log("[loadMorePhotos] -", res);
       const offset = (cat.photo || []).length;
 
       // 使用统一的批量签名函数
@@ -461,7 +455,6 @@ Page({
     const preload = this.jsData.page_settings.galleryPreload;
     const photo_count = this.data.galleryPhotos.length;
     if (this.jsData.whichGallery == 'best' && photo_count - index <= preload && photo_count < this.jsData.photoMax) {
-      console.log("[bindGalleryChange] - 加载更多精选图");
       await this.loadMorePhotos(); //preload
 
       var photos = this.data.cat.photo;
@@ -626,18 +619,16 @@ Page({
     })
   },
 
-  likeCountChanged(e) {
-    console.log("[likeCountChanged] -", e);
+  async likeCountChanged(e) {
     const current = e.detail.current;
     const like_count = e.detail.like_count;
     if (this.jsData.whichGallery == "best") {
-      console.log("[likeCountChanged] - update best photo", e.detail);
       const bestList = this.data.cat.photo || [];
       const before = bestList[current];
       const oldCount = (before && before.like_count) || 0;
       // 同步到 COS inbox，由 Action 聚合。旧值还没被 setData 覆盖，可以据此判断点赞还是取消
       if (before && before._id) {
-        putInbox('like', {
+        await putInbox('like', {
           photo_id: before._id,
           cat_id: this.jsData.cat_id,
           like: like_count > oldCount,
@@ -650,7 +641,7 @@ Page({
       const before = this.jsData.album_raw[current];
       const oldCount = (before && before.like_count) || 0;
       if (before && before._id) {
-        putInbox('like', {
+        await putInbox('like', {
           photo_id: before._id,
           cat_id: this.jsData.cat_id,
           like: like_count > oldCount,
@@ -716,7 +707,7 @@ Page({
   },
 
   // 猫咪点赞：本地切换 + 乐观更新计数 + 写 inbox（Actions 聚合到 cat.like_count）
-  likeCat() {
+  async likeCat() {
     const catId = this.data.cat && this.data.cat._id;
     if (!catId) return;
 
@@ -724,15 +715,17 @@ Page({
     const wasLiked = likedIds.includes(catId);
     const nextLiked = !wasLiked;
     const nextIds = wasLiked ? likedIds.filter(id => id !== catId) : likedIds.concat(catId);
+    // 同步写本地，是防连点的唯一可信来源，必须在 await 之前完成
     wx.setStorageSync('likedCatIds', nextIds);
 
     const cur = Number(this.data.cat.like_count) || 0;
+    // 先入队，await 保证顺序后再做本地乐观更新（切换关注态、加减计数）
+    await putInbox('like', { cat_id: catId, like: nextLiked });
+
     this.setData({
       likedCat: nextLiked,
       'cat.like_count': Math.max(0, cur + (nextLiked ? 1 : -1)),
     });
-
-    putInbox('like', { cat_id: catId, like: nextLiked });
   },
 
   // 获取最新疫苗记录

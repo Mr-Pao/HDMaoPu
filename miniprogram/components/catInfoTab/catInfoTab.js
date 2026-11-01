@@ -4,6 +4,8 @@ import { loadFilter } from "../../utils/page";
 import { getCatItemMulti } from "../../utils/cat";
 import { signCosUrl } from "../../utils/common";
 import api from "../../utils/cloudApi";
+import passcode from "../../utils/passcode";
+import { putInbox } from "../../utils/writeback";
 const app = getApp();
 
 const photoStep = 5; // 每次加载的图片数量
@@ -153,7 +155,6 @@ Component({
       } else {
         this.jsData.cat_id = cat._id;
       }
-      console.log('[loadCatData] - 加载外部传入的猫咪数据:', cat);
       this.loadCat();
     },
 
@@ -187,7 +188,6 @@ Component({
       // 确保 jsData 已初始化
       if (!this.jsData) {
         this.jsData = { cat_id: null, phers: {} };
-        console.log('[loadCat] - 初始化 jsData');
       }
       if (this.jsData.cat_id === undefined) {
         this.setData({
@@ -202,7 +202,6 @@ Component({
       }
 
       var cat = (await getCatItemMulti([this.jsData.cat_id], { nocache: true }))[0];
-      console.log("[loadCat] -", cat);
       cat.mphoto = String(new Date(cat.mphoto));
       // 处理一下picker
       var picker_selected = {};
@@ -268,7 +267,6 @@ Component({
           bottomText: "-- 没有更多猫图了 --",
           noMorePhoto: true,
         });
-        console.log("[checkNeedLoad] - Check no more");
         return false;
       } else {
         this.setData({
@@ -305,7 +303,6 @@ Component({
       var { result: newPhotos } = await app.mpServerless.db.collection('photo').find(qf, { sort: { mdate: -1 }, skip: now, limit: photoStep })
       await fillUserInfo(newPhotos, "_openid", "userInfo");
 
-      console.log("[loadMorePhotos] -", newPhotos);
       for (var photos of newPhotos) {
         if (photos.photo_id) {
           photos.photo_id = await signCosUrl(photos.photo_id);
@@ -340,11 +337,9 @@ Component({
       if (this.data.pickerValueMaps && this.data.pickerValueMaps[key]) {
         // 使用映射表中的实际值
         value = this.data.pickerValueMaps[key][index];
-        console.log(`使用映射值 ${key}[${index}] = ${value}`);
       } else if (key === 'adopt') {
         // 特殊处理adopt选项：使用索引作为值
         value = index;
-        console.log(`设置adopt索引值: ${index}`);
       } else {
         // 没有映射表，直接使用选项值
         value = this.data.pickers[key][index];
@@ -360,7 +355,6 @@ Component({
         ['picker_selected.' + key]: index
       });
 
-      console.log(`选择了 ${key} = ${value}，索引 = ${index}`);
       return value;
     },
 
@@ -400,7 +394,6 @@ Component({
     },
     async loadPickers() {
       var filterRes = await loadFilter();
-      console.log(filterRes);
       // 把area按campus分类
       var area_category = {};
       for (const campus of filterRes.campuses) {
@@ -450,7 +443,6 @@ Component({
         cat: this.data.cat,
         cat_id: this.jsData.cat_id
       });
-      console.log("updateCat res:", res);
       if (res.insertedId) {
         this.jsData.cat_id = res.insertedId;
       }
@@ -469,7 +461,6 @@ Component({
       }
     },
     async deletePhoto(e) {
-      console.log("[deletePhoto] -", e);
       const photo = e.currentTarget.dataset.photo;
       const ActionRes = await wx.showActionSheet({
         itemList: ['删除照片', '移动到其他猫猫']
@@ -498,13 +489,11 @@ Component({
         return;
       }
 
-      console.log('开始删除');
       await api.managePhoto({
         type: "delete",
         photo: photo
       });
 
-      console.log("删除照片记录：" + photo._id);
       wx.showToast({
         title: '删除成功',
       });
@@ -587,11 +576,15 @@ Component({
         return;
       }
 
-      await api.curdOp({
-        operation: "update",
-        collection: "photo",
-        item_id: photo._id,
-        data: { cat_id: cat._id },
+      // 真实写入：走 COS inbox 聚合链路，把照片移动到另一只猫（photo_count 不自动重算）。
+      // 不再假写本地覆盖层——本地覆盖层只写不回传，移动线上永远看不到。
+      const token = passcode.getToken();
+      if (!this.ensureToken(token)) return;
+      await putInbox('manage', {
+        action: 'movePhoto',
+        token: token,
+        photo_id: photo._id,
+        cat_id: cat._id,
       });
 
       wx.showToast({
@@ -606,7 +599,29 @@ Component({
 
     async upload() {
       await this.saveCat();
-    }
+    },
+
+    // 提交前检查：没有口令就不让提交（否则后台会静默丢弃）
+    ensureToken(token) {
+      if (token) return true;
+      wx.showModal({
+        title: "还没设置管理口令",
+        content: "提交需要管理口令，否则后台会直接丢弃。现在设置吗？",
+        confirmText: "去设置",
+        success: r => {
+          if (r.confirm) this.editToken();
+        },
+      });
+      return false;
+    },
+
+    editToken() {
+      passcode.promptToken({
+        onSaved: () => {
+          wx.showToast({ title: passcode.hasToken() ? "口令已保存" : "已清除口令", icon: "none" });
+        },
+      });
+    },
   }
 })
 

@@ -58,12 +58,10 @@ Page({
   async reloadMyRatings() {
     // 获取榜单和标签定义
     if (!(this.data.user && this.data.user.openid)) {
-      console.log(this.data);
       return
     }
     const { result: myRatingsItems } = await app.mpServerless.db.collection('rating').findOne({ _openid: this.data.user.openid, cat_id: this.data.cat_id })
 
-    console.log(myRatingsItems);
 
     if (!myRatingsItems) {
       // 还没有评分
@@ -72,7 +70,6 @@ Page({
 
     let myRatings = convertRatingList(myRatingsItems);
 
-    console.log(myRatings);
     this.setData({
       myRatings,
       myRatingId: myRatingsItems._id,
@@ -84,7 +81,6 @@ Page({
     let { cat_id } = this.data;
     let { result: cat } = await app.mpServerless.db.collection('cat').findOne({ _id: cat_id })
 
-    console.log(cat);
 
     if (!cat.rating) {
       this.setData({
@@ -154,7 +150,6 @@ Page({
       });
     }
 
-    console.log(res);
 
     // 同步到 COS inbox，由 Action 聚合回写 data/cat.json 的 rating。
     // score 是综合分（五维取整平均），决定 scores/avgScore；

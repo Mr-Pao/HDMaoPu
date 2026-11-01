@@ -1,6 +1,6 @@
 import { getUser, setUserRole } from "./user";
 import { getCacheItem, setCacheItem, cacheTime } from "./cache";
-import api from "./cloudApi";
+import { putInbox } from "./writeback";
 const app = getApp();
 
 var user = undefined;
@@ -65,14 +65,12 @@ async function likeCheck(item_ids, options) {
 async function likeToInvite() {
   if (user.role) {
     // 已经是了
-    console.log("already role");
     return;
   }
 
   const { result: count } = await app.mpServerless.db.collection('inter').count({ type: TYPE_LIKE, uid: user.openid });
 
   if (count >= 2) {
-    console.log("invite user with like_count >= 2");
     await setUserRole(user.openid, 1);
     await getUser({ nocache: true });
   }
@@ -80,35 +78,27 @@ async function likeToInvite() {
 
 
 // 点赞操作
-async function likeAdd(item_id, item_type) {
+// 图库点赞不再假写 inter 集合 + 计数，改为走 COS inbox 聚合链路：
+//   putInbox('like', { photo_id, cat_id, like })
+// 服务端 handleLike 会按 openid 幂等落库 like 计数（cat/photo 的 like_count）。
+// 本地乐观更新（likeCheck 缓存、计数加减）仍由调用方（gallery.js / detailCat.js）负责。
+async function likeAdd(item_id, item_type, cat_id) {
   var res = (await likeCheck([item_id]))[0];
-  console.log(res);
   // 已经赞过
   if (res) {
     return false;
   }
 
-  // 没有记录
-  await ensureUser();
-  await api.curdOp({
-    operation: "add",
-    collection: "inter",
-    data: {
-      type: TYPE_LIKE,
-      uid: user.openid,
-      item_id: item_id,
-      count: 1
-    }
+  // 没有记录：写入 inbox，由 Actions 聚合回传服务端（永不 reject）
+  const ok = await putInbox('like', {
+    photo_id: item_id,
+    cat_id: cat_id || '',
+    like: true,
   });
-
-  // 加上去
-  console.log("like", item_type, item_id);
-  await api.curdOp({
-    operation: "inc",
-    collection: item_type,
-    type: "like",
-    item_id, item_id,
-  });
+  if (!ok) {
+    // 写入失败只影响服务端聚合，本地乐观计数已由调用方 setData 完成，不阻断 UI
+    console.warn('[inter] like inbox 写入失败', item_id);
+  }
 
   // 刷新缓存
   await likeCheck([item_id], {

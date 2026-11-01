@@ -59,7 +59,6 @@ Page({
       setTimeout(() => {
         const catInfoTab = this.selectComponent('#catInfoTab');
         if (catInfoTab) {
-          console.log('刷新猫咪信息组件');
           catInfoTab.loadCatData(this.data.selectedCat);
         }
       }, 300);
@@ -159,7 +158,6 @@ Page({
    */
   selectCat(e) {
     const catId = e.currentTarget.dataset.id;
-    console.log('选中猫咪ID:', catId);
     this.getCatById(catId);
     this.setData({
       showSearchResults: false,
@@ -186,26 +184,22 @@ Page({
 
     try {
       wx.showLoading({ title: '加载中...' });
-      console.log('正在获取猫咪信息, ID:', catId);
 
       // 获取猫咪基本信息和头像
       const cat = await getCatItem(catId);
       cat.avatar = await getAvatar(cat._id, cat.photo_count_best);
 
-      console.log('获取到猫咪信息:', cat);
 
       this.setData({
         selectedCat: cat,
         isNewMode: false // 重置新建模式
       });
 
-      console.log('selectedCat已更新:', this.data.selectedCat);
 
       // 确保catInfoTab加载最新的猫咪信息
       setTimeout(() => {
         const catInfoTab = this.selectComponent('#catInfoTab');
         if (catInfoTab && this.data.activeTab === 'info') {
-          console.log('调用catInfoTab.loadCat，catId:', catId);
           try {
             // 先初始化必要属性
             catInfoTab.setData({
@@ -306,7 +300,6 @@ Page({
         catInfoTab: infoTab
       });
     } else {
-      console.log('未找到catInfoTab组件，请确保在信息选项卡已激活');
     }
     // 如果当前不在信息选项卡，则切换到信息选项卡
     if (this.data.activeTab !== 'info') {

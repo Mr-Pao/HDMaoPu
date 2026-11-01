@@ -89,21 +89,18 @@ Page({
   // },
 
   onShow: function () {
-    console.log('设置屏幕常亮');
     wx.setKeepScreenOn({
       keepScreenOn: true
     });
   },
 
   onHide: function () {
-    console.log('取消屏幕常亮');
     wx.setKeepScreenOn({
       keepScreenOn: false
     });
   },
 
   onUnload: async function () {
-    console.log('取消屏幕常亮');
     wx.setKeepScreenOn({
       keepScreenOn: false
     });
@@ -116,7 +113,6 @@ Page({
       photo_compressed: { $in: [undefined, ''] },
       verified: true
     });
-    console.log("imProcess loadProcess:", total);
     this.setData({
       total: total,
       now: 0,
@@ -173,7 +169,6 @@ Page({
       });
 
       await fillUserInfo(photos, "_openid", "userInfo");
-      console.log("imProcess beginProcess", photos);
 
       if (!photos.length) {
         wx.showModal({
@@ -231,18 +226,15 @@ Page({
     if (photoObj.orientation == 'right' || photoObj.orientation == 'left') {
       [photoObj.width, photoObj.height] = [photoObj.height, photoObj.width];
     }
-    console.log("imProcess processOne:", photoObj);
     this.setData({
       origin: photoObj
     });
     // 压缩图
     this.setPhase(2);
     const compressPath = await this.compress(photoObj);
-    console.log("compressPath", compressPath);
     // 水印图
     this.setPhase(3);
     const watermarkPath = await this.watermark(photoObj, photoInfo);
-    console.log("watermarkPath", watermarkPath);
     // 是否只是测试运行
     if (isTesting) {
       await wx.showModal({
@@ -257,12 +249,10 @@ Page({
     this.setPhase(4);
     const compressCloudPath = `/compressed/${generateUUID()}.jpg`;
     const compressCloudID = await this.uploadImage(compressPath, compressCloudPath);
-    console.log("compressCloudID", compressCloudID);
     // 上传水印图
     this.setPhase(5);
     const watermarkCloudPath = `/watermark/${generateUUID()}.jpg`;
     const watermarkCloud = await this.uploadImage(watermarkPath, watermarkCloudPath);
-    console.log("watermarkCloud", watermarkCloud);
     // 更新数据库
     this.setPhase(6);
     await this.updataDatabase(photoInfo, compressCloudID, watermarkCloud);
@@ -275,10 +265,8 @@ Page({
     const origin = oriPhotoObj;
 
     const draw_rate = Math.max(origin.width, origin.height) / canvasMax;
-    console.log(origin, draw_rate);
     const draw_width = Math.floor(origin.width / draw_rate);
     const draw_height = Math.floor(origin.height / draw_rate);
-    console.log("draw size", draw_width, draw_height);
 
     // 画上图片
     const { gCtx, gCanvas } = this.jsData;
@@ -294,7 +282,6 @@ Page({
       comp_width = Math.floor(origin.width / origin.height * compressLength);
     }
 
-    console.log("comp size", comp_width, comp_height);
 
     // 变成图片显示
     var path = await drawUtils.getTempPath(gCtx, gCanvas, {

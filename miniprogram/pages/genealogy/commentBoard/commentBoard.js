@@ -26,6 +26,10 @@ import {
 import {
   markPending,
 } from "../../../utils/syncTip";
+import {
+  getNickname,
+  saveNickname,
+} from "../../../utils/nickname";
 import api from "../../../utils/cloudApi";
 const app = getApp();
 Page({
@@ -83,15 +87,14 @@ Page({
   },
 
   // 昵称改为选填：不拦发便利贴，只用于显示与审核通知
-  // 每次提交就地填，本机记住上一次填的（last_nickname），换设备自然丢失
+  // 每次提交就地填，本机记住上一次填的（utils/nickname 的 last_nickname），换设备自然丢失
   async loadUserInfo() {
     const user = (await getUser()) || {};
-    const last_nickname = wx.getStorageSync('last_nickname') || '';
     this.setData({
       user: Object.assign({}, user, {
         userInfo: user.userInfo || {},
       }),
-      nickname: last_nickname,
+      nickname: getNickname(),
     });
   },
 
@@ -154,11 +157,9 @@ Page({
 
   async loadCat() {
     var cat = (await app.mpServerless.db.collection('cat').findOne({ _id: this.jsData.cat_id })).result;
-    console.log(cat);
 
     // 获取头像
     cat.avatar = await getAvatar(cat._id, cat.photo_count_best);
-    console.log(cat.avatar);
 
     // 获取总数
     var comment_count = await getCatCommentCount(cat._id);
@@ -199,7 +200,6 @@ Page({
   async sendComment() {
     // 发送中
     if (this.jsData.sendLock) {
-      console.log("locking...");
       return false;
     }
 
@@ -253,7 +253,7 @@ Page({
       // 没有检测出问题
       // 记住本机上次填的昵称（换设备自然丢失），空值不覆盖
       if (this.data.nickname) {
-        wx.setStorageSync('last_nickname', this.data.nickname);
+        saveNickname(this.data.nickname);
       }
       await this.addComment(item, user);
       return
@@ -276,9 +276,7 @@ Page({
         data: item
       });
 
-      console.log("curdOp(add-Comment) result): ", res, user);
       // 插入最新便利贴 + 清空输入框
-      console.log(item);
       item.userInfo = { nickName: this.data.nickname || '匿名猫友' };
       item.datetime = formatDate(new Date(), "yyyy-MM-dd hh:mm:ss")
       var comments = this.data.comments;
@@ -340,7 +338,6 @@ Page({
       cat_id: this.jsData.cat_id
     };
     var res = (await app.mpServerless.db.collection('comment').find(qf, { skip: comments.length, sort: { create_date: -1 }, limit: 10 })).result;
-    console.log(res);
     if (res.length === 0) {
       this.setData({
         loadNoMore: true
@@ -360,7 +357,6 @@ Page({
       comments.push(item);
     }
 
-    console.log(comments);
     this.setData({ comments });
 
   },
@@ -380,20 +376,33 @@ Page({
       return false;
     }
 
-    await api.curdOp({
-      operation: "remove",
-      collection: "comment",
-      item_id: comment_id
-    });
+    // 走 inbox 聚合软删（作者删自己的评论），不依赖本地覆盖层假写。
+    // putInbox 永远不 reject，失败只是这次同步丢了，UI 不走崩。
+    const ok = await putInbox('deleteComment', { comment_id });
 
-    wx.showToast({
-      title: '删除成功',
-    });
+    // 乐观更新：无论聚合是否成功，先移除本地该项（聚合后服务端软删，重进会消失）。
     var comments = this.data.comments;
     comments.splice(index, 1);
     this.setData({
       comments: comments,
-    })
+      comment_count: Math.max(0, this.data.comment_count - 1),
+    });
+
+    if (ok) {
+      markPending("comment", { cat_id: item.cat_id, label: "便利贴" });
+      wx.showToast({
+        title: config.text.sync.received_tip,
+        icon: 'none',
+        duration: 2000,
+      });
+    } else {
+      // 防御：失败不要崩，给个轻提示（markPending 已吞异常，这里也不抛）。
+      wx.showToast({
+        title: config.text.sync.offline_tip,
+        icon: 'none',
+        duration: 2500,
+      });
+    }
   },
 
   async ifSendNotifyVeriftMsg() {
@@ -406,7 +415,6 @@ Page({
 
     if (numUnchkPhotos >= triggerNum) {
       await sendNotifyVertifyNotice(numUnchkPhotos);
-      console.log("toSendNVMsg");
     }
   },
 

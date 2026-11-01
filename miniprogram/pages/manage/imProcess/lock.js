@@ -18,7 +18,6 @@ async function geneKey(type) {
 async function geneUserDeviceKey() {
   const user = await userUtils.getUser();
   const device = await wx.getSystemInfoSync();
-  console.log(user, device);
   const key = `${user.openid}-${user.userInfo.nickName}-${device.platform}-${device.model}-${device.version}-${device.SDKVersion}`;
   return key;
 }
@@ -34,7 +33,6 @@ async function lock(scene, key, limit, expire_minutes) {
     limit: limit,
     expire_date: expire_date,
   })).result;
-  console.log("lock:", res);
 
   return res;
 }

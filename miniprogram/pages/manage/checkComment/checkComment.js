@@ -42,7 +42,6 @@ Page({
    * 生命周期函数--监听页面卸载
    */
   onUnload: function () {
-    console.log('[onUnload] - 页面退出');
 
     // 发送审核消息
     sendVerifyCommentNotice(this.jsData.notice_list);
@@ -59,7 +58,6 @@ Page({
         create_date: -1
       }
     })
-    console.log(result);
 
     // 填充userInfo
     await fillUserInfo(result, "user_openid", "userInfo");
@@ -177,7 +175,6 @@ Page({
     });
 
     if (modalRes.confirm) {
-      console.log('[bindCheckMulti] - 开始通过');
       await this.doCheckMulti();
     }
 
@@ -251,7 +248,6 @@ Page({
     wx.getSetting({
       withSubscriptions: true,
       success: res => {
-        console.log("[requestSubscribeMessage] - subscribeSet:", res);
         if ('subscriptionsSetting' in res) {
           if (!(notifyVerifyTplId in res['subscriptionsSetting'])) {
             // 第一次申请或只点了取消，未永久拒绝也未允许
@@ -260,7 +256,6 @@ Page({
           } else if (res.subscriptionsSetting[notifyVerifyTplId] === 'reject') {
             // console.log("已拒绝");// 不再请求/重复弹出toast
           } else if (res.subscriptionsSetting[notifyVerifyTplId] === 'accept') {
-            console.log('[requestSubscribeMessage] - 重新请求下个一次性订阅');
             requestNotice('notifyVerify');
           }
         }

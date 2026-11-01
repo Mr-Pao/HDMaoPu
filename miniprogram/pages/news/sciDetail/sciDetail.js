@@ -52,7 +52,6 @@ Page({
 
     const res = await api.getAllSci({});
 
-    console.log("getAllSci:", res);
     const data = res;
     this.setData({
       qnas: data
@@ -63,7 +62,6 @@ Page({
   changeCate(e) {
     // 这个cate是0~n范围内的
     const cate = e.detail.current;
-    console.log("ChangeCate", cate);
     this.setData({
       cate_active: cates[cate]
     });

@@ -200,7 +200,6 @@ Page({
     // 尝试使用预加载数据
     const preloadedData = wx.getStorageSync('infoPagePreload');
     if (preloadedData && preloadedData.timestamp && now - preloadedData.timestamp < 5 * 60 * 1000) {
-      console.log('[INFO] 使用预加载数据');
       numAllCats = preloadedData.numAllCats;
       numAllPhotos = preloadedData.numAllPhotos;
       numAllComments = preloadedData.numAllComments;
@@ -418,7 +417,6 @@ Page({
       return false;
     }
     const actionMap = {
-      clearCache: () => this.clearCache(),
       guide: () => this.guide(e),
       // 可扩展
     };

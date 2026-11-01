@@ -97,11 +97,6 @@ Page({
         // create_date 旧数据可能缺失（老后端迁移），用 mdate 兜底排序
         { sort: { create_date: -1, mdate: -1 }, skip: this.jsData.photoSkip, limit: PHOTO_PAGE_SIZE }
       );
-      // 诊断：核实各照片 create_date/mdate 的实际存值
-      console.log('[loadMorePhotos] 日期字段核查:', (photos || []).map(p => ({
-        _id: p._id, create_date: p.create_date, mdate: p.mdate,
-      })));
-
       // 猫名
       const catIds = [...new Set((photos || []).map(p => p.cat_id).filter(Boolean))];
       const catMap = {};

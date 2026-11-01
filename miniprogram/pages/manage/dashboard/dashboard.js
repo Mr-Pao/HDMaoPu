@@ -66,7 +66,6 @@ Page({
           loading: false,
           lastUpdateTime: formattedTime
         });
-        console.log("使用缓存数据，缓存时间:", formattedTime);
         this.calculateMaxAreaCount();
         return;
       }
@@ -89,7 +88,6 @@ Page({
           loading: false,
           lastUpdateTime: formattedTime
         });
-        console.log("获取最新统计数据:", stats, "更新时间:", formattedTime);
         this.calculateMaxAreaCount();
       } else {
         wx.showToast({
