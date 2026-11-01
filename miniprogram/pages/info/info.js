@@ -64,11 +64,19 @@ Page({
             icon: "icon-check-square-o"
           },
           {
+            name: "猫资料编辑",
+            path: "/pages/manage/admin/admin?tab=cat",
+            icon: "icon-edit"
+          },
+          {
             name: "照片审核",
-            path: "/pages/manage/checkPhotos/checkPhotos",
-            num: "numChkPhotos",
-            icon: "icon-photo-o",
-            disabled: true
+            path: "/pages/manage/admin/admin?tab=photo",
+            icon: "icon-photo-o"
+          },
+          {
+            name: "友情链接",
+            path: "/pages/manage/admin/admin?tab=link",
+            icon: "icon-cluster-o"
           },
           {
             name: "便利贴审核",
@@ -98,11 +106,6 @@ Page({
             name: "位置/区域/花色",
             path: "/pages/manage/filters/filters",
             icon: "icon-location-o"
-          },
-          {
-            name: "管理后台",
-            path: "/pages/manage/admin/admin",
-            icon: "icon-cluster-o"
           },
           {
             name: "人员管理",

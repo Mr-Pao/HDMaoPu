@@ -8,7 +8,7 @@ const secrets = require('./appSecret.js');
 
 module.exports = {
   // 版本号
-  app_version: "v4.0.30",
+  app_version: "v4.0.31",
   // 【离线 Demo 模式】
   // true  = 不连任何后端，使用 utils/demo.js 里的假数据（11 只猫 + 照片 + 设置）
   // false = 走下面的 data_base_url（COS 上的静态 JSON）
@@ -122,9 +122,9 @@ module.exports = {
     // 由 GitHub Actions 每 5 分钟聚合成 data/*.json 再推回 COS，
     // 所以重新进页面 / 其他用户最长要等 5~15 分钟才看得到，照片和留言还要人工审核。
     sync: {
-      submitted_title: "已提交",
-      delay_tip: "后台会在几分钟内自动汇总，稍后刷新就能看到",
-      review_tip: "照片和留言需要审核通过后才会展示",
+      // 所有提交成功提示统一用这一句，改文案只改这里
+      received_tip: "已收到，审核后就会展示出来啦",
+      submitted_title: "已收到",
       offline_tip: "网络不太好，这次可能没提交成功",
       pending_title: "等待同步",
       pending_tip: "你还有 {n} 条内容正在等待同步 · 约 5~15 分钟后生效",

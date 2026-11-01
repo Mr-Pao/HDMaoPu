@@ -141,7 +141,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.30`），commit message 末尾带版本号。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.31`），commit message 末尾带版本号。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -158,14 +158,26 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-01）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.30`
-- **v4.0.30：友情链接改为可手动增删（管理后台新 tab）**
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.31`
+- **v4.0.31：管理后台拆成三个独立入口（去掉页内 tab）**
+  - **用户要求（2026-11-01）「不单独做管理后台按钮，把功能直接加在现有的管理后台列表里」，并补充「入口和审核队列并列，猫资料编辑 / 照片审核 / 友情链接三个都拿出来」**。→ 「关于 → 管理后台」网格里的单独「管理后台」项**已删除**，换成三项并排：`猫资料编辑`（`icon-edit`）/ `照片审核`（`icon-photo-o`）/ `友情链接`（`icon-cluster-o`），紧跟在「审核队列」后面。原来的「照片审核」项原本 `disabled: true` 指向未注册死页 `pages/manage/checkPhotos`，现已换成能跑的管理页。
+  - **同一个页面复用三种形态**：`pages/manage/admin/admin` 靠 query `?tab=cat|photo|link` 决定显示哪一块；`onLoad(options)` 里 `const tab = TAB_META[(options && options.tab) || ""] ? options.tab : "cat";` 兜底（`TAB_META = {cat:"猫资料编辑", photo:"照片审核", link:"友情链接"}`），**同时 `wx.setNavigationBarTitle({title: TAB_META[tab]})`**，页内标题与口令门标题都改成 `{{pageTitle}}`。**页面内已没有 tab 栏**：`admin.wxml` 的 `.tabs` 块、`admin.js` 的 `switchTab()`、`admin.wxss` 的 `.tabs/.tab/.tab-active` 三组样式全部删除（当前残留检查为 0）。
+  - **首次加载改为 `afterUnlock()`**：`if (tab === "link") loadLinks(); else loadCats();`。`unlock()` 里原来写死的 `this.loadCats()` 改为调 `afterUnlock()`——否则从「友情链接」入口进来解锁后猫列表白拉一次、链接反而不加载。照片 tab 仍需用户先选猫再 `loadPhotos(idx)`，不做自动加载。
+  - **`info.js` 的 `clickbtn`** 只做 `wx.navigateTo({url: to})`，query 参数原样透传，无需改跳转逻辑。⚠️ 该函数有 `actionMap`（`clearCache`/`guide`）优先匹配，路径里带 `?` 不会影响匹配。
+- **v4.0.30：友情链接改为可手动增删（管理后台入口）**
   - 入口在 `pages/manage/admin/admin`（原有口令门内），tab 从 `cat | photo` 扩成 **`cat | photo | link`**。数据仍存在 `data/setting.json` 的 `_id='friendLink'` 记录里，schema 不变：`{_id:'friendLink', apps:[{appid, name, logo}]}`。
   - **写入链路**：客户端 `saveLinks()` → `putInbox('manage', {action:'saveFriendLinks', token:this.getToken(), apps})` → `scripts/process-inbox.js` 的 `handleManage` 新分支 `manageSaveFriendLinks(data)`；服务端 `tokenOk()` 校验 `REVIEW_PASSCODE`，整体**替换** `apps` 数组（不是增量），`markTouched('setting')` 让 `data/setting.json` 被写回并随 `sync-data.yml` 上 COS。客户端 `datasource` 的 updateOne **不能用来改这里**——它只写本地覆盖层，不回传远端。
   - **服务端校验（`normalizeFriendApp`）**：`APPID_RE = /^wx[0-9a-zA-Z]{16}$/`、`name` 非空且 ≤20 字、`logo` ≤300 字符且可空、按 appid 去重、上限 `FRIEND_LINK_MAX = 20`。失败返回 `drop:no-apps` / `drop:bad-friend-app` / `drop:too-many-links`；成功 `ok:friend-links`。
   - **admin 页新增**：`data.links/linkLoading/linkSaving/linkDirty/draft{appid,name,logo}`；方法 `loadLinks()`（`linkDirty` 时不覆盖，避免冲掉未保存编辑）、`onDraftInput`、`addLink`（同样的正则与去重前校验，纯本地）、`deleteLink`（`wx.showModal` 二次确认）、`moveLink`（↑↓ 调序）、`saveLinks`。`switchTab` 切到 link 时才懒加载。
   - **展示端改了缓存策略**：`pages/info/info.js` 把原来写在 `onLoad` 里的 friendLink 查询抽成 `loadFriendLinks()`，`onShow` 调用，5 分钟节流（`this.jsData.linkFetchedAt`）——否则改完后台要重进小程序才看得到。`info.wxml` 整块包 `wx:if="{{friendApps.length}}"`（空列表不再显示空标题），无 logo 时用首字占位 `.friend-link-ph`。
   - `data/setting.json` **没有本地改动**，线上靠 Actions 聚合写回；自测用 `DRY_RUN=1 REVIEW_PASSCODE=xxx node scripts/process-inbox.js`，`selftestObjects()` 里已有 offset 21（合法）/22（非法 appid）两条 manage 用例，`snapshot()` 会打印 `friendLinks` 名称数组。
+- **v4.0.30：提交后「延迟生效」提示（用户需求：数据/照片走 Actions，小程序不能实时显示）**
+  - **根因三段延迟**：① `utils/writeback.js:75` `putInbox(kind, data)` 匿名 PUT 到 COS `inbox/`，`WRITEBACK_TIMEOUT = 8000`，**永远不 reject**，失败只 `console.warn` 返回 false；② `process-inbox.yml` cron `*/5 * * * *` 聚合成 `data/*.json`，`sync-data.yml` 再推 COS；③ `datasource` SWR 的 `CACHE_TTL` 10 分钟。→ 提交后只有当前页乐观更新，重进页面/他人最长等 5~15 分钟，照片留言还要人工审核。旧文案（`'张贴成功~'` / `'提交成功'` / `'审核后就会展示出来啦'`）让用户以为失败而反复提交。
+  - **新增 `miniprogram/utils/syncTip.js`（157 行，唯一新增文件）**：`module.exports = { markPending, getPending, getPendingCount, clearPending, submittedModal, pendingText }`。`STORAGE_KEY = "pending_sync"`、`MAX_ITEMS = 20`、`TTL = 2*60*60*1000`；存 `[{kind, cat_id, label, ts}]`，**同 kind+cat_id 覆盖 ts 不重复追加**，读时清理过期并写回。**所有函数同步、异常全吞、绝不 throw**，不影响提交主流程。`submittedModal(content, title)` 是对 `wx.showModal` 的封装（`showCancel:false`、`confirmText:"知道了"`）。
+  - **`config.js:120-132` 新增 `text.sync` 七键**：`submitted_title:"已提交"`、`delay_tip:"后台会在几分钟内自动汇总，稍后刷新就能看到"`、`review_tip:"照片和留言需要审核通过后才会展示"`、`offline_tip:"网络不太好，这次可能没提交成功"`、`pending_title:"等待同步"`、`pending_tip:"你还有 {n} 条内容正在等待同步 · 约 5~15 分钟后生效"`、`pending_close:"关闭提示"`。
+  - **六个提交点接入**：`addPhoto.js:148-153`（单张）/`:197-202`（批量）、`commentBoard.js:318` + toast `'已提交，审核后展示'`、`ratingDetail.js:178` + toast `'已提交，稍后自动汇总'`、`feedbackDetail.js:155` + toast `'已收到，审核后展示'`、`admin.js` 的 submitToast、`review.js` 的 decide（`'已通过/已拒绝，后台几分钟内汇总生效'`）。`addPhoto.uploadImg` 改为 **`return !!ok`**，单张/批量按 ok 分支：成功 → `delay_tip + "\n" + review_tip`，失败（含任一张网络失败）→ `offline_tip`。⚠️ 这是**行为收敛**：旧 `uploadAllClick` 无论成败都弹成功，属修 bug。
+  - **detailCat 顶部可关闭提示条**（这是用户能持续看到的唯一入口）：`detailCat.js:30` import，`:99-101` 三个 data 字段 `pendingCount / pendingText / syncTipHidden`，`onShow`（`:168-181`）读 `getPendingCount(this.jsData.cat_id)` 并 `pendingText(n)`，try/catch 包裹；`:184-186` `dismissSyncTip()` **只 setData 隐藏，不清本机记录**。`detailCat.wxml:18-24` 用 **`wx:if="{{pendingCount > 0 && !syncTipHidden}}"`**（不是 `hidden`，避开 v4.0.27 记的那个坑），右侧 `×`。`detailCat.wxss:1046-1083` 的 `.sync-tip` 系列用 `--dk-accent-soft` 底 / `--dk-accent-line` 边 / 20rpx 圆角 / margin 24rpx。
+  - **刻意不做的**：detailCat 的点赞/关注不弹窗、不 markPending（交互太频繁）；没新增页面，没碰 `app.json` / `project.config.json` / `app.wxss` token。
 - **v4.0.29：四页标题字号统一 + tab 改名「猫片」+ 猫抓板两篇示例**
   - **标题字号**：猫谱页 `.nav-t` 在 v5.2 精修里被放大到 **52rpx**（`genealogy.wxss:1144`），而猫抓板/关于页仍用 `app.wxss:345` 的全局 `.nav-title` **46rpx** → 三页标题大小不一。修法是在 `news.wxss`、`info.wxss` **各自尾部追加 `.nav-title` 覆盖**（52rpx / line-height 56rpx / 800 / letter-spacing -1.6rpx / margin-top 10rpx），**不动 `app.wxss`**。猫图页没有大标题（全屏漂流墙，顶部只有 `.hud-kicker` 22rpx 的「CAT GALLERY」标识），属刻意设计，不要强行补。
   - **tabBar 文案「猫图」→「猫片」**：只改 `custom-tab-bar/tab.js:12` 的 `text`。`gallery.json` 的 `navigationBarTitleText`、`gallery.js:94` 分享标题、`config.js` 的 `share_tip: "猫图墙"`、`catInfoTab`/`addCat` 的「加载更多猫图」**全部保持「猫图」不动**（用户只要求改 tab 文案，别顺手全局替换）。

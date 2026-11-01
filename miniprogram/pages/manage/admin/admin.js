@@ -1,4 +1,6 @@
-// 管理后台：猫资料编辑 + 照片下架/恢复 + 友情链接增删
+// 管理后台（三个独立入口，共用本页，靠 ?tab= 区分）：
+//   猫资料编辑 ?tab=cat / 照片审核 ?tab=photo / 友情链接 ?tab=link
+//   入口都在「关于 → 管理后台」的菜单列表里，页面内没有 tab 切换。
 //
 // 口令模型：
 //   - 小程序包里不再内置口令（config.review_passcode 已删除）。
@@ -23,6 +25,14 @@ const PASSCODE_TTL = 24 * 60 * 60 * 1000; // 24 小时免输入
 const GENDER_OPTIONS = ["公", "母", "未知"];
 const ADOPT_OPTIONS = text_cfg.cat_status_adopt; // ["未领养", "已领养", "寻找领养中"]
 
+// 「关于 → 管理后台」里的三个菜单项各自带 ?tab= 打开本页，
+// 所以页面内不再有 tab 切换，进来看到的就是那一块。
+const TAB_META = {
+  cat: "猫资料编辑",
+  photo: "照片审核",
+  link: "友情链接",
+};
+
 function formatDate(iso) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -36,7 +46,8 @@ Page({
     unlocked: false,
     passcode: "",
 
-    tab: "cat", // cat | photo | link
+    tab: "cat", // cat | photo | link，由 onLoad 的 ?tab= 决定
+    pageTitle: TAB_META.cat,
 
     // 猫列表（picker 用）
     catNames: [],
@@ -82,9 +93,22 @@ Page({
     currentCatId: "",
   },
 
-  onLoad() {
+  onLoad(options) {
+    // 「关于 → 管理后台」的三个菜单项分别带 ?tab=cat|photo|link 进来
+    const tab = TAB_META[(options && options.tab) || ""] ? options.tab : "cat";
+    this.setData({ tab, pageTitle: TAB_META[tab] });
+    wx.setNavigationBarTitle({ title: TAB_META[tab] });
+
     if (this.hasValidPasscode()) {
-      this.setData({ unlocked: true });
+      this.afterUnlock();
+    }
+  },
+
+  // 解锁后按当前 tab 做一次首次加载
+  afterUnlock() {
+    if (this.data.tab === "link") {
+      this.loadLinks();
+    } else {
       this.loadCats();
     }
   },
@@ -110,7 +134,7 @@ Page({
     wx.setStorageSync(PASSCODE_KEY, input);
     wx.setStorageSync(PASSCODE_TS_KEY, Date.now());
     this.setData({ unlocked: true, passcode: "" });
-    this.loadCats();
+    this.afterUnlock();
   },
 
   lock() {
@@ -128,13 +152,6 @@ Page({
   },
 
   // ---------- 公共 ----------
-
-  switchTab(e) {
-    const tab = e.currentTarget.dataset.tab;
-    if (!tab || tab === this.data.tab) return;
-    this.setData({ tab });
-    if (tab === "link" && this.data.unlocked) this.loadLinks();
-  },
 
   async loadCats() {
     try {
