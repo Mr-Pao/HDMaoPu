@@ -8,7 +8,7 @@ const secrets = require('./appSecret.js');
 
 module.exports = {
   // 版本号
-  app_version: "v4.0.47",
+  app_version: "v4.0.48",
   // 【离线 Demo 模式】
   // true  = 不连任何后端，使用 utils/demo.js 里的假数据（11 只猫 + 照片 + 设置）
   // false = 走下面的 data_base_url（COS 上的静态 JSON）
@@ -80,6 +80,7 @@ module.exports = {
       photo_by_unknow_tip: "匿名猫友",
       photo_loading_tip: "加载照片ing",
       to_star_tip: "返回喵星",
+      traits_empty_tip: "未登记",
     },
     // 关于页，pages/info/info
     info: {

@@ -1083,11 +1083,39 @@ swiper-item image {
 }
 
 /* =========================================================
-   v5.7 猫咪详情页沉浸式（2026-11-01）
-   - 去掉顶部标题，只留悬浮返回箭头
-   - 大图（swiper）顶到屏幕上沿，宽度铺满 750rpx
-   - 信息卡上浮压住大图下沿，保持原有圆角与阴影
+   v5.8 猫咪详情页沉浸式 + 视差（2026-11-01）
+   - 顶部大图 fixed 在视口上，滚动时不动
+   - 信息卡从下方逐渐盖住大图（视差效果）
+   - 去掉顶部标题，只留悬浮返回圆片
    ========================================================= */
+
+/* 顶部大图：固定在视口，宽度铺满，滚动时纹丝不动 */
+.hero-fixed {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 750rpx;
+  height: 750rpx;
+  z-index: 0;
+  overflow: hidden;
+  background-color: #DCE5D8; /* 图片加载前的占位色，避免闪白 */
+}
+
+/* 滚动容器浮在大图之上，自身背景透明，只有信息卡是白的 */
+#container {
+  position: relative;
+  z-index: 1;
+  width: 750rpx;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 占位块：把首屏信息卡顶到大图下沿 */
+.hero-spacer {
+  width: 750rpx;
+  height: 750rpx;
+  pointer-events: none;
+}
 
 /* 返回按钮改为悬浮圆片，压在照片上也能看清 */
 .dc-nav {
@@ -1120,7 +1148,7 @@ swiper-item image {
   display: none;
 }
 
-/* 大图铺满：轮播占满屏宽，高度按 4:3 拉满到视觉重心 */
+/* 大图铺满：轮播占满屏宽 */
 swiper {
   width: 750rpx;
   height: 750rpx;
@@ -1146,13 +1174,14 @@ swiper-item image {
   left: auto;
 }
 
-/* 信息卡继续上浮，压住大图下沿 */
+/* 信息卡：白底、上圆角，初始就压住大图下沿一点；滚动时整体上移盖住大图 */
 .info {
   margin-top: -48rpx;
   border-radius: var(--dk-radius-lg) var(--dk-radius-lg) 0 0;
+  box-shadow: 0 -8rpx 24rpx rgba(12, 95, 3, 0.10);
 }
 
-/* 待同步提示：图上文字容易看不清，改成常规卡片间距 */
+/* 待同步提示：取消原来的左右外边距叠图效果，紧贴信息卡上方 */
 .sync-tip {
-  margin: 24rpx;
+  margin: 24rpx 24rpx 0 24rpx;
 }

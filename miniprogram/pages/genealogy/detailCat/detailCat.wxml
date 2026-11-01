@@ -11,13 +11,8 @@
   </view>
 </view>
 
-<!-- 整个页面容器：不加 padding-top，大图直接顶到屏幕上沿（沉浸式） -->
-<scroll-view id='container' scroll-y="1" bindscrolltolower='loadMoreAlbum' enable-back-to-top="true" bindscroll="bindContainerScroll">
-  <!-- 半圆形下面的白底块 -->
-  <view id='bg-big-circle'></view>
-  <!-- 这是黄色的半圆形 -->
-  <view id='big-circle'></view>
-
+<!-- 顶部大图：固定在视口上，滚动时不动，下面的信息卡逐渐盖上来（视差效果） -->
+<view class='hero-fixed'>
   <swiper indicator-dots='{{false}}' bindchange='swiperLast' previous-margin='0rpx' next-margin='0rpx' circular="true">
     <swiper-item class="best-photo" wx:for='{{cat.photo}}' wx:key="_id" bindtap='bindTapPhoto' data-index="{{item.index}}" data-kind='best'>
       <image bindload='bindImageLoaded' mode='aspectFill' src='{{item.photo_compressed || item.photo_id}}'></image>
@@ -27,6 +22,12 @@
       </item>
     </swiper-item>
   </swiper>
+</view>
+
+<!-- 整个页面容器：不加 padding-top，大图直接顶到屏幕上沿（沉浸式） -->
+<scroll-view id='container' scroll-y="1" bindscrolltolower='loadMoreAlbum' enable-back-to-top="true" bindscroll="bindContainerScroll">
+  <!-- 占位：初始状态下把信息卡顶到大图下沿 -->
+  <view class='hero-spacer'></view>
 
   <!-- 本机待同步提示：提交后要等后台聚合，期间告诉用户别以为没提交成功 -->
   <view class='sync-tip' wx:if="{{pendingCount > 0 && !syncTipHidden}}">
