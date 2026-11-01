@@ -1,5 +1,5 @@
 {
-  "version": "1793517097762",
+  "version": "v1793531243692",
   "items": [
     {
       "_id": "pages",
@@ -78,8 +78,13 @@
       "apps": [
         {
           "appid": "wx5bd705b2bc91c73b",
-          "logo": "/pages/public/images/system/zdmp.png",
-          "name": "笃行猫谱"
+          "name": "笃行猫谱",
+          "logo": "/pages/public/images/system/zdmp.png"
+        },
+        {
+          "appid": "wxb1a4cbb5fa337016",
+          "name": "SpaceLaunch",
+          "logo": "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/photos/friendlink/wxb1a4cbb5fa337016.png"
         }
       ]
     },
