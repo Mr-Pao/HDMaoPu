@@ -2,8 +2,7 @@
   "navigationStyle": "custom",
   "usingComponents": {
     "heart": "/packages/heart-button/heart",
-    "photoRank": "/components/photoRank/photoRank",
-    "badgeRank": "/components/badgeRank/badgeRank"
+    "photoRank": "/components/photoRank/photoRank"
   },
   "disableScroll": true,
   "navigationBarTitleText": "榜单"

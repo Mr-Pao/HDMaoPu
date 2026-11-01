@@ -195,29 +195,6 @@ async function main() {
     check('stat 的 openid 都能在 user 找到', us.result.length === openids.length, `${us.result.length}/${openids.length}`);
   }
 
-  console.log('\n【勋章 / badge + badge_def】');
-  {
-    const defs = await db.collection('badge_def').find({});
-    check('badge_def 非空', defs.result.length > 0, `${defs.result.length} 个`);
-    check('每条有 name/desc/level', defs.result.every((d) => d.name && d.desc && d.level));
-    const ub = await db.collection('badge').find({ _openid: 'demo-openid-1', catId: null });
-    check('loadUserBadge 查询有结果', ub.result.length > 0, `${ub.result.length} 个`);
-    check('用户徽章都无 givenTime 或被正确标记', ub.result.every((b) => b.givenTime === null || b.givenTime));
-    const cb = await db.collection('badge').count({ catId: 'demo-cat-1' });
-    check('loadCatBadge 计数 > 0', cb.result > 0, String(cb.result));
-    const br = await db.collection('badge_rank').findOne({}, { sort: { mdate: -1 } });
-    check('badge_rank 快照存在', !!br.result);
-    const rv2 = br.result && br.result.rankV2;
-    check('rankV2 有 7/30/365 三个窗口', !!rv2 && !!rv2[7] && !!rv2[30] && !!rv2[365]);
-    const catsInRank = new Set();
-    for (const win of Object.keys(rv2 || {})) {
-      for (const k of Object.keys(rv2[win])) Object.keys(rv2[win][k]).forEach((id) => catsInRank.add(id));
-    }
-    const catIds = [...catsInRank];
-    const cs = await db.collection('cat').find({ _id: { $in: catIds } });
-    check('榜单里的 catId 都存在', cs.result.length === catIds.length, `${cs.result.length}/${catIds.length}`);
-  }
-
   console.log('\n【新闻 / news】');
   {
     const home = await db.collection('news').find({ setNewsModal: true }, { sort: { date: -1 } });

@@ -147,43 +147,6 @@ async function contentSafeCheck(content, nickname) {
   return;
 }
 
-async function getBadge(options) {
-  const openid = await getCurrentUserOpenid();
-  return await callUnionOp('getBadge', {
-    ...options,
-    openid: openid
-  });
-}
-
-async function giveBadge(options) {
-  const openid = await getCurrentUserOpenid();
-  return await callUnionOp('giveBadge', {
-    ...options,
-    openid: openid
-  });
-}
-
-async function genBadgeCode(options) {
-  const openid = await getCurrentUserOpenid();
-  return await callUnionOp('genBadgeCode', {
-    ...options,
-    openid: openid
-  });
-}
-
-async function loadBadgeCode(options) {
-  const openid = await getCurrentUserOpenid();
-  return await callUnionOp('curdOp', {
-    ...options,
-    openid: openid,
-    operation: "read",
-    collection: "badge_code",
-    where: options.where,
-    skip: options.skip,
-    limit: options.limit
-  });
-}
-
 async function getUserStats(options) {
   const openid = await getCurrentUserOpenid();
   console.log("openid", openid);
@@ -255,10 +218,6 @@ module.exports = {
   contentSafeCheck,
   updateCat,
   getDate,
-  getBadge,
-  giveBadge,
-  genBadgeCode,
-  loadBadgeCode,
   getUserStats,
   updateCatRating,
   getCatStats,

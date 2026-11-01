@@ -214,10 +214,6 @@
       },
       {
         "type": "folder",
-        "value": "pages/info/badge"
-      },
-      {
-        "type": "folder",
         "value": "pages/info/userInfo/modifyUserInfo"
       },
       {

@@ -33,8 +33,8 @@ Page({
     ],
     tempPics: [],
     loadnomore: false,
-    threads: ["徽章收集", "照片点赞", "拍照月榜"],
-    threadsActive: 1,
+    threads: ["照片点赞", "拍照月榜"],
+    threadsActive: 0,
     filters: [{
       name: "周精选",
       hours: 24 * 7,
@@ -211,7 +211,7 @@ Page({
     this.getHeights();
   },
   onReachBottom: function () {
-    if (this.data.threadsActive != 1) {
+    if (this.data.threadsActive != 0) {
       return;
     }
     this.loadData();
@@ -319,10 +319,7 @@ Page({
       threadsActive: index,
     });
 
-    if (index == 0) {
-      this.selectComponent('#badge-rank').reloadData();
-    }
-    if (index == 2) {
+    if (index == 1) {
       this.selectComponent('#photo-rank').reloadData();
     }
   },

@@ -64,7 +64,7 @@ jobs:
           //   1) 只统计源码体积，不含微信开发者工具编译产物（.wxml→.js 等），真实产物更大；
           //   2) 小程序上传时平台会压缩，故 3MB 预算是粗筛护栏而非精确上限；
           //   3) 当前主包已超微信名义 2MB：因 app.json 声明的部分子包页面
-          //      （pages/recognize、pages/info/badge）实际位于主包目录，属既有打包结构，
+          //      （pages/recognize）实际位于主包目录，属既有打包结构，
           //      不在本门禁处理范围，需后续把相应文件移入 pages/packageA 才能真正独立分包。
 
           if (mainBytes > limit) {

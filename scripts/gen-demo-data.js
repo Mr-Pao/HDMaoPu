@@ -405,107 +405,6 @@ function genNews() {
   }));
 }
 
-// ---------------------------------------------------------------- badge_def
-
-const BADGE_DEFS = [
-  { _id: 'bd-first-meet', name: '初次相遇', desc: '第一次在猫谱中见到猫猫', level: 'C', rankDesc: '相遇的开始', img: '' },
-  { _id: 'bd-photo-fan', name: '拍猫达人', desc: '累计拍摄并上传 10 张猫猫照片', level: 'B', rankDesc: '镜头里的猫', img: '' },
-  { _id: 'bd-like-star', name: '人气之星', desc: '单张照片获得 20 次以上点赞', level: 'B', rankDesc: '被更多人看见', img: '' },
-  { _id: 'bd-comment-king', name: '便利贴之王', desc: '累计发布 20 条便利贴留言', level: 'B', rankDesc: '留下最多故事的人', img: '' },
-  { _id: 'bd-tnr-hero', name: 'TNR 卫士', desc: '参与或协助完成一次绝育行动', level: 'A', rankDesc: '为绝育贡献一份力', img: '' },
-  { _id: 'bd-adopter', name: '暖心归宿', desc: '成功领养一只校园猫', level: 'A', rankDesc: '给了一个家', img: '' },
-  { _id: 'bd-night-owl', name: '夜巡者', desc: '在夜间时段记录过猫猫状态', level: 'C', rankDesc: '深夜的守护', img: '' },
-  { _id: 'bd-map-pioneer', name: '地图开拓者', desc: '新增 5 个猫猫常出没地点', level: 'B', rankDesc: '摸清了活动范围', img: '' },
-  { _id: 'bd-legend', name: '猫谱传奇', desc: '累计获得 100 个徽章', level: 'S', rankDesc: '传说级热爱', img: '' },
-  { _id: 'bd-guardian', name: '守护者', desc: '连续 30 天访问猫谱', level: 'S', rankDesc: '风雨无阻', img: '' },
-];
-
-function genBadgeDef() {
-  return BADGE_DEFS.map((b) => ({ ...b }));
-}
-
-// ---------------------------------------------------------------- badge
-
-const BADGE_REASONS = ['checkIn', 'watchPictureAD', 'watchVideoAD', 'manual'];
-
-function genBadge(users, badgeDefs) {
-  const items = [];
-  let n = 0;
-  const normal = users.filter((u) => u.manager === 0);
-  // 用户级徽章（catId = null），loadUserBadge 只看 catId===null 且无 givenTime
-  for (let ui = 0; ui < normal.length; ui++) {
-    const u = normal[ui];
-    const cnt = 2 + (ui % 4);
-    for (let k = 0; k < cnt; k++) {
-      const def = badgeDefs[(ui * 2 + k) % badgeDefs.length];
-      n++;
-      items.push({
-        _id: 'demo-badge-' + n,
-        _openid: u.openid,
-        catId: null,
-        badgeDef: def._id,
-        reason: BADGE_REASONS[k % BADGE_REASONS.length],
-        acquireTime: daysAgo(1 + ((ui * 5 + k) % 25)),
-        givenTime: null,
-      });
-    }
-  }
-  // 猫猫级徽章，detailCat 的 reloadCatBadge 按 catId 查
-  for (let ci = 0; ci < cats.length; ci++) {
-    const cnt = 1 + (ci % 3);
-    for (let k = 0; k < cnt; k++) {
-      const def = badgeDefs[(ci + k + 3) % badgeDefs.length];
-      n++;
-      items.push({
-        _id: 'demo-badge-' + n,
-        _openid: normal[ci % normal.length].openid,
-        catId: cats[ci]._id,
-        badgeDef: def._id,
-        reason: 'manual',
-        acquireTime: daysAgo(2 + ((ci * 3 + k) % 20)),
-        givenTime: null,
-      });
-    }
-  }
-  return items;
-}
-
-// ---------------------------------------------------------------- badge_rank
-
-/**
- * 快照结构：{ _id, mdate, rankV2: { [days]: { count: {catId: n}, score: {catId: n}, [badgeDefId]: {catId: n} } } }
- * 组件遍历 rankV2[days]，再对每个 rankKey 遍历 catId -> 计数。
- */
-function genBadgeRank(cats2, badgeDefs) {
-  const mk = (scale) => {
-    const o = {};
-    for (let ci = 0; ci < cats2.length; ci++) {
-      const c = cats2[ci];
-      o[c._id] = Math.max(1, ((cats2.length - ci) * scale) % 9);
-    }
-    return o;
-  };
-  const build = (scale) => {
-    const r = { count: mk(scale), score: mk(scale + 2) };
-    // 取前 3 个徽章定义各做一榜
-    badgeDefs.slice(0, 3).forEach((d, i) => {
-      r[d._id] = mk(scale + i + 1);
-    });
-    return r;
-  };
-  return [
-    {
-      _id: 'demo-badge-rank-1',
-      mdate: daysAgo(0, 8),
-      rankV2: {
-        7: build(1),
-        30: build(2),
-        365: build(3),
-      },
-    },
-  ];
-}
-
 // ---------------------------------------------------------------- photo_rank
 
 /**
@@ -679,9 +578,6 @@ function main() {
   const inter = genInter(users);
   const feedback = genFeedback(users);
   const news = genNews();
-  const badgeDefs = genBadgeDef();
-  const badge = genBadge(users, badgeDefs);
-  const badgeRank = genBadgeRank(cats, badgeDefs);
   const reward = genReward();
   const achievement = genAchievement(users);
   const reviewQueue = genReviewQueue(users);
@@ -713,9 +609,6 @@ function main() {
   writeJSON('inter', coll(inter));
   writeJSON('feedback', coll(feedback));
   writeJSON('news', coll(news));
-  writeJSON('badge_def', coll(badgeDefs));
-  writeJSON('badge', coll(badge));
-  writeJSON('badge_rank', coll(badgeRank));
   writeJSON('photo_rank', coll(photoRank));
   writeJSON('reward', coll(reward));
   writeJSON('achievement', coll(achievement));
@@ -729,7 +622,6 @@ function main() {
   const catIdSet = new Set(CAT_IDS);
   const photoIdSet = new Set(photos.map((p) => p._id));
   const userOpenidSet = new Set(users.map((u) => u.openid));
-  const badgeDefIdSet = new Set(badgeDefs.map((b) => b._id));
 
   const check = (cond, msg) => {
     if (!cond) errs.push(msg);
@@ -752,10 +644,6 @@ function main() {
     check(userOpenidSet.has(f.openid) && userOpenidSet.has(f._openid), `feedback ${f._id} 的 openid/_openid 缺失`);
     check(typeof f.repliable === 'boolean', `feedback ${f._id} 缺 repliable`);
     check(typeof f.dealed === 'boolean', `feedback ${f._id} 缺 dealed`);
-  });
-  badge.forEach((b) => {
-    check(badgeDefIdSet.has(b.badgeDef), `badge ${b._id} 的 badgeDef 不存在: ${b.badgeDef}`);
-    if (b.catId) check(catIdSet.has(b.catId), `badge ${b._id} 的 catId 不存在`);
   });
   reward.forEach((r) => {
     check(typeof r.records === 'string' && r.records.includes('#'), `reward ${r._id} 的 records 必须是 # 分隔字符串`);
@@ -802,7 +690,7 @@ function main() {
     console.log('  ✓ 全部通过');
     console.log('\n统计概览：');
     console.log(`  用户 ${users.length} / 评论 ${comments.length} / 评分 ${ratings.length} / 点赞 ${inter.length}`);
-    console.log(`  反馈 ${feedback.length} / 新闻 ${news.length} / 勋章定义 ${badgeDefs.length} / 勋章 ${badge.length}`);
+    console.log(`  反馈 ${feedback.length} / 新闻 ${news.length}`);
     console.log(`  成就 ${achievement.length} / 打赏 ${reward.length} / 审核队列 ${reviewQueue.length}`);
     console.log(`  有赞照片 ${likedPhotos.length}/${photos.length}`);
     const avg = cats.map((c) => c.rating.avgScore).filter((x) => x > 0);
