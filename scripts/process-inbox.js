@@ -17,7 +17,7 @@
  *      - openid 格式校验（非空、长度 ≤64、字符集受限）
  *      - kind 白名单（只接受现有合法值，拒绝未知 kind）
  *      - body schema 基础校验（必须有 v/kind/openid/ts/data；data 为对象）
- *      - 单对象体积上限 4096 字节前置拦截（list 阶段 + parse 阶段双重）
+ *      - 单对象体积上限 16384 字节前置拦截（list 阶段 + parse 阶段双重）
  *      - 单 openid 运行内突发限频（MAX_PER_OPENID）+ 跨运行去重
  *        （inbox_log 记录，跨天去重）+ pop 12 小时跨运行限频
  *   3. 关于「COS 预签名 URL 方案」：本次【不落地】。原因——EMAS 空间已删，
@@ -53,10 +53,15 @@ const DATA_DIR = path.resolve(__dirname, '..', 'data');
 const INBOX_PREFIX = 'inbox/';
 const SELFTEST_PREFIX = 'inbox/_selftest/';
 
-// 单个对象的体积上限，超过直接丢弃（正常 payload 都在 500 字节内）。
+// 单个对象的体积上限，超过直接丢弃（普通 payload 都在 500 字节内）。
 // 注意：这个 too-large 前置拦截保留——单对象大小上限是防止 inbox 被大文件灌爆的
 // 第一道闸门，list 阶段（main）和 parseObject 阶段双重检查。
-const MAX_OBJECT_BYTES = 4096;
+// 2026-11-01 由 4096 放宽到 16384：公告 manageNews 的正文最长 800 字，UTF-8 中文
+// 约 3 字节/字（2400 字节），再加上 9 张图的 photosPath/photosPathId 完整 COS URL
+// （每条 ~95 字符，两个数组约 1700 字节）、coverPath/coverPathId、标题与 JSON 结构，
+// 实测最坏情况会顶到 4096 以上；服务端 mainContent 上限放宽到 5000 字（15000 字节）
+// 后 4096 必然误杀。16384 仍远小于 pending/* 的 512KB 照片闸门，防刷效果不变。
+const MAX_OBJECT_BYTES = 16384;
 // 单次运行内，单个 openid 最多处理多少条（运行内突发限频）
 const MAX_PER_OPENID = 200;
 // 审核队列保留条数
@@ -687,6 +692,7 @@ function handleManage(p) {
   if (data.action === 'updateCat') return manageUpdateCat(data);
   if (data.action === 'managePhoto') return managePhoto(data);
   if (data.action === 'saveFriendLinks') return manageSaveFriendLinks(data);
+  if (data.action === 'manageNews') return manageNews(data);
   return 'drop:bad-action';
 }
 
@@ -766,6 +772,241 @@ function manageSaveFriendLinks(data) {
   return 'ok:friend-links';
 }
 
+// ---------------------------------------------------------------------------
+// 公告（news）增删改：客户端 manageNews → inbox/manage/ → 这里
+//
+// 为什么必须是服务端生成 _id 和 date：
+//   - _id 由客户端给会和聚合端的其它写入撞车，也挡不住伪造已有 _id 覆盖别人的公告。
+//   - date 是发布时间，客户端传会被人改手机时间伪造，一律用服务端当前时间。
+//   - update 走白名单：_id / date / show 都不允许客户端改。
+// ---------------------------------------------------------------------------
+
+// 分类枚举：与 miniprogram/pages/news/news.js 的筛选按钮一致。
+// 「全部」是筛选用的假分类，不在枚举里——传进来按非法处理。
+const NEWS_CLASSES = ['领养', '救助', '活动', '其他'];
+const NEWS_TITLE_MAX = 30;
+// 客户端限制 800 字，服务端放宽到 5000 留余地（邮件客户端/旧版本提交的长文不误杀）
+const NEWS_CONTENT_MAX = 5000;
+const NEWS_NICKNAME_MAX = 30;
+const NEWS_PHOTOS_MAX = 9;
+const NEWS_PATH_MAX = 400;
+
+// 可被 update 覆盖的字段白名单（_id / date / show 刻意不在其中）
+const NEWS_UPDATE_FIELDS = [
+  'title',
+  'mainContent',
+  'class',
+  'setNewsModal',
+  'coverPath',
+  'photosPath',
+  'photosPathId',
+  'coverPathId',
+  'dateLastModify',
+  'userNicknameLastModify',
+];
+
+function newsString(v, max) {
+  if (typeof v !== 'string') return null;
+  if (v.length > max) return null;
+  return v;
+}
+
+// 路径字段：可空字符串，非空时必须是 http(s) URL 或 / 开头的站内路径。
+// 不校验的话客户端可以把 javascript: / 任意超长串写进 data/news.json，
+// detailNews 直接拿去 wx.previewImage / image src。
+function newsPath(v) {
+  if (v == null || v === '') return '';
+  const s = newsString(v, NEWS_PATH_MAX);
+  if (s === null) return null;
+  if (!/^(https?:\/\/|\/)/.test(s)) return null;
+  return s;
+}
+
+// photosPath / photosPathId：必须是数组，元素为字符串，空串元素剔除。
+// detailNews 直接 photosPath.map(...)，传非数组会崩，所以这里必须兜住。
+function newsPathList(v) {
+  if (v == null) return [];
+  if (!Array.isArray(v)) return null;
+  if (v.length > NEWS_PHOTOS_MAX) return null;
+  const out = [];
+  for (const raw of v) {
+    const s = newsPath(raw);
+    if (s === null) return null;
+    if (s) out.push(s);
+  }
+  return out;
+}
+
+// 校验并规整「一条公告的可写字段」。partial=true 时只处理出现的字段（update 用）。
+// 返回 null 表示这条数据不合法，调用方统一回 'drop:bad-news'。
+function normalizeNewsFields(raw, partial) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const out = {};
+  const has = k => Object.prototype.hasOwnProperty.call(raw, k) && raw[k] !== undefined;
+
+  if (has('title') || !partial) {
+    const title = typeof raw.title === 'string' ? raw.title.trim() : '';
+    // 标题必填且非空（空标题在列表页是一行空白，无法辨认）
+    if (!title) return null;
+    if (title.length > NEWS_TITLE_MAX) return null;
+    out.title = title;
+  }
+
+  if (has('mainContent') || !partial) {
+    if (raw.mainContent == null) {
+      out.mainContent = '';
+    } else {
+      const s = newsString(raw.mainContent, NEWS_CONTENT_MAX);
+      if (s === null) return null;
+      out.mainContent = s;
+    }
+  }
+
+  if (has('class') || !partial) {
+    const cls = typeof raw.class === 'string' ? raw.class.trim() : '';
+    // 「全部」是筛选用的假分类，不在 NEWS_CLASSES 里，会在这里被拒
+    if (!NEWS_CLASSES.includes(cls)) return null;
+    out.class = cls;
+  }
+
+  if (has('setNewsModal') || !partial) {
+    if (raw.setNewsModal != null && typeof raw.setNewsModal !== 'boolean') return null;
+    out.setNewsModal = raw.setNewsModal === true;
+  }
+
+  if (has('coverPath') || !partial) {
+    const s = newsPath(raw.coverPath);
+    if (s === null) return null;
+    out.coverPath = s;
+  }
+
+  if (has('coverPathId') || !partial) {
+    const s = newsPath(raw.coverPathId);
+    if (s === null) return null;
+    out.coverPathId = s;
+  }
+
+  if (has('photosPath') || !partial) {
+    const list = newsPathList(raw.photosPath);
+    if (list === null) return null;
+    out.photosPath = list;
+  }
+
+  if (has('photosPathId') || !partial) {
+    const list = newsPathList(raw.photosPathId);
+    if (list === null) return null;
+    out.photosPathId = list;
+  }
+
+  if (has('dateLastModify')) {
+    const s = newsString(raw.dateLastModify, 40);
+    if (s === null) return null;
+    out.dateLastModify = s;
+  }
+
+  if (has('userNicknameLastModify')) {
+    const s = typeof raw.userNicknameLastModify === 'string'
+      ? raw.userNicknameLastModify.trim().slice(0, NEWS_NICKNAME_MAX)
+      : '';
+    out.userNicknameLastModify = s || '匿名猫友';
+  }
+
+  return out;
+}
+
+// 公告 _id：优先从 ASCII 标题做可读 slug（news-xxx），中文标题退回 news-<ts36>。
+// 冲突时依次加 -2 / -3……，保证唯一。
+function genNewsId(title) {
+  const news = loadData('news');
+  const used = new Set(news.items.filter(it => it && it._id).map(it => it._id));
+  const slug = String(title || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 24);
+  const head = slug ? `news-${slug}` : `news-${Date.now().toString(36)}`;
+  if (!used.has(head)) return head;
+  for (let i = 2; i < 1000; i++) {
+    const id = `${head}-${i}`;
+    if (!used.has(id)) return id;
+  }
+  return `news-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function manageNews(data) {
+  const op = data.op;
+  if (op !== 'add' && op !== 'update' && op !== 'remove') return 'drop:bad-op';
+
+  const news = loadData('news');
+
+  if (op === 'add') {
+    const fields = normalizeNewsFields(data.news, false);
+    if (!fields) return 'drop:bad-news';
+
+    // 昵称由提交者自填，空则兜底「猫谱管理员」（公告本来就是管理员发的）
+    const rawNick = data.news.userNickname;
+    const nickname = typeof rawNick === 'string' && rawNick.trim()
+      ? rawNick.trim().slice(0, NEWS_NICKNAME_MAX)
+      : '猫谱管理员';
+
+    const now = new Date();
+    const id = genNewsId(fields.title);
+    news.items.push({
+      _id: id,
+      userNickname: nickname,
+      userNicknameLastModify: nickname,
+      title: fields.title,
+      class: fields.class,
+      // 发布时间由服务端决定，不信客户端传的 date
+      date: now.toISOString(),
+      mainContent: fields.mainContent,
+      coverPath: fields.coverPath || '',
+      coverPathId: fields.coverPathId || '',
+      photosPath: fields.photosPath || [],
+      photosPathId: fields.photosPathId || [],
+      setNewsModal: fields.setNewsModal === true,
+      // news 记录必须带 show 布尔（列表页/详情页都读它），新增默认展示
+      show: true,
+    });
+    markTouched('news');
+    return 'ok:news-add';
+  }
+
+  // update / remove 都要先定位记录
+  const newsId = data.news_id;
+  if (typeof newsId !== 'string' || !newsId) return 'drop:no-news-id';
+  const item = news.items.find(it => it && it._id === newsId);
+  if (!item) return 'drop:no-news';
+
+  if (op === 'remove') {
+    news.items.splice(news.items.indexOf(item), 1);
+    markTouched('news');
+    return 'ok:news-remove';
+  }
+
+  // update：只允许白名单字段，白名单外的键直接忽略（客户端还带 openidLastModify，
+  // data/user.json 里没有它的位置，忽略即丢弃）。
+  const raw = data.news;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return 'drop:bad-news';
+  const patch = {};
+  for (const k of Object.keys(raw)) {
+    if (NEWS_UPDATE_FIELDS.includes(k)) patch[k] = raw[k];
+  }
+  if (!Object.keys(patch).length) return 'drop:bad-news';
+
+  const fields = normalizeNewsFields(patch, true);
+  if (!fields) return 'drop:bad-news';
+
+  for (const k of Object.keys(fields)) {
+    if (!NEWS_UPDATE_FIELDS.includes(k)) continue;
+    item[k] = fields[k];
+  }
+  // 最后修改时间兜底：客户端没传或传了空串就用服务端时间
+  if (!item.dateLastModify) item.dateLastModify = new Date().toISOString();
+  markTouched('news');
+  return 'ok:news-update';
+}
+
 const HANDLERS = {
   like: handleLike,
   follow: handleFollow,
@@ -821,6 +1062,8 @@ function processObjects(objects, stats) {
     }
 
     stats.byKind[p.kind] = stats.byKind[p.kind] || { applied: 0, skipped: 0 };
+    // DRY_RUN 下留一份逐条结果，自测能直接看到每条用例是 ok 还是 drop
+    if (DRY) stats.__trace.push(`${obj.key.split('/').pop()} [${p.kind}] → ${result}`);
 
     if (result.startsWith('ok')) {
       stats.applied++;
@@ -854,7 +1097,7 @@ function processObjects(objects, stats) {
 }
 
 function newStats() {
-  return { read: 0, applied: 0, skipped: 0, retried: 0, dropped: {}, byKind: {}, __popSeen: new Set() };
+  return { read: 0, applied: 0, skipped: 0, retried: 0, dropped: {}, byKind: {}, __popSeen: new Set(), __trace: [] };
 }
 
 // ---------------------------------------------------------------------------
@@ -989,6 +1232,54 @@ function selftestObjects() {
       token: REVIEW_PASSCODE || 'wrong',
       apps: [{ appid: 'not-an-appid', name: '坏数据' }],
     }, 22), // 非法 appid，整条拒绝
+
+    // ---- 公告（manageNews）自测 ----
+    // 标题带 ASCII 时 _id 走 slug，是确定值（'自测公告 self-test' → news-self-test），
+    // 后面的 update/remove 才能稳定指向同一条。
+    mk('manage', 'openid-a', {
+      action: 'manageNews',
+      token: REVIEW_PASSCODE || 'wrong',
+      op: 'add',
+      news: { title: '自测公告 self-test', class: '活动', mainContent: '自测正文：新增' },
+    }, 23),
+    mk('manage', 'openid-a', {
+      action: 'manageNews',
+      token: REVIEW_PASSCODE || 'wrong',
+      op: 'update',
+      news_id: 'news-self-test',
+      news: { title: '自测公告（已改）', class: '其他', dateLastModify: '' },
+    }, 24), // 只覆盖白名单字段
+    mk('manage', 'openid-a', {
+      action: 'manageNews',
+      token: REVIEW_PASSCODE || 'wrong',
+      op: 'remove',
+      news_id: 'news-self-test',
+    }, 25),
+    mk('manage', 'openid-a', {
+      action: 'manageNews',
+      token: REVIEW_PASSCODE || 'wrong',
+      op: 'add',
+      news: { title: '自测公告（保留）', class: '救助', mainContent: '这条留在新闻表里供快照查看' },
+    }, 26), // 留着，snapshot 里能看到
+    mk('manage', 'openid-a', {
+      action: 'manageNews',
+      token: REVIEW_PASSCODE || 'wrong',
+      op: 'add',
+      news: { title: '坏分类公告', class: '全部' }, // 「全部」是筛选假分类，应被丢弃
+    }, 27),
+    mk('manage', 'openid-a', {
+      action: 'manageNews',
+      token: REVIEW_PASSCODE || 'wrong',
+      op: 'update',
+      news_id: 'news-does-not-exist',
+      news: { title: '改不存在的公告' },
+    }, 28), // 找不到记录，应被丢弃
+    mk('manage', 'openid-a', {
+      action: 'manageNews',
+      token: 'definitely-wrong-token',
+      op: 'add',
+      news: { title: '口令错不该写入', class: '其他' },
+    }, 29), // 口令错，整条丢弃
   ];
 }
 
@@ -1005,6 +1296,7 @@ function snapshot() {
     photoLike: photo ? photo.like_count : null,
     photoHidden: photo ? !!photo.hidden : null,
     friendLinks: friendLink ? JSON.stringify((friendLink.apps || []).map(a => a.name)) : null,
+    newsTitles: JSON.stringify(loadData('news').items.map(it => it.title)),
     queue: loadData('review_queue').items.length,
   };
 }
@@ -1025,6 +1317,9 @@ async function main() {
     trimQueue();
 
     console.log('聚合后状态：' + JSON.stringify(snapshot()));
+    console.log('----------------------------------------');
+    console.log('逐条结果：');
+    for (const line of stats.__trace) console.log('  ' + line);
     console.log('----------------------------------------');
     printStats(stats);
     console.log('----------------------------------------');

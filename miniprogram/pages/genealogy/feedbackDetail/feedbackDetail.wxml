@@ -6,13 +6,6 @@
   <view class='nicknameRow'>
     <input class='nicknameInput' type='text' placeholder='昵称（选填，不填就匿名）' value='{{nickname}}' bindinput='inputNickname' maxlength='20'/>
   </view>
-  <view class='adminEntry' wx:if="{{isManager && cat && cat._id}}" bindtap='toAddRelation' hover-class='link-hover'>
-    <view class='adminEntry-title'>管理</view>
-    <view class='adminEntry-btn'>
-      <text class='iconfont icon-relation'></text>
-      <text>添加猫际关系</text>
-    </view>
-  </view>
   <view class='inputColumns'>
     <view>
       <text class='inputTitle'>{{text_cfg.feedback_detail.feedback_title}}：</text>

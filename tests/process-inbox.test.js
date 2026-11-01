@@ -30,13 +30,32 @@ test('合法样本：标准 like 通过校验', () => {
   assert.strictEqual(r.payload.kind, 'like');
 });
 
-test('大小上限：超过 4096 字节直接拒绝（too-large）', () => {
+test('大小上限：超过 16384 字节直接拒绝（too-large）', () => {
   const big = body({
     v: 1, kind: 'like', openid: 'openid-aaaaaaaa', ts: now,
-    data: { photo_id: 'p1', blob: 'x'.repeat(5000) },
+    data: { photo_id: 'p1', blob: 'x'.repeat(20000) },
   });
-  assert.ok(Buffer.byteLength(big, 'utf8') > 4096);
+  assert.ok(Buffer.byteLength(big, 'utf8') > 16384);
   assert.strictEqual(validateInboxItem(KEY, big).reason, 'too-large');
+});
+
+test('大小上限：公告正文接近上限仍可通过（4096 会误杀）', () => {
+  // 800 字中文正文（约 3 字节/字）+ 9 张照片的两组 URL ~1700 字节，总量已过 4096
+  const news = {
+    title: '投喂指南｜别让好心办坏事',
+    class: '活动',
+    mainContent: '猫'.repeat(800),
+    coverPath: 'https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/' + 'c'.repeat(60),
+    photosPath: Array.from({ length: 9 }, () => 'https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/' + 'p'.repeat(60)),
+    photosPathId: Array.from({ length: 9 }, () => 'https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/' + 'q'.repeat(60)),
+  };
+  const raw = body({
+    v: 1, kind: 'manage', openid: 'openid-aaaaaaaa', ts: now,
+    data: { action: 'manageNews', op: 'add', token: 'x', news },
+  });
+  assert.ok(Buffer.byteLength(raw, 'utf8') > 4096);
+  assert.ok(Buffer.byteLength(raw, 'utf8') < 16384);
+  assert.strictEqual(validateInboxItem(KEY, raw).ok, true);
 });
 
 test('body schema：非法 JSON 拒绝（bad-json）', () => {

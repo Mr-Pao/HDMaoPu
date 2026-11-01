@@ -6,8 +6,7 @@ import config from "../../../config";
 import {
   getUser,
   fillUserInfo,
-  checkCanComment,
-  isManagerAsync
+  checkCanComment
 } from "../../../utils/user";
 import {
   getCurrentUserOpenid
@@ -41,7 +40,6 @@ Page({
     comment_count: 0,
     keyboard_height: 0,
     text_cfg: config.text,
-    is_manager: false,
     is_owner: false,
     user: {},
     nickname: '',
@@ -68,16 +66,6 @@ Page({
       this.loadCat(),
       this.loadMoreComment(),
     ]);
-
-    // 是否为管理员lv.1
-    var manager = await isManagerAsync(1);
-    if (manager) {
-      this.setData({
-        is_manager: true
-      })
-    } else {
-      console.log("not a manager");
-    }
   },
 
   /**

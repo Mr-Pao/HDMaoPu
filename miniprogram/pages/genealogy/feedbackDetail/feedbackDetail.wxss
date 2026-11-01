@@ -123,42 +123,7 @@ page {
   border-radius: 20rpx;
 }
 
-/* 管理员专属入口：添加猫际关系（由详情页关系卡迁来） */
-.adminEntry {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: var(--dk-card);
-  border: 1rpx solid var(--dk-line);
-  border-radius: 20rpx;
-  padding: 24rpx 28rpx;
-  margin-bottom: 30rpx;
-  box-sizing: border-box;
-}
-
-.adminEntry-title {
-  font-size: 30rpx;
-  color: var(--dk-text);
-  opacity: 0.6;
-  letter-spacing: 2rpx;
-}
-
-.adminEntry-btn {
-  display: flex;
-  align-items: center;
-  padding: 12rpx 28rpx;
-  border-radius: var(--dk-radius-pill);
-  background-color: var(--color-primary-soft);
-  color: var(--dk-accent);
-  font-size: 28rpx;
-  line-height: 1;
-}
-
-.adminEntry-btn .iconfont {
-  font-size: 30rpx;
-  color: var(--dk-accent);
-  margin-right: 10rpx;
-}
+/* 管理员专属入口的样式已随入口一起移除（管理功能统一收进「关于 → 管理后台」） */
 
 .link-hover {
   opacity: 0.7;

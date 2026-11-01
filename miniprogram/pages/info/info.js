@@ -102,7 +102,7 @@ Page({
           },
           {
             name: "猫抓板公告",
-            path: "/pages/news/createNews/createNews",
+            path: "/pages/manage/newsAdmin/newsAdmin",
             icon: "icon-edit"
           },
           {

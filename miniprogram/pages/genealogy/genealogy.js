@@ -16,7 +16,7 @@ import { getUserInfo } from "../../utils/user";
 import cache from "../../utils/cache";
 import config from "../../config";
 import { loadFilter, getGlobalSettings, showTab } from "../../utils/page";
-import { isManagerAsync, checkCanShowNews } from "../../utils/user";
+import { checkCanShowNews } from "../../utils/user";
 import { signCosUrl } from "../../utils/common";
 
 const default_png = undefined;
@@ -520,15 +520,6 @@ Page({
         });
       }
     });
-  },
-
-  async bindManageCat(e) {
-    if (await isManagerAsync()) {
-      const cat_id = e.currentTarget.dataset.cat_id;
-      wx.navigateTo({
-        url: `/pages/manage/catManage/catManage?cat_id=${cat_id}&activeTab=info`,
-      });
-    }
   },
 
   // 筛选抽屉开关

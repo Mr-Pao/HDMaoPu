@@ -29,11 +29,6 @@
             </view>
         </view>
         <view wx:if='{{news.ddateLastModify}}' class='news editTime'>修改于：{{news.ddateLastModify}} </view>
-
-        <view wx:if="{{showManager}}">
-            <button bindtap='removeNews'>删除</button>
-            <button bindtap='modifyNews'>修改</button>
-        </view>
     </view>
     <view class='verify-box' wx:if='{{err}}'>
         <view class='news err'>喵公告消失了？</view>

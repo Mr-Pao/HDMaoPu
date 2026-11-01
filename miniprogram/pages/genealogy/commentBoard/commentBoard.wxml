@@ -12,7 +12,7 @@
     wx:key="_id"
     comment="{{item}}"
     index="{{index}}"
-    can-delete="{{is_manager || item.user_openid === user.openid}}"
+    can-delete="{{item.user_openid === user.openid}}"
     bind:delete="deleteComment"
   />
 

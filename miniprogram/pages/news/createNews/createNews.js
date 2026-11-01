@@ -2,18 +2,20 @@ import {
   generateUUID
 } from "../../../utils/utils";
 import {
-  getUser,
-  checkAuth
+  getUser
 } from "../../../utils/user";
-import api from "../../../utils/cloudApi";
+import { putInbox } from "../../../utils/writeback";
+import { text as text_cfg } from "../../../config";
 import { uploadFile } from "../../../utils/common"
+const passcode = require("../../../utils/passcode");
 const app = getApp();
 Page({
   /**
    * 页面的初始数据
    */
   data: {
-    auth: false,
+    // 本页只在管理后台「猫抓板公告」里进入，口令门已在上一页把过，这里不再重复判权限
+    auth: true,
     user: {},
     news_id: 0,
     namelength: 0,
@@ -61,7 +63,7 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: async function (options) {
-    await checkAuth(this, 2);
+    // 权限由管理后台入口把关，本页不再调用 checkAuth
   },
 
   onShow: async function () {
@@ -310,6 +312,11 @@ Page({
       return;
     }
 
+    // 没有口令就别提交：服务端 tokenOk() 会直接 drop:bad-token，用户以为发布成功了。
+    // 放在上传图片之前，免得口令没设置还白传一堆图。
+    const token = this.getToken();
+    if (!this.ensureToken(token)) return;
+
     // 上传图片
     await this.uploadCover();
     await this.uploadAllImg();
@@ -328,7 +335,8 @@ Page({
 
     var data = {
       userNickname: submitData.name,
-      date: api.getDate(),
+      // date 只作客户端展示兜底，服务端 manageNews 一律用当前时间覆盖（防改手机时间伪造）
+      date: new Date().toISOString(),
       title: submitData.title,
       mainContent: submitData.mainContent,
       coverPath: that.data.cover_path,
@@ -340,23 +348,55 @@ Page({
     };
     console.log("[bindSubmit] - data: ", data);
 
-    const res = await api.curdOp({
-      operation: "add",
-      collection: "news",
-      data: data
+    // 写 inbox/manage/，由 process-inbox.yml 聚合成 data/news.json 再推 COS。
+    // putInbox 永远不 reject，返回 false 只代表这次没传上去。
+    const ok = await putInbox("manage", {
+      action: "manageNews",
+      op: "add",
+      token: token,
+      news: data
     });
-    console.log("newOp(create) Result:", res);
-    if (res.ok) {
-      that.setData({
-        news_id: res.insertedId
-      });
+    console.log("[bindSubmit] - putInbox ok: ", ok);
+
+    if (ok) {
       wx.showToast({
-        title: '发布成功',
-        icon: 'success',
-        duration: 1000
+        title: text_cfg.sync.received_tip,
+        icon: 'none',
+        duration: 2000
+      });
+      setTimeout(wx.navigateBack, 1200);
+    } else {
+      wx.showToast({
+        title: text_cfg.sync.offline_tip,
+        icon: 'none',
+        duration: 2500
       });
     }
-    setTimeout(wx.navigateBack, 1000);
+  },
+
+  // 取本机口令（utils/passcode.js，storage key manage_passcode）
+  getToken() {
+    return passcode.getToken();
+  },
+
+  // 没口令时引导设置，返回是否已经有口令可提交
+  ensureToken(token) {
+    if (token) return true;
+    wx.showModal({
+      title: '还没设置管理口令',
+      content: '提交需要管理口令，否则后台会直接丢弃。现在设置吗？',
+      confirmText: '去设置',
+      success: res => {
+        if (res.confirm) {
+          passcode.promptToken({
+            onSaved: () => {
+              wx.showToast({ title: '口令已保存，请再点发布', icon: 'none', duration: 2500 });
+            }
+          });
+        }
+      }
+    });
+    return false;
   },
 
   // 没有权限，返回上一页

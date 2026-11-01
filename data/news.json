@@ -1,23 +1,6 @@
 {
-  "version": "1793523571551",
+  "version": "1793526599565",
   "items": [
-    {
-      "_id": "news-xiaobai-northgate",
-      "userNickname": "猫谱管理员",
-      "userNicknameLastModify": "猫谱管理员",
-      "title": "小白出没｜北门花坛的独行侠",
-      "class": "其他",
-      "date": "2026-10-28T03:20:00.000Z",
-      "mainContent": "北门花坛一带，最近多了一位固定住户。\n\n通体雪白的猫，只有尾巴尖有一点灰。它不太亲人，但也不怕人——你蹲下去，它会停在三步远的地方看你，然后慢慢卧下，把尾巴盘到身侧。\n\n这是小白，目前相册里已经有 28 张照片，是校外片区记录最多的一只。从夏天到现在，它一直在同一个花坛附近活动，作息稳定得很：早上在花盆背阴处，午后移到台阶上晒太阳。\n\n提醒几句：小白目前未绝育，也还没有正式领养。想去看它的同学请自带水，不要投喂人类食物；如果它情绪不好，隔着距离看看就好，别追着逗。\n\n遇到没见过的猫，也欢迎在猫谱里记录下来——多一张照片，猫友就少一次找错。",
-      "coverPath": "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/xiaobai/001.jpg",
-      "photosPath": [
-        "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/xiaobai/001.jpg",
-        "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/xiaobai/003.jpg",
-        "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/xiaobai/007.jpg"
-      ],
-      "setNewsModal": true,
-      "show": true
-    },
     {
       "_id": "news-feed-guide",
       "userNickname": "猫谱管理员",

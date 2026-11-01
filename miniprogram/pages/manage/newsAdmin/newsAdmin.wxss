@@ -1,0 +1,169 @@
+/* pages/manage/newsAdmin/newsAdmin.wxss */
+/* 外观沿用审核队列（review）那套，保证二级页一致 */
+
+.container {
+  padding: 30rpx;
+  background-color: var(--color-gray-light);
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* ==================== 头部 ==================== */
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10rpx;
+}
+
+.head-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: var(--color-primary-text);
+}
+
+.head-lock {
+  font-size: 26rpx;
+  color: var(--color-gray-max);
+  padding: 8rpx 20rpx;
+  border: 1rpx solid var(--color-gray-normal);
+  border-radius: 24rpx;
+}
+
+.head-tip {
+  font-size: 24rpx;
+  color: var(--color-gray-max);
+  margin-bottom: 26rpx;
+}
+
+.token-tip {
+  margin: 0 0 16rpx;
+  padding: 14rpx 20rpx;
+  border-radius: 16rpx;
+  background: var(--dk-accent-soft);
+  color: var(--dk-accent);
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+/* ==================== 新建按钮 ==================== */
+.toolbar {
+  margin-bottom: 24rpx;
+}
+
+.btn-add {
+  height: 80rpx;
+  line-height: 80rpx;
+  text-align: center;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  color: var(--color-surface);
+  background: var(--color-primary, #0C5F03);
+}
+
+/* ==================== 状态 ==================== */
+.loading {
+  text-align: center;
+  padding: 80rpx 0;
+  font-size: 26rpx;
+  color: var(--color-gray-max);
+}
+
+.empty {
+  text-align: center;
+  padding: 120rpx 0;
+  font-size: 28rpx;
+  color: var(--color-gray-max);
+}
+
+.empty-icon {
+  font-size: 70rpx;
+  margin-bottom: 20rpx;
+}
+
+.empty-sub {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: var(--color-gray-normal, #bbb);
+}
+
+/* ==================== 卡片 ==================== */
+.card {
+  background: var(--color-surface);
+  border-radius: 20rpx;
+  padding: 26rpx;
+  margin-bottom: 22rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14rpx;
+}
+
+.tag {
+  font-size: 22rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+  color: var(--color-surface);
+  background: var(--color-primary, #0C5F03);
+}
+
+.time {
+  margin-left: auto;
+  font-size: 22rpx;
+  color: var(--color-gray-max);
+}
+
+.title {
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--color-primary-text);
+}
+
+.excerpt {
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: var(--color-gray-max);
+  /* 摘要最多两行，超出省略 */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 24rpx;
+}
+
+.btn {
+  flex: 1;
+  height: 72rpx;
+  line-height: 72rpx;
+  text-align: center;
+  border-radius: 36rpx;
+  font-size: 28rpx;
+}
+
+.btn-reject {
+  color: #8A8A8A;
+  background: var(--color-gray-light, #F2F2F2);
+}
+
+.btn-approve {
+  color: var(--color-surface);
+  background: var(--color-primary, #0C5F03);
+}
+
+/* =========================================================
+   v5.1 全站统一外观（二级页自动套用）
+   ========================================================= */
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}

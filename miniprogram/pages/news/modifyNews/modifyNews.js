@@ -1,11 +1,12 @@
 import {
-  getUser,
-  checkAuth
+  getUser
 } from "../../../utils/user";
 import {
   getCurrentUserOpenid
 } from "../../../utils/common";
-import api from "../../../utils/cloudApi";
+import { putInbox } from "../../../utils/writeback";
+import { text as text_cfg } from "../../../config";
+const passcode = require("../../../utils/passcode");
 const app = getApp();
 Page({
 
@@ -15,7 +16,8 @@ Page({
   data: {
     news_id: 0,
     news: 0,
-    auth: false,
+    // 本页只在管理后台「猫抓板公告」里进入，口令门已在上一页把过，这里不再重复判权限
+    auth: true,
     user: {},
     nickname: '',
     namelength: 0,
@@ -60,10 +62,8 @@ Page({
     this.setData({
       news_id: options.news_id
     })
-    await Promise.all([
-      this.loadNews(),
-      checkAuth(this, 2)
-    ])
+    // 权限由管理后台入口把关，本页不再调用 checkAuth
+    await this.loadNews();
   },
 
   onShow: async function () {
@@ -231,7 +231,8 @@ Page({
     var data = {
       openidLastModify: (this.data.user && this.data.user.openid) || (await getCurrentUserOpenid()),
       userNicknameLastModify: submitData.name || this.data.nickname || '匿名猫友',
-      dateLastModify: api.getDate(),
+      // 服务端 manageNews 会用服务端时间兜底，这里只是客户端展示值
+      dateLastModify: new Date().toISOString(),
       title: submitData.title,
       mainContent: submitData.mainContent,
       class: classBelongto,
@@ -248,18 +249,59 @@ Page({
 
   async doModify(item_id, item_data) {
     console.log(item_id, item_data);
-    const res = (await api.curdOp({
-      operation: "update",
-      collection: "news",
-      item_id: item_id,
-      data: item_data
-    })).result;
-    console.log("[doModify] - 修改成功", res);
-    wx.showToast({
-      title: '修改成功',
-      icon: 'success',
-      duration: 1000
-    })
-    setTimeout(wx.navigateBack, 1000)
+    // 没有口令就别提交：服务端 tokenOk() 会直接 drop:bad-token，用户以为改成功了
+    const token = this.getToken();
+    if (!this.ensureToken(token)) return;
+
+    // 写 inbox/manage/，由 process-inbox.yml 聚合成 data/news.json 再推 COS。
+    // putInbox 永远不 reject，返回 false 只代表这次没传上去。
+    const ok = await putInbox("manage", {
+      action: "manageNews",
+      op: "update",
+      token: token,
+      news_id: item_id,
+      news: item_data
+    });
+    console.log("[doModify] - putInbox ok", ok);
+
+    if (ok) {
+      wx.showToast({
+        title: text_cfg.sync.received_tip,
+        icon: 'none',
+        duration: 2000
+      });
+      setTimeout(wx.navigateBack, 1200);
+    } else {
+      wx.showToast({
+        title: text_cfg.sync.offline_tip,
+        icon: 'none',
+        duration: 2500
+      });
+    }
+  },
+
+  // 取本机口令（utils/passcode.js，storage key manage_passcode）
+  getToken() {
+    return passcode.getToken();
+  },
+
+  // 没口令时引导设置，返回是否已经有口令可提交
+  ensureToken(token) {
+    if (token) return true;
+    wx.showModal({
+      title: '还没设置管理口令',
+      content: '提交需要管理口令，否则后台会直接丢弃。现在设置吗？',
+      confirmText: '去设置',
+      success: res => {
+        if (res.confirm) {
+          passcode.promptToken({
+            onSaved: () => {
+              wx.showToast({ title: '口令已保存，请再点修改', icon: 'none', duration: 2500 });
+            }
+          });
+        }
+      }
+    });
+    return false;
   },
 })

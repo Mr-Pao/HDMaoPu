@@ -83,7 +83,7 @@
   </view>
 
   <block wx:for='{{cats}}' wx:key="_id">
-    <view class='row {{item.to_star? "row--star": ""}}' bindtap='clickCatCard' bindlongpress='bindManageCat' data-cat_id='{{item._id}}' data-index='{{index}}'>
+    <view class='row {{item.to_star? "row--star": ""}}' bindtap='clickCatCard' data-cat_id='{{item._id}}' data-index='{{index}}'>
       <view class='row-pic'>
         <image class='row-img' bindload="bindImageLoaded" mode='aspectFill' src='{{item.photo.photo_compressed || item.photo.photo_id}}' data-index="{{index}}" lazy-load="{{true}}"></image>
         <view class='row-new' wx:if="{{item.mphoto_new}}">{{text_cfg.genealogy.new_photo_tip}}</view>

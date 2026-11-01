@@ -1,13 +1,8 @@
 import {
   shareTo,
   getCurrentPath,
-  formatDate,
-  sleep
+  formatDate
 } from "../../../utils/utils";
-import {
-  isManagerAsync
-} from "../../../utils/user";
-import api from "../../../utils/cloudApi";
 import { signCosUrl } from "../../../utils/common";
 
 const app = getApp();
@@ -23,7 +18,6 @@ Page({
     err: false,
     photos_path: [],
     cover_path: "",
-    showManager: false,
   },
 
   /**
@@ -34,12 +28,6 @@ Page({
       news_id: options.news_id
     })
     await this.loadNews();
-
-    const res = await isManagerAsync(3);
-    this.setData({
-      showManager: res
-    })
-
   },
 
   /**
@@ -93,46 +81,5 @@ Page({
       current: that.data.photos_path[event.currentTarget.dataset.index],
       urls: that.data.photos_path
     })
-  },
-
-
-  modifyNews() {
-    const detail_url = '/pages/news/modifyNews/modifyNews';
-    wx.navigateTo({
-      url: detail_url + '?news_id=' + this.data.news_id,
-    });
-  },
-
-  async _doRemove(item_id) {
-    var res = await api.curdOp({
-      operation: "remove",
-      collection: "news",
-      item_id: item_id
-    });
-
-    console.log("curdOp(remove) res:", res);
-    if (!res.ok) {
-      wx.showToast({
-        icon: 'none',
-        title: '删除失败',
-      });
-      return
-    }
-    await sleep(1000);
-    wx.navigateBack();
-  },
-
-  async removeNews() {
-    if (this.data.showManager == false) {
-      return;
-    }
-
-    var modalRes = await wx.showModal({
-      content: '确定要删除吗？'
-    });
-
-    if (modalRes.confirm) {
-      await this._doRemove(this.data.news_id);
-    }
   },
 })

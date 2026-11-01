@@ -9,6 +9,31 @@
 
 const KEY = "manage_passcode";
 
+// 本机「已解锁管理后台」标记。关于页连击 5 次 + 口令正确后写入，
+// 全站所有管理入口（菜单显隐、公告删改、审核页等）都以它为唯一判据。
+const UNLOCK_KEY = "admin_unlocked";
+
+function isUnlocked() {
+  try {
+    return !!wx.getStorageSync(UNLOCK_KEY);
+  } catch (e) {
+    console.warn("[passcode] 读取解锁标记失败", e);
+    return false;
+  }
+}
+
+function setUnlocked(v) {
+  try {
+    if (v) {
+      wx.setStorageSync(UNLOCK_KEY, 1);
+    } else {
+      wx.removeStorageSync(UNLOCK_KEY);
+    }
+  } catch (e) {
+    console.warn("[passcode] 保存解锁标记失败", e);
+  }
+}
+
 // 读口令，没有就是空串；storage 异常也当没有
 function getToken() {
   try {
@@ -73,4 +98,6 @@ module.exports = {
   hasToken,
   setToken,
   promptToken,
+  isUnlocked,
+  setUnlocked,
 };

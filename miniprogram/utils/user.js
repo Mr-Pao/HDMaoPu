@@ -3,6 +3,7 @@ import { randomInt } from './utils';
 import { getGlobalSettings } from "./page";
 import { getCacheItem, setCacheItem } from "./cache";
 import { getCurrentUserOpenid, signCosUrl } from "./common";
+import passcode from "./passcode";
 import config from "../config";
 
 const app = getApp();
@@ -181,12 +182,19 @@ async function getPageUserInfo(page) {
   return true;
 }
 
+// 是否管理员
+// ⚠️ 唯一判据是「关于页连击 5 次 + 口令」解锁后的本机标记，不再只看 user.manager。
+// 原因：data/user.json 为空表时，datasource._userOp('get') 会给每个新访客自动发
+// manager=99（remoteConfirmedEmpty 分支），只看 manager 等于人人都是管理员。
 async function isManagerAsync(req) {
-  const user = await getUser();
+  if (!passcode.isUnlocked()) {
+    return false;
+  }
   if (!req) {
     req = 1;
   }
-  return user.manager && user.manager >= req;
+  const user = await getUser();
+  return !!(user && user.manager && user.manager >= req);
 }
 
 // TODO，应该做成一个模块

@@ -1,7 +1,6 @@
 // miniprogram/pages/news/news.js
 import { sleep } from "../../utils/utils";
 import { text as text_cfg, science_imgs } from "../../config";
-import { checkAuth } from "../../utils/user";
 import { showTab } from "../../utils/page";
 import { signCosUrl } from "../../utils/common";
 const share_text = text_cfg.app_name + ' - ' + text_cfg.science.share_tip;
@@ -16,7 +15,6 @@ Page({
     newsList: [],
     newsList_show: [],
     updateRequest: false,
-    auth: false,
     buttons: [{
       id: -1,
       name: '全部',
@@ -74,7 +72,6 @@ Page({
       newsList: result,
       newsList_show: result,
     })
-    await checkAuth(this, 2);
 
     // 科普部分
     this.setSciImgs();

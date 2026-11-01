@@ -1,0 +1,37 @@
+<!--pages/manage/newsAdmin/newsAdmin.wxml-->
+<view class="container">
+
+  <!-- 公告管理：列表 + 新建 + 改 + 删都在这页，「猫抓板」普通页面不再有任何管理按钮 -->
+  <view class="head">
+    <view class="head-title">猫抓板公告</view>
+    <view class="head-lock" bindtap="editToken">口令</view>
+  </view>
+  <view class="head-tip">增删改都会提交到后台，几分钟内自动汇总生效。</view>
+  <view class="token-tip" wx:if="{{!hasToken}}" bindtap="editToken">还没设置管理口令，点这里设置一次（提交需要）</view>
+
+  <view class="toolbar">
+    <view class="btn-add" bindtap="createNews">＋ 新建公告</view>
+  </view>
+
+  <view class="loading" wx:if="{{loading}}">加载中…</view>
+
+  <view class="empty" wx:elif="{{!items.length}}">
+    <view class="empty-icon">📝</view>
+    <view>还没有公告</view>
+    <view class="empty-sub">点上面「新建公告」发第一条</view>
+  </view>
+
+  <view class="card" wx:for="{{items}}" wx:key="_id">
+    <view class="card-top">
+      <view class="tag">{{item.class || '未分类'}}</view>
+      <view class="time">{{item.dateText}}</view>
+    </view>
+    <view class="title" bindtap="preview" data-id="{{item._id}}">{{item.title}}</view>
+    <view class="excerpt">{{item.excerpt}}</view>
+    <view class="actions">
+      <view class="btn btn-reject" data-id="{{item._id}}" data-title="{{item.title}}" bindtap="removeNews">删除</view>
+      <view class="btn btn-approve" data-id="{{item._id}}" bindtap="modifyNews">修改</view>
+    </view>
+  </view>
+
+</view>

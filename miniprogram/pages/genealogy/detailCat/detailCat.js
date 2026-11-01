@@ -8,7 +8,6 @@ import {
 import {
   checkCanUpload,
   checkCanComment,
-  isManagerAsync,
   getUser
 } from "../../../utils/user";
 import {
@@ -119,11 +118,6 @@ Page({
    */
   onLoad: async function (options) {
     this.jsData.cat_id = options.cat_id;
-
-    // 判断是否为管理员
-    this.setData({
-      is_manager: (await isManagerAsync(3))
-    });
 
     // 记录访问时间，消除"有新相片"
     // TODO：用cache

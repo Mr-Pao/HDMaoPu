@@ -29,6 +29,7 @@
     "pages/manage/catManage/catManage",
     "pages/manage/review/review",
     "pages/manage/admin/admin",
+    "pages/manage/newsAdmin/newsAdmin",
     "pages/manage/dashboard/dashboard"
   ],
   "subPackages": [

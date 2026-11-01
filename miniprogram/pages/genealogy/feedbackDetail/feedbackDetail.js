@@ -1,5 +1,5 @@
 import { getCurrentPath, shareTo } from "../../../utils/utils";
-import { getUser, checkCanFeedback, isManagerAsync } from "../../../utils/user";
+import { getUser, checkCanFeedback } from "../../../utils/user";
 import { requestNotice, sendNotifyChkFeeedback } from "../../../utils/msg";
 import { putInbox } from "../../../utils/writeback";
 import { markPending } from "../../../utils/syncTip";
@@ -18,7 +18,6 @@ Page({
     maxlength: 300,
     cat: undefined,
     text_cfg: text_cfg,
-    isManager: false,
   },
 
   /**
@@ -31,11 +30,6 @@ Page({
         cat: catRes
       });
     }
-
-    // 管理员可在此直接进入关系管理（添加关系入口已从详情页迁来）
-    this.setData({
-      isManager: await isManagerAsync(3)
-    });
 
     // 检查是否可以上传
     this.setData({
@@ -186,12 +180,6 @@ Page({
       console.log('repliable record fail:\n', res);
     }
 
-  },
-
-  toAddRelation() {
-    const cat_id = this.data.cat && this.data.cat._id;
-    if (!cat_id) return;
-    wx.navigateTo({ url: `/pages/manage/catManage/catManage?cat_id=${cat_id}&activeTab=relation` });
   },
 
   async changeAgreement(e) {
