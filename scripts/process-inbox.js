@@ -748,19 +748,108 @@ function normalizeFriendApp(raw) {
   return { appid, name, logo };
 }
 
-function manageSaveFriendLinks(data) {
+// 友链 Logo 的公开地址：管理端选图后先匿名直传到 pending/（客户端零密钥），
+// 聚合时复制到 photos/friendlink/<appid>.<ext> 并给 public-read，再把 logo 换成完整 URL。
+// 这样小程序里 <image src> 直接可用，且没有把上传密钥下发到客户端。
+const FRIEND_LOGO_PREFIX = 'photos/friendlink/';
+
+function publicUrlOf(key) {
+  // DRY_RUN 下通常没配 COS 环境变量，给个占位域名，只为了自测 trace 能看出结构
+  const bucket = COS_BUCKET || 'maopu-bucket';
+  const region = COS_REGION || 'ap-guangzhou';
+  return `https://${bucket}.cos.${region}.myqcloud.com/${key}`;
+}
+
+// COS 的 CopySource 要 `<bucket>-<appid>.cos.<region>.myqcloud.com/<key>`，
+// SDK 内部只 decode 不 encode，key 必须按 / 分段编码（和 review.js 保持一致）。
+function copySourceOf(key) {
+  return `${COS_BUCKET}.cos.${COS_REGION}.myqcloud.com/${key
+    .split('/')
+    .map(encodeURIComponent)
+    .join('/')}`;
+}
+
+function contentTypeOfKey(key) {
+  const ext = String(key).split('.').pop().toLowerCase();
+  if (ext === 'png') return 'image/png';
+  if (ext === 'webp') return 'image/webp';
+  if (ext === 'gif') return 'image/gif';
+  return 'image/jpeg';
+}
+
+function extOfKey(key) {
+  const ext = String(key).split('.').pop().toLowerCase();
+  if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) return ext === 'jpeg' ? 'jpg' : ext;
+  return 'jpg';
+}
+
+function putObjectCopy(cos, fromKey, toKey) {
+  return new Promise((resolve, reject) => {
+    cos.putObjectCopy(
+      {
+        Bucket: COS_BUCKET,
+        Region: COS_REGION,
+        Key: toKey,
+        CopySource: copySourceOf(fromKey),
+        MetadataDirective: 'Replaced',
+        Headers: {
+          'Content-Type': contentTypeOfKey(toKey),
+          'x-cos-metadata-directive': 'Replaced',
+          'x-cos-acl': 'public-read',
+        },
+      },
+      (err, data) => (err ? reject(err) : resolve(data))
+    );
+  });
+}
+
+function deleteObject(cos, key) {
+  return new Promise((resolve, reject) => {
+    cos.deleteObject({ Bucket: COS_BUCKET, Region: COS_REGION, Key: key }, (err, data) =>
+      err ? reject(err) : resolve(data)
+    );
+  });
+}
+
+async function manageSaveFriendLinks(data) {
   const apps = data.apps;
   if (!Array.isArray(apps)) return 'drop:no-apps';
 
   const seen = {};
   const cleaned = [];
+  const pendingLogoApps = [];
   for (const raw of apps) {
     const item = normalizeFriendApp(raw);
     if (!item) return 'drop:bad-friend-app';
     if (seen[item.appid]) continue;
     seen[item.appid] = true;
+    if (item.logo && item.logo.startsWith('pending/')) pendingLogoApps.push(item);
     cleaned.push(item);
     if (cleaned.length > FRIEND_LINK_MAX) return 'drop:too-many-links';
+  }
+
+  // 先落图片再改数据：复制失败就整条返回 error 让 inbox 对象留到下轮重试，
+  // 不会出现「setting 里写着 URL、COS 上却没有对象」的空引用。
+  if (pendingLogoApps.length) {
+    const cos = DRY ? null : cosClient();
+    for (const item of pendingLogoApps) {
+      const targetKey = `${FRIEND_LOGO_PREFIX}${item.appid}.${extOfKey(item.logo)}`;
+      if (!DRY) {
+        try {
+          await putObjectCopy(cos, item.logo, targetKey);
+        } catch (err) {
+          console.error(`  [friendlink] 复制 Logo 失败 ${item.logo} → ${targetKey}：${err.message || err}`);
+          return 'error:logo-copy';
+        }
+        // 复制成功后删掉 pending 原件；删除失败只警告（最坏情况是留个孤儿对象）
+        try {
+          await deleteObject(cos, item.logo);
+        } catch (err) {
+          console.warn(`  [friendlink] 删除 pending 原件失败（忽略）：${item.logo} ${err.message || err}`);
+        }
+      }
+      item.logo = publicUrlOf(targetKey);
+    }
   }
 
   const setting = loadData('setting');
@@ -1022,12 +1111,11 @@ const HANDLERS = {
 // 主流程
 // ---------------------------------------------------------------------------
 
-function processObjects(objects, stats) {
+async function processObjects(objects, stats) {
   const perOpenid = new Map();
   const doneKeys = [];
 
-  for (const obj of objects) {
-    stats.read++;
+  for (const obj of objects) {    stats.read++;
     const parsed = parseObject(obj.key, obj.body);
     if (!parsed.ok) {
       stats.dropped[parsed.reason] = (stats.dropped[parsed.reason] || 0) + 1;
@@ -1056,7 +1144,7 @@ function processObjects(objects, stats) {
 
     let result;
     try {
-      result = HANDLERS[p.kind](p);
+      result = await HANDLERS[p.kind](p);
     } catch (err) {
       result = 'error:' + (err && err.message ? err.message : String(err));
     }
@@ -1280,6 +1368,14 @@ function selftestObjects() {
       op: 'add',
       news: { title: '口令错不该写入', class: '其他' },
     }, 29), // 口令错，整条丢弃
+
+    // ---- 友情链接 Logo 选图上传（pending/ → photos/friendlink/）----
+    // DRY 下不真发 COS 请求，只验证「pending/ 开头的 logo 会被改写成完整公网 URL」。
+    mk('manage', 'openid-a', {
+      action: 'saveFriendLinks',
+      token: REVIEW_PASSCODE || 'wrong',
+      apps: [{ appid: 'wx5bd705b2bc91c73b', name: '带图友链', logo: 'pending/openid-a-99999.jpg' }],
+    }, 30),
   ];
 }
 
@@ -1296,6 +1392,7 @@ function snapshot() {
     photoLike: photo ? photo.like_count : null,
     photoHidden: photo ? !!photo.hidden : null,
     friendLinks: friendLink ? JSON.stringify((friendLink.apps || []).map(a => a.name)) : null,
+    friendLogos: friendLink ? JSON.stringify((friendLink.apps || []).map(a => a.logo || '')) : null,
     newsTitles: JSON.stringify(loadData('news').items.map(it => it.title)),
     queue: loadData('review_queue').items.length,
   };
@@ -1313,7 +1410,7 @@ async function main() {
     console.log('初始状态：' + JSON.stringify(snapshot()));
     console.log('----------------------------------------');
 
-    const keys = processObjects(selftestObjects(), stats);
+    const keys = await processObjects(selftestObjects(), stats);
     trimQueue();
 
     console.log('聚合后状态：' + JSON.stringify(snapshot()));
@@ -1376,7 +1473,7 @@ async function main() {
 
   // doneKeys 只包含已成功处理（含确定性 drop/skip）的 key；
   // 处理出错的对象不删，留在桶里下轮重试
-  const doneKeys = processObjects(objects, stats);
+  const doneKeys = await processObjects(objects, stats);
   const trimmed = trimQueue();
   const written = flushData();
 

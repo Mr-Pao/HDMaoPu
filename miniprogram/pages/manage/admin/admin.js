@@ -14,6 +14,9 @@
 
 import { putInbox } from "../../../utils/writeback";
 import { text as text_cfg } from "../../../config";
+import config from "../../../config";
+import { getCurrentUserOpenid } from "../../../utils/common";
+import { compressImage } from "../../../utils/utils";
 
 const passcode = require("../../../utils/passcode");
 
@@ -82,7 +85,10 @@ Page({
     linkLoading: false,
     linkSaving: false,
     linkDirty: false,
-    draft: { appid: "", name: "", logo: "" },
+    // draft.logo 存的是要提交的字符串：要么是 pending/xxx.jpg（刚选的图，等聚合上传），
+    // 要么是完整 https URL（存量数据 / 手工填）。draft.logoPreview 只是本地预览用的临时路径。
+    draft: { appid: "", name: "", logo: "", logoPreview: "" },
+    logoUploading: false,
   },
 
   jsData: {
@@ -349,7 +355,7 @@ Page({
       const { result } = await app.mpServerless.db.collection("setting").findOne({ _id: "friendLink" });
       const apps = ((result && result.apps) || []).filter(a => a && a.appid);
       this.setData({
-        links: apps.map(a => ({ appid: a.appid, name: a.name || "", logo: a.logo || "" })),
+        links: apps.map(a => ({ appid: a.appid, name: a.name || "", logo: a.logo || "", logoPreview: "" })),
         linkLoading: false,
         linkDirty: false,
       });
@@ -366,10 +372,121 @@ Page({
     this.setData({ ["draft." + field]: e.detail.value });
   },
 
+  // ---------- 友情链接 Logo 选图上传 ----------
+  //
+  // 客户端不存 COS 密钥，所以这里和「上传喵照」走同一条匿名直传链路：
+  //   选图 → 压缩 → PUT 到 pending/<openid>-<ts>.<ext>（桶策略允许匿名写，≤512KB）
+  //   → 只把 key 记进 draft.logo → 点「保存」时随 apps 一起进 inbox/manage/
+  //   → 聚合端 manageSaveFriendLinks 把 pending/ 的对象复制到 photos/friendlink/
+  //     （public-read）再把 logo 换成完整 URL（原始 pending 对象审核后删除）。
+  //
+  // 选完图本地就能预览（tempFilePath 是本地临时路径，wx:if="{{item.logo}}" 也能显示），
+  // 但只有保存成功才会真正上线；提交失败时 logo 仍是 pending/ 开头的 key，页面显示不出
+  // 图片也不影响数据。
+  async pickLinkLogo() {
+    if (this.data.logoUploading) return;
+
+    let file;
+    try {
+      const chosen = await wx.chooseMedia({
+        count: 1,
+        mediaType: ["image"],
+        sizeType: ["compressed"],
+        sourceType: ["album", "camera"],
+      });
+      file = (chosen && chosen.tempFiles && chosen.tempFiles[0]) || null;
+    } catch (e) {
+      // 用户取消选图不算错误
+      return;
+    }
+    if (!file) return;
+
+    const tempPath = file.tempFilePath || file.path;
+    if (!tempPath) return;
+
+    this.setData({ logoUploading: true });
+    wx.showLoading({ title: "上传中…", mask: true });
+
+    try {
+      // 和 addPhoto 一致：大于 512KB 先压缩（桶策略对 pending/* 有 512KB 的单对象上限）
+      let uploadPath = tempPath;
+      let size = Number(file.size || 0);
+      if (size > 512 * 1024) {
+        uploadPath = await compressImage(tempPath, 30);
+        try {
+          const info = await wx.getFileSystemManager().getFileInfo({ filePath: uploadPath });
+          size = Number((info && info.data && info.data.size) || 0);
+        } catch (e) {
+          size = 0;
+        }
+      }
+
+      const dot = String(uploadPath).lastIndexOf(".");
+      let ext = dot >= 0 ? String(uploadPath).substr(dot + 1) : "jpg";
+      ext = (ext || "jpg").toLowerCase();
+      if (ext === "jpeg") ext = "jpg";
+
+      const openid = (await getCurrentUserOpenid()) || "anon";
+      const key = `pending/${openid}-${Date.now()}.${ext}`;
+      const baseUrl = String(config.data_base_url || "").replace(/\/+$/, "");
+      if (!baseUrl) throw new Error("缺少 data_base_url");
+
+      const arrayBuffer = await new Promise((resolve, reject) => {
+        wx.getFileSystemManager().readFile({
+          filePath: uploadPath,
+          success: res => resolve(res.data),
+          fail: reject,
+        });
+      });
+
+      await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${baseUrl}/${key}`,
+          method: "PUT",
+          data: arrayBuffer,
+          header: {
+            "Content-Type":
+              ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg",
+          },
+          success: res => {
+            if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(res);
+            else reject(new Error("PUT 返回 " + (res && res.statusCode)));
+          },
+          fail: reject,
+        });
+      });
+
+      wx.hideLoading();
+      this.setData({
+        "draft.logo": key,
+        "draft.logoPreview": tempPath,
+        logoUploading: false,
+      });
+      wx.showToast({ title: "已选好，点下面添加", icon: "none" });
+      console.log("[admin] 友链 logo 已上传到", key, size ? `${size} 字节` : "");
+    } catch (e) {
+      wx.hideLoading();
+      this.setData({ logoUploading: false });
+      console.warn("[admin] 友链 logo 上传失败", e);
+      wx.showModal({
+        title: "上传失败",
+        content: text_cfg.sync.offline_tip,
+        showCancel: false,
+        confirmText: "知道了",
+      });
+    }
+  },
+
+  clearLinkLogo() {
+    this.setData({ "draft.logo": "", "draft.logoPreview": "" });
+  },
+
   addLink() {
     const appid = String(this.data.draft.appid || "").trim();
     const name = String(this.data.draft.name || "").trim();
     const logo = String(this.data.draft.logo || "").trim();
+    // 刚选的图只有本地临时路径，先记下来让列表能预览；保存后会被服务端换成 COS URL
+    const logoPreview = logo ? String(this.data.draft.logoPreview || "") : "";
 
     if (!/^wx[0-9a-zA-Z]{16}$/.test(appid)) {
       wx.showToast({ title: "AppID 格式不对（wx 开头 18 位）", icon: "none" });
@@ -393,8 +510,8 @@ Page({
     }
 
     this.setData({
-      links: this.data.links.concat([{ appid, name, logo }]),
-      draft: { appid: "", name: "", logo: "" },
+      links: this.data.links.concat([{ appid, name, logo, logoPreview }]),
+      draft: { appid: "", name: "", logo: "", logoPreview: "" },
       linkDirty: true,
     });
   },

@@ -133,7 +133,7 @@
 
     <block wx:else>
       <view class="link-row" wx:for="{{links}}" wx:key="appid">
-        <image class="link-logo" src="{{item.logo}}" mode="aspectFill" wx:if="{{item.logo}}" />
+        <image class="link-logo" src="{{item.logoPreview || item.logo}}" mode="aspectFill" wx:if="{{item.logoPreview || item.logo}}" />
         <view class="link-logo link-logo-ph" wx:else>链</view>
         <view class="link-main">
           <view class="link-name">{{item.name}}</view>
@@ -156,9 +156,16 @@
           <text class="label">名称</text>
           <input class="input" value="{{draft.name}}" data-field="name" bindinput="onDraftInput" maxlength="20" placeholder="显示名，最多 20 字" />
         </view>
-        <view class="field">
+        <view class="field field-col">
           <text class="label">Logo</text>
-          <input class="input" value="{{draft.logo}}" data-field="logo" bindinput="onDraftInput" placeholder="可留空" />
+          <view class="logo-pick">
+            <image class="logo-pick-img" src="{{draft.logoPreview || draft.logo}}" mode="aspectFill" wx:if="{{draft.logoPreview || draft.logo}}" />
+            <view class="logo-pick-ph" wx:else>未选</view>
+            <view class="logo-pick-btns">
+              <button class="logo-btn" bindtap="pickLinkLogo" disabled="{{logoUploading}}">{{logoUploading ? '上传中…' : (draft.logoPreview || draft.logo ? '换一张' : '选择图片')}}</button>
+              <button class="logo-btn logo-btn-ghost" bindtap="clearLinkLogo" wx:if="{{draft.logoPreview || draft.logo}}">清除</button>
+            </view>
+          </view>
         </view>
         <button class="add-btn" bindtap="addLink">添加到列表</button>
       </view>

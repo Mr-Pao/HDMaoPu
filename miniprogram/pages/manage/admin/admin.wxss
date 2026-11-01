@@ -98,6 +98,63 @@
   color: var(--color-primary-text);
 }
 
+/* 友情链接 Logo：选图上传（不是文本输入） */
+.field-col {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.logo-pick {
+  display: flex;
+  align-items: center;
+  margin-top: 16rpx;
+}
+
+.logo-pick-img,
+.logo-pick-ph {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 24rpx;
+  flex-shrink: 0;
+  background: var(--color-gray-light, #F2F2F2);
+}
+
+.logo-pick-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22rpx;
+  color: var(--color-text-secondary, #55605A);
+}
+
+.logo-pick-btns {
+  display: flex;
+  align-items: center;
+  margin-left: 24rpx;
+}
+
+.logo-btn {
+  height: 64rpx;
+  line-height: 64rpx;
+  padding: 0 28rpx;
+  margin-right: 16rpx;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  font-weight: normal;
+  background: var(--color-primary, #0C5F03);
+  color: var(--color-surface);
+}
+
+.logo-btn::after {
+  border: none;
+}
+
+.logo-btn-ghost {
+  background: transparent;
+  color: var(--color-text-secondary, #55605A);
+  border: 1rpx solid var(--color-gray-light, #E4E4E4);
+}
+
 .save-btn {
   margin: 30rpx 0;
   height: 84rpx;
