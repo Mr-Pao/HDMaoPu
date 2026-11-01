@@ -2,7 +2,7 @@ import {
   generateUUID
 } from "../../../utils/utils";
 import {
-  getPageUserInfo,
+  getUser,
   checkAuth
 } from "../../../utils/user";
 import api from "../../../utils/cloudApi";
@@ -65,7 +65,12 @@ Page({
   },
 
   onShow: async function () {
-    await getPageUserInfo(this);
+    const user = (await getUser()) || {};
+    this.setData({
+      user: Object.assign({}, user, {
+        userInfo: user.userInfo || {},
+      }),
+    });
   },
 
   bindInputName(e) {
@@ -87,17 +92,6 @@ Page({
     this.setData({
       length: inputData.length
     })
-  },
-
-  getUInfo: function() {
-    this.setData({
-    showEdit: true
-    });
-  },
-  closeEdit: function() {
-    this.setData({
-    showEdit: false
-    });
   },
 
   async chooseImg(e) {
