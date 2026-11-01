@@ -4,11 +4,14 @@ import {
 } from "../../../utils/utils";
 import config from "../../../config";
 import {
-  getPageUserInfo,
+  getUser,
   fillUserInfo,
   checkCanComment,
   isManagerAsync
 } from "../../../utils/user";
+import {
+  getCurrentUserOpenid
+} from "../../../utils/common";
 import {
   getAvatar
 } from "../../../utils/cat";
@@ -37,6 +40,9 @@ Page({
     text_cfg: config.text,
     is_manager: false,
     is_owner: false,
+    user: {},
+    defaultAvatar: '/pages/public/images/system/user.png',
+    showEdit: false,
 
     paper_colors: ['white', 'yellow', 'green', 'pink'],
     paper_color_select: 0,
@@ -83,7 +89,18 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow: async function () {
-    await getPageUserInfo(this);
+    await this.loadUserInfo();
+  },
+
+  // 昵称头像改为选填：不拦发便利贴，只用于显示与审核通知
+  async loadUserInfo() {
+    const user = (await getUser()) || {};
+    // doSendComment 会读 user.userInfo.nickName，这里必须兜底成对象
+    this.setData({
+      user: Object.assign({}, user, {
+        userInfo: user.userInfo || {},
+      }),
+    });
   },
 
   /**
@@ -179,7 +196,7 @@ Page({
     });
   },
 
-  // 授权个人信息
+  // 授权个人信息（选填，点开弹窗设置头像昵称）
   getUInfo: function () {
     this.setData({
       showEdit: true
@@ -188,6 +205,14 @@ Page({
   closeEdit: function () {
     this.setData({
       showEdit: false
+    });
+  },
+  async onUserInfoUpdated(e) {
+    const user = (e && e.detail && e.detail.user) || (await getUser()) || {};
+    this.setData({
+      user: Object.assign({}, user, {
+        userInfo: user.userInfo || {},
+      }),
     });
   },
 
@@ -221,7 +246,8 @@ Page({
     const content = this.data.comment_input;
 
     // 判断是否可以发
-    const user = this.data.user;
+    const user = this.data.user || {};
+    const userInfo = user.userInfo || {};
     if (user.cantComment) {
       wx.showModal({
         title: "发送失败",
@@ -231,17 +257,20 @@ Page({
       return false;
     }
 
+    // openid 兜底：本地 fake_openid，一设备一 id
+    const user_openid = user.openid || (await getCurrentUserOpenid());
+
     // 插入便利贴
     const { paper_colors, paper_color_select } = this.data;
     var item = {
       content: content,
-      user_openid: user.openid,
+      user_openid: user_openid,
       cat_id: this.jsData.cat_id,
       paper_color: paper_colors[paper_color_select],
       needVerify: true,
     };
 
-    const checkRes = await api.contentSafeCheck(content, user.userInfo.nickName);
+    const checkRes = await api.contentSafeCheck(content, userInfo.nickName);
     if (!checkRes) {
       // 没有检测出问题
       await this.addComment(item, user);
