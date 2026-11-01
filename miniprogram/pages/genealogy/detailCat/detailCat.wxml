@@ -127,13 +127,8 @@
           </view>
 
           <view class="rating-dim" wx:if="{{showDetailRating}}">
-            <view class="one-rating" wx:for="{{cat.rating.catRatings}}" wx:key="name" wx:for-item="x" bind:tap="bindDetailRating">
-              <view class="title">{{x.name}}：</view>
-              <view class="stars">
-                <star-rating value="{{x.score}}" readonly />
-                <view class="score">{{x.scoreDisp}}</view>
-              </view>
-            </view>
+            <canvas type="2d" id="rating-radar" class="rating-radar"></canvas>
+            <view class="rating-radar-empty" wx:if="{{cat.rating.count === 0}}">暂无评分，快来当第一个～</view>
           </view>
         </view>
       </view>

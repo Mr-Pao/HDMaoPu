@@ -171,6 +171,9 @@ Page({
     } catch (e) {
       console.warn("[detailCat] 待同步记录读取失败", e);
     }
+    if (this.data.showDetailRating) {
+      this.drawRatingRadar();
+    }
   },
 
   // 只隐藏提示条，不清本机记录（下次提交还会再算）
@@ -421,6 +424,104 @@ Page({
     wx.navigateTo({
       url: '/pages/genealogy/detailCat/ratingDetail/ratingDetail?cat_id=' + this.data.cat._id,
     });
+  },
+
+  // 五维评分雷达图（canvas 2d）：把 cat.rating.catRatings 画成五边形，空评时画空圈
+  drawRatingRadar() {
+    try {
+      const cats = (this.data.cat && this.data.cat.rating && this.data.cat.rating.catRatings) || [];
+      if (!cats.length) return;
+      const query = wx.createSelectorQuery();
+      query.select('#rating-radar').fields({ node: true, size: true }).exec((res) => {
+        if (!res || !res[0] || !res[0].node) return;
+        const canvas = res[0].node;
+        const ctx = canvas.getContext('2d');
+        let dpr = 2;
+        try {
+          dpr = (wx.getWindowInfo && wx.getWindowInfo().pixelRatio) || wx.getSystemInfoSync().pixelRatio || 2;
+        } catch (e) {}
+        const w = res[0].width;
+        const h = res[0].height;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, w, h);
+
+        const cx = w / 2;
+        const cy = h / 2 + 6;
+        const radius = Math.min(w, h) / 2 - 30;
+        const n = cats.length;
+        const angle = (i) => -Math.PI / 2 + i * 2 * Math.PI / n;
+        const max = 5;
+
+        // 同心网格
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(12,95,3,0.12)';
+        for (let ring = 1; ring <= 4; ring++) {
+          const r = radius * ring / 4;
+          ctx.beginPath();
+          for (let i = 0; i <= n; i++) {
+            const a = angle(i % n);
+            const x = cx + r * Math.cos(a);
+            const y = cy + r * Math.sin(a);
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+
+        // 轴线 + 维度标签
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (let i = 0; i < n; i++) {
+          const a = angle(i);
+          const x = cx + radius * Math.cos(a);
+          const y = cy + radius * Math.sin(a);
+          ctx.strokeStyle = 'rgba(12,95,3,0.12)';
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+          const lx = cx + (radius + 16) * Math.cos(a);
+          const ly = cy + (radius + 16) * Math.sin(a);
+          ctx.fillStyle = '#55605A';
+          ctx.fillText(cats[i].name, lx, ly);
+        }
+
+        // 数据多边形
+        ctx.beginPath();
+        for (let i = 0; i <= n; i++) {
+          const idx = i % n;
+          const a = angle(idx);
+          const val = Math.max(0, Math.min(max, cats[idx].score || 0));
+          const r = radius * val / max;
+          const x = cx + r * Math.cos(a);
+          const y = cy + r * Math.sin(a);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(20,128,31,0.18)';
+        ctx.fill();
+        ctx.strokeStyle = '#14801F';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 数据点
+        for (let i = 0; i < n; i++) {
+          const a = angle(i);
+          const val = Math.max(0, Math.min(max, cats[i].score || 0));
+          const r = radius * val / max;
+          const x = cx + r * Math.cos(a);
+          const y = cy + r * Math.sin(a);
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, 2 * Math.PI);
+          ctx.fillStyle = '#0C5F03';
+          ctx.fill();
+        }
+      });
+    } catch (e) {
+      console.warn('[detailCat] 雷达图绘制失败', e);
+    }
   },
 
   async bindTapPhoto(e) {
@@ -679,10 +780,13 @@ Page({
 
   bindDetailRating(e) {
     let { showDetailRating } = this.data;
-
+    showDetailRating = !showDetailRating;
     this.setData({
-      showDetailRating: !showDetailRating,
+      showDetailRating
     });
+    if (showDetailRating) {
+      this.drawRatingRadar();
+    }
   },
 
   // 展示分享海报

@@ -1043,6 +1043,18 @@ swiper-item image {
   font-weight: 600;
 }
 
+/* 五维评分雷达图（v4.0.54） */
+.rating-radar {
+  width: 100%;
+  height: 440rpx;
+}
+.rating-radar-empty {
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--dk-text-2);
+  margin-top: 16rpx;
+}
+
 /* 本机待同步提示条：提交后要等后台聚合 + 审核，避免用户以为没提交成功 */
 .sync-tip {
   display: flex;

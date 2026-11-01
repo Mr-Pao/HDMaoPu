@@ -55,7 +55,7 @@ NODE="C:/Users/yzx49/Program/HBuilderX/plugins/node/node.exe"
 
 ### 3. `packOptions.ignore` 会让"文件在磁盘上"的页面报 `WXML file not found`
 `project.config.json` 有 **18 项**打包忽略。启用任何页面，**除了 `app.json` 注册，还必须从 ignore 名单移除**：
-`pages/manage/photoManagement`、`pages/manage/medicalManage`、`pages/info/myFootprint`、`pages/info/myAchievement`、`pages/genealogy/applyMapAccess`、`pages/genealogy/detailCat/relationGraph`、`pages/tools/updateUserRole`、`pages/tools/inviteUser`、`pages/debug`、`pages/map`、`pages/manage/addCat`、`pages/manage/addRelations`、`pages/manage/managers`、`pages/manage/checkComment`、`pages/manage/rewards`、`components/achievementRank`、`images/markers`、`packages/tencentcloud`
+`pages/manage/photoManagement`、`pages/manage/medicalManage`、`pages/info/myFootprint`、`pages/info/myAchievement`、`pages/genealogy/applyMapAccess`、`pages/genealogy/detailCat/relationGraph`、`pages/tools/updateUserRole`、`pages/tools/inviteUser`、`pages/debug`、`pages/map`、`pages/manage/addCat`、`pages/manage/addRelations`、`pages/manage/managers`、`pages/manage/checkComment`、`pages/manage/rewards`、`images/markers`、`packages/tencentcloud`（⚠️ `components/achievementRank` 整目录已在 v4.0.53 审计中删除，勿再列出）
 - 反例：领养三页当年就是被 ignore 掉的"死代码"，注册后立刻编译失败
 
 ### 4. `rating` 与 `cat.rating.scores` 同名反义（最容易读错的一处）
@@ -85,13 +85,13 @@ NODE="C:/Users/yzx49/Program/HBuilderX/plugins/node/node.exe"
 若某天要关上传，只改这个开关即可，别再单独放开某一页。
 
 ### 9. `navigationStyle: custom` 的页面要自己留状态栏高度
-`app.json` **没有**全局设 `navigationStyle`，只有 7 页单独设 custom：`followFeed`、`gallery`、`detailCat`、`genealogy`、`info`、`news`、`leaderboard`。
+`app.json` **没有**全局设 `navigationStyle`，只有 6 页单独设 custom：`followFeed`、`gallery`、`detailCat`、`genealogy`、`info`、`news`（`leaderboard` 整目录已在 v4.0.53 审计中删除，见「已知限制」）。
 这些页要调 `utils/nav.js` 的 `applyNav(page)`，否则内容被刘海/灵动岛遮住。新增自绘头部页面记得一起处理。
 
 ### 10. tabBar 有历史缓存别名
 `custom-tab-bar/index.js:55`：`const alias = { leaderboard: 'gallery' }`，兼容客户端 7 天的 pageSetting 缓存。4 个 tab 键（v4.0.23 起）：`genealogy`(猫谱) / `gallery`(猫图) / `news`(猫抓板) / `info`(关于)。「喵友圈」`followFeed` 已从 `tab.js` 与 `data/setting.json` 的 `fullTab` 下线（页面本身仍在 `app.json` 注册，可被直接跳转）。图库 tab 文案由「图库」改为「猫图」，**v4.0.29 再改为「猫片」**（仅 `tab.js` 的 `text`；页面 `navigationBarTitleText`、分享标题、`config` 的 `share_tip` 仍是「猫图」）。
 `custom-tab-bar/index.js` 另有 `RETIRED_TAB_KEYS = [followFeed, recognize, leaderboard, map]` 兜底：旧客户端缓存里的 `fullTab` 只要含这些已下线 key，就丢弃其顺序、改按 `tab.js` 的 `Object.keys` 重排（权限过滤照旧）。改 tab 结构时记得同步这个数组。
-`pages/leaderboard/` 目录还在磁盘但**未在 `app.json` 注册**，是图库改造后的遗留死页。
+`pages/leaderboard/` 整目录**已在 v4.0.53 审计中删除**（连同 `components/photoRank`、`components/achievementRank` 两个孤儿组件），不再是死页遗留。
 
 ### 11. 字段语义陷阱（填假数据/改数据前必看）
 - `feedback` 记录带 `openid`（管理端 `fillUserInfo` 按它查用户）；历史数据里还有 `_openid`，原为「我的反馈」页过滤用，**2026-11-01 该页已随用户档案功能一起删除**，`_openid` 仅作历史字段保留，新代码无须再写
@@ -142,7 +142,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.42`），commit message 末尾带版本号。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.54`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -159,7 +159,10 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-01）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.42`
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.54`
+- **v4.0.53：全量代码审计优化落地（2026-11-01）** — 用户指令「除六（可加功能）其余全做」。改动：①B1 下架照片露出——`cat.js`(getBestPhoto/getLatestPhoto)、`datasource.js`(_getCatLocations)、`gallery.js`、`detailCat.js` 相册均过滤 `hidden`/`deleted`；②B2 `detailCat.js` likeCat/likeCountChanged 改 async + `await putInbox('like',...)`；③B3 服务端新增 `deleteComment` kind + `handleDeleteComment`（仅作者删/幂等/软删），客户端 `commentBoard.js` 真 putInbox；④B4 `handleDecision` 新增 `approvePhoto` 真复制 pending→catimg 并 append `photo.json`、cat.photo_count_total+1；⑤二 6 处 `api.curdOp` 假写→真 putInbox：`inter`(图库点赞)/`relationTab`/`checkFeedbacks`/`replyFeedback`/`pageSettings`/`filters`/`catInfoTab`(movePhoto)，服务端补 `manageFeedback`/`managePageSettings`/`saveFilter`/`movePhoto` action（白名单+永不throw+markTouched）；⑥三 删 `leaderboard`/`components/photoRank`/`components/achievementRank` 死页与孤儿组件 + `news.js` clickScience + `info.js` clearCache + `cloudApi.getMpCode`；⑦四 `gallery` PER_ROW 12→8、genealogy 并发池5、删 `common.js` convertToWebP/getOptimizedImageUrl 死代码；⑧五 删 252 处调试 console.log；⑨七 新建 `utils/nickname.js`（NICKNAME_MAX=20）应用到 commentBoard/feedbackDetail/modifyNews（3 页非 4 页，addPhoto 已匿名直传无昵称）；管理页口令壳评估后不抽（`promptToken` 已是共享 API）；`datasource.js` 不拆。验收：47 单测 + 66 verify + DRY_RUN 自测全过；提交 `1e48b71`。⚠️ 用户自有改动 `app_logo.png`/`图片.pptx` 未纳入审计提交。
+
+- **v4.0.54：五维评分雷达图（2026-11-02）** — 用户从审计「六·可加功能」里选了「五维评分可视化」（m00339）。在详情页「猫友评价」卡**展开详情**里，原本的 5 行 `star-rating` 替换为 **canvas-2d 五维雷达图**：`detailCat.js` 新增 `drawRatingRadar()`（用 `wx.createSelectorQuery().select('#rating-radar').fields({node:true,size:true})`，按 `cat.rating.catRatings` 的 `{name,score}` 画五边形，`#0C5F03` 描点、`#14801F` 描边、`rgba(20,128,31,0.18)` 填充，4 圈同心网格+维度标签；dpr 取 `wx.getWindowInfo().pixelRatio`，兜底 2），`bindDetailRating` 展开时与 `onShow`（`showDetailRating` 为真时）各重绘一次；`detailCat.wxml` 用 `<canvas type="2d" id="rating-radar">` + `count===0` 时显示「暂无评分，快来当第一个～」；`detailCat.wxss` 新增 `.rating-radar`(高440rpx)/`.rating-radar-empty`。设计依据：五维 = `utils/rating.js` 的 `ratingMap`（r1猫德/r2颜值/r3社交/r4干饭/r5活力），值来自 `cat.rating.dimAvg`（已由 `process-inbox` 的 `handleRating` 重算）。**只动视觉、不碰数据结构、不引依赖、主题色不变**。验收：47 单测 + 66 verify 全过（canvas 渲染只能在微信开发者工具里目测，node 测试不覆盖）。提交见 v4.0.54 commit。
 - **v4.0.42：管理口令收敛为 `data/gate.json` 一处（2026-11-01）**
   - **用户原话（m01906）：「我只是想在小程序端加一个密码，输入了之后就能进入管理界面管理数据，怎么搞得这么麻烦啊，一定要搞什么REVIEW_PASSCODE吗」**——此前口令分两处：界面进不进认 `data/gate.json` 的 `code`，提交能不能过认 Actions secret `REVIEW_PASSCODE`，两处不一致就表现为「进去了但提交没反应」，而 secret 在手机上根本看不到。
   - **`scripts/process-inbox.js` 新增 `currentGateCode()`**：`loadData('gate').items.find(it => it._id === 'gate')` 取 `code` 并 trim，读失败 `console.warn` 后返回空串；`tokenOk(token)` 改为 `const expect = currentGateCode() || REVIEW_PASSCODE || ''`。**`REVIEW_PASSCODE` 降级为兜底**（gate.json 缺失或 code 为空时才用），老部署可继续留着，新部署完全不用配。
@@ -254,9 +257,9 @@ cos-version  从上游错误派生，废弃
 - `README.md` 是上游原文，写着"阿里云 EMAS + MongoDB + OSS"，**完全过时**，别据此判断架构；以本文件为准
 - `functionsEMAS/unionOp/node_modules` 残缺（源目录 3866 个占位丢约 400 个），`dev` 线要用得重装
 - 桶里 962 个对象 / 239.9 MB（2026-11-01 清理后实测）。其中 `东苑/`(136) `校外/`(113) `其它/`(42) `校内/`(2) `undefined/`(5) `compressed/`(298) `watermark/`(298) 都是 EMAS 时代的历史猫照，**无归属关系可恢复**——EMAS 里的 photo 表已随空间删除，别承诺恢复。容量大头是 `watermark/` 139.1 MB（原图带水印）与 `校外/` 41.5 MB，两者都只有对象读权限（私有，匿名 GET 403），不占对外流量
-- 一批已注册但写操作静默 no-op 的页面：`catManage` / `checkPhotos` / `replyFeedback`
-- 遗留死代码：`news.js:149 clickScience()` 跳 `/pages/science/science`（页面不存在，wxml 未绑定不触发）；`pages/leaderboard/` 整目录
-- 首页封面/榜单/地图的照片查询**没有**过滤 `hidden`（只有 `detailCat` 相册过滤了），下架照片仍可能在其他位置露出
+- 一批已注册但写操作静默 no-op 的页面：`catManage` / `checkPhotos`（`replyFeedback`/`checkFeedbacks` 已在 v4.0.53 审计中改为真实 `putInbox('manage',{action:'manageFeedback'})` 写入链路）
+- 遗留死代码：`news.js:149 clickScience()` 跳 `/pages/science/science`（页面不存在，wxml 未绑定不触发）。（注：`pages/leaderboard/`、`components/photoRank`、`components/achievementRank` 已在 v4.0.53 审计中删除）
+- 首页封面/榜单/地图的照片查询过滤问题已在 v4.0.53 审计中修复（B1）：`cat.js` 的 `getBestPhoto/getLatestPhoto`、`datasource.js` 的 `_getCatLocations`、`gallery.js` 查询、`detailCat.js` 相册均已过滤 `hidden`/`deleted`，下架照片不再在其他位置露出
 - `--color-comment-paper-white` 这类被误伤的命名残留已还原，但 `packages/weui/weui-wxss/dist/style/weui.wxss` 也曾被批量替换过（等价改动，未回滚）
 
 ## 照片归属重建工具（2026-11-01 建）
