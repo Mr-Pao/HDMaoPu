@@ -271,7 +271,9 @@ async function moveObject(fromKey, toKey, contentType) {
   console.log(`[cos] ContentType = ${contentType}`);
 
   // 只有审核通过的照片（photos/ 前缀）才公开；驳回的留在 rejected/ 保持私有。
-  // 桶是私有读，桶策略对匿名访问不生效（实测），所以必须逐对象打 ACL。
+  // 桶已是「公有读私有写」（2026-11-01），所以 rejected/ 必须**显式传 private**——
+  // 不传就会继承桶的 AllUsers READ，未通过审核的照片直接被匿名读到。
+  // 另外桶策略里还有一条 Deny（deny-anon-read-private-prefixes）兜底 pending/rejected/inbox。
   const acl = toKey.startsWith('photos/') ? 'public-read' : 'private';
   console.log(`[cos] ACL = ${acl}`);
 

@@ -29,8 +29,8 @@ const DRY = DRY_RUN === '1' || DRY_RUN === 'true';
 // 5 分钟：改完 data 之后能比较快地在客户端生效
 const CACHE_CONTROL = 'max-age=300';
 
-// 桶是私有读，且桶策略（putBucketPolicy）对匿名访问不生效（实测过，已撤销）。
-// 小程序是匿名 GET，只能靠对象级 ACL：不传 ACL 就是 403，整站数据拉不到。
+// 桶已改成「公有读私有写」（2026-11-01），新对象不传 ACL 也会继承桶的 AllUsers READ。
+// 这里仍然显式传 public-read 是**冗余保险**：万一哪天桶被改回私有，data/ 不会跟着全站 403。
 const OBJECT_ACL = 'public-read';
 
 // 禁止公网上传的文件：上传对象全部是 public-read，这两份文件
