@@ -22,9 +22,10 @@ Page({
    * 生命周期函数--监听页面加载
    */
   async onLoad(options) {
+    // current-user 可能为空（无档案体系），?.item 兜底成 {} 避免 TypeError
     this.setData({
       cat_id: options.cat_id,
-      user: wx.getStorageSync('current-user').item
+      user: wx.getStorageSync('current-user')?.item || {}
     });
     await Promise.all([
       this.reloadMyRatings(),
@@ -54,7 +55,7 @@ Page({
   // 重新加载自己的评分
   async reloadMyRatings() {
     // 获取榜单和标签定义
-    if (!this.data.user.openid) {
+    if (!(this.data.user && this.data.user.openid)) {
       console.log(this.data);
       return
     }
@@ -118,18 +119,8 @@ Page({
       title: '提交中...',
     });
 
-    let { myRatingId, myRatings, cat_id, user } = this.data;
+    let { myRatingId, myRatings, cat_id } = this.data;
 
-    if (!user.userInfo.nickName) {
-      // 防止机器人刷评分
-      wx.hideLoading();
-      this.jsData.submitting = false;
-      wx.showToast({
-        title: '请先设置用户昵称',
-        icon: 'none'
-      })
-      return;
-    }
     let item = {
       cat_id
     };

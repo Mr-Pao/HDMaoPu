@@ -1,17 +1,13 @@
 <!--pages/news/modifyNews/modifyNews.wxml-->
 
 <form bindsubmit="bindSubmit" wx:if="{{auth}}">
-    <!-- 昵称头像选填：点这里打开编辑弹窗，不拦提交 -->
-    <view class='userInfo' bindtap='getUInfo' hover-class='link-hover'>
-        <image src='{{user.userInfo.avatarUrl || defaultAvatar}}'></image>
-        <view class='userInfo-text'>
-            <text class='userInfo-name'>{{user.userInfo.nickName || "匿名猫友"}}</text>
-            <text class='authHint'>{{user.userInfo.nickName ? "点此修改头像昵称" : "点此设置头像昵称（选填）"}}</text>
-        </view>
+    <!-- 昵称就地填（选填，不填就匿名），不拦提交 -->
+    <view class='nicknameRow'>
+        <input class='nicknameInput' type='text' placeholder='修改人昵称（选填）' value='{{nickname}}' bindinput='inputNickname' maxlength='20'/>
     </view>
 
     <view class='label'>自定义昵称：（选填）</view>
-    <input name='name' type='text' placeholder="{{user.userInfo.nickName}}" bindinput='bindInputName' maxlength='{{namemaxlength}}'></input>
+    <input name='name' type='text' placeholder='（选填，默认用上方昵称）' bindinput='bindInputName' maxlength='{{namemaxlength}}'></input>
     <view class='lengthTips'>字数：{{namelength}}/{{namemaxlength}}</view>
 
     <view class='label'>标题：</view>
@@ -62,5 +58,3 @@
     <text>{{tipText || "没有修改公告的权限"}}</text>
     <button bindtap='goBack' wx:if="{{tipBtn}}">打扰了</button>
 </view>
-
-<modifyUserInfo show="{{showEdit}}" bind:close="closeEdit" bind:userInfoUpdated="onUserInfoUpdated"></modifyUserInfo>

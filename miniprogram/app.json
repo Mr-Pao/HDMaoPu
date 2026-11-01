@@ -10,12 +10,8 @@
     "pages/info/info",
     "pages/info/reward/reward",
     "pages/info/feedback/feedback",
-    "pages/info/feedback/myFeedback/myFeedback",
     "pages/info/devTeam/devTeam",
-    "pages/info/userInfo/userInfo",
     "pages/info/agreement/agreement",
-    "pages/info/myFollowCats/myFollowCats",
-    "pages/info/myAdoption/myAdoption",
     "pages/followFeed/followFeed",
     "pages/news/news",
     "pages/news/detailNews/detailNews",
@@ -53,13 +49,10 @@
         "pagePath": "pages/genealogy/genealogy"
       },
       {
-        "pagePath": "pages/followFeed/followFeed"
+        "pagePath": "pages/gallery/gallery"
       },
       {
         "pagePath": "pages/news/news"
-      },
-      {
-        "pagePath": "pages/gallery/gallery"
       },
       {
         "pagePath": "pages/info/info"

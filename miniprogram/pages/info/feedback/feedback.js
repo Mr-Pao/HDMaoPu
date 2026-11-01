@@ -10,12 +10,6 @@ Page({
     text_cfg: text_cfg,
   },
 
-  toMyFeedback() {
-    wx.navigateTo({
-      url: '/pages/info/feedback/myFeedback/myFeedback'
-    });
-  },
-
   toFeedback() {
     wx.navigateTo({
       url: '/pages/genealogy/feedbackDetail/feedbackDetail',

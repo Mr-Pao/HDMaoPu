@@ -10,7 +10,7 @@
 ## 技术栈与目录
 
 - 微信原生小程序，无框架。`miniprogramRoot: miniprogram/`，appid `wx5d52c6c8f098ed5e`，`libVersion: 2.24.7`，`nodeModules: false`
-- 页面：`app.json` 注册 **34 页 + 分包 `pages/packageA` 1 页**（v4.0.17 删徽章后从 38+3 降下来）
+- 页面：`app.json` 注册 **30 页 + 分包 `pages/packageA` 1 页**（v4.0.17 删徽章 38→34；v4.0.23 删用户档案页 34→30）
 - `miniprogram/utils/datasource.js`（1321 行）：自研的 mpserverless 兼容层，实现 `createJsonServerless({baseUrl})`
 - `miniprogram/utils/writeback.js`：COS inbox 写入通道（客户端零密钥）
 - `data/`：19 个 JSON，即"数据库"（删徽章三件套后从 22 降下来）
@@ -53,8 +53,8 @@ NODE="C:/Users/yzx49/Program/HBuilderX/plugins/node/node.exe"
 - 校验手段：改完查 `var(--color-var(` / `paper-var(` 残留 + 花括号平衡
 
 ### 3. `packOptions.ignore` 会让"文件在磁盘上"的页面报 `WXML file not found`
-`project.config.json` 有 **19 项**打包忽略。启用任何页面，**除了 `app.json` 注册，还必须从 ignore 名单移除**：
-`pages/manage/photoManagement`、`pages/manage/medicalManage`、`pages/info/myFootprint`、`pages/info/myAchievement`、`pages/genealogy/applyMapAccess`、`pages/genealogy/detailCat/relationGraph`、`pages/tools/updateUserRole`、`pages/tools/inviteUser`、`pages/debug`、`pages/map`、`pages/info/userInfo/modifyUserInfo`、`pages/manage/addCat`、`pages/manage/addRelations`、`pages/manage/managers`、`pages/manage/checkComment`、`pages/manage/rewards`、`components/achievementRank`、`images/markers`、`packages/tencentcloud`
+`project.config.json` 有 **18 项**打包忽略。启用任何页面，**除了 `app.json` 注册，还必须从 ignore 名单移除**：
+`pages/manage/photoManagement`、`pages/manage/medicalManage`、`pages/info/myFootprint`、`pages/info/myAchievement`、`pages/genealogy/applyMapAccess`、`pages/genealogy/detailCat/relationGraph`、`pages/tools/updateUserRole`、`pages/tools/inviteUser`、`pages/debug`、`pages/map`、`pages/manage/addCat`、`pages/manage/addRelations`、`pages/manage/managers`、`pages/manage/checkComment`、`pages/manage/rewards`、`components/achievementRank`、`images/markers`、`packages/tencentcloud`
 - 反例：领养三页当年就是被 ignore 掉的"死代码"，注册后立刻编译失败
 
 ### 4. `rating` 与 `cat.rating.scores` 同名反义（最容易读错的一处）
@@ -88,11 +88,12 @@ NODE="C:/Users/yzx49/Program/HBuilderX/plugins/node/node.exe"
 这些页要调 `utils/nav.js` 的 `applyNav(page)`，否则内容被刘海/灵动岛遮住。新增自绘头部页面记得一起处理。
 
 ### 10. tabBar 有历史缓存别名
-`custom-tab-bar/index.js:55`：`const alias = { leaderboard: 'gallery' }`，兼容客户端 7 天的 pageSetting 缓存。5 个 tab 键：`genealogy`(猫谱) / `followFeed`(喵友圈) / `news`(猫抓板) / `gallery`(图库) / `info`(关于)。
+`custom-tab-bar/index.js:55`：`const alias = { leaderboard: 'gallery' }`，兼容客户端 7 天的 pageSetting 缓存。4 个 tab 键（v4.0.23 起）：`genealogy`(猫谱) / `gallery`(猫图) / `news`(猫抓板) / `info`(关于)。「喵友圈」`followFeed` 已从 `tab.js` 与 `data/setting.json` 的 `fullTab` 下线（页面本身仍在 `app.json` 注册，可被直接跳转）。图库 tab 文案由「图库」改为「猫图」。
+`custom-tab-bar/index.js` 另有 `RETIRED_TAB_KEYS = [followFeed, recognize, leaderboard, map]` 兜底：旧客户端缓存里的 `fullTab` 只要含这些已下线 key，就丢弃其顺序、改按 `tab.js` 的 `Object.keys` 重排（权限过滤照旧）。改 tab 结构时记得同步这个数组。
 `pages/leaderboard/` 目录还在磁盘但**未在 `app.json` 注册**，是图库改造后的遗留死页。
 
 ### 11. 字段语义陷阱（填假数据/改数据前必看）
-- `feedback` 必须**同时**有 `_openid`（我的反馈页过滤）和 `openid`（管理端 fillUserInfo）
+- `feedback` 记录带 `openid`（管理端 `fillUserInfo` 按它查用户）；历史数据里还有 `_openid`，原为「我的反馈」页过滤用，**2026-11-01 该页已随用户档案功能一起删除**，`_openid` 仅作历史字段保留，新代码无须再写
 - `reward.records` 必须是 `#` 分隔的**字符串**，页面执行 `records.replace(/^#+|#+$/g,'').split('#')`，传数组会崩
 - `news` 必须带 `photosPath` **数组**（detailNews 直接 `.map` 无保护）、`show` 布尔、`date`
 - `inter` 的 `TYPE_LIKE = 10000`，`uid`=openid，`item_id`=photo._id
@@ -124,7 +125,7 @@ upstream/master (sysucats/zhongdamaopu)
 cos-version  从上游错误派生，废弃
 ```
 - origin = `Mr-Pao/HDMaoPu`（真 fork，可用 GitHub Sync fork），upstream = `sysucats/zhongdamaopu`
-- **当前分支 `cos`**，HEAD `b4b3ee1`（v4.0.22）；工作区干净（2026-11-01 已把 v4.0.14→v4.0.22 的积压改动全部整理成独立 commit 推上去了）
+- **当前分支 `cos`**，HEAD `cca08b5`（v4.0.22 docs），工作区有 v4.0.23 的未提交改动（放弃用户档案体系：删 4 页 + 删 `components/modifyUserInfo` + 5 页就地填昵称 + tabBar 改 4 tab）
 - 从 `13f0f6a`（v4.1.4 设计系统重构）到 HEAD 共 21 个提交 / 100 文件 / +3496 −321，全是 UI 迭代
 
 ### 数据流
@@ -140,7 +141,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.22`），commit message 末尾带版本号。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.23`），commit message 末尾带版本号。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -157,21 +158,20 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-01）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.22`
-- **「点击授权」假门槛已全站拆掉**（v4.0.19 `feedbackDetail` / v4.0.20 `commentBoard` / v4.0.21 `modifyNews`）：根因是 `getUInfo()` 只 `setData({showEdit:true})`，而这些页从未在 json 注册、也没在 wxml 渲染 `modifyUserInfo` 组件，所以点击完全静默（用户报告的"不能区分用户"就是这个）。统一范式（照 `addPhoto` 抄）：json 注册 `modifyUserInfo` → wxml 底部渲染 `<modifyUserInfo show="{{showEdit}}" bind:close="closeEdit" bind:userInfoUpdated="onUserInfoUpdated">` → `onShow` 用 `getUser()` 取代 `getPageUserInfo`（后者在无 `userInfo` 时直接 `return false`，不设 `isAuth`/`user`，导致 `wx:else` 分支永不渲染 = 空白页）→ 顶部一块可点的「匿名猫友 / 点此设置头像昵称（选填）」提示条 → `user.userInfo` 必须兜底成 `{}`（`doSendComment` 等处会读 `user.userInfo.nickName`，否则 TypeError）→ openid 兜底 `getCurrentUserOpenid()`（`datasource._getOrCreateOpenid` 存本地 `fake_openid`，一设备一 id）。
-  - `feedbackDetail`（v4.0.19）：拆掉 `!isAuth` 等待块与 `wx:else`，不再拦提交；顺带修 `data.cat_name = this.data.cat_name`（原为 undefined）→ `this.data.cat.name`
-  - `commentBoard`（v4.0.20）：原 `wx:if="{{!isAuth}}"` 按钮 + `<block wx:else>` 把输入区整个藏起来，改成输入区常显、顶部加 `.input-user` 提示条；`doSendComment` 里 `user.openid` / `user.userInfo.nickName` 全部加兜底
-  - `modifyNews`（v4.0.21）：删掉「等待授权/点击授权」块与 `wx:if="{{isAuth}}"` 包裹，表单改由 `wx:if="{{auth}}"`（管理员 Level-2）控制，无权限时显示 `.noAuth` 整页空态（`tipText` + 「打扰了」按钮，`goBack()`）；`openidLastModify` / `userNicknameLastModify` 加兜底
-  - `createNews`：wxml 本就没有 `getUInfo` 绑定（`:3` 是 `wx:if="{{auth}}"`），但 js 有死方法 `getUInfo/closeEdit` 且 `onShow` 还在调无效的 `getPageUserInfo` —— 已删死方法、`onShow` 改 `getUser()`，避免 `user.userInfo.nickName`（wxml `:5` placeholder）为 undefined
-  - **仍走旧 `getPageUserInfo` 的页面**（2026-11-01 已清点，全站只剩两处）：`addPhoto.js:79`（该页没有昵称编辑 UI，`isAuth` 副作用无害，未动）、`applyMapAccess.js:34`（在 `packOptions.ignore` 里的死页，未动）。以后新增页面别再调它，用 `getUser()`。
-  - ⚠️ `modifyUserInfo` 的头像上传仍走 `utils/common.js uploadFile()` → 云函数 `getURL`，dataMode 下必然返回 undefined（EMAS 已删），**只有昵称能存下来，头像存不了**。要修得照 `addPhoto.js` 改成 COS 匿名直传。
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.23`
+- **用户档案体系已整体放弃（v4.0.23）**：根因是 `utils/datasource.js:27` 的 `OPENID_STORAGE_KEY = 'fake_openid'` + `_getOrCreateOpenid()`（`:1229-1237`）生成 `guest_xxxxxxxx` 存本地，**与微信账号完全无关**，换设备/清缓存/重装就是新人；而 `data/user.json` 从没有 nickname 字段、`scripts/process-inbox.js` 里一次 `loadData('user')` 都没有，用户昵称压根不上传。要做真跨设备只能接 `wx.login` → 服务端 code2session，和「月成本 ≤5 元、不引服务器」的红线冲突 → 用户拍板：**不做档案，每个提交场景当场自己填昵称，不填就是匿名用户**。
+  - 删掉的 4 个页面（共 20 文件）：`pages/info/userInfo/`（个人主页，含子目录 `modifyUserInfo/`）、`pages/info/myFollowCats/`、`pages/info/myAdoption/`、`pages/info/feedback/myFeedback/`。连带 `app.json` 34→30 页、`packOptions.ignore` 19→18 项、`info.js` 的 `data.cards` 5→2（只剩投喂罐头 / 程序开发）、`info/feedback/feedback.js` 的 `toMyFeedback()`、`utils/user.js` 的 `toSetUserInfo()`、`utils/msg.js:130` 订阅消息跳转页改 `pages/info/info`。
+  - **`components/modifyUserInfo/` 整目录已删除**，全仓 0 引用。v4.0.19–v4.0.21 那套「json 注册组件 + 点此设置头像昵称」的旧范式**已作废，别再照着抄**。
+  - 就地填昵称范式（5 页统一）：`data.nickname: ''` → `onShow`/`onLoad` 用 `wx.getStorageSync('last_nickname') || ''` 预填 → `<input>` 就地输入（`maxlength=20`）→ 提交前 `wx.setStorageSync('last_nickname', this.data.nickname)` → 空值一律兜底 `'匿名猫友'`。落地位置：`commentBoard`（悬浮输入区顶部，textarea 上方）、`feedbackDetail`（表单最上方，标题「正在为「猫名」反馈信息」下；`.adminEntry` 管理员「添加猫际关系」入口保留不动）、`modifyNews`（表单第一项）、`addPhoto`（删掉 `!isAuth` 等待授权层，上传表单常显，只留「正在为「猫名」添加照片」提示；摄影师仍走原有 `inputPher`，匿名直传 COS 链路一字未动）、`ratingDetail`（**不加**昵称框，评分本就匿名；`putInbox('rating', {cat_id, score, dims})` 保持无 nickname 字段，否则会破坏 `process-inbox.js` 的聚合 schema）。
+  - 昵称只在本机记忆（`last_nickname`），换设备自然丢失——这是已接受的取舍，别再提"恢复码/微信登录"方案。
+  - 遗留死代码（不影响运行）：`components/photoRank/` 仍留着 `bindtap='getUInfo'` 与 `setData({showEdit:true})`，但该组件只被未注册死页 `pages/leaderboard` 引用且组件已无从打开；`utils/user.js` 的 `getPageUserInfo()` 也还在，现存调用点只剩 `applyMapAccess.js:34`（ignore 死页）与 `photoRank.js:31`（上述死组件）。以后新增页面用 `getUser()`，别调 `getPageUserInfo`（它在无 `userInfo` 时直接 `return false`，不设 `isAuth`/`user`，会让 `wx:else` 分支永不渲染 = 空白页）。
 - 数据源：`https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com`，微信后台已加 request 合法域名
 - **整份 `data/` 都是演示假数据，没有任何真实猫记录**：`cat` 11/11、`photo` 11/11、`comment` 48/48、`rating` 48/48、`user` 9/9 的 `_id` **全部**以 `demo-` 开头（`demo-cat-1..11`、`demo-photo-1..11` …），11 只猫名是大橘/三花/小黑/小白/奶茶/芝麻/年糕/团子/花生/汤圆/布丁，全部 `campus: 南校园`。由 `scripts/gen-demo-data.js` 固定种子生成（**注意：它不生成 photo，只重写已有条目**）。
   - 猫的 `birthday` **全部有值**（不是空），范围 2022-06-15 ~ 2024-05-01，例如大橘 `2023-01-01`；详情页「拍摄时约 X 月龄」就是拿它和 `shooting_date` 算的。
   - ⚠️ 区分"记录假"与"图真"：`photo.json` 引用的 `photos/demo-cat-N/cover.jpg` 是**真实拍摄的猫照片素材**（抽查 demo-cat-1 为室内猫吃罐头图），不是 AI 生成。假的是猫名、拍摄日期、点赞数这些元数据。
   - ✅ 已修的数据缺陷（2026-11-01）：`demo-photo-11` 的 `shooting_date` 曾是 `"2026-05-00"`（5 月 0 日，非法），`detailCat.js:564-570` 会算成负数月龄。已改为 `2026-04-30`，并在 `scripts/verify-demo-data.js` 补 3 项校验（相册查询 / `shooting_date` 合法日期 / 拍摄日期不早于猫生日），校验总数 47→50。
   - ⚠️ **本地改了 `data/` 不会自动上 COS**：要 push `cos` 触发 `sync-data.yml`。2026-11-01 14:12 复查：远端 `data/photo.json` 已是修正后的 11 条、无非法日期，说明 `sync-data.yml` 已跑通。
-  - COS 上曾出现过一条 `relink-photo-1`（指向 `photos/demo-cat-12/0001.jpg`，猫 `demo-cat-12 奶盖`），是误把 `photos/demo-cat-1/cover.jpg` 复制过来当新照片的假数据。2026-11-01 复查：远端 `data/photo.json` 已回到 11 条、`data/cat.json` 也是 11 只（`demo-cat-12` 已不在 JSON 里），但**孤儿对象 `photos/demo-cat-12/0001.jpg` 仍在桶里且匿名可读（HTTP 200）**，无害可留。
+  - COS 上曾出现过一条 `relink-photo-1`（指向 `photos/demo-cat-12/0001.jpg`，猫 `demo-cat-12 奶盖`），是误把 `photos/demo-cat-1/cover.jpg` 复制过来当新照片的假数据。**2026-11-01 已彻底清除**（远端只剩 11 条 photo、11 只 cat，孤儿对象 `photos/demo-cat-12/0001.jpg` 已删）。
 - 其余演示规模：comment 48 / rating 48 / user 9 / news 8 …
 - UI 已全站统一白底大圆角（v5.2），图库是横向漂流墙（8 行宽窄交替 marquee）
 - 审核/管理走口令门（本地 storage `manage_passcode` 24h），真正校验在 `process-inbox.js` 的 `REVIEW_PASSCODE`
@@ -186,7 +186,7 @@ cos-version  从上游错误派生，废弃
 - **跑不了 E2E**：需要微信开发者工具 + `cli.bat auto --auto-port 9420`，当前沙箱拦 `reg.exe`
 - `README.md` 是上游原文，写着"阿里云 EMAS + MongoDB + OSS"，**完全过时**，别据此判断架构；以本文件为准
 - `functionsEMAS/unionOp/node_modules` 残缺（源目录 3866 个占位丢约 400 个），`dev` 线要用得重装
-- 桶里 ~963 个历史对象（`东苑/`、`compressed/` 等，含 298 张真实猫照）**无归属关系可恢复**——EMAS 里的 photo 表已随空间删除，别承诺恢复
+- 桶里 962 个对象 / 239.9 MB（2026-11-01 清理后实测）。其中 `东苑/`(136) `校外/`(113) `其它/`(42) `校内/`(2) `undefined/`(5) `compressed/`(298) `watermark/`(298) 都是 EMAS 时代的历史猫照，**无归属关系可恢复**——EMAS 里的 photo 表已随空间删除，别承诺恢复。容量大头是 `watermark/` 139.1 MB（原图带水印）与 `校外/` 41.5 MB，两者都只有对象读权限（私有，匿名 GET 403），不占对外流量
 - 一批已注册但写操作静默 no-op 的页面：`catManage` / `checkPhotos` / `replyFeedback`
 - 遗留死代码：`news.js:149 clickScience()` 跳 `/pages/science/science`（页面不存在，wxml 未绑定不触发）；`pages/leaderboard/` 整目录
 - 首页封面/榜单/地图的照片查询**没有**过滤 `hidden`（只有 `detailCat` 相册过滤了），下架照片仍可能在其他位置露出

@@ -1,11 +1,10 @@
 <form bindsubmit="bindSubmit" wx:if="{{canFeedback}}">
-  <!-- 昵称头像改为选填：点这块打开编辑弹窗，不拦提交 -->
-  <view class='userInfo' bindtap='getUInfo' hover-class='link-hover'>
-    <image src='{{user.userInfo.avatarUrl || defaultAvatar}}'></image>
-    <view class='userInfo-text'>
-      <text>{{user.userInfo.nickName || "匿名猫友"}}\n---正在为「<text style="font-weight:600;">{{cat? cat.name: text_cfg.app_name}}</text>」反馈信息</text>
-      <text class='authHint'>{{user.userInfo.nickName ? "点此修改头像昵称" : "点此设置头像昵称（选填）"}}</text>
-    </view>
+  <!-- 昵称就地填（选填，不填就匿名），不拦提交 -->
+  <view class='userInfo'>
+    <text class='userInfo-title'>正在为「<text style="font-weight:600;">{{cat? cat.name: text_cfg.app_name}}</text>」反馈信息</text>
+  </view>
+  <view class='nicknameRow'>
+    <input class='nicknameInput' type='text' placeholder='昵称（选填，不填就匿名）' value='{{nickname}}' bindinput='inputNickname' maxlength='20'/>
   </view>
   <view class='adminEntry' wx:if="{{isManager && cat && cat._id}}" bindtap='toAddRelation' hover-class='link-hover'>
     <view class='adminEntry-title'>管理</view>
@@ -38,4 +37,3 @@
 <view class='footnote'>
   <text>{{text_cfg.feedback_detail.submit_tip}}</text>
 </view>
-<modifyUserInfo show="{{showEdit}}" bind:close="closeEdit" bind:userInfoUpdated="onUserInfoUpdated"></modifyUserInfo>

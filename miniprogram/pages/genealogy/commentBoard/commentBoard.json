@@ -2,7 +2,6 @@
   "usingComponents": {
     "heart": "/packages/heart-button/heart",
     "comment-list": "/components/comment-list/comment-list",
-    "cat-card": "/components/cat-card/cat-card",
-    "modifyUserInfo": "/components/modifyUserInfo/modifyUserInfo"
+    "cat-card": "/components/cat-card/cat-card"
   }
 }

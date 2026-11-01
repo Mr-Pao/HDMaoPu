@@ -17,8 +17,7 @@ Page({
     news: 0,
     auth: false,
     user: {},
-    defaultAvatar: '/pages/public/images/system/user.png',
-    showEdit: false,
+    nickname: '',
     namelength: 0,
     namemaxlength: 30,
     titlelength: 0,
@@ -71,13 +70,15 @@ Page({
     await this.loadUserInfo();
   },
 
-  // 昵称头像改为选填：不拦提交，只用于展示与记录最后修改人
+  // 昵称改为选填：不拦提交，只用于展示与记录最后修改人
+  // 每次就地填，本机记住上一次填的（last_nickname），换设备自然丢失
   async loadUserInfo() {
     const user = (await getUser()) || {};
     this.setData({
       user: Object.assign({}, user, {
         userInfo: user.userInfo || {},
       }),
+      nickname: wx.getStorageSync('last_nickname') || '',
     });
   },
 
@@ -159,23 +160,10 @@ Page({
     })
   },
 
-  // 昵称头像选填（点开 modifyUserInfo 弹窗）
-  getUInfo: function () {
+  // 昵称输入（选填，不填就匿名）
+  inputNickname(e) {
     this.setData({
-      showEdit: true
-    });
-  },
-  closeEdit: function () {
-    this.setData({
-      showEdit: false
-    });
-  },
-  async onUserInfoUpdated(e) {
-    const user = (e && e.detail && e.detail.user) || (await getUser()) || {};
-    this.setData({
-      user: Object.assign({}, user, {
-        userInfo: user.userInfo || {},
-      }),
+      nickname: e.detail.value
     });
   },
 
@@ -236,9 +224,13 @@ Page({
       setNewsModal = true;
     }
 
+    // 昵称取输入框的值，空则匿名；顺手记到本机（换设备自然丢失）
+    if (this.data.nickname) {
+      wx.setStorageSync('last_nickname', this.data.nickname);
+    }
     var data = {
-      openidLastModify: this.data.user.openid || (await getCurrentUserOpenid()),
-      userNicknameLastModify: submitData.name || (this.data.user.userInfo && this.data.user.userInfo.nickName) || '匿名猫友',
+      openidLastModify: (this.data.user && this.data.user.openid) || (await getCurrentUserOpenid()),
+      userNicknameLastModify: submitData.name || this.data.nickname || '匿名猫友',
       dateLastModify: api.getDate(),
       title: submitData.title,
       mainContent: submitData.mainContent,

@@ -23,21 +23,9 @@ Page({
     // 卡片，不需要设计绘制卡片图，只需用放图标即可
     cards: [
       {
-        icon:"/pages/public/images/info/btn/user.svg", // 一个示例
-        label:"个人主页",
-        path:"/pages/info/userInfo/userInfo",
-      },{
         icon:"/pages/public/images/info/btn/reward.svg",
         label:"投喂罐头",
         path:"/pages/info/reward/reward",
-      },{
-        icon:"/pages/public/images/info/btn/cat_head.png",
-        label:"我的领养",
-        path:"/pages/info/myAdoption/myAdoption",
-      },{
-        icon:"/pages/public/images/info/btn/feedback.svg",
-        label:"我的反馈",
-        path:"/pages/info/feedback/myFeedback/myFeedback",
       },{
         icon:"/pages/public/images/info/btn/team.svg",
         label:"程序开发",

@@ -41,8 +41,7 @@ Page({
     is_manager: false,
     is_owner: false,
     user: {},
-    defaultAvatar: '/pages/public/images/system/user.png',
-    showEdit: false,
+    nickname: '',
 
     paper_colors: ['white', 'yellow', 'green', 'pink'],
     paper_color_select: 0,
@@ -92,14 +91,16 @@ Page({
     await this.loadUserInfo();
   },
 
-  // 昵称头像改为选填：不拦发便利贴，只用于显示与审核通知
+  // 昵称改为选填：不拦发便利贴，只用于显示与审核通知
+  // 每次提交就地填，本机记住上一次填的（last_nickname），换设备自然丢失
   async loadUserInfo() {
     const user = (await getUser()) || {};
-    // doSendComment 会读 user.userInfo.nickName，这里必须兜底成对象
+    const last_nickname = wx.getStorageSync('last_nickname') || '';
     this.setData({
       user: Object.assign({}, user, {
         userInfo: user.userInfo || {},
       }),
+      nickname: last_nickname,
     });
   },
 
@@ -196,23 +197,10 @@ Page({
     });
   },
 
-  // 授权个人信息（选填，点开弹窗设置头像昵称）
-  getUInfo: function () {
+  // 昵称输入（选填，不填就匿名）
+  inputNickname(e) {
     this.setData({
-      showEdit: true
-    });
-  },
-  closeEdit: function () {
-    this.setData({
-      showEdit: false
-    });
-  },
-  async onUserInfoUpdated(e) {
-    const user = (e && e.detail && e.detail.user) || (await getUser()) || {};
-    this.setData({
-      user: Object.assign({}, user, {
-        userInfo: user.userInfo || {},
-      }),
+      nickname: e.detail.value
     });
   },
 
@@ -247,7 +235,6 @@ Page({
 
     // 判断是否可以发
     const user = this.data.user || {};
-    const userInfo = user.userInfo || {};
     if (user.cantComment) {
       wx.showModal({
         title: "发送失败",
@@ -270,9 +257,13 @@ Page({
       needVerify: true,
     };
 
-    const checkRes = await api.contentSafeCheck(content, userInfo.nickName);
+    const checkRes = await api.contentSafeCheck(content, this.data.nickname || '匿名猫友');
     if (!checkRes) {
       // 没有检测出问题
+      // 记住本机上次填的昵称（换设备自然丢失），空值不覆盖
+      if (this.data.nickname) {
+        wx.setStorageSync('last_nickname', this.data.nickname);
+      }
       await this.addComment(item, user);
       return
     }
@@ -297,7 +288,7 @@ Page({
       console.log("curdOp(add-Comment) result): ", res, user);
       // 插入最新便利贴 + 清空输入框
       console.log(item);
-      item.userInfo = user.userInfo;
+      item.userInfo = { nickName: this.data.nickname || '匿名猫友' };
       item.datetime = formatDate(new Date(), "yyyy-MM-dd hh:mm:ss")
       var comments = this.data.comments;
       comments.unshift(item);
@@ -321,7 +312,7 @@ Page({
       putInbox('comment', {
         cat_id: item.cat_id,
         content: item.content,
-        nickname: (user.userInfo && user.userInfo.nickName) || '匿名猫友',
+        nickname: this.data.nickname || '匿名猫友',
       });
     } catch {
       wx.showModal({

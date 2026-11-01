@@ -8,7 +8,7 @@ const secrets = require('./appSecret.js');
 
 module.exports = {
   // 版本号
-  app_version: "v4.0.22",
+  app_version: "v4.0.23",
   // 【离线 Demo 模式】
   // true  = 不连任何后端，使用 utils/demo.js 里的假数据（11 只猫 + 照片 + 设置）
   // false = 走下面的 data_base_url（COS 上的静态 JSON）
@@ -189,9 +189,9 @@ module.exports = {
     leaderboard: {
       share_tip: "榜单",
     },
-    // 图库，pages/gallery/gallery
+    // 猫图，pages/gallery/gallery
     gallery: {
-      share_tip: "猫咪图库",
+      share_tip: "猫图墙",
     },
     // 精选，pages/inviteUser/inviteUser
     inviteUser: {

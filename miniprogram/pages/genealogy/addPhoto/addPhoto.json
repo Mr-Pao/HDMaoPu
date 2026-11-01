@@ -1,6 +1,4 @@
 {
-  "usingComponents": {
-    "modifyUserInfo": "/components/modifyUserInfo/modifyUserInfo"
-  },
+  "usingComponents": {},
   "navigationBarTitleText": "添加照片"
 }

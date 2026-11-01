@@ -1,4 +1,4 @@
-import { getPageUserInfo, toSetUserInfo, fillUserInfo } from "../../utils/user";
+import { getPageUserInfo, fillUserInfo } from "../../utils/user";
 import { formatDate } from "../../utils/utils";
 import { text as text_cfg } from "../../config";
 const app = getApp();

@@ -27,13 +27,9 @@
 
 
 <view id="input-block" style="margin-bottom: {{keyboard_height}}px;" class="{{keyboard_height>0 ? 'active': ''}}" wx:if="{{canComment}}">
-  <!-- 昵称头像选填：点这里打开编辑弹窗，不拦发送 -->
-  <view class="input-user" bindtap="getUInfo" hover-class="link-hover">
-    <image class="input-user-avatar" src="{{user.userInfo.avatarUrl || defaultAvatar}}"></image>
-    <view class="input-user-text">
-      <text class="input-user-name">{{user.userInfo.nickName || "匿名猫友"}}</text>
-      <text class="input-user-hint">{{user.userInfo.nickName ? "点此修改头像昵称" : "点此设置头像昵称（选填）"}}</text>
-    </view>
+  <!-- 昵称选填：每次就地填，不填就匿名；本机记住上次填的 -->
+  <view class="input-nickname">
+    <input class="input-nickname-field" type="text" placeholder="昵称（选填，不填就匿名）" value="{{nickname}}" bindinput="inputNickname" maxlength="20" />
   </view>
   <textarea id="comment-input" value="{{comment_input}}" auto-height="{{true}}" show-confirm-bar="{{false}}" maxlength="300" placeholder="{{text_cfg.comment_board.comment_tip}}" adjust-position="{{false}}" bindfocus="commentFocus" bindblur="commentBlur" bindinput="commentInput"></textarea>
   <view class="bottom-line">
@@ -47,5 +43,3 @@
   <view wx:if="{{keyboard_height == 0}}" id="input-block-bottom"></view>
 </view>
 <view wx:else class="comment-input-closed"><text>便利贴功能已被关闭... QAQ</text></view>
-
-<modifyUserInfo show="{{showEdit}}" bind:close="closeEdit" bind:userInfoUpdated="onUserInfoUpdated"></modifyUserInfo>

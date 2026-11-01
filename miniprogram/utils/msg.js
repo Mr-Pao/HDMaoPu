@@ -127,7 +127,7 @@ async function sendReplyNotice(openid, fb_id) {
     touser: openid,
     data: data,
     templateId: cfg.ID,
-    page: 'pages/info/feedback/myFeedback/myFeedback',
+    page: 'pages/info/info',
   });
 
   return res;

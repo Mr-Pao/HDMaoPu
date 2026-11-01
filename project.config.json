@@ -214,10 +214,6 @@
       },
       {
         "type": "folder",
-        "value": "pages/info/userInfo/modifyUserInfo"
-      },
-      {
-        "type": "folder",
         "value": "pages/manage/addCat"
       },
       {

@@ -38,5 +38,3 @@
 
 <view style='margin-top: 20rpx;'></view>
 
-<!-- 个人信息修改组件 -->
-<modifyUserInfo show="{{showEdit}}" bind:close="closeEdit"></modifyUserInfo>

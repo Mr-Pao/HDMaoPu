@@ -5,7 +5,6 @@ import {
   compressImage
 } from "../../../utils/utils";
 import {
-  getPageUserInfo,
   checkCanUpload,
 } from "../../../utils/user";
 import {
@@ -29,7 +28,6 @@ Page({
     set_all: {},
     canUpload: false,
     text_cfg: config.text,
-    showEdit: false,
   },
 
   /**
@@ -76,7 +74,7 @@ Page({
   },
 
   async onShow() {
-    await getPageUserInfo(this);
+    // 不管用户档案：摄影师字段由表单里的 input 自己填
   },
 
   onUnload: async function (options) {
@@ -324,16 +322,5 @@ Page({
     wx.switchTab({
       url: '/pages/genealogy/genealogy',
     });
-  },
-
-  getUInfo: function () {
-    this.setData({
-      showEdit: true
-    });
-  },
-  closeEdit: function () {
-    this.setData({
-      showEdit: false
-    });
-  },
+  }
 })

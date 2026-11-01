@@ -16,21 +16,19 @@ page {
   border-radius: 5rpx;
 }
 
-.userInfo-cat {
-  width: 520rpx;
+/* 顶部猫名提示（原 [等待授权]/[更新信息] 已随用户档案一起删除） */
+.pending-cat {
+  font-size: 28rpx;
+  line-height: 44rpx;
+  color: var(--dk-text);
+  opacity: 0.75;
+  margin-bottom: 20rpx;
 }
 
 .userInfo text {
   height: 50rpx;
   line-height: 50rpx;
   font-size: 32rpx;
-}
-
-.update-userInfo {
-  font-size: 20rpx;
-  line-height: 50rpx;
-  color: var(--color-gray-dark);
-  margin-left: auto;
 }
 
 .need-notice {

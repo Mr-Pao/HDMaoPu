@@ -128,43 +128,24 @@ page {
   padding-bottom: 10rpx;
 }
 
-/* 昵称头像（选填）：点开编辑弹窗，不拦发送 */
-#input-block .input-user {
+/* 昵称输入（选填，不填就匿名）：就地填，不打弹窗 */
+#input-block .input-nickname {
   width: 100%;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 0 4rpx 16rpx 4rpx;
+  padding: 0 4rpx 14rpx 4rpx;
+  box-sizing: border-box;
 }
 
-.input-user-avatar {
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: 50%;
-  margin-right: 14rpx;
-  flex-shrink: 0;
-  background-color: var(--color-white-dark);
-}
-
-.input-user-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.input-user-name {
+#input-block .input-nickname-field {
+  width: 100%;
+  height: 64rpx;
+  line-height: 64rpx;
+  padding: 0 20rpx;
+  box-sizing: border-box;
   font-size: 26rpx;
-  color: var(--color-black-light);
-}
-
-.input-user-hint {
-  font-size: 22rpx;
-  color: var(--color-black-min);
-  margin-top: 2rpx;
-}
-
-.link-hover {
-  opacity: 0.6;
+  color: var(--dk-text);
+  background-color: var(--dk-card);
+  border: 1rpx solid var(--dk-line);
+  border-radius: var(--dk-radius-pill);
 }
 
 #input-block textarea {
@@ -230,45 +211,6 @@ page {
   border-radius: 50rpx;
 }
 
-/* 昵称头像选填行：点开 modifyUserInfo 弹窗，不拦发送 */
-.input-user {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  padding: 4rpx 4rpx 12rpx 4rpx;
-}
-
-.input-user-avatar {
-  width: 44rpx;
-  height: 44rpx;
-  border-radius: 50%;
-  margin-right: 12rpx;
-  background-color: var(--color-surface);
-  flex-shrink: 0;
-}
-
-.input-user-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.input-user-name {
-  font-size: 24rpx;
-  line-height: 32rpx;
-  color: var(--dk-text);
-}
-
-.input-user-hint {
-  font-size: 20rpx;
-  line-height: 28rpx;
-  color: var(--color-primary);
-  opacity: 0.75;
-}
-
-.link-hover {
-  opacity: 0.6;
-}
 
 button.long {
   width: 100%;

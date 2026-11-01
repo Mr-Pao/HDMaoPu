@@ -12,13 +12,12 @@ Page({
    */
   data: {
     user: {},
-    defaultAvatar: '/pages/public/images/system/user.png',
+    nickname: '',
     feedbackLength: 0,
     maxlength: 300,
     cat: undefined,
     text_cfg: text_cfg,
     isManager: false,
-    showEdit: false,
   },
 
   /**
@@ -45,7 +44,11 @@ Page({
 
   async onShow() {
     const user = await getUser();
-    this.setData({ user: user || {} });
+    // 昵称就地填，本机记住上一次填的（换设备自然丢失）
+    this.setData({
+      user: user || {},
+      nickname: wx.getStorageSync('last_nickname') || '',
+    });
   },
 
   /**
@@ -58,20 +61,11 @@ Page({
     return shareTo(share_text, path);
   },
 
-  // 头像昵称只在「后台回复我」时才需要，改为选填，不拦表单
-  getUInfo: function () {
+  // 昵称输入（选填，不填就匿名）
+  inputNickname(e) {
     this.setData({
-      showEdit: true
+      nickname: e.detail.value
     });
-  },
-  closeEdit: function () {
-    this.setData({
-      showEdit: false
-    });
-  },
-  async onUserInfoUpdated(e) {
-    const user = (e && e.detail && e.detail.user) || (await getUser());
-    this.setData({ user: user || {} });
   },
 
   bindInput(e) {
@@ -145,10 +139,14 @@ Page({
 
     // 同步到 COS inbox，由 Action 聚合进审核队列（kind 复用 comment，带 type 标记；
     // handleComment 要求 cat_id 非空，无关联猫猫时用占位标记，审核页可见即可）
+    // 昵称取输入框的值，空则匿名；顺手记到本机（换设备自然丢失）
+    if (this.data.nickname) {
+      wx.setStorageSync('last_nickname', this.data.nickname);
+    }
     putInbox('comment', {
       cat_id: data.cat_id || '(feedback)',
       content: data.feedbackInfo + (data.contactInfo ? `\n联系方式: ${data.contactInfo}` : ''),
-      nickname: (this.data.user && this.data.user.userInfo && this.data.user.userInfo.nickName) || '匿名猫友',
+      nickname: this.data.nickname || '匿名猫友',
       type: 'feedback',
     });
 
