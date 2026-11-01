@@ -130,7 +130,7 @@ Component({
       const defaultCatState = {
         nickname: [],
         characteristics: [],
-        popularity: 0,
+        like_count: 0,
         gender: this.data.pickers.gender[defaultPickerSelected.gender], // '未知'
         sterilized: this.data.pickerValueMaps.sterilized[defaultPickerSelected.sterilized], // false
         missing: this.data.pickerValueMaps.missing[defaultPickerSelected.missing], // false
@@ -194,7 +194,7 @@ Component({
           cat: {
             nickname: [],
             characteristics: [],
-            popularity: 0,
+            like_count: 0,
           }
         });
         //说明是新猫

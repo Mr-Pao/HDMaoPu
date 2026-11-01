@@ -142,13 +142,16 @@ Page({
       return;
     }
 
-    // 本地先移出列表，实际生效要等下一次聚合
+    // 本地先移出列表，实际生效要等下一次聚合（后台几分钟内自动汇总）
     this.setData({
       items: this.data.items.filter(it => it._id !== id),
     });
     wx.showToast({
-      title: action === "approve" ? "已通过" : "已拒绝",
-      icon: "success",
+      title: action === "approve"
+        ? "已通过，后台几分钟内汇总生效"
+        : "已拒绝，后台几分钟内汇总生效",
+      icon: "none",
+      duration: 2500,
     });
   },
 });

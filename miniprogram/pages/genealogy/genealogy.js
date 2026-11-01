@@ -117,8 +117,7 @@ Page({
 
     this.setData({
       main_lower_threshold: settings['main_lower_threshold'] || 50,
-      adStep: settings['adStep'] || 0,
-      photoPopWeight: settings['photoPopWeight'] || 10
+      adStep: settings['adStep'] || 0
     });
 
     this.newsModal = this.selectComponent("#newsModal");
@@ -391,7 +390,7 @@ Page({
     const query = await this.fGet();
     
     let { result: new_cats } = await app.mpServerless.db.collection('cat').find(query, { 
-      sort: { mphoto: -1, popularity: -1 }, 
+      sort: { mphoto: -1, like_count: -1 }, 
       skip: cats.length, 
       limit: step 
     });
@@ -509,7 +508,9 @@ Page({
         const g = (app && app.globalData) || {};
         const statusBarHeight = g.statusBarHeight || res.statusBarHeight || 20;
         // 自定义导航：状态栏 + 标题行 + 搜索行 + 上下留白
-        const filters = statusBarHeight + 170 * rpx2px;
+        // 224rpx 对应 v5.3 实际内容高度：nav-row(标题 19+52rpx 行高 + 26rpx 上下留白 ≈ 119rpx) + search-row(80rpx 输入框 + 20rpx 下留白 = 100rpx)。
+        // 历史值 170rpx 装不下（差约 50rpx），搜索行会溢出 #search 盒子、压住下面的数据卡和筛选抽屉。
+        const filters = statusBarHeight + 224 * rpx2px;
         this.setData({
           "heights.filters": filters,
           "heights.statusBarHeight": statusBarHeight,
@@ -779,14 +780,6 @@ Page({
     }
 
     await this.applyFilters(filters, hero_mode);
-    this.unlockBtn();
-  },
-
-  async clickBackFirstPageBtn() {
-    if (this.jsData.pageLoadingLock) return false;
-    this.lockBtn();
-    await this.fRowReset();
-    await this.fSearchClear();
     this.unlockBtn();
   },
 

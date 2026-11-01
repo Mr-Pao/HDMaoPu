@@ -2,6 +2,7 @@ import { getCurrentPath, shareTo } from "../../../utils/utils";
 import { getUser, checkCanFeedback, isManagerAsync } from "../../../utils/user";
 import { requestNotice, sendNotifyChkFeeedback } from "../../../utils/msg";
 import { putInbox } from "../../../utils/writeback";
+import { markPending } from "../../../utils/syncTip";
 import { text as text_cfg } from "../../../config";
 import { getCurrentUserOpenid } from "../../../utils/common";
 import api from "../../../utils/cloudApi";
@@ -143,12 +144,16 @@ Page({
     if (this.data.nickname) {
       wx.setStorageSync('last_nickname', this.data.nickname);
     }
-    putInbox('comment', {
-      cat_id: data.cat_id || '(feedback)',
+    const inboxCatId = data.cat_id || '(feedback)';
+    const ok = await putInbox('comment', {
+      cat_id: inboxCatId,
       content: data.feedbackInfo + (data.contactInfo ? `\n联系方式: ${data.contactInfo}` : ''),
       nickname: this.data.nickname || '匿名猫友',
       type: 'feedback',
     });
+    if (ok) {
+      markPending("comment", { cat_id: inboxCatId, label: "信息纠错" });
+    }
 
     this.setData({
       feedbackId: res.insertedId
@@ -156,10 +161,11 @@ Page({
     await this.askNotice();
     wx.hideLoading();
     await sendNotifyChkFeeedback();
+    // 提交后要等 Actions 聚合 + 人工审核才展示，提示里说明延迟
     wx.showToast({
-      title: '收到你的反馈啦',
-      icon: 'success',
-      duration: 1000
+      title: ok ? '已收到，审核后展示' : text_cfg.sync.offline_tip,
+      icon: 'none',
+      duration: 2000
     })
   },
 

@@ -64,3 +64,21 @@
   color: #0C5F03;
   font-weight: 700;
 }
+
+/* =========================================================
+   v5.4 主题色强化：选中项整块浅绿胶囊底 + 亮绿文字
+   （品牌色 #0C5F03 不变，大面积填充改用亮绿 --dk-accent-2 #14801F）
+   ========================================================= */
+
+.tab-bar-item.active::before {
+  content: '';
+  position: absolute;
+  left: 8rpx;
+  right: 8rpx;
+  top: 10rpx;
+  bottom: 10rpx;
+  border-radius: 999rpx;
+  background-color: rgba(20, 128, 31, 0.12);
+}
+.tab-bar-item.active .tab-bar-img { position: relative; z-index: 1; }
+.tab-bar-item.active .tab-bar-title { position: relative; z-index: 1; color: #14801F; font-weight: 700; }

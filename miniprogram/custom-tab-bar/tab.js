@@ -9,7 +9,7 @@ module.exports = {
     "pagePath": "pages/gallery/gallery",
     "iconPath": "/pages/public/images/tabs/default/gallery.png",
     "selectedIconPath": "/pages/public/images/tabs/active/gallery.png",
-    "text": "猫图"
+    "text": "猫片"
   },
   news: {
     "pagePath": "pages/news/news",

@@ -2,7 +2,6 @@ import config from "../../../config";
 import {
   shareTo,
   getCurrentPath,
-  checkMultiClick,
   formatDate,
   deepcopy
 } from "../../../utils/utils";
@@ -28,10 +27,9 @@ import { showMpcode } from "../../../utils/mpcode";
 import { signCosUrl, signPhotoUrls } from "../../../utils/common";
 import api from "../../../utils/cloudApi";
 import { putInbox } from "../../../utils/writeback";
+import { getPendingCount, pendingText } from "../../../utils/syncTip";
 
 const app = getApp();
-
-const max_follow_cats = 30; // 最大的猫猫关注数量
 
 // 获取照片的排序功能
 const photoOrder = [{
@@ -93,6 +91,14 @@ Page({
     showGenealogyTree: false,
     parentCats: [],
     childCats: [],
+
+    // 本机是否已给这只猫点过赞（热度下线后接替原「关注」位）
+    likedCat: false,
+
+    // 本机待同步记录（提交后要等 Actions 聚合，期间在页面顶部提示）
+    pendingCount: 0,
+    pendingText: "",
+    syncTipHidden: false,
   },
 
   jsData: {
@@ -119,24 +125,6 @@ Page({
       is_manager: (await isManagerAsync(3))
     });
 
-    // 先判断一下这个用户在12小时之内有没有点击过这只猫
-    if (!checkMultiClick(this.jsData.cat_id)) {
-      console.log("[onLoad] - Add click for cat", this.jsData.cat_id);
-      wx.setStorage({
-        key: this.jsData.cat_id,
-        data: new Date(),
-      });
-      // 增加click数
-      await api.curdOp({
-        operation: "inc",
-        type: "pop",
-        collection: "cat",
-        item_id: this.jsData.cat_id
-      });
-      // 同步到 COS inbox，由 Action 聚合（不 await，不阻塞进页面）
-      putInbox('pop', { cat_id: this.jsData.cat_id });
-    }
-
     // 记录访问时间，消除"有新相片"
     // TODO：用cache
     setVisitedDate(this.jsData.cat_id);
@@ -161,9 +149,6 @@ Page({
 
     // 开始加载页面
     this.jsData.page_settings = await getGlobalSettings('detailCat');
-    this.setData({
-      photoPopWeight: this.jsData.page_settings['photoPopWeight'] || 10
-    });
     // 加载猫猫，是否开启上传、便利贴留言功能
     var [_, canUpload, canComment] = await Promise.all([
       this.loadCat(),
@@ -182,6 +167,22 @@ Page({
    */
   onShow: function () {
     applyNav(this);
+
+    // 提交的内容要等后台聚合，期间留在本机记录里 → 页面顶部给一条可关闭的提示
+    try {
+      const n = getPendingCount(this.jsData.cat_id);
+      this.setData({
+        pendingCount: n,
+        pendingText: pendingText(n)
+      });
+    } catch (e) {
+      console.warn("[detailCat] 待同步记录读取失败", e);
+    }
+  },
+
+  // 只隐藏提示条，不清本机记录（下次提交还会再算）
+  dismissSyncTip() {
+    this.setData({ syncTipHidden: true });
   },
 
   /**
@@ -276,7 +277,7 @@ Page({
     await Promise.all([
       this.reloadPhotos(),
       this.loadCommentCount(),
-      this.loadFollowCount(),
+      this.loadLikeState(),
       this.loadRelations(),
       this.getLatestVaccine(cat._id),
     ]);
@@ -347,14 +348,12 @@ Page({
     });
   },
 
-  async loadFollowCount() {
-    const { cat_id } = this.jsData;
-    const { result: total } = await app.mpServerless.db.collection('user').count({
-      followCats: cat_id
-    });
-
+  // 点赞状态只认本地 storage（静态数据源下拿不到「谁赞过」的云端数据），
+  // 计数直接用 cat.like_count，由 Actions 聚合照片/猫点赞后写回。
+  loadLikeState() {
+    const likedIds = wx.getStorageSync('likedCatIds') || [];
     this.setData({
-      "cat.follow_count": total
+      likedCat: !!(likedIds && likedIds.includes(this.jsData.cat_id))
     });
   },
 
@@ -628,14 +627,6 @@ Page({
     await showMpcode(this.data.cat);
   },
 
-  showPopTip(e) {
-    let { tip } = e.currentTarget.dataset;
-    wx.showToast({
-      title: tip,
-      icon: "none"
-    });
-  },
-
   toComment() {
     const url = `/pages/genealogy/commentBoard/commentBoard?cat_id=${this.jsData.cat_id}`
     wx.navigateTo({
@@ -694,18 +685,12 @@ Page({
     if (!user.userInfo) {
       user.userInfo = {};
     }
-    // 处理关注（以本地 storage 的 followedCatIds 为准，user.followCats 仅作兜底）
-    const followedIds = wx.getStorageSync('followedCatIds') || [];
-    let followedCat;
-    if ((followedIds && followedIds.includes(this.data.cat._id)) ||
-        (user.followCats && user.followCats.includes(this.data.cat._id))) {
-      followedCat = true;
-    } else {
-      followedCat = false;
-    }
+    // 处理点赞（本地 storage 是唯一可信来源）
+    const likedIds0 = wx.getStorageSync('likedCatIds') || [];
+    const likedCat = !!(likedIds0 && likedIds0.includes(this.data.cat._id));
     this.setData({
       user,
-      followedCat
+      likedCat
     });
   },
 
@@ -738,56 +723,24 @@ Page({
     });
   },
 
-  async followCat() {
-    if (this.jsData.updatingFollowCats) {
-      return;
-    }
+  // 猫咪点赞：本地切换 + 乐观更新计数 + 写 inbox（Actions 聚合到 cat.like_count）
+  likeCat() {
+    const catId = this.data.cat && this.data.cat._id;
+    if (!catId) return;
 
-    // 如果关注过多，禁止再继续新增关注。
-    // 以本地维护的 followedCatIds 为准（user.followCats 来自云端，静态数据源下拿不到真实数据）
-    let { followedCat } = this.data;
-    const curFollowedIds = wx.getStorageSync('followedCatIds') || [];
-    if (!followedCat && curFollowedIds.length > max_follow_cats) {
-      wx.showModal({
-        title: '关注已满',
-        content: `最多关注${max_follow_cats}只猫猫，请到关于页-个人中心管理已关注的猫猫。`,
-      });
-      return false;
-    }
+    const likedIds = wx.getStorageSync('likedCatIds') || [];
+    const wasLiked = likedIds.includes(catId);
+    const nextLiked = !wasLiked;
+    const nextIds = wasLiked ? likedIds.filter(id => id !== catId) : likedIds.concat(catId);
+    wx.setStorageSync('likedCatIds', nextIds);
 
-    this.jsData.updatingFollowCats = true;
-
-    // 先更新本地 storage，再刷新用户信息，保证 UI 状态不滞后（否则无法取关）
-    let followedIds = wx.getStorageSync('followedCatIds') || [];
-    if (!followedCat) {
-      if (!followedIds.includes(this.data.cat._id)) {
-        followedIds.push(this.data.cat._id);
-      }
-    } else {
-      followedIds = followedIds.filter(id => id !== this.data.cat._id);
-    }
-    wx.setStorageSync('followedCatIds', followedIds);
-
-    // UI 乐观更新
-    this.setData({ followedCat: !followedCat });
-
-    // 同步到 COS inbox，由 Action 聚合。followedCat 是操作前的状态，取反即新状态
-    putInbox('follow', {
-      cat_id: this.data.cat._id,
-      follow: !followedCat,
+    const cur = Number(this.data.cat.like_count) || 0;
+    this.setData({
+      likedCat: nextLiked,
+      'cat.like_count': Math.max(0, cur + (nextLiked ? 1 : -1)),
     });
 
-    await Promise.all([
-      this.loadUser(),
-      this.loadFollowCount(),
-    ]);
-
-    // 本地 storage 已真实更新，按本地结果提示（updateFollowCats 是 no-op，不能作为依据）
-    wx.showToast({
-      title: `${followedCat ? "取关" : "关注"}成功`,
-      icon: "success"
-    });
-    this.jsData.updatingFollowCats = false;
+    putInbox('like', { cat_id: catId, like: nextLiked });
   },
 
   // 获取最新疫苗记录

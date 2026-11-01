@@ -2,7 +2,7 @@
 
 <view class="dk-glow"></view>
 
-<view id='search' class='{{filters_show_shadow? "shadow": ""}}' style='height: {{heights.filters}}px; padding-top: {{heights.statusBarHeight}}px;'>
+<view id='search' class='{{filters_show_shadow? "shadow": ""}} {{filters_show? "solid": ""}}' style='height: {{heights.filters}}px; padding-top: {{heights.statusBarHeight}}px;'>
   <view class='nav-row'>
     <view class='nav-l'>
       <text class='nav-k'>MAOPU / CAMPUS CAT</text>
@@ -18,37 +18,41 @@
       <input class='name' placeholder='{{text_cfg.genealogy.search_tip}}' placeholder-class='searchPlaceholderStyle' value='{{filters_input}}' maxlength='20' confirm-type='search' bindinput='fSearchInput' bindconfirm='fSearch'></input>
     </view>
 
-    <view class='filter-btn' bindtap='fToggle'>
-      <image wx:if='{{filters_active}}' mode='aspectFit' src="/pages/public/images/filter/filter_y.png"></image>
+    <view class='filter-btn {{filters_active? "on": ""}}' bindtap='fToggle'>
+      <image wx:if='{{filters_active}}' mode='aspectFit' src="/pages/public/images/filter/filter_w.png"></image>
       <image wx:else mode='aspectFit' src="/pages/public/images/filter/filter.png"></image>
     </view>
   </view>
 </view>
 
 <!-- 点击过滤按钮出来的块 -->
-<view id='filter-block' style='height: {{heights.windowHeight - heights.filters}}px;' catchtouchmove="voidMove" hidden='{{!filters_show}}' bindtap='fHide'>
-  <!-- 三行胶囊：位置 / 花色 / 状态 -->
-  <view class='filters' catchtap='voidMove'>
-    <block wx:for="{{filters}}" wx:key="name" wx:for-index="rowIdx" wx:for-item="rowItem">
-      <view class='frow'>
-        <text class='frow-k'>{{rowItem.name}}</text>
-        <scroll-view class='frow-scroll' scroll-x='1' enable-flex='1'>
-          <view class='fpill {{rowItem.all_active ? "on" : ""}}' catchtap='fRowAll' data-row='{{rowIdx}}'>全部</view>
-          <view wx:for='{{rowItem.options}}' wx:for-item='opt' wx:for-index='optIdx' wx:key='name'
-                class='fpill {{opt.active ? "on" : ""}}' catchtap='fRowOpt' data-row='{{rowIdx}}' data-opt='{{optIdx}}'>
-            <text>{{opt.name}}</text>
-            <text class='fpill-n' wx:if='{{opt.count !== undefined}}'>{{opt.count}}</text>
-          </view>
-        </scroll-view>
-      </view>
-    </block>
-  </view>
-  <!-- 来一条分割线 -->
-  <view class='divider' catchtap='voidMove'></view>
-  <!-- 按钮部分 -->
-  <view class='buttons' catchtap='voidMove'>
-    <view class='btn' bindtap='fRowReset'>重 置</view>
-    <view class='btn {{filters_legal? "active": ""}}' bindtap='fHide'>完 成</view>
+<view wx:if='{{filters_show}}' id='filter-block' style='height: {{heights.windowHeight - heights.filters}}px;' catchtouchmove="voidMove" bindtap='fHide'>
+  <view class='fsheet' catchtap='voidMove'>
+    <!-- 三行胶囊：位置 / 花色 / 状态 -->
+    <view class='filters'>
+      <block wx:for="{{filters}}" wx:key="name" wx:for-index="rowIdx" wx:for-item="rowItem">
+        <view class='frow'>
+          <text class='frow-k'>{{rowItem.name}}</text>
+          <scroll-view class='frow-scroll' scroll-x='1'>
+            <view class='frow-inner'>
+              <view class='fpill {{rowItem.all_active ? "on" : ""}}' catchtap='fRowAll' data-row='{{rowIdx}}'>全部</view>
+              <view wx:for='{{rowItem.options}}' wx:for-item='opt' wx:for-index='optIdx' wx:key='name'
+                    class='fpill {{opt.active ? "on" : ""}}' catchtap='fRowOpt' data-row='{{rowIdx}}' data-opt='{{optIdx}}'>
+                <text>{{opt.name}}</text>
+                <text class='fpill-n' wx:if='{{opt.count !== undefined}}'>{{opt.count}}</text>
+              </view>
+            </view>
+          </scroll-view>
+        </view>
+      </block>
+    </view>
+    <!-- 来一条分割线 -->
+    <view class='divider'></view>
+    <!-- 按钮部分 -->
+    <view class='buttons'>
+      <view class='btn' bindtap='fRowReset'>重 置</view>
+      <view class='btn {{filters_legal? "active": ""}}' bindtap='fHide'>完 成</view>
+    </view>
   </view>
 </view>
 
@@ -110,7 +114,7 @@
           <text class='row-sep'>|</text>
           <text class='row-num'>{{item.photo_count_total || 0}}<text class='row-num-k'>照片</text></text>
           <text class='row-sep'>|</text>
-          <text class='row-num'>{{item.popularity + (item.photo_count_total? item.photo_count_total * photoPopWeight: 0)}}<text class='row-num-k'>热度</text></text>
+          <text class='row-num'>{{item.like_count || 0}}<text class='row-num-k'>点赞</text></text>
         </view>
       </view>
     </view>
@@ -130,11 +134,6 @@
   <!-- 底tab占位 -->
   <view style="height: {{tabBarHeight}}px;"></view>
 </scroll-view>
-
-<!-- 返回首页 -->
-<view wx:if="{{!filters_empty}}" id="back-to-firstpage" bindtap="clickBackFirstPageBtn">
-  <image class="back-btn" src="/pages/public/images/button/back_to_first_page.png"></image>
-</view>
 
 <!-- 公告弹窗 -->
 <view class="news-container">

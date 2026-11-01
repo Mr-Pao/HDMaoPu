@@ -244,6 +244,102 @@
   background: var(--color-primary, #0C5F03);
 }
 
+/* ==================== 友情链接 ==================== */
+.link-tip {
+  margin-bottom: 20rpx;
+  line-height: 1.6;
+}
+
+.link-row {
+  display: flex;
+  align-items: center;
+  background: var(--color-surface);
+  border-radius: 20rpx;
+  padding: 20rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.link-logo {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 38rpx;
+  flex-shrink: 0;
+  background: var(--color-gray-light, #F2F2F2);
+}
+
+.link-logo-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+  color: var(--color-gray-max);
+}
+
+.link-main {
+  flex: 1;
+  min-width: 0;
+  margin-left: 20rpx;
+}
+
+.link-name {
+  font-size: 28rpx;
+  color: var(--color-primary-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.link-appid {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: var(--color-gray-max);
+}
+
+.link-op {
+  flex-shrink: 0;
+  min-width: 52rpx;
+  height: 52rpx;
+  line-height: 52rpx;
+  margin-left: 8rpx;
+  padding: 0 12rpx;
+  border-radius: 26rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--color-gray-max);
+  background: var(--color-gray-light, #F2F2F2);
+  box-sizing: border-box;
+}
+
+.link-del {
+  color: #D93025;
+  padding: 0 20rpx;
+}
+
+.add-card {
+  margin: 26rpx 0 0;
+}
+
+.add-title {
+  font-size: 26rpx;
+  color: var(--color-gray-max);
+  padding: 24rpx 0 4rpx;
+}
+
+.add-btn {
+  margin: 24rpx 0;
+  height: 76rpx;
+  line-height: 76rpx;
+  border-radius: 38rpx;
+  background: var(--color-primary-soft, #E8F3EA);
+  color: var(--color-primary, #0C5F03);
+  font-size: 28rpx;
+}
+
+.add-btn::after {
+  border: none;
+}
+
 /* ==================== 状态 ==================== */
 .loading {
   text-align: center;

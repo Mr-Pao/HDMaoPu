@@ -54,15 +54,19 @@
   </view>
 </view>
 
-<view class='block-name'>友情链接</view>
+<!-- 友情链接：整块按数据显隐（后台可增删，删空后不显示空卡片） -->
+<block wx:if="{{friendApps.length}}">
+  <view class='block-name'>友情链接</view>
 
-<!-- <scroll-view class="scroll-friend-link-box" scroll-x="true" enable-flex='true' enhanced="true" show-scrollbar='false'></scroll-view> -->
-<view class="block">
-  <view wx:for="{{friendApps}}" class="friend-link" bindtap="clickFriendLink" data-appid="{{item.appid}}" wx:key="name">
-    <image mode='aspectFit' src="{{item.logo}}"></image>
-    <view class="friend-link-text">{{item.name}}</view>
+  <!-- <scroll-view class="scroll-friend-link-box" scroll-x="true" enable-flex='true' enhanced="true" show-scrollbar='false'></scroll-view> -->
+  <view class="block">
+    <view wx:for="{{friendApps}}" class="friend-link" bindtap="clickFriendLink" data-appid="{{item.appid}}" wx:key="appid">
+      <image wx:if="{{item.logo}}" mode='aspectFit' src="{{item.logo}}"></image>
+      <view wx:else class="friend-link-ph">{{item.initial}}</view>
+      <view class="friend-link-text">{{item.name}}</view>
+    </view>
   </view>
-</view>
+</block>
 
 <!-- 工具 -->
 <block wx:for="{{menuList}}" wx:key="title" wx:for-item="menu" wx:if="{{showCond[menu.show]}}">

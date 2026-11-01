@@ -100,7 +100,7 @@ Page({
         cat: {
           nickname: [],
           characteristics: [],
-          popularity: 0,
+          like_count: 0,
         }
       })
       //说明是新猫

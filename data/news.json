@@ -1,4 +1,40 @@
 {
-  "version": "1793462400000",
-  "items": []
+  "version": "1793523571551",
+  "items": [
+    {
+      "_id": "news-xiaobai-northgate",
+      "userNickname": "猫谱管理员",
+      "userNicknameLastModify": "猫谱管理员",
+      "title": "小白出没｜北门花坛的独行侠",
+      "class": "其他",
+      "date": "2026-10-28T03:20:00.000Z",
+      "mainContent": "北门花坛一带，最近多了一位固定住户。\n\n通体雪白的猫，只有尾巴尖有一点灰。它不太亲人，但也不怕人——你蹲下去，它会停在三步远的地方看你，然后慢慢卧下，把尾巴盘到身侧。\n\n这是小白，目前相册里已经有 28 张照片，是校外片区记录最多的一只。从夏天到现在，它一直在同一个花坛附近活动，作息稳定得很：早上在花盆背阴处，午后移到台阶上晒太阳。\n\n提醒几句：小白目前未绝育，也还没有正式领养。想去看它的同学请自带水，不要投喂人类食物；如果它情绪不好，隔着距离看看就好，别追着逗。\n\n遇到没见过的猫，也欢迎在猫谱里记录下来——多一张照片，猫友就少一次找错。",
+      "coverPath": "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/xiaobai/001.jpg",
+      "photosPath": [
+        "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/xiaobai/001.jpg",
+        "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/xiaobai/003.jpg",
+        "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/xiaobai/007.jpg"
+      ],
+      "setNewsModal": true,
+      "show": true
+    },
+    {
+      "_id": "news-feed-guide",
+      "userNickname": "猫谱管理员",
+      "userNicknameLastModify": "猫谱管理员",
+      "title": "投喂指南｜别让好心办坏事",
+      "class": "活动",
+      "date": "2026-10-31T11:00:00.000Z",
+      "mainContent": "入秋之后，投喂的同学明显多了。先谢过，但有几件事得说清楚。\n\n一、不要喂人类的剩饭。食堂打包的鸡腿、红烧肉、带油带盐的汤，对猫来说负担很重，长期吃下去皮肤和肾脏都会出问题。真要喂，用猫粮，干净的水同样重要——很多猫缺的不是食物，是水。\n\n二、投喂点要固定。猫是习惯动物，今天在东边明天在西边，它反而吃不上。选一个背风、不挡路的角落，喂完把包装和残渣收走，否则很快会被物业清理，甚至招来投诉。\n\n三、不要一次性倒一大盆。定量投喂才能顺带观察状态——吃多少、剩多少、毛色和体重有没有变化，这些是判断一只猫健不健康最直接的依据。\n\n四、看到新面孔先别急着上手。先拍照记录到猫谱，看是不是已经有档案；不确定能不能吃的东西，一律不喂。\n\n四只主力投喂点的猫都已经有档案了：奶盖、小白、松子、可乐。想认猫，可以从它们开始。",
+      "coverPath": "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/naigai/001.jpg",
+      "photosPath": [
+        "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/naigai/001.jpg",
+        "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/naigai/002.jpg",
+        "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/songzi/001.jpg",
+        "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/kele/001.jpg"
+      ],
+      "setNewsModal": false,
+      "show": true
+    }
+  ]
 }

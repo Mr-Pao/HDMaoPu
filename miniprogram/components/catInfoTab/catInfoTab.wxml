@@ -149,9 +149,9 @@
     </view>
   </view>
 
-  <!-- 人气信息 -->
+  <!-- 点赞信息 -->
   <view class="popularity-info" wx:if="{{!isNewCat}}">
-    <text>人气值: {{cat.popularity || 0}}</text>
+    <text>点赞数: {{cat.like_count || 0}}</text>
   </view>
 
   <!-- 照片 -->

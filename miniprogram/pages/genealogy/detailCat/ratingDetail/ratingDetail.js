@@ -1,6 +1,8 @@
 import { convertRatingList, genDefaultRating } from "../../../../utils/rating";
 import api from "../../../../utils/cloudApi";
 import { putInbox } from "../../../../utils/writeback";
+import { markPending } from "../../../../utils/syncTip";
+import { text as text_cfg } from "../../../../config";
 
 const app = getApp();
 Page({
@@ -163,7 +165,8 @@ Page({
     }
     const avg = myRatings.reduce((sum, r) => sum + r.score, 0) / myRatings.length;
     const score = Math.min(5, Math.max(1, Math.round(avg)));
-    putInbox('rating', { cat_id, score, dims });
+    // 提交后要等 Actions 聚合才生效，提示里说明延迟
+    const ok = await putInbox('rating', { cat_id, score, dims });
     await Promise.all([
       this.reloadMyRatings(),
       this.reloadCatRating()
@@ -171,10 +174,20 @@ Page({
 
     wx.hideLoading();
 
-    wx.showToast({
-      title: '提交成功',
-      icon: 'success'
-    });
+    if (ok) {
+      markPending("rating", { cat_id, label: "评分" });
+      wx.showToast({
+        title: '已提交，稍后自动汇总',
+        icon: 'none',
+        duration: 2000,
+      });
+    } else {
+      wx.showToast({
+        title: text_cfg.sync.offline_tip,
+        icon: 'none',
+        duration: 2500,
+      });
+    }
     this.jsData.submitting = false;
   }
 })

@@ -14,6 +14,11 @@ const app = getApp();
 const { applyNav } = require('../../utils/nav');
 
 Page({
+  // 非渲染数据（不进 setData，避免无谓的视图层通信）
+  jsData: {
+    linkFetchedAt: 0,
+  },
+
   data: {
     logo_img,
     friendApps: [],
@@ -143,18 +148,30 @@ Page({
     this.setData({
       "showCond.dev": sysInfo.platform === "devtools"
     });
+  },
 
-    const { result: friendLinkRes } = await app.mpServerless.db.collection('setting').findOne({ _id: 'friendLink' });
+  // 友情链接：后台（管理后台 → 友情链接）可增删，这里每次进页面拉一次，
+  // 5 分钟内复用，避免返回本页时看到旧列表。
+  async loadFriendLinks() {
+    const now = Date.now();
+    if (now - (this.jsData.linkFetchedAt || 0) < 5 * 60 * 1000) return;
+    this.jsData.linkFetchedAt = now;
 
-    // 找不到配置（或没有 apps 字段）时兜底为空数组，避免解包报错
-    let { apps } = friendLinkRes || {};
-    apps = apps || [];
-    for (let i = 0; i < apps.length; i++) {
-      apps[i].logo = await signCosUrl(apps[i].logo);
+    try {
+      const { result: friendLinkRes } = await app.mpServerless.db.collection('setting').findOne({ _id: 'friendLink' });
+
+      // 找不到配置（或没有 apps 字段）时兜底为空数组，避免解包报错
+      let { apps } = friendLinkRes || {};
+      apps = apps || [];
+      for (let i = 0; i < apps.length; i++) {
+        apps[i].logo = await signCosUrl(apps[i].logo);
+        // 后台可新增不填 logo 的链接，这里备好占位字（WXML 里不好对字符串取首字）
+        apps[i].initial = String(apps[i].name || "?").slice(0, 1);
+      }
+      this.setData({ friendApps: apps });
+    } catch (e) {
+      console.warn('[INFO] 友情链接加载失败', e);
     }
-    this.setData({
-      friendApps: apps,
-    });
   },
 
   // 用 onShow 不用 onLoad，为了在返回这个页面时也能重新加载
@@ -162,6 +179,8 @@ Page({
     applyNav(this);
     // 切换自定义tab
     showTab(this);
+    // 友情链接可能在管理后台被增删，回到本页时按 5 分钟节流重新拉一次
+    this.loadFriendLinks();
 
     // 获取version
     this.setData({

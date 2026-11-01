@@ -138,11 +138,12 @@ async function main() {
     check('_id 不重复', new Set(cats.map((c) => c._id)).size === cats.length);
     check('每只都有 name', cats.every((c) => typeof c.name === 'string' && c.name));
     check('mphoto 都是数字', cats.every((c) => typeof c.mphoto === 'number'));
-    const sorted = (await db.collection('cat').find({ deleted: { $ne: true } }, { sort: { mphoto: -1, popularity: -1 } })).result;
+    const sorted = (await db.collection('cat').find({ deleted: { $ne: true } }, { sort: { mphoto: -1, like_count: -1 } })).result;
     check('按 mphoto 倒序', sorted.every((x, i, a) => i === 0 || a[i - 1].mphoto >= x.mphoto));
     check('当前在册计数 > 0', cats.filter((c) => c.adopt !== 1 && !c.to_star && !c.missing).length > 0);
     check('comment_count 是数字', cats.every((c) => typeof c.comment_count === 'number'));
     check('follow_count 是数字', cats.every((c) => typeof c.follow_count === 'number'));
+    check('like_count 是数字（详情页/首页点赞格）', cats.every((c) => typeof c.like_count === 'number'));
     check('campus 都有值（详情页只拼 campus + area）', cats.every((c) => typeof c.campus === 'string' && c.campus));
     check('rating 结构完整（count 为 0 时不能是 null）',
       cats.every((c) => c.rating && typeof c.rating === 'object' && typeof c.rating.count === 'number'));

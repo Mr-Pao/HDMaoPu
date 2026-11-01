@@ -32,6 +32,7 @@
     <view class="tabs">
       <view class="tab {{tab === 'cat' ? 'tab-active' : ''}}" data-tab="cat" bindtap="switchTab">猫资料编辑</view>
       <view class="tab {{tab === 'photo' ? 'tab-active' : ''}}" data-tab="photo" bindtap="switchTab">照片审核</view>
+      <view class="tab {{tab === 'link' ? 'tab-active' : ''}}" data-tab="link" bindtap="switchTab">友情链接</view>
     </view>
 
     <!-- Tab1 猫资料编辑 -->
@@ -120,7 +121,7 @@
     </block>
 
     <!-- Tab2 照片审核 -->
-    <block wx:else>
+    <block wx:elif="{{tab === 'photo'}}">
       <picker mode="selector" range="{{catNames}}" bindchange="onPhotoCatPick">
         <view class="picker-row">
           <text>选择猫猫</text>
@@ -145,6 +146,48 @@
           >{{item.hidden ? '恢复' : '下架'}}</view>
         </view>
       </view>
+    </block>
+
+    <!-- Tab3 友情链接 -->
+    <block wx:else>
+      <view class="head-tip link-tip">首页「关于」页的友情链接，可增可删；改完点底部「保存」整批提交，最长约 1 小时生效。</view>
+
+      <view class="loading" wx:if="{{linkLoading}}">加载中…</view>
+
+      <block wx:else>
+        <view class="link-row" wx:for="{{links}}" wx:key="appid">
+          <image class="link-logo" src="{{item.logo}}" mode="aspectFill" wx:if="{{item.logo}}" />
+          <view class="link-logo link-logo-ph" wx:else>链</view>
+          <view class="link-main">
+            <view class="link-name">{{item.name}}</view>
+            <view class="link-appid">{{item.appid}}</view>
+          </view>
+          <view class="link-op" data-appid="{{item.appid}}" data-dir="up" bindtap="moveLink">↑</view>
+          <view class="link-op" data-appid="{{item.appid}}" data-dir="down" bindtap="moveLink">↓</view>
+          <view class="link-op link-del" data-appid="{{item.appid}}" bindtap="deleteLink">删除</view>
+        </view>
+
+        <view class="empty" wx:if="{{!links.length}}">还没有友情链接，在下面添加</view>
+
+        <view class="card add-card">
+          <view class="add-title">新增一项</view>
+          <view class="field">
+            <text class="label">AppID</text>
+            <input class="input" value="{{draft.appid}}" data-field="appid" bindinput="onDraftInput" placeholder="wx 开头 18 位" />
+          </view>
+          <view class="field">
+            <text class="label">名称</text>
+            <input class="input" value="{{draft.name}}" data-field="name" bindinput="onDraftInput" maxlength="20" placeholder="显示名，最多 20 字" />
+          </view>
+          <view class="field">
+            <text class="label">Logo</text>
+            <input class="input" value="{{draft.logo}}" data-field="logo" bindinput="onDraftInput" placeholder="可留空" />
+          </view>
+          <button class="add-btn" bindtap="addLink">添加到列表</button>
+        </view>
+
+        <button class="save-btn" bindtap="saveLinks" disabled="{{linkSaving}}">{{linkSaving ? '提交中…' : (linkDirty ? '保存（有未提交的改动）' : '保存')}}</button>
+      </block>
     </block>
   </block>
 

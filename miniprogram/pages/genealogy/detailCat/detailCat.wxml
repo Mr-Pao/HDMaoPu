@@ -14,6 +14,15 @@
 
 <!-- 整个页面容器 -->
 <scroll-view id='container' scroll-y="1" bindscrolltolower='loadMoreAlbum' enable-back-to-top="true" bindscroll="bindContainerScroll" style='padding-top: {{statusBarHeight + navBarHeight}}px;'>
+  <!-- 本机待同步提示：提交后要等后台聚合，期间告诉用户别以为没提交成功 -->
+  <view class='sync-tip' wx:if="{{pendingCount > 0 && !syncTipHidden}}">
+    <view class='sync-tip-main'>
+      <view class='sync-tip-title'>{{text_cfg.sync.pending_title}}</view>
+      <view class='sync-tip-desc'>{{pendingText}}</view>
+    </view>
+    <view class='sync-tip-close' bindtap='dismissSyncTip'>×</view>
+  </view>
+
   <!-- 半圆形下面的白底块 -->
   <view id='bg-big-circle'></view>
   <!-- 这是黄色的半圆形 -->
@@ -36,17 +45,13 @@
         <image mode='aspectFill' class='gender' wx:if='{{cat.gender === "公"}}' src="/pages/public/images/card/card/male.png"></image>
         <image mode='aspectFill' class='gender' wx:if='{{cat.gender === "母"}}' src="/pages/public/images/card/card/female.png"></image>
       </block>
-      <view class='count first' bindtap="showPopTip" wx:if="{{cat.popularity != undefined}}" data-tip="{{text_cfg.detail_cat.popularity_tip}}">
-        <view class='iconfont icon-fire'></view>
-        <text> {{cat.popularity + (cat.photo_count_total? cat.photo_count_total * photoPopWeight: 0)}}</text>
-      </view>
       <view class='count comment' bindtap="toComment">
         <view class='iconfont icon-chat'></view>
         <text> {{cat.comment_count || 0}}</text>
       </view>
-      <view class='count comment {{followedCat ? "tap-on" : ""}}' bindtap="followCat">
+      <view class='count {{likedCat ? "tap-on" : ""}}' bindtap="likeCat">
         <view class='iconfont icon-like'></view>
-        <text> {{cat.follow_count || 0}}</text>
+        <text> {{cat.like_count || 0}}</text>
       </view>
     </view>
 

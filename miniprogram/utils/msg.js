@@ -21,13 +21,23 @@ _getMsgConfig().then(x => { msgConfig = x });
 
 function getMsgTplId(template) {
   console.log(template, msgConfig)
-  return msgConfig[template].ID;
+  const cfg = msgConfig && msgConfig[template];
+  return cfg ? cfg.ID : '';
 }
 
 // 订阅请求
 async function requestNotice(template) {
-  const cfg = msgConfig[template];
+  const cfg = msgConfig && msgConfig[template];
   console.log(template, cfg);
+
+  // 未配置模板 ID 时静默跳过。
+  // 本架构是纯静态（数据走 COS、没有服务端发消息的能力），
+  // data/setting.json 的 pages.subscribe 里四个模板 ID 全是空串，
+  // 硬发 wx.requestSubscribeMessage({tmplIds:['']}) 只会得到 20001 并弹出报错弹窗。
+  if (!cfg || !cfg.ID) {
+    console.log('[requestNotice] 未配置订阅消息模板 ID，跳过：' + template);
+    return false;
+  }
 
   try {
     let res = await wx.requestSubscribeMessage({
@@ -62,7 +72,11 @@ async function requestNotice(template) {
     }
 
   } catch (error) { // 订阅消息错误处理
-    console.log("request SubMsg error:", error)
+    console.log("request SubMsg error:", error);
+    // 20001 = 模板 ID 无效，属于配置缺失而非用户能处理的问题，不再打扰用户
+    if (error && error.errCode === 20001) {
+      return false;
+    }
     await wx.showModal({
       title: '提示',
       content: '订阅消息出错（错误代码：' + error.errCode + '）\n请尝试通过 “关于页”-“信息反馈”内的邮箱 或 “笃行志愿服务队”公众号留言联系我们，感谢反馈！',

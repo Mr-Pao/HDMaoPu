@@ -185,9 +185,8 @@ Component({
             const sterilized = cat.sterilized ? text_cfg.detail_cat.sterilized_true : text_cfg.detail_cat.sterilized_false;
             const to_star = text_cfg.genealogy.to_star_tip;
 
-            // photoPopWeight如何获取？
-            const photoPopWeight = 10;
-            const popularityScore = cat.popularity + (cat.photo_count_total ? cat.photo_count_total * photoPopWeight : 0);
+            // 海报上原本画的是「热度」，热度已下线，改画点赞数
+            const popularityScore = cat.like_count || 0;
 
             const photographer = text_cfg.genealogy.photo_by_tip + (coverImg.photographer || (coverImg.userInfo ? coverImg.userInfo.nickName : text_cfg.genealogy.photo_by_unknow_tip));
 
@@ -304,7 +303,7 @@ Component({
                     fontWeight: 'bold'
                 }, {
                     type: Image,
-                    url: '/pages/public/images/card/card/pop.png',
+                    url: '/pages/public/images/card/card/heart.png',
                     x: this.data.posterWidth - tagPadding * 2 - popularityScoreWidth - 85,
                     y: 657,
                     height: 20,

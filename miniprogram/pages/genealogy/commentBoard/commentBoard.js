@@ -24,6 +24,9 @@ import {
 import {
   putInbox,
 } from "../../../utils/writeback";
+import {
+  markPending,
+} from "../../../utils/syncTip";
 import api from "../../../utils/cloudApi";
 const app = getApp();
 Page({
@@ -303,17 +306,28 @@ Page({
         comment_count: comment_count,
       });
 
-      // 显示success toast
-      wx.showToast({
-        title: '张贴成功~',
-      });
-
       // 同步到 COS inbox，由 Action 聚合进审核队列（字段约定见 process-inbox handleComment）
-      putInbox('comment', {
+      // 注意：提交后不是立刻生效，要等 Actions 聚合 + 人工审核，提示里说明清楚
+      const ok = await putInbox('comment', {
         cat_id: item.cat_id,
         content: item.content,
         nickname: this.data.nickname || '匿名猫友',
       });
+
+      if (ok) {
+        markPending("comment", { cat_id: item.cat_id, label: "便利贴" });
+        wx.showToast({
+          title: '已提交，审核后展示',
+          icon: 'none',
+          duration: 2000,
+        });
+      } else {
+        wx.showToast({
+          title: this.data.text_cfg.sync.offline_tip,
+          icon: 'none',
+          duration: 2500,
+        });
+      }
     } catch {
       wx.showModal({
         title: "张贴失败",

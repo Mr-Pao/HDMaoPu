@@ -14,6 +14,7 @@ import {
 import config from "../../../config";
 import { getCurrentUserOpenid } from "../../../utils/common";
 import { putInbox } from "../../../utils/writeback";
+import { markPending, submittedModal } from "../../../utils/syncTip";
 const app = getApp();
 Page({
   /**
@@ -134,7 +135,7 @@ Page({
     });
     const currentIndex = e.currentTarget.dataset.index;
     const photo = this.data.photos[currentIndex];
-    await this.uploadImg(photo);
+    const ok = await this.uploadImg(photo);
     this.data.photos = this.data.photos.filter((ph) => {
       // 把已上传的图片从图片列表中去掉
       return ph.file.path != photo.file.path;
@@ -144,11 +145,12 @@ Page({
       photos: this.data.photos,
     });
     wx.hideLoading();
-    wx.showModal({
-      title: config.text.add_photo.success_tip_title,
-      content: config.text.add_photo.success_tip_content,
-      showCancel: false
-    });
+    if (ok) {
+      markPending("photo", { cat_id: (this.data.cat || {})._id, label: "照片" });
+      submittedModal(config.text.sync.delay_tip + "\n" + config.text.sync.review_tip);
+    } else {
+      submittedModal(config.text.sync.offline_tip);
+    }
   },
 
   // 点击多个上传
@@ -172,12 +174,16 @@ Page({
       return;
     }
     await requestNotice('verify');
+    let allOk = true;
     for (let i = 0; i < photos.length; ++i) {
       wx.showLoading({
         title: '正在上传(' + (photos.length - i) + ')',
         mask: true,
       });
-      await this.uploadImg(photos[i]);
+      const ok = await this.uploadImg(photos[i]);
+      if (!ok) {
+        allOk = false;
+      }
       this.data.photos = this.data.photos.filter((ph) => {
         // 把已上传的图片从图片列表中去掉
         return ph.file.path != photos[i].file.path;
@@ -188,11 +194,12 @@ Page({
       photos: this.data.photos,
     })
     wx.hideLoading();
-    wx.showModal({
-      title: config.text.add_photo.success_tip_title,
-      content: config.text.add_photo.success_tip_content,
-      showCancel: false
-    });
+    if (allOk) {
+      markPending("photo", { cat_id: (this.data.cat || {})._id, label: "照片" });
+      submittedModal(config.text.sync.delay_tip + "\n" + config.text.sync.review_tip);
+    } else {
+      submittedModal(config.text.sync.offline_tip);
+    }
   },
 
   async ifSendNotifyVeriftMsg() {
@@ -258,12 +265,13 @@ Page({
     });
 
     // 写元数据到 inbox（小 JSON，不含照片二进制），由 Actions 聚合进审核队列
-    await putInbox("photo", {
+    const ok = await putInbox("photo", {
       photo_key: key,
       cat_id: cat._id,
       photographer: photo.pher || "",
       shooting_date: photo.shooting_date || "",
     });
+    return !!ok;
   },
 
   pickDate(e) {

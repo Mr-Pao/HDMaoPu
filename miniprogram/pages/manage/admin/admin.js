@@ -1,4 +1,4 @@
-// 管理后台：猫资料编辑 + 照片下架/恢复
+// 管理后台：猫资料编辑 + 照片下架/恢复 + 友情链接增删
 //
 // 口令模型：
 //   - 小程序包里不再内置口令（config.review_passcode 已删除）。
@@ -36,7 +36,7 @@ Page({
     unlocked: false,
     passcode: "",
 
-    tab: "cat", // cat | photo
+    tab: "cat", // cat | photo | link
 
     // 猫列表（picker 用）
     catNames: [],
@@ -68,6 +68,13 @@ Page({
     photoCatIndex: -1,
     photos: [],
     photoLoading: false,
+
+    // Tab3 友情链接
+    links: [],
+    linkLoading: false,
+    linkSaving: false,
+    linkDirty: false,
+    draft: { appid: "", name: "", logo: "" },
   },
 
   jsData: {
@@ -109,14 +116,24 @@ Page({
   lock() {
     wx.removeStorageSync(PASSCODE_KEY);
     wx.removeStorageSync(PASSCODE_TS_KEY);
-    this.setData({ unlocked: false, photos: [], photoCatIndex: -1, catIndex: -1 });
+    this.setData({
+      unlocked: false,
+      photos: [],
+      photoCatIndex: -1,
+      catIndex: -1,
+      links: [],
+      linkDirty: false,
+      draft: { appid: "", name: "", logo: "" },
+    });
   },
 
   // ---------- 公共 ----------
 
   switchTab(e) {
     const tab = e.currentTarget.dataset.tab;
-    if (tab && tab !== this.data.tab) this.setData({ tab });
+    if (!tab || tab === this.data.tab) return;
+    this.setData({ tab });
+    if (tab === "link" && this.data.unlocked) this.loadLinks();
   },
 
   async loadCats() {
@@ -139,7 +156,7 @@ Page({
 
   submitToast() {
     wx.showToast({
-      title: "已提交，最长约1小时生效（可在 GitHub Actions 手动运行 process-inbox 立即聚合）",
+      title: "已提交，后台几分钟内自动汇总生效（可在 GitHub Actions 手动运行 process-inbox 立即聚合）",
       icon: "none",
       duration: 3500,
     });
@@ -296,6 +313,126 @@ Page({
     // 本地先翻转状态，实际生效要等下一次聚合
     const photos = this.data.photos.map(p => (p._id === id ? Object.assign({}, p, { hidden: !hidden }) : p));
     this.setData({ photos });
+    this.submitToast();
+  },
+
+  // ---------- Tab3 友情链接 ----------
+  //
+  // 增删只改本地数组，点「保存」才整批提交：
+  //   putInbox('manage', { action:'saveFriendLinks', token, apps })
+  // 聚合端 manageSaveFriendLinks 校验后整体覆盖 setting 里 _id='friendLink' 的 apps。
+  // 整批提交的好处：增、删、排序一次到位，不会出现半截状态。
+
+  async loadLinks() {
+    if (this.data.linkLoading) return;
+    // 有未保存的改动时不重新拉取，避免把用户刚编辑的列表冲掉
+    if (this.data.linkDirty) return;
+    this.setData({ linkLoading: true });
+    try {
+      const { result } = await app.mpServerless.db.collection("setting").findOne({ _id: "friendLink" });
+      const apps = ((result && result.apps) || []).filter(a => a && a.appid);
+      this.setData({
+        links: apps.map(a => ({ appid: a.appid, name: a.name || "", logo: a.logo || "" })),
+        linkLoading: false,
+        linkDirty: false,
+      });
+    } catch (e) {
+      console.warn("[admin] 友情链接加载失败", e);
+      this.setData({ linkLoading: false });
+      wx.showToast({ title: "友情链接加载失败", icon: "none" });
+    }
+  },
+
+  onDraftInput(e) {
+    const field = e.currentTarget.dataset.field;
+    if (!field) return;
+    this.setData({ ["draft." + field]: e.detail.value });
+  },
+
+  addLink() {
+    const appid = String(this.data.draft.appid || "").trim();
+    const name = String(this.data.draft.name || "").trim();
+    const logo = String(this.data.draft.logo || "").trim();
+
+    if (!/^wx[0-9a-zA-Z]{16}$/.test(appid)) {
+      wx.showToast({ title: "AppID 格式不对（wx 开头 18 位）", icon: "none" });
+      return;
+    }
+    if (!name) {
+      wx.showToast({ title: "请填写名称", icon: "none" });
+      return;
+    }
+    if (name.length > 20) {
+      wx.showToast({ title: "名称最多 20 字", icon: "none" });
+      return;
+    }
+    if (this.data.links.some(l => l.appid === appid)) {
+      wx.showToast({ title: "这个 AppID 已经在列表里了", icon: "none" });
+      return;
+    }
+    if (this.data.links.length >= 20) {
+      wx.showToast({ title: "最多 20 个", icon: "none" });
+      return;
+    }
+
+    this.setData({
+      links: this.data.links.concat([{ appid, name, logo }]),
+      draft: { appid: "", name: "", logo: "" },
+      linkDirty: true,
+    });
+  },
+
+  deleteLink(e) {
+    const appid = e.currentTarget.dataset.appid;
+    if (!appid) return;
+    wx.showModal({
+      title: "删除友情链接",
+      content: "确定移除这一项？保存后生效。",
+      success: res => {
+        if (!res.confirm) return;
+        this.setData({
+          links: this.data.links.filter(l => l.appid !== appid),
+          linkDirty: true,
+        });
+      },
+    });
+  },
+
+  moveLink(e) {
+    const appid = e.currentTarget.dataset.appid;
+    const dir = e.currentTarget.dataset.dir;
+    const links = this.data.links.slice();
+    const i = links.findIndex(l => l.appid === appid);
+    const j = dir === "up" ? i - 1 : i + 1;
+    if (i < 0 || j < 0 || j >= links.length) return;
+    const tmp = links[i];
+    links[i] = links[j];
+    links[j] = tmp;
+    this.setData({ links, linkDirty: true });
+  },
+
+  async saveLinks() {
+    if (this.data.linkSaving) return;
+    this.setData({ linkSaving: true });
+
+    const apps = this.data.links.map(l => ({
+      appid: l.appid,
+      name: l.name,
+      logo: l.logo || "",
+    }));
+
+    const ok = await putInbox("manage", {
+      action: "saveFriendLinks",
+      token: this.getToken(),
+      apps,
+    });
+    this.setData({ linkSaving: false });
+
+    if (!ok) {
+      wx.showToast({ title: "提交失败，请检查网络", icon: "none" });
+      return;
+    }
+    this.setData({ linkDirty: false });
     this.submitToast();
   },
 });

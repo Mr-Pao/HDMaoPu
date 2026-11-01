@@ -122,7 +122,7 @@ module.exports = {
     },
     photoPopWeight: {
       type: "number",
-      tip: "每张猫猫照片增加的人气值"
+      tip: "已废弃：热度下线后本项不再生效"
     },
   },
   subscribe: {

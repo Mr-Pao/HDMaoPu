@@ -273,9 +273,32 @@ function bumpCounter(container, field, delta) {
 
 function handleLike(p) {
   const { openid, data, ts } = p;
-  const photoId = data.photo_id;
   const like = data.like !== false;
-  if (!photoId) return 'drop:no-photo-id';
+
+  // 两种粒度共用 like 通道：
+  //   带 photo_id → 照片点赞（photo.like_count）
+  //   只带 cat_id → 猫咪点赞（cat.like_count）
+  // 日志 key 分开写，避免同一 openid 的猫赞和照片赞互相覆盖。
+  const photoId = data.photo_id;
+  const catId = data.cat_id;
+
+  if (!photoId) {
+    if (!catId) return 'drop:no-photo-id';
+    const cat = findItem('cat', catId);
+    if (!cat) return 'drop:cat-not-found';
+
+    const prevCat = readLog('catlike', openid, catId);
+    if (prevCat && prevCat.state === like) return 'skip:duplicate';
+
+    let catDelta = 0;
+    if (prevCat) catDelta = like ? 1 : -1;
+    else if (like) catDelta = 1;
+
+    if (catDelta !== 0) bumpCounter(cat, 'like_count', catDelta);
+    writeLog('catlike', openid, catId, like, ts);
+    markTouched('cat');
+    return 'ok';
+  }
 
   const photo = findItem('photo', photoId);
   if (!photo) return 'drop:photo-not-found';
@@ -663,6 +686,7 @@ function handleManage(p) {
 
   if (data.action === 'updateCat') return manageUpdateCat(data);
   if (data.action === 'managePhoto') return managePhoto(data);
+  if (data.action === 'saveFriendLinks') return manageSaveFriendLinks(data);
   return 'drop:bad-action';
 }
 
@@ -700,6 +724,46 @@ function managePhoto(data) {
   photo.hidden = !!data.hidden;
   markTouched('photo');
   return 'ok:photo-hidden';
+}
+
+// 友情链接：整体覆盖 setting 里 _id='friendLink' 的 apps。
+// 管理端是「增删后整批提交」，天然处理并发覆盖；这里只做服务端校验。
+const FRIEND_LINK_MAX = 20;
+const APPID_RE = /^wx[0-9a-zA-Z]{16}$/;
+
+function normalizeFriendApp(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const appid = typeof raw.appid === 'string' ? raw.appid.trim() : '';
+  const name = typeof raw.name === 'string' ? raw.name.trim() : '';
+  const logo = typeof raw.logo === 'string' ? raw.logo.trim() : '';
+  if (!APPID_RE.test(appid)) return null;
+  if (!name || name.length > 20) return null;
+  if (logo.length > 300) return null;
+  return { appid, name, logo };
+}
+
+function manageSaveFriendLinks(data) {
+  const apps = data.apps;
+  if (!Array.isArray(apps)) return 'drop:no-apps';
+
+  const seen = {};
+  const cleaned = [];
+  for (const raw of apps) {
+    const item = normalizeFriendApp(raw);
+    if (!item) return 'drop:bad-friend-app';
+    if (seen[item.appid]) continue;
+    seen[item.appid] = true;
+    cleaned.push(item);
+    if (cleaned.length > FRIEND_LINK_MAX) return 'drop:too-many-links';
+  }
+
+  const setting = loadData('setting');
+  const record = setting.items.find(it => it && it._id === 'friendLink');
+  if (record) record.apps = cleaned;
+  else setting.items.push({ _id: 'friendLink', apps: cleaned });
+
+  markTouched('setting');
+  return 'ok:friend-links';
 }
 
 const HANDLERS = {
@@ -915,12 +979,23 @@ function selftestObjects() {
     mk('manage', 'openid-a', { action: 'updateCat', token: 'definitely-wrong-token', cat_id: cat, patch: { name: '不该生效' } }, 17), // 口令错，应被丢弃
     mk('manage', 'openid-a', { action: 'updateCat', token: REVIEW_PASSCODE || 'wrong', cat_id: cat, patch: { popularity: 999, name: '也不该生效' } }, 18), // 白名单外字段，整条拒绝
     mk('manage', 'openid-a', { action: 'deleteEverything', token: REVIEW_PASSCODE || 'wrong' }, 19), // 未知 action，应被丢弃
+    mk('manage', 'openid-a', {
+      action: 'saveFriendLinks',
+      token: REVIEW_PASSCODE || 'wrong',
+      apps: [{ appid: 'wx5bd705b2bc91c73b', name: '笃行猫谱（自测）', logo: '/pages/public/images/system/zdmp.png' }],
+    }, 21),
+    mk('manage', 'openid-a', {
+      action: 'saveFriendLinks',
+      token: REVIEW_PASSCODE || 'wrong',
+      apps: [{ appid: 'not-an-appid', name: '坏数据' }],
+    }, 22), // 非法 appid，整条拒绝
   ];
 }
 
 function snapshot() {
   const cat = findItem('cat', 'demo-cat-1');
   const photo = findItem('photo', 'demo-photo-1');
+  const friendLink = findItem('setting', 'friendLink');
   return {
     catPop: cat ? cat.popularity : null,
     catFollow: cat ? cat.follow_count : null,
@@ -929,6 +1004,7 @@ function snapshot() {
     catHabit: cat ? cat.habit : null,
     photoLike: photo ? photo.like_count : null,
     photoHidden: photo ? !!photo.hidden : null,
+    friendLinks: friendLink ? JSON.stringify((friendLink.apps || []).map(a => a.name)) : null,
     queue: loadData('review_queue').items.length,
   };
 }

@@ -299,23 +299,6 @@ scroll-view {
   display: flex;
 }
 
-/* 返回首页 */
-#back-to-firstpage {
-  position: fixed;
-  bottom: 200rpx;
-  right: 30rpx;
-
-  filter: drop-shadow(0 0 5rpx var(--color-gray-dark));
-  transform: translateZ(0);
-}
-
-#back-to-firstpage .back-btn {
-  width: 80rpx;
-  height: 80rpx;
-  margin: 0rpx 10rpx;
-  display: block;
-}
-
 .news-container {
   z-index: 99;
 }
@@ -613,42 +596,6 @@ page {
   background-color: rgba(0, 0, 0, .8);
 }
 
-#filter-block .filters {
-  width: 100%;
-  padding: 22rpx 0 18rpx 0;
-  box-sizing: border-box;
-  background-color: var(--color-surface);
-  display: flex;
-  flex-direction: column;
-}
-
-#filter-block .divider {
-  width: 100%;
-  height: 1rpx;
-  background-color: var(--color-gray);
-}
-
-#filter-block .buttons {
-  width: 100%;
-  background-color: var(--color-gray);
-  display: flex;
-  justify-content: space-between;
-}
-
-#filter-block .buttons .btn {
-  width: 374.8rpx;
-  height: 80rpx;
-  line-height: 80rpx;
-  font-size: 30rpx;
-  background-color: var(--color-surface);
-  color: var(--color-gray-dark);
-  text-align: center;
-}
-
-#filter-block .buttons .active {
-  color: var(--color-primary);
-}
-
 .frow {
   width: 100%;
   display: flex;
@@ -674,6 +621,11 @@ page {
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
+}
+
+.frow-inner {
+  display: inline-flex;
+  align-items: center;
 }
 
 .fpill {
@@ -923,11 +875,6 @@ page {
   margin: 10rpx 292rpx;
 }
 
-/* ---------- 漂浮按钮深色化 ---------- */
-#back-to-firstpage {
-  filter: drop-shadow(0 4rpx 14rpx rgba(12, 95, 3, 0.22));
-}
-
 /* =========================================================
    v5.2 首页精修：更大的数字、更透的卡片、更稳的层次
    ========================================================= */
@@ -1065,3 +1012,248 @@ page {
   border-radius: 6rpx;
   background-image: linear-gradient(90deg, rgba(12, 95, 3, 0.55), var(--dk-accent));
 }
+
+/* =========================================================
+   v5.3 首页外观：筛选抽屉重做 + 顶部留白 + 提示条成条
+   ========================================================= */
+
+/* ---------- 筛选抽屉：从搜索栏下方往下摊开，下方是黑罩 ---------- */
+#filter-block {
+  left: 0;
+  right: 0;
+  background-color: rgba(16, 22, 15, 0.42);
+  /* 内容贴顶，向下展开 */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.fsheet {
+  width: 100%;
+  padding: 0;
+  background-color: var(--dk-bg);
+  border-radius: 0;
+  box-shadow: none;
+  box-sizing: border-box;
+  text-align: center;
+  transform-origin: top center;
+  animation: sheetDown 0.22s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* 抽屉打开时搜索栏改用实心底，否则底部渐隐会透出遮罩，在面板上方留下一道深色裂缝 */
+#search.solid {
+  background-image: none;
+  background-color: var(--dk-bg);
+}
+
+@keyframes sheetDown {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.fsheet .filters {
+  width: 100%;
+  padding: 22rpx 0 4rpx;
+  background-color: transparent;
+  display: flex;
+  flex-direction: column;
+}
+
+.fsheet .frow {
+  margin-top: 20rpx;
+}
+
+.fsheet .frow:first-child {
+  margin-top: 0;
+}
+
+.fsheet .frow-k {
+  width: 80rpx;
+  flex-shrink: 0;
+  font-size: 22rpx;
+  letter-spacing: 1rpx;
+  font-weight: 600;
+  color: var(--dk-text-3);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.fsheet .fpill {
+  height: 62rpx;
+  padding: 0 28rpx;
+  margin-right: 14rpx;
+  font-size: 25rpx;
+  background-color: var(--dk-card);
+  border-color: var(--dk-line);
+}
+
+.fsheet .fpill.on {
+  color: #FFFFFF;
+  background-color: var(--dk-accent);
+  border-color: var(--dk-accent);
+  box-shadow: 0 6rpx 16rpx rgba(12, 95, 3, 0.22);
+}
+
+.fsheet .divider {
+  display: none;
+}
+
+.fsheet .buttons {
+  width: 100%;
+  margin: 20rpx 0 0 0;
+  padding: 0;
+  background-color: var(--dk-bg);
+  display: flex;
+  justify-content: flex-start;
+}
+
+.fsheet .buttons .btn {
+  width: 50%;
+  height: 92rpx;
+  line-height: 92rpx;
+  font-size: 29rpx;
+  letter-spacing: 4rpx;
+  border-radius: 0;
+  background-color: transparent;
+  color: var(--dk-text-2);
+  font-weight: 600;
+}
+
+.fsheet .buttons .btn.active {
+  background-color: var(--dk-accent);
+  color: #FFFFFF;
+  box-shadow: none;
+}
+
+/* ---------- 顶部：标题区呼吸感 + 搜索行更整 ---------- */
+.nav-row {
+  padding: 6rpx 0 20rpx 0;
+  align-items: center;
+}
+
+.nav-k {
+  font-size: 18rpx;
+  letter-spacing: 3.4rpx;
+  opacity: 0.72;
+}
+
+.nav-t {
+  font-size: 52rpx;
+  line-height: 56rpx;
+  letter-spacing: -1.6rpx;
+  margin-top: 10rpx;
+}
+
+.search-row {
+  padding-bottom: 20rpx;
+}
+
+#search .input-block {
+  height: 80rpx;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
+  box-shadow: 0 2rpx 10rpx rgba(12, 95, 3, 0.05);
+}
+
+#search input.name {
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 27rpx;
+}
+
+#search .filter-btn {
+  width: 80rpx;
+  height: 80rpx;
+  flex: 0 0 80rpx;
+  margin-left: 18rpx;
+  box-shadow: 0 2rpx 10rpx rgba(12, 95, 3, 0.05);
+}
+
+#search .filter-btn.on {
+  background-color: var(--dk-accent);
+  border-color: var(--dk-accent);
+}
+
+/* ---------- 广告提示：从裸文本变成一条浅绿提示条 ---------- */
+.tips-wrap {
+  width: 100%;
+  /* width:100% + 左右 padding 时，content-box 会整体宽出 48rpx，
+     右边比猫卡多冒出去 24rpx —— 必须 border-box 才能和 .row 对齐 */
+  box-sizing: border-box;
+  padding: 4rpx 24rpx 22rpx 24rpx;
+}
+
+.tips {
+  display: block;
+  padding: 18rpx 24rpx 18rpx 26rpx;
+  border-radius: 20rpx;
+  background-color: rgba(12, 95, 3, 0.045);
+  border-left: 4rpx solid var(--dk-accent-line);
+  font-size: 22rpx;
+  line-height: 34rpx;
+  letter-spacing: 0.3rpx;
+  color: var(--dk-text-2);
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   v5.4 主题色强化：绿色面积与对比度（品牌色 #0C5F03 不变，
+   大面积填充改用亮绿 --dk-accent-2 #14801F）
+   ========================================================= */
+
+/* ---------- 1) 顶部标题区：小标从灰改亮绿 ---------- */
+.nav-k { color: var(--dk-accent-2); font-weight: 700; opacity: 1; }
+
+/* ---------- 2) 搜索框与筛选按钮：描边/阴影统一到绿系 ---------- */
+#search .input-block { border-color: var(--dk-accent-line); box-shadow: 0 2rpx 12rpx rgba(12, 95, 3, 0.08); }
+#search .input-block image { opacity: 0.85; }
+#search .filter-btn { border-color: var(--dk-accent-line); }
+#search .filter-btn.on { background-color: var(--dk-accent-2); border-color: var(--dk-accent-2); box-shadow: 0 6rpx 16rpx rgba(20, 128, 31, 0.32); }
+
+/* ---------- 3) 数据卡 hero：绿色面积最大的一块 ---------- */
+.hero {
+  background-image: linear-gradient(135deg, rgba(20, 128, 31, 0.18), rgba(20, 128, 31, 0.06) 52%, rgba(20, 128, 31, 0.02) 78%);
+  border-color: rgba(20, 128, 31, 0.20);
+  box-shadow: 0 4rpx 20rpx rgba(12, 95, 3, 0.10);
+}
+.hero-k { color: var(--dk-accent-2); font-weight: 700; }
+.hero-k::after { width: 84rpx; height: 6rpx; background-color: var(--dk-accent-2); opacity: 1; }
+.hero-link { background-color: var(--dk-accent-2); border-color: var(--dk-accent-2); box-shadow: 0 4rpx 12rpx rgba(20, 128, 31, 0.28); }
+.hero-link-t { color: #FFFFFF; font-weight: 700; }
+.hero-link-arrow { color: #FFFFFF; opacity: 0.9; }
+.hero-row { margin-top: 24rpx; }
+.hero-cell { border-left-color: rgba(20, 128, 31, 0.18); padding: 10rpx 0 12rpx; border-radius: 18rpx; }
+.hero-n { color: var(--dk-accent-2); }
+.hero-n--accent { color: var(--dk-accent-2); }
+.hero-k2 { color: var(--dk-text-2); }
+
+/* 选中格：整格铺浅绿底 + 数字加深，替代原来那根小短横线
+   （短横线用 height/opacity 归零隐藏，不动 display） */
+.hero-cell.on { background-color: rgba(20, 128, 31, 0.12); }
+.hero-cell.on .hero-n { color: var(--dk-accent); }
+.hero-cell.on .hero-k2 { color: var(--dk-accent); font-weight: 700; }
+.hero-cell.on::after { height: 0; opacity: 0; background-color: transparent; }
+
+/* ---------- 4) 猫列表卡 ---------- */
+.row { border-color: rgba(20, 128, 31, 0.14); }
+.row-adopt { color: #FFFFFF; background-color: var(--dk-accent-2); border-color: var(--dk-accent-2); font-weight: 700; }
+.row-score-v { color: var(--dk-accent-2); }
+.row-bar { height: 10rpx; background-color: rgba(20, 128, 31, 0.16); }
+.row-bar-fill { height: 10rpx; background-image: linear-gradient(90deg, var(--dk-accent-2), #1FA34A); }
+.row-num { color: var(--dk-accent-2); }
+.row-num-k { color: var(--dk-text-3); }
+
+/* ---------- 5) 公告提示条 tips ---------- */
+.tips { background-color: rgba(20, 128, 31, 0.09); border-left-color: var(--dk-accent-2); }
+
+/* ---------- 6) 筛选抽屉 .fsheet ---------- */
+.fsheet .frow-k { color: var(--dk-accent-2); font-weight: 700; }
+.fsheet .fpill { background-color: #FFFFFF; border-color: rgba(20, 128, 31, 0.16); }
+.fsheet .fpill.on { background-color: var(--dk-accent-2); border-color: var(--dk-accent-2); box-shadow: 0 6rpx 18rpx rgba(20, 128, 31, 0.34); }
+.fsheet .fpill.on .fpill-n { opacity: 1; }
+.fsheet .buttons .btn { color: var(--dk-text-2); }
+.fsheet .buttons .btn.active { background-color: var(--dk-accent-2); box-shadow: 0 0 0 0 rgba(0,0,0,0); }

@@ -22,6 +22,7 @@
             wx:key="key"
             bindtap="preview"
             data-url="{{pic.full}}"
+            data-catid="{{pic.cat_id}}"
             style="animation-delay: {{(ci % 12) * 45}}ms;"
           >
             <image class="cell-img" src="{{pic.thumb}}" mode="aspectFill"></image>
@@ -69,5 +70,35 @@
     <text class="empty-icon">🐾</text>
     <text class="empty-text">还没有照片</text>
     <text class="empty-sub">等猫友们上传之后，这里会变成一面猫猫墙</text>
+  </view>
+
+  <!-- 大图浮层：图下直接给猫咪基本信息 -->
+  <view class="viewer" wx:if="{{viewer.show}}" catchtouchmove="noop">
+    <view class="viewer-mask" bindtap="closeViewer"></view>
+    <image class="viewer-img" src="{{viewer.url}}" mode="aspectFit" bindtap="closeViewer"></image>
+    <view class="viewer-bar">
+      <view class="viewer-cat" wx:if="{{viewer.brief && viewer.brief.name}}" hover-class="viewer-hover" bindtap="toCatDetail">
+        <view class="viewer-top">
+          <text class="viewer-cat-name">{{viewer.brief.name}}</text>
+          <text class="viewer-score">{{viewer.brief.score}}</text>
+          <text class="viewer-score-k">猫德</text>
+        </view>
+        <view class="viewer-meta" wx:if="{{viewer.brief.where || viewer.brief.colour || viewer.brief.gender}}">
+          <text wx:if="{{viewer.brief.where}}">{{viewer.brief.where}}</text>
+          <text wx:if="{{viewer.brief.colour}}">{{viewer.brief.colour}}</text>
+          <text wx:if="{{viewer.brief.gender}}">{{viewer.brief.gender}}</text>
+        </view>
+        <view class="viewer-tags" wx:if="{{viewer.brief.tags.length}}">
+          <text class="viewer-tag" wx:for="{{viewer.brief.tags}}" wx:key="*this">{{item}}</text>
+          <text class="viewer-tag viewer-tag--num">{{viewer.brief.photos}} 张照片</text>
+        </view>
+        <view class="viewer-go">
+          <text class="viewer-go-t">进入猫咪详情</text>
+          <text class="viewer-go-a">›</text>
+        </view>
+      </view>
+      <view class="viewer-note" wx:else>这张照片还没挂到猫咪档案上</view>
+      <view class="viewer-close" hover-class="viewer-hover" bindtap="closeViewer">关闭</view>
+    </view>
   </view>
 </view>

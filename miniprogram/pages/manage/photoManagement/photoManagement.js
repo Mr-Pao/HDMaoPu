@@ -261,11 +261,11 @@ Page({
       // 计算skip数量
       const skip = (this.data.pageNum - 1) * this.data.pageSize;
       
-      // 按popularity降序排序（photo_count_total作为popularity的替代）
+      // 按点赞降序排序（热度已下线，改用 like_count）
       const { result } = await app.mpServerless.db.collection('cat')
         .find({}, { 
-          fields: ['_id', 'name', 'nickname', 'photo_count_best', 'photo_count_total', 'campus', 'popularity'],
-          sort: { popularity: -1 },
+          fields: ['_id', 'name', 'nickname', 'photo_count_best', 'photo_count_total', 'campus', 'like_count'],
+          sort: { like_count: -1 },
           skip: skip,
           limit: this.data.pageSize
         });

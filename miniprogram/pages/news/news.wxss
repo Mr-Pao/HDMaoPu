@@ -329,3 +329,12 @@ swiper image {
   font-size: 34rpx;
   letter-spacing: -0.5rpx;
 }
+
+/* 顶部大标题与猫谱页 .nav-t 对齐（52rpx） */
+.nav-title {
+  font-size: 52rpx;
+  line-height: 56rpx;
+  font-weight: 800;
+  letter-spacing: -1.6rpx;
+  margin-top: 10rpx;
+}

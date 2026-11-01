@@ -8,7 +8,7 @@ const secrets = require('./appSecret.js');
 
 module.exports = {
   // 版本号
-  app_version: "v4.0.28",
+  app_version: "v4.0.30",
   // 【离线 Demo 模式】
   // true  = 不连任何后端，使用 utils/demo.js 里的假数据（11 只猫 + 照片 + 设置）
   // false = 走下面的 data_base_url（COS 上的静态 JSON）
@@ -89,7 +89,7 @@ module.exports = {
     detail_cat: {
       bottom_text_loading: "LOADING...",
       bottom_text_end: "- THE END -",
-      popularity_tip: "猫猫人气值",
+      popularity_tip: "猫咪点赞数",
       comment_tip: "猫猫留言数",
       button_feedback: "猫咪信息纠错",
       label_nickname: "昵称",
@@ -116,6 +116,19 @@ module.exports = {
       contract_tip: "（选填）微信/QQ/邮箱",
       submit_button: "提交反馈",
       submit_tip: "*反馈内容仅后台工作人员可见",
+    },
+    // 提交后「延迟生效」的统一提示，utils/syncTip.js 与各提交点共用
+    // 小程序没有服务器：提交只是 PUT 到 COS 的 inbox/，
+    // 由 GitHub Actions 每 5 分钟聚合成 data/*.json 再推回 COS，
+    // 所以重新进页面 / 其他用户最长要等 5~15 分钟才看得到，照片和留言还要人工审核。
+    sync: {
+      submitted_title: "已提交",
+      delay_tip: "后台会在几分钟内自动汇总，稍后刷新就能看到",
+      review_tip: "照片和留言需要审核通过后才会展示",
+      offline_tip: "网络不太好，这次可能没提交成功",
+      pending_title: "等待同步",
+      pending_tip: "你还有 {n} 条内容正在等待同步 · 约 5~15 分钟后生效",
+      pending_close: "关闭提示",
     },
     // 提交留言页，pages/genealogy/commentBoard/commentBoard
     comment_board: {

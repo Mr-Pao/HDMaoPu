@@ -373,3 +373,141 @@ page {
   font-weight: 700;
   letter-spacing: 1rpx;
 }
+
+/* =========================================================
+   大图浮层：图下带「进入猫咪详情」入口
+   ========================================================= */
+.viewer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: rgba(10, 14, 9, 0.95);
+  animation: viewerIn 0.18s ease-out both;
+}
+@keyframes viewerIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.viewer-mask {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+.viewer-img {
+  position: relative;
+  width: 750rpx;
+  height: 62vh;
+}
+.viewer-bar {
+  position: relative;
+  padding: 34rpx 40rpx calc(48rpx + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.viewer-cat {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 30rpx 34rpx 26rpx;
+  box-sizing: border-box;
+  border-radius: 26rpx;
+  background: rgba(255, 255, 255, 0.10);
+  border: 1rpx solid rgba(255, 255, 255, 0.16);
+}
+.viewer-hover {
+  opacity: 0.68;
+}
+.viewer-top {
+  display: flex;
+  align-items: baseline;
+}
+.viewer-cat-name {
+  color: #FFFFFF;
+  font-size: 38rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+}
+.viewer-score {
+  margin-left: 20rpx;
+  color: #7BD88A;
+  font-size: 30rpx;
+  font-weight: 800;
+}
+.viewer-score-k {
+  margin-left: 8rpx;
+  color: rgba(255, 255, 255, 0.44);
+  font-size: 20rpx;
+  letter-spacing: 1rpx;
+}
+.viewer-meta {
+  margin-top: 12rpx;
+  display: flex;
+  flex-wrap: wrap;
+}
+.viewer-meta text {
+  margin-right: 26rpx;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 23rpx;
+  letter-spacing: 0.5rpx;
+}
+.viewer-tags {
+  margin-top: 18rpx;
+  display: flex;
+  flex-wrap: wrap;
+}
+.viewer-tag {
+  margin: 0 12rpx 10rpx 0;
+  padding: 5rpx 18rpx;
+  border-radius: 999rpx;
+  color: #B9E7C1;
+  font-size: 20rpx;
+  letter-spacing: 0.5rpx;
+  background: rgba(20, 128, 31, 0.22);
+  border: 1rpx solid rgba(123, 216, 138, 0.35);
+}
+.viewer-tag--num {
+  color: rgba(255, 255, 255, 0.56);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+.viewer-go {
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1rpx solid rgba(255, 255, 255, 0.12);
+}
+.viewer-go-t {
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 24rpx;
+  letter-spacing: 2rpx;
+}
+.viewer-go-a {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 34rpx;
+  line-height: 1;
+}
+.viewer-note {
+  color: rgba(255, 255, 255, 0.50);
+  font-size: 22rpx;
+  letter-spacing: 1rpx;
+}
+.viewer-close {
+  margin-top: 26rpx;
+  padding: 16rpx 60rpx;
+  border-radius: 999rpx;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 24rpx;
+  letter-spacing: 2rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.18);
+}

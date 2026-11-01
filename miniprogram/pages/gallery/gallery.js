@@ -33,6 +33,30 @@ function shuffle(arr) {
   return a;
 }
 
+// 把猫档案压成浮层要展示的几行字，wxml 里就不用写一堆判断
+function buildBrief(cat, cat_id) {
+  if (!cat) {
+    return { name: '', cat_id: cat_id || '', where: '', colour: '', gender: '', score: '0.0', tags: [], photos: 0 };
+  }
+  const tags = [];
+  if (cat.adopt === 1) tags.push('已领养');
+  if (cat.adopt === 2) tags.push('寻找领养中');
+  if (cat.to_star) tags.push('去往喵星');
+  else if (cat.missing) tags.push('已失踪');
+  else if (cat.sterilized) tags.push('已绝育');
+  else tags.push('待绝育');
+  return {
+    name: cat.name || '',
+    cat_id: cat_id || cat._id || '',
+    where: cat.area ? cat.campus + ' ' + cat.area : (cat.campus || ''),
+    colour: cat.colour || '',
+    gender: cat.gender || '',
+    score: (cat.rating && cat.rating.avgScoreDisp) || '0.0',
+    tags,
+    photos: cat.photo_count_total || 0,
+  };
+}
+
 Page({
   jsData: {
     pool: [],
@@ -43,10 +67,26 @@ Page({
     total: 0,
     statusBarHeight: 20,
     navBarHeight: 44,
+    viewer: { show: false, url: '', cat_id: '', brief: null },
   },
   onShow: function () {
     applyNav(this);
     showTab(this);
+    // 从别页返回时兜底：浮层可能把 tabBar 收掉了
+    if (this.getTabBar && this.getTabBar() && this.getTabBar().data.showTabBar === false) {
+      this.getTabBar().setData({ showTabBar: true });
+    }
+    if (this.data.viewer.show) {
+      this.setData({ viewer: { show: false, url: '', cat_id: '', brief: null } });
+    }
+  },
+  onHide: function () {
+    if (this.data.viewer.show) this.closeViewer();
+  },
+  onUnload: function () {
+    if (this.getTabBar && this.getTabBar()) {
+      this.getTabBar().setData({ showTabBar: true });
+    }
   },
   onShareAppMessage: function () {
     const first = (this.jsData.pool[0] || {});
@@ -85,6 +125,18 @@ Page({
       return;
     }
 
+    // 猫档案：照片本身不带 cat 对象，按 cat_id 现查一次建索引
+    const catMap = {};
+    try {
+      const { result } = await app.mpServerless.db.collection('cat').find(
+        { deleted: 0 },
+        { limit: 500 }
+      );
+      (result || []).forEach(c => { catMap[c._id] = c; });
+    } catch (e) {
+      console.warn('[gallery] 猫档案加载失败', e);
+    }
+
     let total = photos.length;
     try {
       const { result } = await app.mpServerless.db.collection('photo').count({ verified: true });
@@ -95,17 +147,23 @@ Page({
 
     // COS 公开读，signCosUrl 直接透传
     const pool = [];
+    const briefMap = {};
     for (const p of photos) {
       const thumb = await signCosUrl(p.photo_compressed || p.photo_id);
       if (!thumb) continue;
+      const cat = catMap[p.cat_id] || null;
+      if (cat && !briefMap[p.cat_id]) {
+        briefMap[p.cat_id] = buildBrief(cat, p.cat_id);
+      }
       pool.push({
         thumb,
         full: (await signCosUrl(p.photo_id)) || thumb,
-        name: (p.cat && p.cat.name) || '',
+        cat_id: p.cat_id || '',
       });
     }
 
     this.jsData.pool = pool;
+    this.jsData.briefMap = briefMap;
     this.buildRows(shuffle(pool));
     this.setData({ loading: false, total });
   },
@@ -125,8 +183,8 @@ Page({
       }
       // 副本：x + x，动画走 -50% 正好回到起点，看不出接缝
       const items = base
-        .map((x, i) => ({ thumb: x.thumb, full: x.full, name: x.name, key: 'a' + r + '-' + i }))
-        .concat(base.map((x, i) => ({ thumb: x.thumb, full: x.full, name: x.name, key: 'b' + r + '-' + i })));
+        .map((x, i) => ({ thumb: x.thumb, full: x.full, cat_id: x.cat_id, key: 'a' + r + '-' + i }))
+        .concat(base.map((x, i) => ({ thumb: x.thumb, full: x.full, cat_id: x.cat_id, key: 'b' + r + '-' + i })));
       rows.push({
         id: r,
         level: L.level,
@@ -152,12 +210,36 @@ Page({
   },
 
   preview: function (e) {
-    const { url } = e.currentTarget.dataset;
+    const { url, catid } = e.currentTarget.dataset;
     if (!url) return;
-    const urls = (this.jsData.pool || []).map(x => x.full).filter(Boolean);
-    wx.previewImage({
-      urls: urls.length ? urls : [url],
-      current: url,
+    const brief = (this.jsData.briefMap || {})[catid] || buildBrief(null, catid);
+    // 看大图时把 tabBar 收掉，不跟内容抢底部
+    if (this.getTabBar && this.getTabBar()) {
+      this.getTabBar().setData({ showTabBar: false });
+    }
+    this.setData({
+      viewer: {
+        show: true,
+        url,
+        cat_id: catid || '',
+        brief,
+      },
     });
   },
+
+  closeViewer: function () {
+    if (this.getTabBar && this.getTabBar()) {
+      this.getTabBar().setData({ showTabBar: true });
+    }
+    this.setData({ viewer: { show: false, url: '', cat_id: '', brief: null } });
+  },
+
+  toCatDetail: function () {
+    const cat_id = this.data.viewer.cat_id;
+    if (!cat_id) return;
+    this.closeViewer();
+    wx.navigateTo({ url: '/pages/genealogy/detailCat/detailCat?cat_id=' + cat_id });
+  },
+
+  noop: function () { },
 });
