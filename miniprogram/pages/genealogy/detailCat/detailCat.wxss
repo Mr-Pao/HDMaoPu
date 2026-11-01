@@ -1181,7 +1181,9 @@ swiper-item image {
   box-shadow: 0 -8rpx 24rpx rgba(12, 95, 3, 0.10);
 }
 
-/* 待同步提示：取消原来的左右外边距叠图效果，紧贴信息卡上方 */
+/* 待同步提示：挪进信息卡内部（标签行与档案卡之间），不再压大图/卡角 */
 .sync-tip {
-  margin: 24rpx 24rpx 0 24rpx;
+  margin: 20rpx 0 0 0;
+  padding: 18rpx 22rpx;
+  border-radius: var(--dk-radius);
 }

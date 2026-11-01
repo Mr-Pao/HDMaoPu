@@ -29,15 +29,6 @@
   <!-- 占位：初始状态下把信息卡顶到大图下沿 -->
   <view class='hero-spacer'></view>
 
-  <!-- 本机待同步提示：提交后要等后台聚合，期间告诉用户别以为没提交成功 -->
-  <view class='sync-tip' wx:if="{{pendingCount > 0 && !syncTipHidden}}">
-    <view class='sync-tip-main'>
-      <view class='sync-tip-title'>{{text_cfg.sync.pending_title}}</view>
-      <view class='sync-tip-desc'>{{pendingText}}</view>
-    </view>
-    <view class='sync-tip-close' bindtap='dismissSyncTip'>×</view>
-  </view>
-
   <view class='info' id='info-box'>
     <view class="identity">
       <view class='name'>{{cat.name}}</view>
@@ -66,6 +57,16 @@
         <view class='iconfont icon-qrcode'></view>
       </view>
     </view>
+
+    <!-- 本机待同步提示：提交后要等后台聚合，避免用户以为没提交成功 -->
+    <view class='sync-tip' wx:if="{{pendingCount > 0 && !syncTipHidden}}">
+      <view class='sync-tip-main'>
+        <view class='sync-tip-title'>{{text_cfg.sync.pending_title}}</view>
+        <view class='sync-tip-desc'>{{pendingText}}</view>
+      </view>
+      <view class='sync-tip-close' bindtap='dismissSyncTip'>×</view>
+    </view>
+
     <view class='details'>
 
       <!-- 猫猫档案 -->
