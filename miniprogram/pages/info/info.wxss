@@ -455,13 +455,10 @@ page {
   box-shadow: 0 2rpx 10rpx rgba(12, 95, 3, 0.035);
 }
 
-/* 顶部大标题与猫谱页 .nav-t 对齐（52rpx） */
-.nav-title {
-  font-size: 52rpx;
-  line-height: 56rpx;
-  font-weight: 800;
-  letter-spacing: -1.6rpx;
-  margin-top: 10rpx;
+/* 顶部「关于」大标题已按用户要求移除（2026-11-01），只留 MAOPU 小字，
+   这里给导航栏补一点下边距，避免和下方品牌区贴太近 */
+.nav {
+  padding-bottom: 22rpx;
 }
 
 /* =========================================================

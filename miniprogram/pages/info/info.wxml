@@ -4,8 +4,6 @@
   <view class="nav-flex">
     <view class="nav-l">
       <view class="nav-sub">MAOPU</view>
-      <!-- 导航栏标题不再响应连击，连击改到下方「火大猫谱」大标题上 -->
-      <view class="nav-title">关于</view>
     </view>
   </view>
 </view>
