@@ -14,11 +14,12 @@ page {
   overflow: hidden;
   /* 顶部一层极淡的品牌绿光晕，画面之外还有一层空间 */
   background:
-    radial-gradient(120% 50% at 50% 0%, rgba(12, 95, 3, 0.10) 0%, rgba(12, 95, 3, 0) 62%),
+    radial-gradient(120% 46% at 50% 0%, rgba(12, 95, 3, 0.12) 0%, rgba(12, 95, 3, 0) 64%),
+    radial-gradient(90% 40% at 0% 100%, rgba(20, 128, 31, 0.08) 0%, rgba(20, 128, 31, 0) 60%),
     var(--dk-bg);
 }
 
-/* 墙面铺满整页：从最上沿到底部，含浮岛 tabBar 后面 */
+/* ============ 墙面：从最上沿铺到底部，含浮岛 tabBar 后面 ============ */
 .stage {
   position: absolute;
   top: 0;
@@ -36,17 +37,17 @@ page {
   height: 100%;
   display: flex;
   flex-direction: column;
+  /* 行间留一点缝，让每一条带子是独立的，不是一整块 */
+  padding: 2rpx 0;
+  box-sizing: border-box;
 }
 
 .band {
   overflow: hidden;
-  margin-bottom: 8rpx;
   min-height: 0;
-  flex: 232 1 0%;
-}
-/* 窄行：与宽行的高度比沿用原始节奏，铺满后仍有疏密 */
-.band-t {
-  flex: 164 1 0%;
+  /* flex-grow 由 wxml 行内 style 按档位注入，三档拉开节奏 */
+  flex: 1 1 0%;
+  margin-bottom: 6rpx;
 }
 .band:last-child {
   margin-bottom: 0;
@@ -58,7 +59,7 @@ page {
   height: 100%;
   will-change: transform;
 }
-/* 宽行向左漂、窄行向右漂，速度各不相同 */
+/* 宽行向左漂、窄行向右漂 */
 .dir-l {
   animation: marqueeL linear infinite;
 }
@@ -75,34 +76,46 @@ page {
   to { transform: translateX(0); }
 }
 
+/* ============ 格子 ============ */
 .cell {
   position: relative;
   flex-shrink: 0;
-  margin-right: 8rpx;
-  border-radius: 14rpx;
+  margin-right: 6rpx;
+  border-radius: 16rpx;
   overflow: hidden;
-  background: rgba(12, 95, 3, 0.06);
-  box-shadow: inset 0 0 0 1rpx rgba(12, 95, 3, 0.08);
+  background: rgba(12, 95, 3, 0.07);
+  /* 极细内描边：深色墙上每格有轮廓，不糊成一团 */
+  box-shadow: inset 0 0 0 1rpx rgba(12, 95, 3, 0.10);
+  /* 逐张错峰淡入：开局不是「啪」地铺满，墙慢慢显影 */
+  animation: cellIn 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-/* 宽窄两档宽度差异拉大，四行节奏分明 */
-.wide {
+.cell:last-child {
+  margin-right: 0;
+}
+
+/* 三档格宽：hero 最宽，wide 次之，tall 最窄 */
+.cell--hero {
+  width: 430rpx;
+  border-radius: 20rpx;
+}
+.cell--wide {
   width: 336rpx;
-  height: 100%;
+  border-radius: 16rpx;
 }
-.tall {
-  width: 232rpx;
-  height: 100%;
+.cell--tall {
+  width: 238rpx;
+  border-radius: 14rpx;
 }
 
 .cell-img {
   display: block;
   width: 100%;
   height: 100%;
-  animation: cellIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform: scale(1.001);
 }
 
 @keyframes cellIn {
-  from { opacity: 0; transform: scale(1.06); }
+  from { opacity: 0; transform: scale(1.07); }
   to { opacity: 1; transform: scale(1); }
 }
 
@@ -112,12 +125,12 @@ page {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 46%;
-  background: linear-gradient(to top, rgba(16, 22, 15, 0.22) 0%, rgba(16, 22, 15, 0) 100%);
+  height: 44%;
+  background: linear-gradient(to top, rgba(16, 22, 15, 0.20) 0%, rgba(16, 22, 15, 0) 100%);
   pointer-events: none;
 }
 
-/* ---- 四面渐隐（渐到白底）---- */
+/* ============ 四面渐隐（渐到白底）============ */
 .fade {
   position: absolute;
   z-index: 5;
@@ -127,35 +140,48 @@ page {
   left: 0;
   right: 0;
   top: 0;
-  height: 24%;
-  background: linear-gradient(to bottom, rgba(245, 247, 245, 0.96) 0%, rgba(245, 247, 245, 0.55) 48%, rgba(245, 247, 245, 0) 100%);
+  height: 22%;
+  background: linear-gradient(
+    to bottom,
+    rgba(245, 247, 245, 0.97) 0%,
+    rgba(245, 247, 245, 0.72) 38%,
+    rgba(245, 247, 245, 0.24) 74%,
+    rgba(245, 247, 245, 0) 100%
+  );
 }
 .fade.bottom {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 34%;
-  background: linear-gradient(to top, rgba(245, 247, 245, 0.98) 0%, rgba(245, 247, 245, 0.62) 42%, rgba(245, 247, 245, 0) 100%);
+  height: 36%;
+  background: linear-gradient(
+    to top,
+    rgba(245, 247, 245, 0.99) 0%,
+    rgba(245, 247, 245, 0.80) 32%,
+    rgba(245, 247, 245, 0.34) 68%,
+    rgba(245, 247, 245, 0) 100%
+  );
 }
+/* 左右各 100rpx：看得到「有图进来」，但读不出细节 */
 .fade.left {
   top: 0;
   bottom: 0;
   left: 0;
-  width: 90rpx;
-  background: linear-gradient(to right, rgba(245, 247, 245, 0.94) 0%, rgba(245, 247, 245, 0) 100%);
+  width: 100rpx;
+  background: linear-gradient(to right, rgba(245, 247, 245, 0.95) 0%, rgba(245, 247, 245, 0) 100%);
 }
 .fade.right {
   top: 0;
   bottom: 0;
   right: 0;
-  width: 90rpx;
-  background: linear-gradient(to left, rgba(245, 247, 245, 0.94) 0%, rgba(245, 247, 245, 0) 100%);
+  width: 100rpx;
+  background: linear-gradient(to left, rgba(245, 247, 245, 0.95) 0%, rgba(245, 247, 245, 0) 100%);
 }
 
-/* ---- HUD：不占布局的顶部标识 ---- */
+/* ============ HUD：不占布局的顶部标识 ============ */
 .hud {
   position: fixed;
-  left: 32rpx;
+  left: 34rpx;
   z-index: 20;
   pointer-events: none;
 }
@@ -166,16 +192,16 @@ page {
 .hud-dot {
   width: 10rpx;
   height: 10rpx;
-  margin-right: 12rpx;
+  margin-right: 14rpx;
   border-radius: 50%;
   background: var(--dk-accent);
-  box-shadow: 0 0 14rpx rgba(12, 95, 3, 0.5);
+  box-shadow: 0 0 16rpx rgba(12, 95, 3, 0.55);
 }
 .hud-kicker {
   color: var(--dk-text);
   font-size: 21rpx;
-  font-weight: 700;
-  letter-spacing: 4rpx;
+  font-weight: 800;
+  letter-spacing: 5rpx;
 }
 .hud-sep {
   margin: 0 12rpx;
@@ -185,28 +211,31 @@ page {
 .hud-count {
   color: var(--dk-text-2);
   font-size: 20rpx;
+  letter-spacing: 1rpx;
 }
+/* HUD 下一道青色细光：给标识一个落点，不至于飘在图上 */
 .hud-line {
-  margin-top: 10rpx;
-  width: 120rpx;
+  margin-top: 12rpx;
+  width: 132rpx;
   height: 2rpx;
-  background: linear-gradient(90deg, rgba(12, 95, 3, 0.9) 0%, rgba(12, 95, 3, 0) 100%);
+  border-radius: 2rpx;
+  background: linear-gradient(90deg, rgba(12, 95, 3, 0.95) 0%, rgba(12, 95, 3, 0) 100%);
 }
 
-/* ---- 底部悬浮入口 ---- */
+/* ============ 底部悬浮入口 ============ */
 .wall-tip {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 240rpx;
-  bottom: calc(240rpx + constant(safe-area-inset-bottom));
-  bottom: calc(240rpx + env(safe-area-inset-bottom));
+  bottom: 244rpx;
+  bottom: calc(244rpx + constant(safe-area-inset-bottom));
+  bottom: calc(244rpx + env(safe-area-inset-bottom));
   text-align: center;
   z-index: 2;
   pointer-events: none;
   color: var(--dk-text-2);
   font-size: 21rpx;
-  letter-spacing: 1rpx;
+  letter-spacing: 2rpx;
   animation: tipBreath 3.4s ease-in-out infinite;
 }
 
@@ -214,9 +243,9 @@ page {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 152rpx;
-  bottom: calc(152rpx + constant(safe-area-inset-bottom));
-  bottom: calc(152rpx + env(safe-area-inset-bottom));
+  bottom: 154rpx;
+  bottom: calc(154rpx + constant(safe-area-inset-bottom));
+  bottom: calc(154rpx + env(safe-area-inset-bottom));
   display: flex;
   justify-content: center;
   z-index: 2;
@@ -231,37 +260,42 @@ page {
 .all-btn {
   display: flex;
   align-items: center;
-  padding: 16rpx 32rpx;
+  padding: 18rpx 36rpx;
   border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1rpx solid rgba(12, 95, 3, 0.34);
-  -webkit-backdrop-filter: blur(24rpx) saturate(150%);
-  backdrop-filter: blur(24rpx) saturate(150%);
-  box-shadow: 0 14rpx 40rpx rgba(12, 95, 3, 0.16);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1rpx solid rgba(12, 95, 3, 0.30);
+  -webkit-backdrop-filter: blur(24rpx) saturate(160%);
+  backdrop-filter: blur(24rpx) saturate(160%);
+  box-shadow:
+    0 14rpx 40rpx rgba(12, 95, 3, 0.14),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.9);
   pointer-events: auto;
 }
 .all-btn-hover {
   background: rgba(12, 95, 3, 0.08);
+  transform: scale(0.98);
 }
 .all-text {
   color: var(--dk-text);
-  font-size: 24rpx;
-  letter-spacing: 1rpx;
+  font-size: 25rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
 }
 .all-num {
-  margin-left: 10rpx;
+  margin-left: 12rpx;
   color: var(--dk-accent);
-  font-size: 25rpx;
-  font-weight: 700;
+  font-size: 26rpx;
+  font-weight: 800;
 }
 .all-arrow {
-  margin-left: 10rpx;
+  margin-left: 8rpx;
   color: var(--dk-accent);
   font-size: 30rpx;
+  font-weight: 600;
   line-height: 1;
 }
 
-/* ---- 加载 / 空态 ---- */
+/* ============ 加载 / 空态 ============ */
 .loading {
   flex: 1;
   display: flex;
@@ -271,6 +305,7 @@ page {
 .hint-text {
   color: var(--dk-text-3);
   font-size: 26rpx;
+  letter-spacing: 2rpx;
 }
 .empty-box {
   flex: 1;
@@ -281,17 +316,18 @@ page {
   padding: 0 60rpx;
 }
 .empty-icon {
-  font-size: 60rpx;
-  margin-bottom: 16rpx;
+  font-size: 64rpx;
+  margin-bottom: 18rpx;
 }
 .empty-text {
   color: var(--dk-text-2);
-  font-size: 26rpx;
+  font-size: 27rpx;
+  font-weight: 600;
 }
 .empty-sub {
-  margin-top: 10rpx;
+  margin-top: 12rpx;
   color: var(--dk-text-3);
   font-size: 22rpx;
   text-align: center;
-  line-height: 1.6;
+  line-height: 1.65;
 }

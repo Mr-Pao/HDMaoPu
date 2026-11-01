@@ -1,10 +1,29 @@
 <view class="page">
-  <!-- 漂流墙：从屏幕最上沿铺到底部，图片一直在横向缓慢漂移 -->
+  <!-- 漂流墙：从屏幕最上沿铺到底部，图片横向缓慢漂移 -->
   <view class="stage" wx:if="{{!loading && rows.length}}">
     <view class="bands">
-      <view class="band {{item.isWide ? 'band-w' : 'band-t'}}" wx:for="{{rows}}" wx:for-item="row" wx:key="index">
-        <view class="track {{row.isWide ? 'dir-l' : 'dir-r'}}" style="animation-duration: {{row.duration}}s;">
-          <view class="cell {{row.isWide ? 'wide' : 'tall'}}" wx:for="{{row.items}}" wx:for-item="pic" wx:key="key" bindtap="preview" data-url="{{pic.full}}">
+      <view
+        class="band"
+        wx:for="{{rows}}"
+        wx:for-item="row"
+        wx:for-index="ri"
+        wx:key="ri"
+        style="flex-grow: {{row.grow}};"
+      >
+        <view
+          class="track {{ri % 2 === 0 ? 'dir-l' : 'dir-r'}}"
+          style="animation-duration: {{row.duration}}s; animation-delay: -{{row.delay}}s;"
+        >
+          <view
+            class="cell cell--{{row.level}}"
+            wx:for="{{row.items}}"
+            wx:for-item="pic"
+            wx:for-index="ci"
+            wx:key="key"
+            bindtap="preview"
+            data-url="{{pic.full}}"
+            style="animation-delay: {{(ci % 12) * 45}}ms;"
+          >
             <image class="cell-img" src="{{pic.thumb}}" mode="aspectFill"></image>
             <view class="cell-veil"></view>
           </view>
@@ -20,7 +39,7 @@
   </view>
 
   <!-- HUD：不占布局，只贴一行极轻的标识 -->
-  <view class="hud" style="top: {{statusBarHeight + 12}}px;">
+  <view class="hud" style="top: {{statusBarHeight + 14}}px;">
     <view class="hud-row">
       <view class="hud-dot"></view>
       <text class="hud-kicker">CAT GALLERY</text>

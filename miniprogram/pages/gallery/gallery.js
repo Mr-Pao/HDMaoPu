@@ -4,15 +4,23 @@ import { signCosUrl } from "../../utils/common";
 const app = getApp();
 const { applyNav } = require('../../utils/nav');
 
-// 8 行：宽窄交替（0,2,4,6 宽行；1,3,5,7 窄行）
+// 8 行，按 4 行一个循环做三档行高：hero / tall / wide / tall
 const ROWS = 8;
-// 每行取多少张（复制一份后节点数翻倍：PER_ROW*2）
+// 每行取多少张（复制一份后节点数翻倍）
 const PER_ROW = 12;
-// 宽行 / 窄行时长（秒），错开速度才像各自漂流而不是一整块在平移
-const WIDE_DUR = [52, 62, 56, 58];
-const TALL_DUR = [44, 48, 40, 46];
 // 首屏最多拉多少张照片用于铺墙
 const FETCH_LIMIT = 60;
+
+// 行高与格宽三档：hero 行最高最宽，wide 次之，tall 最窄。
+// 三档拉开才有节奏，四行等宽会像四根带子。
+const LEVELS = [
+  { level: 'hero', grow: 200, width: 420 },
+  { level: 'tall', grow: 108, width: 236 },
+  { level: 'wide', grow: 150, width: 336 },
+  { level: 'tall', grow: 108, width: 236 },
+];
+// 每行漂流时长各不相同：同一速度会像一整块在平移，不像各自漂流
+const DURS = [58, 42, 52, 46, 62, 40, 56, 44];
 
 function shuffle(arr) {
   const a = arr.slice();
@@ -77,7 +85,6 @@ Page({
       return;
     }
 
-    // 总数单独 count，墙只铺首屏用量
     let total = photos.length;
     try {
       const { result } = await app.mpServerless.db.collection('photo').count({ verified: true });
@@ -86,14 +93,14 @@ Page({
       // 计数失败不影响出图
     }
 
-    // 头像/图片直链：COS 公开读，signCosUrl 直接透传
+    // COS 公开读，signCosUrl 直接透传
     const pool = [];
     for (const p of photos) {
       const thumb = await signCosUrl(p.photo_compressed || p.photo_id);
       if (!thumb) continue;
       pool.push({
         thumb,
-        full: await signCosUrl(p.photo_id) || thumb,
+        full: (await signCosUrl(p.photo_id)) || thumb,
         name: (p.cat && p.cat.name) || '',
       });
     }
@@ -103,7 +110,7 @@ Page({
     this.setData({ loading: false, total });
   },
 
-  // 把图池铺成 8 行：每行取 PER_ROW 张再复制一份，靠 translateX(-50%) 无缝循环
+  // 铺成 8 行：每行取 PER_ROW 张再复制一份，靠 translateX(-50%) 无缝循环
   buildRows: function (pool) {
     if (!pool || !pool.length) {
       this.setData({ rows: [] });
@@ -111,19 +118,24 @@ Page({
     }
     const rows = [];
     for (let r = 0; r < ROWS; r++) {
+      const L = LEVELS[r % LEVELS.length];
       const base = [];
       for (let i = 0; i < PER_ROW; i++) {
         base.push(pool[(r * PER_ROW + i) % pool.length]);
       }
-      const doubled = base
+      // 副本：x + x，动画走 -50% 正好回到起点，看不出接缝
+      const items = base
         .map((x, i) => ({ thumb: x.thumb, full: x.full, name: x.name, key: 'a' + r + '-' + i }))
         .concat(base.map((x, i) => ({ thumb: x.thumb, full: x.full, name: x.name, key: 'b' + r + '-' + i })));
-      const isWide = r % 2 === 0;
-      const idx = Math.floor(r / 2);
       rows.push({
-        items: doubled,
-        isWide,
-        duration: isWide ? WIDE_DUR[idx] : TALL_DUR[idx],
+        id: r,
+        level: L.level,
+        grow: L.grow,
+        width: L.width,
+        duration: DURS[r % DURS.length],
+        // 负延迟让每一行开局就处在不同位置，看起来不是同时起步
+        delay: Math.round(((r * 7.3) % DURS[r % DURS.length]) * 10) / 10,
+        items,
       });
     }
     this.setData({ rows });
