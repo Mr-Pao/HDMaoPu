@@ -570,7 +570,23 @@ Page({
       wx.showToast({ title: "提交失败，请检查网络", icon: "none" });
       return;
     }
-    this.setData({ linkDirty: false });
+
+    // 提交成功后，把本地列表里还没承诺的 pending key 就地换成聚合端最终会写出的公开地址。
+    // 不换的话用户再点一次保存还会带上那个 pending key——而聚合端复制完就把 pending 原件删了，
+    // 于是每次都在找一个不存在的源对象，永久报「未能查询源对象的状态」。
+    // logoPreview（本机临时图）保留，所以列表缩略图在当前会话里照常显示。
+    const baseUrl = String(config.data_base_url || "").replace(/\/+$/, "");
+    if (baseUrl) {
+      const links = this.data.links.map(l => {
+        const logo = String(l.logo || "");
+        if (!logo.startsWith("pending/")) return l;
+        const ext = (logo.split(".").pop() || "jpg").toLowerCase().replace("jpeg", "jpg");
+        return Object.assign({}, l, { logo: `${baseUrl}/photos/friendlink/${l.appid}.${ext}` });
+      });
+      this.setData({ links, linkDirty: false });
+    } else {
+      this.setData({ linkDirty: false });
+    }
     this.submitToast();
   },
 });

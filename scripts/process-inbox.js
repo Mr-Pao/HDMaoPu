@@ -817,6 +817,33 @@ function putObjectCopy(cos, fromKey, toKey) {
   });
 }
 
+// 对象是否存在。只判存在性，返回 true/false；网络错误一律当 false（交给上层决定）
+function objectExists(cos, key) {
+  return new Promise((resolve) => {
+    cos.headObject({ Bucket: COS_BUCKET, Region: COS_REGION, Key: key }, (err) => resolve(!err));
+  });
+}
+
+// 把 pending/<openid>-<ts>.<ext> 复制到 photos/friendlink/<appid>.<ext> 并删原件。
+//
+// ⚠️ 幂等前提：客户端保存成功后列表里的 logo 仍是那个 pending key，用户再点一次保存
+// 就会拿一个已经被删掉的源对象来复制，报「未能查询源对象的状态」并永远重试失败。
+// 所以源不存在时先看目标在不在——在就说明这轮之前已经复制过，直接当成功。
+async function moveLogoToPublic(cos, fromKey, toKey) {
+  if (!(await objectExists(cos, fromKey))) {
+    if (await objectExists(cos, toKey)) return 'already-copied';
+    return 'missing-source';
+  }
+  await putObjectCopy(cos, fromKey, toKey);
+  // 复制成功后删掉 pending 原件；删除失败只警告（最坏情况是留个孤儿对象）
+  try {
+    await deleteObject(cos, fromKey);
+  } catch (err) {
+    console.warn(`  [friendlink] 删除 pending 原件失败（忽略）：${fromKey} ${err.message || err}`);
+  }
+  return 'copied';
+}
+
 function deleteObject(cos, key) {
   return new Promise((resolve, reject) => {
     cos.deleteObject({ Bucket: COS_BUCKET, Region: COS_REGION, Key: key }, (err, data) =>
@@ -849,17 +876,23 @@ async function manageSaveFriendLinks(data) {
     for (const item of pendingLogoApps) {
       const targetKey = `${FRIEND_LOGO_PREFIX}${item.appid}.${extOfKey(item.logo)}`;
       if (!DRY) {
+        let outcome;
         try {
-          await putObjectCopy(cos, item.logo, targetKey);
+          outcome = await moveLogoToPublic(cos, item.logo, targetKey);
         } catch (err) {
           console.error(`  [friendlink] 复制 Logo 失败 ${item.logo} → ${targetKey}：${err.message || err}`);
           return 'error:logo-copy';
         }
-        // 复制成功后删掉 pending 原件；删除失败只警告（最坏情况是留个孤儿对象）
-        try {
-          await deleteObject(cos, item.logo);
-        } catch (err) {
-          console.warn(`  [friendlink] 删除 pending 原件失败（忽略）：${item.logo} ${err.message || err}`);
+        if (outcome === 'missing-source') {
+          // 源没了、目标也没有：客户端拿的是个早就消费掉的 pending key（典型场景是
+          // 保存成功后本地列表没换地址，用户再点一次保存）。这条无法自愈，但**不能整批丢弃**
+          // ——同一批里其它 app 可能带了真实的新图。这里只把这张图丢掉，保留 appid 和名字。
+          console.warn(`  [friendlink] 源对象与目标都不存在，这张图留空：${item.logo}`);
+          item.logo = '';
+          continue;
+        }
+        if (outcome === 'already-copied') {
+          console.warn(`  [friendlink] 源已消费过，目标已存在，按成功处理：${targetKey}`);
         }
       }
       item.logo = publicUrlOf(targetKey);
