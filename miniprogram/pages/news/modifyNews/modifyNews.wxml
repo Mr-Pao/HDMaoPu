@@ -1,62 +1,66 @@
 <!--pages/news/modifyNews/modifyNews.wxml-->
 
-<form bindsubmit="bindSubmit">
-    <block wx:if="{{!isAuth}}" class='unAuth'>
-        <view class='userInfo'>
-            <image src='/pages/public/images/system/user.png'></image>
-            <view>等待授权</view>
+<form bindsubmit="bindSubmit" wx:if="{{auth}}">
+    <!-- 昵称头像选填：点这里打开编辑弹窗，不拦提交 -->
+    <view class='userInfo' bindtap='getUInfo' hover-class='link-hover'>
+        <image src='{{user.userInfo.avatarUrl || defaultAvatar}}'></image>
+        <view class='userInfo-text'>
+            <text class='userInfo-name'>{{user.userInfo.nickName || "匿名猫友"}}</text>
+            <text class='authHint'>{{user.userInfo.nickName ? "点此修改头像昵称" : "点此设置头像昵称（选填）"}}</text>
         </view>
-        <button class="authButton" bindtap='getUInfo'>点击授权</button>
-    </block>
-    <block wx:else>
-        <block wx:if="{{isAuth}}">
-            <view class='label'>自定义昵称：（选填）</view>
-            <input name='name' type='text' placeholder="{{user.userInfo.nickName}}" bindinput='bindInputName' maxlength='{{namemaxlength}}'></input>
-            <view class='lengthTips'>字数：{{namelength}}/{{namemaxlength}}</view>
+    </view>
 
-            <view class='label'>标题：</view>
-            <input name='title' type='text' bindinput='bindInputTitle' maxlength='{{titlemaxlength}}' value='{{news.title}}'></input>
-            <view class='lengthTips'>字数：{{titlelength}}/{{titlemaxlength}}</view>
+    <view class='label'>自定义昵称：（选填）</view>
+    <input name='name' type='text' placeholder="{{user.userInfo.nickName}}" bindinput='bindInputName' maxlength='{{namemaxlength}}'></input>
+    <view class='lengthTips'>字数：{{namelength}}/{{namemaxlength}}</view>
 
-            <view class='label'>公告分类：（必选）</view>
-            <view class='button_container'>
-                <block wx:for="{{buttons}}" wx:key="buttons">
-                    <button class='{{item.checked?"checked_button":"normal_button"}}' data-id='{{item.id}}' bindtap='radioButtonTap'>{{item.name}}</button>
-                </block>
-            </view>
+    <view class='label'>标题：</view>
+    <input name='title' type='text' bindinput='bindInputTitle' maxlength='{{titlemaxlength}}' value='{{news.title}}'></input>
+    <view class='lengthTips'>字数：{{titlelength}}/{{titlemaxlength}}</view>
 
-            <view class='label'>正文：</view>
-            <textarea name='mainContent' maxlength='{{maxlength}}' bindinput='bindInput' value='{{news.mainContent}}'></textarea>
-            <view class='lengthTips'>字数：{{length}}/{{maxlength}}</view>
-
-            <view class='label'>封面图：（目前不支持修改图片）</view>
-            <view class='album'>
-                <view class='album-block' wx:if="{{cover != 0}}">
-                    <image mode='aspectFill' class='alb-image' src='{{news.coverPath}}' bindtap='previewCover'  data-url='{{news.coverPath}}'></image>
-                </view>
-            </view>
-
-            <view class='label'>图片：（目前不支持增删图片）</view>
-            <view class='album'>
-                <view class='album-block'>
-                    <block wx:for="{{photos_path}}" wx:key="_id" wx:for-index="idx">
-                        <image mode='aspectFill' class='alb-image' src='{{item}}' bindtap='previewImg' data-index="{{idx}}"></image>
-                    </block>
-                </view>
-            </view>
-            <view class='lengthTips'>图片数目：{{photos_path.length}}/9</view>
-
-            <view class='label'>公告弹窗：设置公告弹窗将会在小程序首页弹出此公告</view>
-            <view class='button_container'>
-                <block wx:for="{{modalButtons}}" wx:key="modalButtons">
-                    <button class='{{item.checked?"checked_button":"normal_button"}}' data-id='{{item.id}}' bindtap='radioModalButtonTap'>{{item.name}}</button>
-                </block>
-            </view>
-
-            <view class="line"></view>
-
-            <button class='submitButton' form-type='submit' bindtap="toSubmit">提交修改</button>
-
+    <view class='label'>公告分类：（必选）</view>
+    <view class='button_container'>
+        <block wx:for="{{buttons}}" wx:key="buttons">
+            <button class='{{item.checked?"checked_button":"normal_button"}}' data-id='{{item.id}}' bindtap='radioButtonTap'>{{item.name}}</button>
         </block>
-    </block>
+    </view>
+
+    <view class='label'>正文：</view>
+    <textarea name='mainContent' maxlength='{{maxlength}}' bindinput='bindInput' value='{{news.mainContent}}'></textarea>
+    <view class='lengthTips'>字数：{{length}}/{{maxlength}}</view>
+
+    <view class='label'>封面图：（目前不支持修改图片）</view>
+    <view class='album'>
+        <view class='album-block' wx:if="{{cover != 0}}">
+            <image mode='aspectFill' class='alb-image' src='{{news.coverPath}}' bindtap='previewCover'  data-url='{{news.coverPath}}'></image>
+        </view>
+    </view>
+
+    <view class='label'>图片：（目前不支持增删图片）</view>
+    <view class='album'>
+        <view class='album-block'>
+            <block wx:for="{{photos_path}}" wx:key="_id" wx:for-index="idx">
+                <image mode='aspectFill' class='alb-image' src='{{item}}' bindtap='previewImg' data-index="{{idx}}"></image>
+            </block>
+        </view>
+    </view>
+    <view class='lengthTips'>图片数目：{{photos_path.length}}/9</view>
+
+    <view class='label'>公告弹窗：设置公告弹窗将会在小程序首页弹出此公告</view>
+    <view class='button_container'>
+        <block wx:for="{{modalButtons}}" wx:key="modalButtons">
+            <button class='{{item.checked?"checked_button":"normal_button"}}' data-id='{{item.id}}' bindtap='radioModalButtonTap'>{{item.name}}</button>
+        </block>
+    </view>
+
+    <view class="line"></view>
+
+    <button class='submitButton' form-type='submit'>提交修改</button>
 </form>
+
+<view wx:else class='noAuth'>
+    <text>{{tipText || "没有修改公告的权限"}}</text>
+    <button bindtap='goBack' wx:if="{{tipBtn}}">打扰了</button>
+</view>
+
+<modifyUserInfo show="{{showEdit}}" bind:close="closeEdit" bind:userInfoUpdated="onUserInfoUpdated"></modifyUserInfo>

@@ -1,7 +1,10 @@
 import {
-  getPageUserInfo,
+  getUser,
   checkAuth
 } from "../../../utils/user";
+import {
+  getCurrentUserOpenid
+} from "../../../utils/common";
 import api from "../../../utils/cloudApi";
 const app = getApp();
 Page({
@@ -12,9 +15,10 @@ Page({
   data: {
     news_id: 0,
     news: 0,
-    isAuth: false,
     auth: false,
     user: {},
+    defaultAvatar: '/pages/public/images/system/user.png',
+    showEdit: false,
     namelength: 0,
     namemaxlength: 30,
     titlelength: 0,
@@ -64,7 +68,17 @@ Page({
   },
 
   onShow: async function () {
-    await getPageUserInfo(this);
+    await this.loadUserInfo();
+  },
+
+  // 昵称头像改为选填：不拦提交，只用于展示与记录最后修改人
+  async loadUserInfo() {
+    const user = (await getUser()) || {};
+    this.setData({
+      user: Object.assign({}, user, {
+        userInfo: user.userInfo || {},
+      }),
+    });
   },
 
   async loadNews() {
@@ -145,8 +159,28 @@ Page({
     })
   },
 
-  async getUInfo() {
-    await getPageUserInfo(this);
+  // 昵称头像选填（点开 modifyUserInfo 弹窗）
+  getUInfo: function () {
+    this.setData({
+      showEdit: true
+    });
+  },
+  closeEdit: function () {
+    this.setData({
+      showEdit: false
+    });
+  },
+  async onUserInfoUpdated(e) {
+    const user = (e && e.detail && e.detail.user) || (await getUser()) || {};
+    this.setData({
+      user: Object.assign({}, user, {
+        userInfo: user.userInfo || {},
+      }),
+    });
+  },
+
+  goBack() {
+    wx.navigateBack();
   },
 
   radioButtonTap: function (e) {
@@ -203,8 +237,8 @@ Page({
     }
 
     var data = {
-      openidLastModify: this.data.user.openid,
-      userNicknameLastModify: submitData.name,
+      openidLastModify: this.data.user.openid || (await getCurrentUserOpenid()),
+      userNicknameLastModify: submitData.name || (this.data.user.userInfo && this.data.user.userInfo.nickName) || '匿名猫友',
       dateLastModify: api.getDate(),
       title: submitData.title,
       mainContent: submitData.mainContent,
