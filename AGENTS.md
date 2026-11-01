@@ -160,10 +160,12 @@ cos-version  从上游错误派生，废弃
 - `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.19`
 - **「点击授权」假门槛已拆掉**（v4.0.19，`feedbackDetail`）：`getUInfo()` 原本只 `setData({showEdit:true})`，但这一页从未在 json 注册、也没在 wxml 渲染 `modifyUserInfo` 组件，所以点击完全静默（用户报告的"不能区分用户"就是这个）。现在改为：`feedbackDetail.json` 注册 `modifyUserInfo`、wxml 底部渲染 `<modifyUserInfo show="{{showEdit}}" ...>`、`onShow` 用 `getUser()` 取代 `getPageUserInfo`、顶部 `.userInfo` 整块可点开编辑（昵称未设显示"匿名猫友"+"点此设置头像昵称（选填）"），**不再用 `isAuth` 拦截提交**。`bindSubmit` 的 `openid` 兜底走 `getCurrentUserOpenid()`（`datasource._getOrCreateOpenid` 存本地 `fake_openid`，一设备一 id），每条 feedback 仍带 openid，`myFeedback`/`checkFeedbacks` 照常按人过滤。顺带修了 `data.cat_name = this.data.cat_name`（原为 undefined）→ `this.data.cat.name`
 - 数据源：`https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com`，微信后台已加 request 合法域名
-- **整份 `data/` 都是演示假数据，没有任何真实猫记录**：`cat` 11/11、`photo` 11/11、`comment` 48/48、`rating` 48/48、`user` 9/9 的 `_id` **全部**以 `demo-` 开头（`demo-cat-1..11`、`demo-photo-1..11` …），11 只猫名是大橘/三花/小黑/小白/奶茶/芝麻/年糕/团子/花生/汤圆/布丁，全部 `campus: 南校园`，`birthday` 全空。由 `scripts/gen-demo-data.js` 固定种子生成（**注意：它不生成 photo，只重写已有条目**）。
+- **整份 `data/` 都是演示假数据，没有任何真实猫记录**：`cat` 11/11、`photo` 11/11、`comment` 48/48、`rating` 48/48、`user` 9/9 的 `_id` **全部**以 `demo-` 开头（`demo-cat-1..11`、`demo-photo-1..11` …），11 只猫名是大橘/三花/小黑/小白/奶茶/芝麻/年糕/团子/花生/汤圆/布丁，全部 `campus: 南校园`。由 `scripts/gen-demo-data.js` 固定种子生成（**注意：它不生成 photo，只重写已有条目**）。
+  - 猫的 `birthday` **全部有值**（不是空），范围 2022-06-15 ~ 2024-05-01，例如大橘 `2023-01-01`；详情页「拍摄时约 X 月龄」就是拿它和 `shooting_date` 算的。
   - ⚠️ 区分"记录假"与"图真"：`photo.json` 引用的 `photos/demo-cat-N/cover.jpg` 是**真实拍摄的猫照片素材**（抽查 demo-cat-1 为室内猫吃罐头图），不是 AI 生成。假的是猫名、拍摄日期、点赞数这些元数据。
-  - ⚠️ 已知数据缺陷：`data/photo.json:248`（`demo-photo-11`）的 `shooting_date` 是 `"2026-05-00"`——非法日期（5 月 0 日），`detailCat.js:564-570` 会把它算成负数月龄；`scripts/verify-demo-data.js` 没有日期合法性校验，所以一直没暴露。
-  - COS 远端 `data/photo.json` 比本地多一条 `relink-photo-1`（指向 `photos/demo-cat-12/0001.jpg`，猫 `demo-cat-12 奶盖`），该对象 md5 与 `photos/demo-cat-1/cover.jpg` 完全相同 → 那是误把大橘封面复制当成"奶盖"照片，同样是假数据。本地 `data/` 未同步这条。
+  - ✅ 已修的数据缺陷（2026-11-01）：`demo-photo-11` 的 `shooting_date` 曾是 `"2026-05-00"`（5 月 0 日，非法），`detailCat.js:564-570` 会算成负数月龄。已改为 `2026-04-30`，并在 `scripts/verify-demo-data.js` 补 3 项校验（相册查询 / `shooting_date` 合法日期 / 拍摄日期不早于猫生日），校验总数 47→50。
+  - ⚠️ **本地改了 `data/` 不会自动上 COS**：要 push `cos` 触发 `sync-data.yml`。2026-11-01 14:12 复查：远端 `data/photo.json` 已是修正后的 11 条、无非法日期，说明 `sync-data.yml` 已跑通。
+  - COS 上曾出现过一条 `relink-photo-1`（指向 `photos/demo-cat-12/0001.jpg`，猫 `demo-cat-12 奶盖`），是误把 `photos/demo-cat-1/cover.jpg` 复制过来当新照片的假数据。2026-11-01 复查：远端 `data/photo.json` 已回到 11 条、`data/cat.json` 也是 11 只（`demo-cat-12` 已不在 JSON 里），但**孤儿对象 `photos/demo-cat-12/0001.jpg` 仍在桶里且匿名可读（HTTP 200）**，无害可留。
 - 其余演示规模：comment 48 / rating 48 / user 9 / news 8 …
 - UI 已全站统一白底大圆角（v5.2），图库是横向漂流墙（8 行宽窄交替 marquee）
 - 审核/管理走口令门（本地 storage `manage_passcode` 24h），真正校验在 `process-inbox.js` 的 `REVIEW_PASSCODE`
