@@ -195,6 +195,35 @@ async function main() {
     check('stat 的 openid 都能在 user 找到', us.result.length === openids.length, `${us.result.length}/${openids.length}`);
   }
 
+  console.log('\n【相册 / photo】');
+  {
+    const photos = await db.collection('photo').find({ deleted: { $ne: true } });
+    check('相册查询有结果', photos.result.length > 0, `${photos.result.length} 张`);
+    // shooting_date 必须是真实存在的日历日：曾出现 "2026-05-00"（5 月 0 日），
+    // detailCat.js 的月龄计算会把 00 当 0 号，算出负数月龄。
+    const isRealDate = (s) => {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
+      if (!m) return false;
+      const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+      return d.getUTCFullYear() === +m[1] && d.getUTCMonth() === +m[2] - 1 && d.getUTCDate() === +m[3];
+    };
+    const badDate = photos.result.filter((p) => !isRealDate(p.shooting_date));
+    check('shooting_date 都是合法日期', badDate.length === 0, badDate.map((p) => `${p._id}=${p.shooting_date}`).join(','));
+    const cats = await db.collection('cat').find({ deleted: { $ne: true } });
+    const birthdayById = {};
+    cats.result.forEach((c) => {
+      if (c.birthday) birthdayById[c._id] = c.birthday;
+    });
+    const beforeBirth = photos.result.filter(
+      (p) => birthdayById[p.cat_id] && String(p.shooting_date) < String(birthdayById[p.cat_id])
+    );
+    check(
+      '拍摄日期不早于猫咪生日',
+      beforeBirth.length === 0,
+      beforeBirth.map((p) => `${p._id}=${p.shooting_date}<${birthdayById[p.cat_id]}`).join(',')
+    );
+  }
+
   console.log('\n【新闻 / news】');
   {
     const home = await db.collection('news').find({ setNewsModal: true }, { sort: { date: -1 } });

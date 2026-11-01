@@ -28,7 +28,7 @@ NODE="C:/Users/yzx49/Program/HBuilderX/plugins/node/node.exe"
 - 单测（46 例）：`"$NODE" --test tests/datasource.test.js tests/cache.test.js tests/process-inbox.test.js`
   - **必须显式列文件**；`node --test tests/` 会把目录当单个测试文件跑并报 fail
   - 用 `plugins/node18/node.exe`（v18.20.0）会挂 1 例：`mock.timers.enable` 不支持 `Date` → `ERR_INVALID_ARG_VALUE`
-- 数据端到端校验（47 项）：`"$NODE" scripts/verify-demo-data.js`
+- 数据端到端校验（50 项）：`"$NODE" scripts/verify-demo-data.js`
 - 重新生成演示数据：`"$NODE" scripts/gen-demo-data.js [--dry-run]`（固定种子、幂等）
 - 颜色硬编码 → token：`"$NODE" scripts/recolor-tokens.js [--dry-run]`
 - inbox 聚合自测：`DRY_RUN=1 REVIEW_PASSCODE=xxx "$NODE" scripts/process-inbox.js`
@@ -203,6 +203,6 @@ cos-version  从上游错误派生，废弃
 1. 改了什么数据？→ 是否需要同步 `data/` + 推 `cos`（触发 `sync-data.yml`）
 2. 新页面/组件？→ `app.json` 注册 **且** 从 `packOptions.ignore` 移除
 3. 改样式？→ 只动 hex，别动颜色关键字；`app.wxss` 排除
-4. 改完跑：单测 46 例 + `verify-demo-data.js` 47 项（原 55，删徽章后少 8 项；一次就够，不要来回验）
+4. 改完跑：单测 46 例 + `verify-demo-data.js` 50 项（删徽章少 8 项、新增相册日期 3 项；一次就够，不要来回验）
 5. 升 `config.js` 的 `app_version`，commit message 带版本号
 6. 有持久价值的新结论 → 追加到本文件（不要写 `.workbuddy/memory/`）
