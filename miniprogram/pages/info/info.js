@@ -27,10 +27,6 @@ Page({
         label:"个人主页",
         path:"/pages/info/userInfo/userInfo",
       },{
-        icon:"/pages/public/images/info/btn/badge.svg",
-        label:"徽章口袋",
-        path:"/pages/packageA/pages/info/badge/badge",
-      },{
         icon:"/pages/public/images/info/btn/reward.svg",
         label:"投喂罐头",
         path:"/pages/info/reward/reward",
@@ -131,11 +127,6 @@ Page({
             path: "/pages/tools/inviteUser/inviteUser",
             icon: "icon-star-o",
             disabled: true
-          },
-          {
-            name: "徽章管理",
-            path: "/pages/manage/badgeDef/badgeDef",
-            icon: "icon-medel-o"
           },
           {
             name: "页面配置",

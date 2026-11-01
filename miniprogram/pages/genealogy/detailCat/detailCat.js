@@ -31,8 +31,6 @@ import { putInbox } from "../../../utils/writeback";
 
 const app = getApp();
 
-import { loadUserBadge, loadBadgeDefMap, loadCatBadge, mergeAndSortBadges, } from "../../../utils/badge";
-
 const max_follow_cats = 30; // 最大的猫猫关注数量
 
 // 获取照片的排序功能
@@ -84,8 +82,6 @@ Page({
     adopt_desc: config.cat_status_adopt,
     text_cfg: config.text,
 
-    activeUserBadge: -1,
-
     // 是否展开评分详情
     showDetailRating: false,
 
@@ -109,8 +105,7 @@ Page({
     infoHeight: 0, // 单位是px
     heights: {}, // 系统的各种heights
     cat_id: "",
-    album_raw: [],
-    badgeDefMap: null
+    album_raw: []
   },
 
   /**
@@ -170,11 +165,10 @@ Page({
       photoPopWeight: this.jsData.page_settings['photoPopWeight'] || 10
     });
     // 加载猫猫，是否开启上传、便利贴留言功能
-    var [_, canUpload, canComment, _] = await Promise.all([
+    var [_, canUpload, canComment] = await Promise.all([
       this.loadCat(),
       checkCanUpload(),
       checkCanComment(),
-      this.reloadUserBadge(),
     ]);
     this.setData({
       // v4.0 上传暂未开放（config.photo_upload_enabled），直接隐藏入口
@@ -284,7 +278,6 @@ Page({
       this.loadCommentCount(),
       this.loadFollowCount(),
       this.loadRelations(),
-      this.reloadCatBadge(),
       this.getLatestVaccine(cat._id),
     ]);
 
@@ -693,21 +686,6 @@ Page({
     });
   },
 
-  toAddRelation() {
-    var cat_id = this.data.cat._id;
-    const url = `/pages/manage/catManage/catManage?cat_id=${cat_id}&activeTab=relation`;
-    wx.navigateTo({
-      url: url,
-    });
-  },
-
-  //弹出层
-  showFunction() {
-    this.setData({ showFunc: true });
-  },
-  closeFunction() {
-    this.setData({ showFunc: false });
-  },
   async loadUser() {
     var user = await getUser({
       nocache: true,
@@ -731,165 +709,6 @@ Page({
     });
   },
 
-  // 检查是否配置了徽章
-  async checkBadgeDefEmpty() {
-    const m = this.jsData.badgeDefMap;
-    if (!Object.keys(m).length) {
-      return;
-    }
-
-    this.setData({ showBadge: true });
-  },
-
-  // 更新用户的徽章库存（不需要onload）
-  async reloadUserBadge() {
-    if (!this.jsData.badgeDefMap) {
-      this.jsData.badgeDefMap = await loadBadgeDefMap();
-      await this.checkBadgeDefEmpty();
-    }
-    if (!this.data.user) {
-      await this.loadUser();
-    }
-    this.setData({
-      userBadges: await loadUserBadge(this.data.user.openid, this.jsData.badgeDefMap, { keepZero: true }),
-    });
-  },
-
-  // 赠予徽章
-  async doGiveBadge() {
-    if (this.jsData.badgeGiving) {
-      return;
-    }
-    this.jsData.badgeGiving = true;
-
-    const index = this.data.activeUserBadge;
-    const badgeDef = this.data.userBadges[index]._id;
-    const res = await api.giveBadge({
-      catId: this.data.cat._id,
-      badgeDef: badgeDef
-    });
-    if (res.ok) {
-      wx.showToast({
-        title: '赠予成功',
-        icon: "success"
-      });
-    } else {
-      wx.showToast({
-        title: '赠予失败',
-        icon: "error"
-      });
-    }
-
-    this.setData({
-      activeUserBadge: -1,
-    });
-
-    await Promise.all([
-      this.reloadUserBadge(),
-      this.reloadCatBadge()
-    ]);
-
-    this.jsData.badgeGiving = false;
-  },
-
-  // 点击赠予徽章
-  async toGiveBadge(e) {
-    if (this.data.activeUserBadge === -1) {
-      return;
-    }
-    await this.doGiveBadge();
-  },
-
-  // 点击获取徽章
-  async toGetBadge(e) {
-    wx.navigateTo({
-      url: '/pages/packageA/pages/info/badge/badge',
-    });
-  },
-
-  // 更新猫的徽章，TODO(zing): 减少调用次数，考虑做个中间表
-  async reloadCatBadge() {
-    const catId = this.data.cat._id;
-    if (!this.jsData.badgeDefMap) {
-      this.jsData.badgeDefMap = await loadBadgeDefMap();
-      await this.checkBadgeDefEmpty();
-    }
-    let badges = await loadCatBadge(catId);
-    badges.sort((a, b) => b.givenTime - a.givenTime);
-    let mergedBadges = await mergeAndSortBadges(badges, this.jsData.badgeDefMap);
-    this.setData({
-      catBadges: mergedBadges,
-      detailBadges: badges,
-    });
-  },
-
-  async bindTapUserBadge(e) {
-    let { index } = e.currentTarget.dataset;
-    if (this.data.userBadges[index].count === 0) {
-      wx.showToast({
-        title: '请先获取该徽章~',
-        icon: "none"
-      });
-      return;
-    }
-    if (this.data.activeUserBadge === index) {
-      index = -1;
-    }
-    this.setData({
-      activeUserBadge: index,
-    });
-  },
-
-  async showGiveBadge() {
-    this.setData({
-      showGiveBadge: true,
-    })
-  },
-
-  async hideGiveBadge() {
-    this.setData({
-      showGiveBadge: false,
-    })
-  },
-
-  async toBadgeDetail() {
-    if (this.data.detailBadges.length === 0) {
-      wx.showToast({
-        title: '暂无徽章~',
-        icon: 'none'
-      });
-      return;
-    }
-    // 新开一个页面，用缓存来传值
-    wx.setStorageSync('cat-badge-info', {
-      catName: this.data.cat.name,
-      userOpenid: this.data.user.openid
-    });
-    wx.setStorageSync('cat-badge-detail', this.data.detailBadges);
-    // 跳转
-    wx.navigateTo({
-      url: '/pages/genealogy/detailCat/badgeDetail/badgeDetail',
-    });
-  },
-
-  // 展示弹窗
-  showBadgeModal(e) {
-    const { index } = e.currentTarget.dataset;
-    const badge = this.data.catBadges[index];
-    const modal = {
-      show: true,
-      title: "徽章详情",
-      name: badge.name,
-      img: badge.img,
-      desc: badge.desc,
-      level: badge.level,
-      tip: `共拥有${badge.count}枚`,
-    };
-    this.setData({ modal });
-  },
-  hideBadgeModal() {
-    this.triggerEvent('close');
-  },
   bindDetailRating(e) {
     let { showDetailRating } = this.data;
 
@@ -900,8 +719,6 @@ Page({
 
   // 展示分享海报
   async showPoster() {
-    // 关掉弹窗
-    this.closeFunction();
     let posterComponent = this.selectComponent('#posterComponent');
     if (posterComponent) {
       posterComponent.startDrawing();

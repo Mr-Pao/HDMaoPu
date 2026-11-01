@@ -152,6 +152,11 @@ swiper-item image {
   color: var(--color-surface);
 }
 
+.tags .tag-link {
+  border: 1rpx solid var(--color-primary);
+  font-weight: 600;
+}
+
 .tags .mpcode {
   font-size: 40rpx;
   margin-left: auto;
@@ -171,16 +176,12 @@ swiper-item image {
   border-radius: 999rpx;
 }
 
-.badge-btn {
-  margin-left: auto;
-}
-
 .badge-all + .badge-all {
   margin-right: 20rpx;
 }
 
 .details {
-  margin-top: 35rpx;
+  margin-top: 24rpx;
 
   display: flex;
   justify-content: space-between;
@@ -193,7 +194,7 @@ swiper-item image {
   background-color: var(--color-surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  margin-bottom: 30rpx;
+  margin-bottom: 24rpx;
   overflow: hidden;
 }
 
@@ -223,8 +224,10 @@ swiper-item image {
 }
 
 .details .item {
-  width: 30%;
-  padding: 30rpx 30rpx;
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  padding: 20rpx 28rpx;
   box-sizing: border-box;
   position: relative;
 }
@@ -232,40 +235,34 @@ swiper-item image {
 .details .item:not(:last-child)::after {
   content: '';
   position: absolute;
-  left: 30rpx;
-  right: 30rpx;
+  left: 28rpx;
+  right: 28rpx;
   bottom: 0;
   height: 1rpx;
-  background-color: rgba(0, 0, 0, 0.03);
+  background-color: var(--dk-line);
 }
 
-.details .item .label-block {
-  width: 8rpx;
-  height: 24rpx;
-  margin-right: 10rpx;
-  border-radius: 4rpx;
-  background-color: var(--color-primary);
-  display: inline-block;
-}
 .details .small {
   font-size: 16rpx;
 }
 
 .details .item .label {
-  width: 100%;
-  font-size: 22rpx;
-  padding-bottom: 10rpx;
-  align-items: center;
+  width: 150rpx;
+  flex: 0 0 150rpx;
+  font-size: 24rpx;
+  line-height: 38rpx;
+  align-items: flex-start;
   display: flex;
-  color: var(--color-black-min);
+  color: var(--dk-text-2);
 }
 
 .details .item .value {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   font-size: 26rpx;
-  line-height: 40rpx;
-  padding-bottom: 5rpx;
-  letter-spacing: 2rpx;
+  line-height: 38rpx;
+  letter-spacing: 0;
+  color: var(--dk-text);
 }
 
 .details .item.long {
@@ -283,7 +280,7 @@ swiper-item image {
   box-sizing: border-box;
   border-radius: 15rpx;
   /* background-color: var(--color-primary); */
-  padding: 30rpx 30rpx;
+  padding: 30rpx 16rpx 30rpx 6rpx;
 
   display: flex;
   align-items: center;
@@ -397,64 +394,38 @@ swiper-item image {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/*弹出层*/
-.plus {
-  width: 100rpx;
-  height: 100rpx;
-  position: fixed;
-  bottom: 150rpx;
-  right: 50rpx;
-  filter: drop-shadow(0px 12rpx 12rpx rgba(0, 0, 0, 0.15));
-  display: block;
-  justify-content: center;
+/* 行内入口（原「+」悬浮弹窗的功能已拆分挂到详情页各处） */
+.count.tap-on {
+  color: var(--dk-accent);
+}
+.album-tools {
+  display: flex;
   align-items: center;
-  z-index: 1;
+  margin-right: 10rpx;
 }
-.plus .icon{
-  width: 100%;
-  height: 100%;
-}
-.withdrawbtn{
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-.withdraw{
-  width: 72rpx;
-  height: 19.5rpx;
-  margin-top: 30rpx;
-  margin-bottom: 30rpx;
-}
-.buttons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  box-sizing: border-box;
-  padding: 10rpx;
-}
-.button {
-  filter: drop-shadow(0px 12rpx 12rpx rgba(0, 0, 0, 0.15));
-  margin-bottom: 50rpx;
-  width: 33.33%;
+.album-tools .tool {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  width: 84rpx;
+  flex-shrink: 0;
+  padding: 6rpx 0;
+  border-radius: 18rpx;
 }
-.button .icon{
-  width: 100rpx;
-  height: 100rpx;
+.album-tools .tool-icon {
+  width: 40rpx;
+  height: 40rpx;
 }
-.button .icon.gray{
-  filter: grayscale(100);
-}
-.button-text {
-  width: 100%;
-  font-size: 25rpx;
-  text-align: center;
+.album-tools .tool-text {
+  margin-top: 4rpx;
+  font-size: 20rpx;
+  line-height: 26rpx;
+  color: var(--dk-text-2);
   white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
+}
+.album-tools .tool-hover {
+  background-color: rgba(12, 95, 3, 0.06);
 }
 
 /* 下面开始悬浮标题 */
@@ -485,14 +456,15 @@ swiper-item image {
 .big-header .name-and-count {
   display: inline-block;
   flex-grow: 1;
+  min-width: 0;
 }
 .big-header .name-and-count .name {
   height: 36rpx;
   line-height: 36rpx;
-  font-size: 36rpx;
+  font-size: 32rpx;
   font-weight: 450;
   margin: 30rpx 0 10rpx 0;
-  width: 380rpx;
+  max-width: 380rpx;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -539,13 +511,13 @@ swiper-item image {
 }
 
 /* 猫猫关系 */
-.relations, .badge-list {
+.relations {
   width: 100%;
   white-space: nowrap;
   box-sizing: border-box;
   padding: 30rpx 5rpx;
 }
-.relation-block, .badge-item {
+.relation-block {
   width: 150rpx;
   display: inline-flex;
   flex-direction: column;
@@ -553,7 +525,7 @@ swiper-item image {
   padding: 10rpx 0;
   border-radius: 20rpx;
 }
-.relation-block.tap, .badge-item.tap {
+.relation-block.tap {
   background-color: var(--color-bg);
 }
 .relation-cat-avatar {
@@ -562,7 +534,7 @@ swiper-item image {
   border-radius: 100%;
   background-color: var(--color-white-dark);
 }
-.relation-name, .badge-item-count, .user-badge-item-count {
+.relation-name {
   max-width: 100rpx;
   margin-top: -20rpx;
   font-size: 20rpx;
@@ -573,7 +545,7 @@ swiper-item image {
   text-overflow:ellipsis;
   overflow:hidden;
 }
-.relation-cat-name, .badge-item-name {
+.relation-cat-name {
   max-width: 150rpx;
   font-size: 24rpx;
   color: var(--color-primary);
@@ -593,173 +565,6 @@ swiper-item image {
 /* 徽章 */
 .badge-all {
   float: right;
-}
-
-/* 赠予徽章 */
-.search {
-  width: 750rpx;
-  background-color: var(--color-white-dark);
-  position: fixed;
-  bottom: 0;
-  padding: 20rpx 20rpx;
-  padding-bottom: max(20rpx, constant(safe-area-inset-bottom));
-  padding-bottom: max(20rpx, env(safe-area-inset-bottom));
-  display: block;
-
-  /* border-top: 5rpx solid var(--color-primary); */
-  border-top-left-radius: 50rpx;
-  border-top-right-radius: 50rpx;
-
-  overflow: hidden;
-  box-sizing: border-box;
-  transition: height 400ms ease, bottom 400ms ease;
-
-  z-index: 999;
-
-  background-color: var(--color-bg);
-
-  filter: drop-shadow(0px 12rpx 12rpx rgba(0, 0, 0, 0.15));
-}
-
-.search.hidden {
-  bottom: -1000rpx;
-}
-
-.user-badge-list {
-  display: flex;
-  height: 380rpx;
-  flex-wrap: wrap;
-}
-
-.user-badge-item {
-  width: 20%;
-  padding: 10rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border: 4rpx solid transparent;
-  border-radius: 20rpx;
-  margin: 6rpx 2.5%;
-  box-sizing: border-box;
-  height: 180rpx;
-}
-
-.user-badge-item.active {
-  border: 4rpx solid var(--color-primary);
-}
-
-.user-badge-item.zero-count {
-  filter: grayscale(0.9);
-}
-
-.user-badge-item-avatar {
-  width: 120rpx;
-  height: 120rpx;
-}
-
-.user-badge-item-name {
-  font-size: 20rpx;
-}
-
-.badge-level-A.active .user-badge-item-avatar {
-  filter: drop-shadow(0rpx 0rpx 7rpx var(--color-badge-A));
-  transform: translateZ(0);
-}
-
-.badge-level-B.active .user-badge-item-avatar {
-  filter: drop-shadow(0rpx 0rpx 7rpx var(--color-badge-B));
-  transform: translateZ(0);
-}
-
-.badge-level-C.active .user-badge-item-avatar {
-  filter: drop-shadow(0rpx 0rpx 7rpx var(--color-badge-C));
-  transform: translateZ(0);
-}
-
-.badge-level-A .user-badge-item-name {
-  color: var(--color-badge-A);
-}
-
-.badge-level-B .user-badge-item-name {
-  color: var(--color-badge-B);
-}
-
-.badge-level-C .user-badge-item-name {
-  color: var(--color-badge-C);
-}
-
-/* search按钮 */
-.search-buttons {
-  display: flex;
-  justify-content: space-evenly;
-  margin-top: 20rpx;
-}
-
-.search-btn {
-  width: 300rpx;
-  height: 42rpx;
-  line-height: 42rpx;
-  font-size: 22rpx;
-  text-align: center;
-  background-color: var(--color-surface);
-  border-radius: 10rpx;
-  border: 1rpx solid var(--color-gray-normal);
-}
-.search-btn.active {
-  background-color: var(--color-primary);
-  color: var(--color-text-onPrimary)
-}
-.search-btn.active.hover {
-  background-color: var(--color-primary-dark);
-}
-.search-btn.disabled {
-  background-color: var(--color-gray-dark);
-}
-
-/* 徽章 */
-.badge-item-name {
-  font-size: 20rpx;
-}
-
-.badge-item-avatar {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 100%;
-}
-
-/* .badge-level-A .badge-item-avatar {
-  filter: drop-shadow(0rpx 0rpx 7rpx var(--color-badge-A));
-}
-
-.badge-level-B .badge-item-avatar {
-  filter: drop-shadow(0rpx 0rpx 7rpx var(--color-badge-B));
-}
-
-.badge-level-C .badge-item-avatar {
-  filter: drop-shadow(0rpx 0rpx 7rpx var(--color-badge-C));
-} */
-
-.badge-level-A .badge-item-name {
-  color: var(--color-badge-A);
-}
-
-.badge-level-B .badge-item-name {
-  color: var(--color-badge-B);
-}
-
-.badge-level-C .badge-item-name {
-  color: var(--color-badge-C);
-}
-
-.badge-item-count, .user-badge-item-count {
-  font-size: 18rpx;
-  background-color: var(--color-bg);
-  opacity: 0.7;
-  padding: 3rpx 6rpx;
-}
-
-.badge-item-count.hidden {
-  opacity: 0.0;
 }
 
 
@@ -1176,4 +981,64 @@ swiper-item image {
 }
 .details .card-header {
   border-bottom: 1rpx solid var(--dk-line);
+}
+
+/* =========================================================
+   v5.3 详情页信息架构重构（档案扁平化 / 评价独立成卡）
+   —— 只动间距、字号、字重、语义色，主题绿 #0C5F03 不变
+   ========================================================= */
+
+/* 猫友评价卡 */
+.rating-body {
+  padding: 24rpx 28rpx;
+}
+.rating-summary {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.rating-score {
+  font-size: 56rpx;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--dk-accent);
+  margin-right: 24rpx;
+}
+.rating-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.rating-stars {
+  display: flex;
+  align-items: center;
+}
+.rating-count {
+  font-size: 22rpx;
+  line-height: 30rpx;
+  color: var(--dk-text-2);
+  margin-top: 8rpx;
+}
+.rating-toggle {
+  flex: 0 0 auto;
+  font-size: 24rpx;
+  color: var(--dk-accent);
+  padding: 8rpx 0 8rpx 20rpx;
+}
+.rating-dim {
+  margin-top: 8rpx;
+  border-top: 1rpx solid var(--dk-line);
+  padding-top: 8rpx;
+}
+.rating-dim .one-rating {
+  padding: 6rpx 0;
+}
+.rating-dim .one-rating .title {
+  color: var(--dk-text-2);
+  font-size: 24rpx;
+}
+.rating-dim .one-rating .score {
+  color: var(--dk-accent);
+  font-weight: 600;
 }

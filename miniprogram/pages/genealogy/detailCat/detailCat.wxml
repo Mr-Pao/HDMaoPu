@@ -40,18 +40,19 @@
         <view class='iconfont icon-fire'></view>
         <text> {{cat.popularity + (cat.photo_count_total? cat.photo_count_total * photoPopWeight: 0)}}</text>
       </view>
-      <view class='count comment' bindtap="showPopTip"  data-tip="便利贴数">
+      <view class='count comment' bindtap="toComment">
         <view class='iconfont icon-chat'></view>
         <text> {{cat.comment_count || 0}}</text>
       </view>
-      <view class='count comment' bindtap="showPopTip" data-tip="粉丝量">
+      <view class='count comment {{followedCat ? "tap-on" : ""}}' bindtap="followCat">
         <view class='iconfont icon-like'></view>
         <text> {{cat.follow_count || 0}}</text>
       </view>
     </view>
 
     <view class="tags">
-      <text class='tag' wx:if="{{cat.adopt != undefined}}">{{adopt_desc[cat.adopt]}}</text>
+      <text class='tag tag-link' wx:if="{{cat.adopt == 1}}" bindtap="bindApplyAdoption">{{adopt_desc[cat.adopt]}} · 申请领养</text>
+      <text class='tag' wx:elif="{{cat.adopt != undefined}}">{{adopt_desc[cat.adopt]}}</text>
       <text class='tag'>{{cat.sterilized? text_cfg.detail_cat.sterilized_true: text_cfg.detail_cat.sterilized_false}}</text>
       <text class='tag to_star' wx:if='{{cat.to_star}}'>{{text_cfg.genealogy.to_star_tip}}</text>
       <text class='tag to_star' wx:if='{{cat.missing}}'>{{text_cfg.genealogy.missing_tip}}</text>
@@ -62,80 +63,72 @@
     </view>
     <view class='details'>
 
-      <!-- 基本信息 -->
+      <!-- 猫猫档案 -->
       <view class="card">
         <view class="card-header">
           <view class="card-title">
             <view class="iconfont icon-newspaper-o"></view>
             猫猫档案
           </view>
+          <view class="badge-all" bindtap="bindTapFeedback">{{text_cfg.detail_cat.button_feedback}}</view>
         </view>
+
         <view class='item long' wx:if="{{cat.nickname && cat.nickname.length > 0}}">
-          <view class='label'>
-            <view class='label-block'></view>
-            {{text_cfg.detail_cat.label_nickname}}
-          </view>
+          <view class='label'>{{text_cfg.detail_cat.label_nickname}}</view>
           <view class='value'>{{cat.nickname}}</view>
         </view>
         <view class='item long'>
-          <view class='label'>
-            <view class='label-block'></view>
-            {{text_cfg.detail_cat.label_location}}
-          </view>
+          <view class='label'>{{text_cfg.detail_cat.label_location}}</view>
           <view class='value'>{{(cat.campus + cat.area) || '-'}}</view>
         </view>
         <view class='item long' wx:if="{{cat.birthday}}">
-          <view class='label'>
-            <view class='label-block'></view>
-            {{text_cfg.detail_cat.label_birthday}}
-          </view>
+          <view class='label'>{{text_cfg.detail_cat.label_birthday}}</view>
           <view class='value'>{{cat.birthday}}</view>
         </view>
-
         <view class='item long'>
-          <view class='label'>
-            <view class='label-block'></view>
-            {{text_cfg.detail_cat.label_character}}
-          </view>
+          <view class='label'>{{text_cfg.detail_cat.label_character}}</view>
           <view class='value'>
             <!-- 新猫特点Char是空的数组（以前的是空值），修改判定方式 -->
             <text>{{cat.characteristics_string || text_cfg.detail_cat.label_characteristics_empty}}</text>
           </view>
         </view>
-
         <view class='item long'>
-          <view class='label'>
-            <view class='label-block'></view>
-            {{text_cfg.detail_cat.label_tutorial}}
-          </view>
+          <view class='label'>{{text_cfg.detail_cat.label_tutorial}}</view>
           <view class='value'>{{cat.tutorial || text_cfg.detail_cat.label_tutorial_empty}}</view>
         </view>
+      </view>
 
-        <view class='item long'>
-          <view class='label'>
-            <view class='label-block'></view>
-            {{text_cfg.detail_cat.label_rating}} （共{{cat.rating.count || 0}}条）
-            <view class="badge-all" bindtap="bindDetailRating">{{showDetailRating ? '折叠详情' : '展开详情'}}</view>
-            <!-- <view class="badge-all" bindtap="bindRating">我要评分</view> -->
+      <!-- 猫友评价 -->
+      <view class="card">
+        <view class="card-header">
+          <view class="card-title">
+            <view class="iconfont icon-star-o"></view>
+            猫友评价
           </view>
-          <view class="one-rating {{showDetailRating ? 'detail': ''}}">
-            <view class="title" wx:if="{{showDetailRating}}">综合：</view>
-            <view class="stars" bind:tap="bindDetailRating">
-              <star-rating value="{{cat.rating.avgScore}}" readonly />
-              <view class="score">{{cat.rating.avgScoreDisp || '0.0'}}</view>
+          <view class="badge-all" bindtap="bindRating">我要评分</view>
+        </view>
+
+        <view class="rating-body">
+          <view class="rating-summary">
+            <view class="rating-score">{{cat.rating.avgScoreDisp || '0.0'}}</view>
+            <view class="rating-meta">
+              <view class="rating-stars">
+                <star-rating value="{{cat.rating.avgScore || 0}}" readonly />
+              </view>
+              <view class="rating-count">共{{cat.rating.count || 0}}条评价</view>
             </view>
+            <view class="rating-toggle" bindtap="bindDetailRating">{{showDetailRating ? '折叠详情' : '展开详情'}}</view>
           </view>
 
-          <block wx:if="{{showDetailRating}}">
-            <view class="one-rating" wx:for="{{cat.rating.catRatings}}" wx:key="name" wx:for-item="x" wx:for-index="i"  bind:tap="bindDetailRating">
+          <view class="rating-dim" wx:if="{{showDetailRating}}">
+            <view class="one-rating" wx:for="{{cat.rating.catRatings}}" wx:key="name" wx:for-item="x" bind:tap="bindDetailRating">
               <view class="title">{{x.name}}：</view>
               <view class="stars">
                 <star-rating value="{{x.score}}" readonly />
                 <view class="score">{{x.scoreDisp}}</view>
               </view>
             </view>
-          </block>
-
+          </view>
         </view>
       </view>
 
@@ -150,7 +143,7 @@
         </view>
 
         <view class='item long' >
-          <view class="latest-vaccine">  
+          <view class="latest-vaccine">
             <view class="iconfont icon-success"></view>
             <view class='value vaccine-info'>
               <text>{{cat.lastVaccine.vaccine_type}}</text>
@@ -160,66 +153,24 @@
         </view>
       </view>
 
-      <!-- 徽章口袋 --> 
-      <view class="card" wx:if="{{showBadge}}">
-        <view class="card-header">
-          <view class="card-title">
-            <view class="iconfont icon-medel-o"></view>
-            徽章口袋
-          </view>
-          <view class="badge-btn">
-              <view class="badge-all" bindtap="showGiveBadge" wx:if="{{detailBadges.length > 4}}">赠予徽章</view>
-              <view class="badge-all" bindtap="toBadgeDetail" wx:if="{{detailBadges.length}}">查看详情</view>
-          </view>
-        </view>
-
-        <scroll-view class="badge-list" scroll-x="1">
-          <view class="badge-item badge-level-{{item.level}}" wx:for="{{catBadges}}" wx:key="_id" hover-class="tap" bindtap="showBadgeModal" data-index="{{index}}">
-            <image class="badge-item-avatar" src="{{item.img}}" mode="aspectFill" />
-            <view class="badge-item-count">x{{item.count}}</view>
-            <view class="badge-item-name">{{item.name}}</view>
-          </view>
-
-          <view class="relation-block add" hover-class="tap" bindtap="showGiveBadge">
-            <image class="badge-item-avatar" src="/pages/public/images/button/plus2.svg" mode="aspectFit"></image>
-            <view class="badge-item-count hidden">+</view>
-            <view class="badge-item-name">赠予徽章</view>
-          </view>
-        </scroll-view>
-      </view>
-
-      <!-- 关系 -->
-      <view class="card" wx:if="{{is_manager || (cat.relations && cat.relations.length)}}">
+      <!-- 猫际关系（关系 + 谱系树合并） -->
+      <view class="card" wx:if="{{cat.relations && cat.relations.length}}">
         <view class="card-header">
           <view class="card-title">
             <view class="iconfont icon-relation"></view>
             猫际关系
           </view>
+          <view class="badge-all" bindtap="toggleGenealogyTree">{{showGenealogyTree ? '收起' : '展开谱系树'}}</view>
         </view>
-        
+
         <scroll-view scroll-x="1" class="relations">
           <view class="relation-block" wx:for="{{cat.relations}}" wx:key="_id" bindtap="toRelationCat" data-cat_id="{{item.cat._id}}" hover-class="tap">
             <image class="relation-cat-avatar" src='{{item.cat.avatar.photo_compressed || item.cat.avatar.photo_id}}' mode="aspectFill"></image>
             <view class="relation-name">{{item.type}}</view>
             <view class="relation-cat-name">{{item.cat.name}}</view>
           </view>
-          <view class="relation-block add" hover-class="tap" wx:if="{{is_manager}}" bindtap="toAddRelation">
-            <image class="relation-cat-avatar" src="../../public/images/info/default_avatar.png" mode="aspectFill"></image>
-            <view class="relation-name">+</view>
-            <view class="relation-cat-name">添加关系</view>
-          </view>
         </scroll-view>
-      </view>
 
-      <!-- 谱系树 -->
-      <view class="card" wx:if="{{is_manager || (cat.relations && cat.relations.length)}}">
-        <view class="card-header">
-          <view class="card-title">
-            <view class="iconfont icon-relation"></view>
-            猫际谱系
-          </view>
-          <view class="badge-all" bindtap="toggleGenealogyTree">{{showGenealogyTree ? '收起' : '展开谱系树'}}</view>
-        </view>
         <genealogy-tree wx:if="{{showGenealogyTree}}" cat="{{cat}}" parents="{{parentCats}}" children="{{childCats}}" bind:tapnode="onGenealogyTap" />
       </view>
     </view>
@@ -233,6 +184,17 @@
       <view class='name-and-count'>
         <view class='name'>{{cat.name}}的相册</view>
         <view class='count'>共{{albumMax}}张照片</view>
+      </view>
+
+      <view class='album-tools'>
+        <view class='tool' hover-class='tool-hover' wx:if="{{canUpload}}" bindtap="bindAddPhoto">
+          <image class='tool-icon' mode='aspectFit' src='/pages/public/images/button/addPhoto.svg'></image>
+          <view class='tool-text'>上传喵照</view>
+        </view>
+        <view class='tool' hover-class='tool-hover' bindtap="showPoster">
+          <image class='tool-icon' mode='aspectFit' src='/pages/public/images/button/shareMeowId.svg'></image>
+          <view class='tool-text'>分享喵ID</view>
+        </view>
       </view>
 
       <view class='sort-button'>
@@ -269,64 +231,9 @@
   </view>
   <!-- album end -->
 
-  <!-- 把传照片留言按钮整到一个弹出框了 -->
-  <view class="plus" bindtap='showFunction'>
-    <image class="icon" src='/pages/public/images/button/plus.svg'></image>
-  </view>
-  <popup show="{{showFunc}}" bind:close="closeFunction">
-    <view class="withdrawbtn" bindtap="closeFunction">
-          <image class="withdraw" src="/pages/public/images/button/withdraw.png"></image>
-    </view>
-    <view class="buttons"> 
-      <view class="button" bindtap='toComment'>
-        <image class="icon" src='/pages/public/images/button/comment.svg'></image>
-        <view class="button-text">{{text_cfg.detail_cat.label_comment_board}}</view>
-      </view>
-      <view class="button" bindtap='bindAddPhoto' wx:if="{{canUpload}}">
-        <image class="icon" src='/pages/public/images/button/addPhoto.svg'></image>
-        <view class="button-text">上传喵照</view>
-      </view>
-      <view class="button" bindtap='bindRating'>
-        <image class="icon" src='/pages/public/images/button/score.svg'></image>
-        <view class="button-text">我要评分</view>
-      </view>
-      <view class="button" bindtap='followCat'>
-        <image class="icon {{followedCat ? 'gray' : ''}}" src='/pages/public/images/button/follow.svg'></image>
-        <view class="button-text">{{followedCat ? "取消关注" : "关注动态"}}</view>
-      </view>
-      <!-- 只有「待领养」的猫（adopt == 1）才显示申请入口 -->
-      <view class="button" bindtap='bindApplyAdoption' wx:if="{{cat.adopt == 1}}">
-        <image class="icon" src='/pages/public/images/button/heart.png'></image>
-        <view class="button-text">申请领养</view>
-      </view>
-      <view class="button" bindtap='bindTapFeedback'>
-        <image class="icon" src='/pages/public/images/button/flag.svg'></image>
-        <view class="button-text">{{text_cfg.detail_cat.button_feedback}}</view>
-      </view>
-      <view class="button" bindtap='showPoster' >
-        <image class="icon" src='/pages/public/images/button/shareMeowId.svg'></image>
-        <view class="button-text">分享喵ID</view>
-      </view>
-    </view>
- </popup>
 </scroll-view>
 
 <mp-gallery show="{{showGallery}}" gallery-photos="{{galleryPhotos}}" img-compressed-urls="{{imgCompressedUrls}}" img-urls="{{imgUrls}}" current="{{currentImg}}" hide-on-click="{{true}}" cat="{{cat}}" bindchange="bindGalleryChange" bindlikecountchanged="likeCountChanged"></mp-gallery>
-
-<!-- 赠予徽章弹出框 -->
-<popup show="{{showGiveBadge}}" bind:close="hideGiveBadge">
-  <scroll-view class="user-badge-list" scroll-y="1" enable-flex="1">
-    <view class="user-badge-item badge-level-{{item.level}} {{item.count === 0? 'zero-count': ''}} {{activeUserBadge === index? 'active': ''}}" wx:for="{{userBadges}}" wx:key="name" bindtap="bindTapUserBadge" data-index="{{index}}">
-      <image class="user-badge-item-avatar" src="{{item.img}}" mode="aspectFill" />
-      <view class="user-badge-item-count">x{{item.count}}</view>
-      <view class="user-badge-item-name">[{{item.level}}]{{item.name}}</view>
-    </view>
-  </scroll-view>
-  <view class="search-buttons">
-    <view class="search-btn" bindtap="toGetBadge">获取徽章</view>
-    <view class="search-btn {{activeUserBadge != -1 ? 'active': 'disabled'}}" hover-class="hover" bindtap="toGiveBadge">赠予</view>
-  </view>
-</popup>
 
 <!-- 疫苗记录弹出层 -->
 <popup show="{{showVaccineHistory}}" position="center" bind:close="hideVaccineHistory">
@@ -358,8 +265,6 @@
     </scroll-view>
   </view>
 </popup>
-
-<badgeModal zindex="2" show="{{modal.show}}" title="{{modal.title}}" name="{{modal.name}}" img="{{modal.img}}" desc="{{modal.desc}}" tip="{{modal.tip}}" level="{{modal.level}}" bind:close="hideBadgeModal"></badgeModal>
 
 <!-- 海报图弹窗组件 -->
 <poster id="posterComponent" cat="{{cat}}" coverImg="{{cat.avatar}}" zindex="3"></poster>

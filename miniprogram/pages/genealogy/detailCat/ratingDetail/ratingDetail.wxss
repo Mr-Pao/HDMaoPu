@@ -1,5 +1,20 @@
 /* pages/genealogy/detailCat/ratingDetail/ratingDetail.wxss */
-@import "../badgeDetail/badgeDetail.wxss";
+/* 原先 @import "../badgeDetail/badgeDetail.wxss"（徽章功能已移除），
+   这里只保留本页实际用到的两个公共块样式 */
+.bd-block {
+  width: 690rpx;
+  margin: 50rpx 30rpx;
+  background-color: var(--color-surface);
+  border-radius: 30rpx;
+  overflow: hidden;
+}
+
+.bd-title {
+  width: 100%;
+  padding: 20rpx 30rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+}
 
 .one-rating {
   display: flex;
