@@ -124,7 +124,7 @@ upstream/master (sysucats/zhongdamaopu)
 cos-version  从上游错误派生，废弃
 ```
 - origin = `Mr-Pao/HDMaoPu`（真 fork，可用 GitHub Sync fork），upstream = `sysucats/zhongdamaopu`
-- **当前分支 `cos`**，HEAD `196c721`（v4.0.13）；工作区已积累一批未提交改动（v4.0.14 → v4.0.19：详情页改造、徽章全站删除、关系卡显隐、上传直传 COS、反馈页去假授权等），`git status` 约 95 条，别误以为是别人的脏状态
+- **当前分支 `cos`**，HEAD `b4b3ee1`（v4.0.22）；工作区干净（2026-11-01 已把 v4.0.14→v4.0.22 的积压改动全部整理成独立 commit 推上去了）
 - 从 `13f0f6a`（v4.1.4 设计系统重构）到 HEAD 共 21 个提交 / 100 文件 / +3496 −321，全是 UI 迭代
 
 ### 数据流
@@ -140,7 +140,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.19`），commit message 末尾带版本号。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.22`），commit message 末尾带版本号。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -157,8 +157,14 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-01）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.19`
-- **「点击授权」假门槛已拆掉**（v4.0.19，`feedbackDetail`）：`getUInfo()` 原本只 `setData({showEdit:true})`，但这一页从未在 json 注册、也没在 wxml 渲染 `modifyUserInfo` 组件，所以点击完全静默（用户报告的"不能区分用户"就是这个）。现在改为：`feedbackDetail.json` 注册 `modifyUserInfo`、wxml 底部渲染 `<modifyUserInfo show="{{showEdit}}" ...>`、`onShow` 用 `getUser()` 取代 `getPageUserInfo`、顶部 `.userInfo` 整块可点开编辑（昵称未设显示"匿名猫友"+"点此设置头像昵称（选填）"），**不再用 `isAuth` 拦截提交**。`bindSubmit` 的 `openid` 兜底走 `getCurrentUserOpenid()`（`datasource._getOrCreateOpenid` 存本地 `fake_openid`，一设备一 id），每条 feedback 仍带 openid，`myFeedback`/`checkFeedbacks` 照常按人过滤。顺带修了 `data.cat_name = this.data.cat_name`（原为 undefined）→ `this.data.cat.name`
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.22`
+- **「点击授权」假门槛已全站拆掉**（v4.0.19 `feedbackDetail` / v4.0.20 `commentBoard` / v4.0.21 `modifyNews`）：根因是 `getUInfo()` 只 `setData({showEdit:true})`，而这些页从未在 json 注册、也没在 wxml 渲染 `modifyUserInfo` 组件，所以点击完全静默（用户报告的"不能区分用户"就是这个）。统一范式（照 `addPhoto` 抄）：json 注册 `modifyUserInfo` → wxml 底部渲染 `<modifyUserInfo show="{{showEdit}}" bind:close="closeEdit" bind:userInfoUpdated="onUserInfoUpdated">` → `onShow` 用 `getUser()` 取代 `getPageUserInfo`（后者在无 `userInfo` 时直接 `return false`，不设 `isAuth`/`user`，导致 `wx:else` 分支永不渲染 = 空白页）→ 顶部一块可点的「匿名猫友 / 点此设置头像昵称（选填）」提示条 → `user.userInfo` 必须兜底成 `{}`（`doSendComment` 等处会读 `user.userInfo.nickName`，否则 TypeError）→ openid 兜底 `getCurrentUserOpenid()`（`datasource._getOrCreateOpenid` 存本地 `fake_openid`，一设备一 id）。
+  - `feedbackDetail`（v4.0.19）：拆掉 `!isAuth` 等待块与 `wx:else`，不再拦提交；顺带修 `data.cat_name = this.data.cat_name`（原为 undefined）→ `this.data.cat.name`
+  - `commentBoard`（v4.0.20）：原 `wx:if="{{!isAuth}}"` 按钮 + `<block wx:else>` 把输入区整个藏起来，改成输入区常显、顶部加 `.input-user` 提示条；`doSendComment` 里 `user.openid` / `user.userInfo.nickName` 全部加兜底
+  - `modifyNews`（v4.0.21）：删掉「等待授权/点击授权」块与 `wx:if="{{isAuth}}"` 包裹，表单改由 `wx:if="{{auth}}"`（管理员 Level-2）控制，无权限时显示 `.noAuth` 整页空态（`tipText` + 「打扰了」按钮，`goBack()`）；`openidLastModify` / `userNicknameLastModify` 加兜底
+  - `createNews`：wxml 本就没有 `getUInfo` 绑定（`:3` 是 `wx:if="{{auth}}"`），但 js 有死方法 `getUInfo/closeEdit` 且 `onShow` 还在调无效的 `getPageUserInfo` —— 已删死方法、`onShow` 改 `getUser()`，避免 `user.userInfo.nickName`（wxml `:5` placeholder）为 undefined
+  - **仍走旧 `getPageUserInfo` 的页面**（若以后也报"点不动/空白"，按上面范式改）：其余调用点未清点，改前先 `grep -rn "getPageUserInfo" miniprogram/ | grep -v node_modules`
+  - ⚠️ `modifyUserInfo` 的头像上传仍走 `utils/common.js uploadFile()` → 云函数 `getURL`，dataMode 下必然返回 undefined（EMAS 已删），**只有昵称能存下来，头像存不了**。要修得照 `addPhoto.js` 改成 COS 匿名直传。
 - 数据源：`https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com`，微信后台已加 request 合法域名
 - **整份 `data/` 都是演示假数据，没有任何真实猫记录**：`cat` 11/11、`photo` 11/11、`comment` 48/48、`rating` 48/48、`user` 9/9 的 `_id` **全部**以 `demo-` 开头（`demo-cat-1..11`、`demo-photo-1..11` …），11 只猫名是大橘/三花/小黑/小白/奶茶/芝麻/年糕/团子/花生/汤圆/布丁，全部 `campus: 南校园`。由 `scripts/gen-demo-data.js` 固定种子生成（**注意：它不生成 photo，只重写已有条目**）。
   - 猫的 `birthday` **全部有值**（不是空），范围 2022-06-15 ~ 2024-05-01，例如大橘 `2023-01-01`；详情页「拍摄时约 X 月龄」就是拿它和 `shooting_date` 算的。
