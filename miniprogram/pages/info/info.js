@@ -7,6 +7,7 @@ const share_text = text_cfg.app_name + ' - ' + text_cfg.info.share_tip;
 const logo_img = "/pages/public/images/app_logo.png";
 
 import { signCosUrl } from "../../utils/common";
+import passcode from "../../utils/passcode";
 
 const app = getApp();
 
@@ -16,8 +17,6 @@ const { applyNav } = require('../../utils/nav');
 const TAP_TO_UNLOCK = 5;
 // 两次点击间隔超过这个毫秒数就重新计数（「连击」而不是「累计」）
 const TAP_WINDOW = 800;
-// 本机记住「已解锁」的标记，口令正确一次后本次安装内不再反复要
-const UNLOCK_KEY = 'admin_unlocked';
 
 Page({
   // 非渲染数据（不进 setData，避免无谓的视图层通信）
@@ -294,19 +293,16 @@ Page({
   // 真正的写入权限仍在 Actions 端 REVIEW_PASSCODE。
 
   isUnlocked() {
-    try {
-      return !!wx.getStorageSync(UNLOCK_KEY);
-    } catch (e) {
-      return false;
-    }
+    // 统一走 utils/passcode：关于页和管理后台必须看同一个标记，
+    // 否则会出现「已解锁管理后台，但提交时说没设置口令」的矛盾。
+    return passcode.isUnlocked();
   },
 
   setUnlocked(v) {
-    try {
-      if (v) wx.setStorageSync(UNLOCK_KEY, 1);
-      else wx.removeStorageSync(UNLOCK_KEY);
-    } catch (e) {
-      console.warn('[INFO] 解锁标记读写失败', e);
+    passcode.setUnlocked(v);
+    if (!v) {
+      // 退出解锁时一并清掉提交用的口令，避免留下一个用不了的 token
+      passcode.setToken("");
     }
   },
 
@@ -367,6 +363,9 @@ Page({
           return;
         }
         this.setUnlocked(true);
+        // 连击时输的就是管理口令，顺手存下来：管理后台提交要用同一个值，
+        // 不存的话进去还会再弹一次「还没设置管理口令」。
+        passcode.setToken(input);
         this.setData({ "showCond.manager": true });
         wx.showToast({ title: '已进入管理后台', icon: 'none' });
         // 解锁后补拉一次待处理数量
