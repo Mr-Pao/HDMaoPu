@@ -66,6 +66,22 @@ Page({
   },
 
   async onLoad() {
+    // 页面顶层的 jsData 是复杂对象，新版基础库实例化时会把它丢掉（控制台会警告
+    // “Free data with key "jsData" ... not a simple value”），必须在这里补回来，
+    // 否则 loadRecognizeSettings 里写 this.jsData.apiBase 会抛 TypeError。
+    if (!this.jsData) {
+      this.jsData = {
+        apiBase: null,
+        projectId: null,
+        apiKey: null,
+        topK: 3,
+        configLoaded: false,
+        canvasSideLen: 720,
+        lastSearch: null,
+        recognizeResults: []
+      };
+    }
+
     var res = await loadFilter();
     this.setData({
       campusList: ['所有位置'].concat(res.campuses),
@@ -253,7 +269,14 @@ Page({
       },
       fail(err) {
         wx.hideLoading();
-        that.toastTip(text_cfg.recognize.network_tip);
+        // 非正式版把底层 errMsg 一起显示：域名白名单（url not in domain list）、
+        // 证书、超时等问题只有看原文才分得清
+        const errMsg = (err && err.errMsg) || '';
+        const isDev = __wxConfig.envVersion !== 'release';
+        const tip = isDev && errMsg
+          ? text_cfg.recognize.network_tip + '（' + errMsg + '）'
+          : text_cfg.recognize.network_tip;
+        that.toastTip(tip, isDev ? 6000 : 2500);
         wx.reportMonitor('recognizeCatPhotoError', 1);
       }
     });
