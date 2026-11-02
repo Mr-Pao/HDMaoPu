@@ -283,7 +283,7 @@ Page({
   },
 
   loadRecognize: async function () {
-    const env = __wxConfig.envVersion === 'release' ? 'recognize' : 'recognize_test';
+    const env = __wxConfig.envVersion === 'release' || __wxConfig.envVersion === 'develop' ? 'recognize' : 'recognize_test';
     const settings = await getGlobalSettings(env) || {};
     // MeowID：项目 ID 和 API Key 都填了才显示识猫入口
     this.setData({

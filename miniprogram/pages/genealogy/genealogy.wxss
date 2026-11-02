@@ -1381,10 +1381,9 @@ page {
   display: flex;
   align-items: center;
   flex: 0 0 auto;
-  height: 56rpx;
-  padding: 0 22rpx;
-  margin-left: 20rpx;
-  margin-bottom: 6rpx;
+  height: 80rpx;
+  padding: 0 24rpx;
+  margin-right: 18rpx;
   border-radius: var(--dk-radius-pill);
   background-color: var(--dk-accent-soft);
   border: 1rpx solid var(--dk-accent-line);
