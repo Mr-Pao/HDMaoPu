@@ -20,7 +20,9 @@ const DEFAULT_API_BASE = 'https://platform.meowid.net';
 // 一次识别最多展示几只候选
 const MAX_DISPLAY = 5;
 // 上传超时：MeowID 首次推理冷启动可能很慢，别设太短
-const UPLOAD_TIMEOUT = 60 * 1000;
+const UPLOAD_TIMEOUT = 90 * 1000;
+// 平台偶发 Cloudflare 连接重置，重试一次能把成功率拉回来不少
+const MAX_UPLOAD_ATTEMPTS = 2;
 
 Page({
 
@@ -233,52 +235,67 @@ Page({
       return;
     }
 
+    // 平台（Cloudflare 后面）经常要几十秒才回，且偶发连接重置，
+    // 所以这里失败会重试一次；4xx 是确定性错误，不重试。
+    let lastErr = null;
+    for (let attempt = 1; attempt <= MAX_UPLOAD_ATTEMPTS; attempt++) {
+      let resp;
+      try {
+        resp = await this.uploadCatPhoto(compressPhotoPath);
+      } catch (err) {
+        lastErr = err;
+        continue;
+      }
+
+      let body = null;
+      try {
+        body = JSON.parse(resp.data);
+      } catch (err) {
+        body = null;
+      }
+
+      if (resp.statusCode == 200 && body) {
+        this.loadRecognizeResult(body);
+        return;
+      }
+      if (resp.statusCode != 200 && resp.statusCode < 500) {
+        wx.hideLoading();
+        this.toastTip(this.describeError(resp.statusCode, body), 3500);
+        wx.reportMonitor('recognizeCatPhotoError', 1);
+        return;
+      }
+      lastErr = { errMsg: 'HTTP ' + resp.statusCode };
+    }
+
+    wx.hideLoading();
+    // 非正式版把底层 errMsg 一起显示：域名白名单（url not in domain list）、
+    // 证书、超时等问题只有看原文才分得清
+    const errMsg = (lastErr && lastErr.errMsg) || '';
+    const isDev = __wxConfig.envVersion !== 'release';
+    const tip = isDev && errMsg
+      ? text_cfg.recognize.network_tip + '（' + errMsg + '）'
+      : text_cfg.recognize.network_tip;
+    this.toastTip(tip, isDev ? 6000 : 2500);
+    wx.reportMonitor('recognizeCatPhotoError', 1);
+  },
+
+  // 单次上传，成功/失败都走 resolve/reject，方便外层统一重试
+  uploadCatPhoto(filePath) {
     const { apiBase, projectId, apiKey, topK } = this.jsData;
     const url = `${apiBase}/v1/projects/${encodeURIComponent(projectId)}/search?top_k=${topK}`;
-    const that = this;
-
-    wx.uploadFile({
-      filePath: compressPhotoPath,
-      name: 'image', // MeowID 的 multipart 字段名固定为 image
-      url: url,
-      header: {
-        // MeowID 只认 Authorization: Bearer <api key>
-        Authorization: 'Bearer ' + apiKey
-      },
-      timeout: UPLOAD_TIMEOUT,
-      success(resp) {
-        let body = null;
-        try {
-          body = JSON.parse(resp.data); // 这里也可能抛出异常
-        } catch (err) {
-          body = null;
-        }
-        if (resp.statusCode != 200) {
-          wx.hideLoading();
-          that.toastTip(that.describeError(resp.statusCode, body), 3500);
-          wx.reportMonitor('recognizeCatPhotoError', 1);
-          return;
-        }
-        if (!body) {
-          wx.hideLoading();
-          that.toastTip(text_cfg.recognize.network_tip);
-          wx.reportMonitor('recognizeCatPhotoError', 1);
-          return;
-        }
-        that.loadRecognizeResult(body);
-      },
-      fail(err) {
-        wx.hideLoading();
-        // 非正式版把底层 errMsg 一起显示：域名白名单（url not in domain list）、
-        // 证书、超时等问题只有看原文才分得清
-        const errMsg = (err && err.errMsg) || '';
-        const isDev = __wxConfig.envVersion !== 'release';
-        const tip = isDev && errMsg
-          ? text_cfg.recognize.network_tip + '（' + errMsg + '）'
-          : text_cfg.recognize.network_tip;
-        that.toastTip(tip, isDev ? 6000 : 2500);
-        wx.reportMonitor('recognizeCatPhotoError', 1);
-      }
+    return new Promise((resolve, reject) => {
+      wx.uploadFile({
+        filePath: filePath,
+        name: 'image', // MeowID 的 multipart 字段名固定为 image
+        url: url,
+        header: {
+          // MeowID 只认 Authorization: Bearer <api key>
+          Authorization: 'Bearer ' + apiKey
+        },
+        timeout: UPLOAD_TIMEOUT,
+        success: resolve,
+        fail: reject
+      });
     });
   },
 
