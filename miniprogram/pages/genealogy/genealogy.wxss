@@ -1376,34 +1376,12 @@ page {
 }
 
 
-/* ---------- 首页右上「识猫」入口（MeowID） ---------- */
+/* ---------- 首页右上「识猫」入口（MeowID）：样式见文件末尾 v4.0.58 块 ---------- */
+/* ---------- v4.0.58 识猫钮对齐筛选钮（同尺寸/同底色/同间距） ---------- */
 .nav-recognize {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 84rpx;
-  width: 84rpx;
-  height: 84rpx;
-  padding: 0;
-  margin-right: 16rpx;
-  border-radius: var(--dk-radius-pill);
-  background-color: var(--dk-accent-soft);
-  border: 1rpx solid var(--dk-accent-line);
-}
-
-.nav-recognize-ic {
-  width: 36rpx;
-  height: 36rpx;
-  opacity: 0.85;
-}
-
-.nav-recognize-hover {
-  background-color: var(--dk-accent-line);
-  border-color: var(--dk-accent);
-}
-
-/* ---------- v4.0.58 识猫钮对齐筛选钮（同尺寸/同底色/同间距） ---------- */
-.nav-recognize {
   flex: 0 0 80rpx;
   width: 80rpx;
   height: 80rpx;
