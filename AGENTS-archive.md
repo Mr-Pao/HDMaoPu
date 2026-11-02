@@ -167,3 +167,12 @@
 - **同一只猫认领多张时序号必须递增**：`nextSeqByCat` 初始值 = 现有最大序号，每分配一张 +1（初版 bug 是 `nextSeqForCat` 每次都基于复制前固定列表算，同猫第 2 张会覆盖第 1 张，已修）。
 - `relink-workbench.html` / `relink-result.json` / `.env` 均在 `.gitignore`，不进版本控制。
 - 本地跑 scan/apply 前需先在 `scripts/` 下 `npm install`（`cos-nodejs-sdk-v5` 未随仓库装）；dsh 运行时 node 可用 `C:/Users/yzx49/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/node/bin/node.exe`。
+
+## v4.0.55 数据看板趋势 + 成长时间轴（2026-11-02，原 AGENTS.md 条目）
+
+- **v4.0.55：数据看板加「近半年趋势」+「成长时间轴」（2026-11-02）** — 用户从审计「六·可加功能」里选了「数据看板时间轴」（m00549）。三文件纯增量：
+  - `miniprogram/utils/datasource.js` 的 `_getCatStats()` 扩返回字段（**原有 basic/rates/gender/month/campus/colour/events 一字未动**）：① `trend`（近 6 个自然月，每项 `{key:'YYYY-M', label:'M月', newCats, adopted, sterilized}`）+ `trendMax`（三列最大值，供百分比高度）；② `timeline`（**全量**事件按日聚合，`byDay` 同日 items 按 `order={绝育:0,领养:1,失踪:2,喵星:3,新猫:4}` 排序，生成 `summary` 如「新猫 3 · 绝育 1」，输出 `{key,label:'M月D日',yearLabel:'YYYY年',summary,items}`，时间倒序 `.slice(0,30)`）。
+  - ⚠️ **为什么不用现成的 `stats.events` 做时间轴**：`events` 只含**本月**且真实数据里 21 只猫的 `sterilized_time`/`adopt_time` 等全为 `null`、`create_time` 全是导入日 2026-11-01 → 本月事件几乎为空。所以另算全量聚合。`mphoto` 是**毫秒时间戳不是计数**，别当照片数用。
+  - `miniprogram/pages/manage/dashboard/dashboard.wxml`：在「领养情况」卡**之前**插入两张 `.bento-card.large`——`.trend-card`（标题 + `.trend-legend` 三点图例 #0C5F03/#14801F/rgba(12,95,3,0.28)；`.trend-chart` 每列三根 `.trend-bar`，`height` 用 `stats.trendMax > 0 ? (item.x / stats.trendMax) * 100 : 0`%；空态「暂无趋势数据」）与 `.timeline-card`（标题 + `.more-button`「本月事件」`bindtap="showEventsPopup"`；`.timeline-list` 每行 `.timeline-axis`{dot+line} + `.timeline-body`{date/summary + `.timeline-tag` 按 type 映射五种 class}；空态「暂无时间轴数据」）。
+  - `miniprogram/pages/manage/dashboard/dashboard.wxss`：文件末尾追加样式块（`.card,.box...{border-radius:20rpx}` 之后）。颜色只用品牌绿与既有语义色（missing `#C65A00`、deceased `#636366`），**零新增色值族**；`trend-chart` 高 260rpx、`trend-bar` 宽 14rpx、`timeline-list` `max-height:640rpx;overflow-y:auto`、`timeline-dot` 16rpx + 6rpx 光环。
+  - 验收：`node --check` 过、单测 **47/47**、`verify-demo-data.js` **66/66**、WXML 标签平衡 view 221/221 block 6/6 text 46/46 popup 3/3 image 3/3、WXSS 花括号平衡。`tests/datasource.test.js:243` 断言的 timeline 是**领养申请**的 timeline，与看板无关，未受影响。
