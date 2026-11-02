@@ -19,7 +19,7 @@
     </view>
 
     <view wx:if='{{showRecognize}}' class='nav-recognize' bindtap='clickRecognize' hover-class='nav-recognize-hover'>
-      <image class='nav-recognize-ic' mode='aspectFit' src="/pages/public/images/button/addPhoto.png"></image>
+      <image class='nav-recognize-ic' mode='aspectFit' src="/pages/public/images/button/recognize.png"></image>
     </view>
     <view class='filter-btn {{filters_active? "on": ""}}' bindtap='fToggle'>
       <image wx:if='{{filters_active}}' mode='aspectFit' src="/pages/public/images/filter/filter_w.png"></image>

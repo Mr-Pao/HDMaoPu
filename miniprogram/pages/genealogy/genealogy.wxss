@@ -1401,3 +1401,28 @@ page {
   background-color: var(--dk-accent-line);
   border-color: var(--dk-accent);
 }
+
+/* ---------- v4.0.58 识猫钮对齐筛选钮（同尺寸/同底色/同间距） ---------- */
+.nav-recognize {
+  flex: 0 0 80rpx;
+  width: 80rpx;
+  height: 80rpx;
+  padding: 0;
+  margin-left: 18rpx;
+  margin-right: 0;
+  border-radius: 999rpx;
+  background-color: var(--dk-card);
+  border: 1rpx solid var(--dk-accent-line);
+  box-shadow: 0 2rpx 10rpx rgba(12, 95, 3, 0.05);
+}
+
+.nav-recognize-ic {
+  width: 38rpx;
+  height: 38rpx;
+  opacity: 0.85;
+}
+
+.nav-recognize-hover {
+  background-color: var(--dk-accent-soft);
+  border-color: var(--dk-accent);
+}
