@@ -18,8 +18,8 @@
       },
       "recognize": {
         "apiBase": "https://platform.meowid.net",
-        "projectId": "",
-        "apiKey": "",
+        "projectId": "0627e727-c9c1-4194-a896-545c5106b676",
+        "apiKey": "mk_live_7f530ff5217c0123_LiHDRBN8vZb3IhP7IGEiYQZkJLsrRQyTkQYCh2geOng",
         "topK": 3
       },
       "accessCtrl": {
