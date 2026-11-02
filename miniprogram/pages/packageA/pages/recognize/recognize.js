@@ -91,7 +91,9 @@ Page({
 
   // 读取识猫接口配置（MeowID：apiBase / projectId / apiKey / topK）
   async loadRecognizeSettings() {
-    const env = __wxConfig.envVersion === 'release' ? 'recognize' : 'recognize_test';
+    // 真机（release）与开发者工具（develop）都读线上配置；
+    // 只有体验版/审核版才回落 recognize_test（历史分组名，实际也常为空）
+    const env = __wxConfig.envVersion === 'release' || __wxConfig.envVersion === 'develop' ? 'recognize' : 'recognize_test';
     const settings = await getGlobalSettings(env) || {};
     let apiBase = (settings.apiBase || DEFAULT_API_BASE).trim();
     if (apiBase && !/^https?:\/\//i.test(apiBase)) {
