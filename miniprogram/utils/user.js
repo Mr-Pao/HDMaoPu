@@ -180,30 +180,28 @@ async function getPageUserInfo(page) {
 }
 
 // 是否管理员
-// ⚠️ 唯一判据是「关于页连击 5 次 + 口令」解锁后的本机标记，不再只看 user.manager。
-// 原因：data/user.json 为空表时，datasource._userOp('get') 会给每个新访客自动发
-// manager=99（remoteConfirmedEmpty 分支），只看 manager 等于人人都是管理员。
-async function isManagerAsync(req) {
-  if (!passcode.isUnlocked()) {
-    return false;
-  }
-  if (!req) {
-    req = 1;
-  }
-  const user = await getUser();
-  return !!(user && user.manager && user.manager >= req);
+// ⚠️ 唯一判据是「关于页连击 5 次 + 口令」解锁后的本机标记，**不再看 user.manager**。
+// 原因有两个：
+//   1) data/user.json 为空表时，datasource._userOp('get') 会给每个新访客自动发
+//      manager=99（remoteConfirmedEmpty 分支），只看 manager 等于人人都是管理员；
+//   2) 用户语义就是「我都进管理后台了自然是能直接管理」——解锁即管理员，
+//      再按等级二次拦截只会让已解锁的人在页内又被挡一次。
+// req 参数保留只为兼容老调用点的签名，不再参与判断。
+async function isManagerAsync(req) { // eslint-disable-line no-unused-vars
+  return passcode.isUnlocked();
 }
 
 // TODO，应该做成一个模块
-async function checkAuth(page, level) {
-  if (await isManagerAsync(level)) {
+// 页面鉴权：只看本机是否已解锁管理后台。解锁 = 管理员，不再做二级等级校验。
+async function checkAuth(page, level) { // eslint-disable-line no-unused-vars
+  if (await isManagerAsync()) {
     page.setData({
       auth: true
     });
     return true;
   }
   page.setData({
-    tipText: `只有管理员Level-${level}能进入嗷`,
+    tipText: "管理后台还没解锁：请回到「关于」页连击标题 5 次，输入一次管理口令",
     tipBtn: true,
   });
   return false;

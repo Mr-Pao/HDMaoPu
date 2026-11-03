@@ -22,7 +22,8 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: async function (options) {
-    if (checkAuth(this, 1)) {
+    // ⚠️ 必须 await：checkAuth 是 async，漏了 await 会拿到 Promise（恒真），权限判断等于失效
+    if (await checkAuth(this, 1)) {
       await this.reload(options);
     }
   },
@@ -75,8 +76,9 @@ Page({
       const that = this;
       if (res.apiResponse.errCode == 0) {
         // 记录一下回复的内容和时间（真实写入：走 COS inbox 聚合链路）
-        const token = passcode.getToken();
-        if (!this.ensureToken(token)) {
+        // 口令在关于页解锁时已存进本机，直接取；取不到会提示重新解锁
+        const token = passcode.ensureToken();
+        if (!token) {
           wx.hideLoading();
           return;
         }
@@ -138,8 +140,8 @@ Page({
 
   async bindCheck() {
     const feedback = this.data.feedback;
-    const token = passcode.getToken();
-    if (!this.ensureToken(token)) return;
+    const token = passcode.ensureToken();
+    if (!token) return;
 
     // 更新反馈状态为已处理（真实写入：走 COS inbox 聚合链路）
     await putInbox('manage', {
@@ -147,28 +149,6 @@ Page({
       token: token,
       feedback_id: feedback._id,
       patch: { status: 'done' },
-    });
-  },
-
-  // 提交前检查：没有口令就不让提交（否则后台会静默丢弃）
-  ensureToken(token) {
-    if (token) return true;
-    wx.showModal({
-      title: "还没设置管理口令",
-      content: "提交需要管理口令，否则后台会直接丢弃。现在设置吗？",
-      confirmText: "去设置",
-      success: r => {
-        if (r.confirm) this.editToken();
-      },
-    });
-    return false;
-  },
-
-  editToken() {
-    passcode.promptToken({
-      onSaved: () => {
-        wx.showToast({ title: passcode.hasToken() ? "口令已保存" : "已清除口令", icon: "none" });
-      },
     });
   },
 })

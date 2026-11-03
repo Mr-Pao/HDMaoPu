@@ -32,51 +32,17 @@ function formatDate(iso) {
 
 Page({
   data: {
-    hasToken: false,
     loading: true,
     items: [],
   },
 
   onLoad() {
-    this.setData({ hasToken: passcode.hasToken() });
     this.loadList();
-  },
-
-  onShow() {
-    const hasToken = passcode.hasToken();
-    if (hasToken !== this.data.hasToken) this.setData({ hasToken });
   },
 
   // 下拉刷新（newsAdmin.json 里开了 enablePullDownRefresh）
   onPullDownRefresh() {
     this.loadList().then(() => wx.stopPullDownRefresh());
-  },
-
-  // ---------- 口令 ----------
-
-  editToken() {
-    passcode.promptToken({
-      onSaved: () => {
-        const hasToken = passcode.hasToken();
-        this.setData({ hasToken });
-        wx.showToast({ title: hasToken ? "口令已保存" : "已清除口令", icon: "none" });
-      },
-    });
-  },
-
-  // 提交前确认本机有口令，没有就引导设置。返回 true 才能继续。
-  async ensureToken() {
-    if (passcode.hasToken()) return true;
-    const ok = await new Promise(resolve => {
-      wx.showModal({
-        title: "需要管理口令",
-        content: "提交前先在右上角「口令」里设置一次管理口令，否则后台会直接丢弃。",
-        confirmText: "去设置",
-        success: res => resolve(!!(res && res.confirm)),
-      });
-    });
-    if (ok) this.editToken();
-    return false;
   },
 
   // ---------- 列表 ----------
@@ -124,7 +90,9 @@ Page({
   async removeNews(e) {
     const { id, title } = e.currentTarget.dataset;
     if (!id) return;
-    if (!(await this.ensureToken())) return;
+    // 口令在关于页解锁时已存好，直接取；取不到会提示重新解锁
+    const token = passcode.ensureToken();
+    if (!token) return;
 
     const res = await new Promise(resolve => {
       wx.showModal({
@@ -142,7 +110,7 @@ Page({
     const ok = await putInbox("manage", {
       action: "manageNews",
       op: "remove",
-      token: passcode.getToken(),
+      token,
       news_id: id,
     });
 

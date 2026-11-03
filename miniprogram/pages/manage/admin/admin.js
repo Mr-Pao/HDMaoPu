@@ -44,8 +44,6 @@ function formatDate(iso) {
 
 Page({
   data: {
-    hasToken: false, // 本机是否已存管理口令（只控制右上角提示条显隐）
-
     tab: "cat", // cat | photo | link，由 onLoad 的 ?tab= 决定
     pageTitle: TAB_META.cat,
 
@@ -98,17 +96,11 @@ Page({
   onLoad(options) {
     // 「关于 → 管理后台」的三个菜单项分别带 ?tab=cat|photo|link 进来
     const tab = TAB_META[(options && options.tab) || ""] ? options.tab : "cat";
-    this.setData({ tab, pageTitle: TAB_META[tab], hasToken: passcode.hasToken() });
+    this.setData({ tab, pageTitle: TAB_META[tab] });
     wx.setNavigationBarTitle({ title: TAB_META[tab] });
 
     // 本页没有口令门，进来直接加载当前 tab
     this.loadCurrentTab();
-  },
-
-  onShow() {
-    // 用户可能在其他页/其他入口刚存过口令，每次回来同步一次
-    const hasToken = passcode.hasToken();
-    if (hasToken !== this.data.hasToken) this.setData({ hasToken });
   },
 
   // 按当前 tab 做一次首次加载
@@ -118,34 +110,6 @@ Page({
     } else {
       this.loadCats();
     }
-  },
-
-  // ---------- 口令 ----------
-
-  // 右上角「口令」按钮：输一次永久存本机（提交时随请求上传，真校验在 Actions 端）
-  editToken() {
-    passcode.promptToken({
-      onSaved: () => {
-        const hasToken = passcode.hasToken();
-        this.setData({ hasToken });
-        wx.showToast({ title: hasToken ? "口令已保存" : "已清除口令", icon: "none" });
-      },
-    });
-  },
-
-  // 提交前检查：没有口令就不让提交（否则后台会静默丢弃）
-  // 返回 true 表示可以继续，false 表示已拦下
-  ensureToken(token) {
-    if (token) return true;
-    wx.showModal({
-      title: "还没设置管理口令",
-      content: "提交需要管理口令，否则后台会直接丢弃。现在设置吗？",
-      confirmText: "去设置",
-      success: r => {
-        if (r.confirm) this.editToken();
-      },
-    });
-    return false;
   },
 
   // ---------- 公共 ----------
@@ -162,10 +126,6 @@ Page({
       console.warn("[admin] 猫列表加载失败", e);
       wx.showToast({ title: "猫列表加载失败", icon: "none" });
     }
-  },
-
-  getToken() {
-    return passcode.getToken();
   },
 
   submitToast() {
@@ -240,9 +200,9 @@ Page({
     }
     if (this.data.saving) return;
 
-    // 提交前先确认本机有口令，否则后台会静默丢弃
-    const token = this.getToken();
-    if (!this.ensureToken(token)) return;
+    // 口令在关于页解锁时已经存好，这里直接取；取不到会提示重新解锁，不再弹输入框
+    const token = passcode.ensureToken();
+    if (!token) return;
 
     this.setData({ saving: true });
 
@@ -313,8 +273,8 @@ Page({
     const hidden = e.currentTarget.dataset.hidden === true;
     if (!id) return;
 
-    const token = this.getToken();
-    if (!this.ensureToken(token)) return;
+    const token = passcode.ensureToken();
+    if (!token) return;
 
     wx.showLoading({ title: "提交中", mask: true });
     const ok = await putInbox("manage", {
@@ -544,8 +504,8 @@ Page({
   async saveLinks() {
     if (this.data.linkSaving) return;
 
-    const token = this.getToken();
-    if (!this.ensureToken(token)) return;
+    const token = passcode.ensureToken();
+    if (!token) return;
 
     this.setData({ linkSaving: true });
 

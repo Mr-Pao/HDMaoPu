@@ -31,7 +31,6 @@ function formatTime(iso) {
 
 Page({
   data: {
-    hasToken: false, // 本机是否已存管理口令（只控制顶部提示条显隐）
     loading: false,
     items: [],
     error: "",
@@ -43,28 +42,11 @@ Page({
   },
 
   onLoad() {
-    this.setData({ hasToken: passcode.hasToken() });
     this.loadQueue();
-  },
-
-  onShow() {
-    const hasToken = passcode.hasToken();
-    if (hasToken !== this.data.hasToken) this.setData({ hasToken });
   },
 
   onPullDownRefresh() {
     this.loadQueue().then(() => wx.stopPullDownRefresh());
-  },
-
-  // 右上角「口令」按钮：输一次永久存本机（审核提交时随请求上传，真校验在 Actions 端）
-  editToken() {
-    passcode.promptToken({
-      onSaved: () => {
-        const hasToken = passcode.hasToken();
-        this.setData({ hasToken });
-        wx.showToast({ title: hasToken ? "口令已保存" : "已清除口令", icon: "none" });
-      },
-    });
   },
 
   async loadQueue() {
@@ -110,26 +92,13 @@ Page({
     }
   },
 
-  // 提交前检查：没有口令就不让提交（否则后台会静默丢弃这条 decision）
-  ensureToken(token) {
-    if (token) return true;
-    wx.showModal({
-      title: "还没设置管理口令",
-      content: "提交需要管理口令，否则后台会直接丢弃。现在设置吗？",
-      confirmText: "去设置",
-      success: r => {
-        if (r.confirm) this.editToken();
-      },
-    });
-    return false;
-  },
-
   async decide(e) {
     const { id, action } = e.currentTarget.dataset;
     if (!id || !action) return;
 
-    const token = passcode.getToken();
-    if (!this.ensureToken(token)) return;
+    // 口令在关于页解锁时已存好，直接取；取不到会提示重新解锁
+    const token = passcode.ensureToken();
+    if (!token) return;
 
     wx.showLoading({ title: "提交中", mask: true });
     const ok = await putInbox("decision", {

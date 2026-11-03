@@ -22,28 +22,10 @@
   color: var(--color-primary-text);
 }
 
-.head-lock {
-  font-size: 26rpx;
-  color: var(--color-gray-max);
-  padding: 8rpx 20rpx;
-  border: 1rpx solid var(--color-gray-normal);
-  border-radius: 24rpx;
-}
-
 .head-tip {
   font-size: 24rpx;
   color: var(--color-gray-max);
   margin-bottom: 26rpx;
-}
-
-.token-tip {
-  margin: 0 0 16rpx;
-  padding: 14rpx 20rpx;
-  border-radius: 16rpx;
-  background: var(--dk-accent-soft);
-  color: var(--dk-accent);
-  font-size: 24rpx;
-  line-height: 1.5;
 }
 
 /* ==================== 新建按钮 ==================== */

@@ -58,5 +58,3 @@
     <text>{{tipText || "没有修改公告的权限"}}</text>
     <button bindtap='goBack' wx:if="{{tipBtn}}">打扰了</button>
 </view>
-<!-- 管理口令弹层：原生 input，键盘右下角「完成」= 确认（不是换行） -->
-<passcode-modal />

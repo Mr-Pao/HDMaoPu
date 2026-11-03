@@ -2,11 +2,13 @@
 //
 // 口诀：
 //   - 口令绝不写进小程序包，也不进 config.js。
-//   - 用户在小程序里输一次，只存手机本地 storage（key: manage_passcode），永久有效。
+//   - **全站只有一次口令输入**：关于页连击标题 5 次 → 输口令 → 同时写入两个 storage：
+//       admin_unlocked（已解锁标记，控制管理菜单显隐与 checkAuth）
+//       manage_passcode（口令原文，提交时随 inbox 请求上传）
+//   - 解锁之后所有管理页都直接读本机口令提交，**不再弹任何口令框**。
 //   - 客户端不做对错校验，真校验在 GitHub Actions 端 scripts/process-inbox.js 的 tokenOk()，
 //     它读的是 data/gate.json 的 code——和小程序解锁用的是同一个值，全站只有这一处口令。
 //     口令不对的提交会被 drop:bad-token 直接丢弃，页面不会报错。
-//   - 所以两个管理页在提交前都要检查本地是否已有口令，没有就引导用户先设置。
 
 const KEY = "manage_passcode";
 
@@ -126,6 +128,33 @@ function legacyPrompt(done) {
   }
 }
 
+// 统一的提交前取口令入口。**绝不弹输入框**——
+// 用户既然已经进到管理后台，就一定在关于页输过口令，这里直接读本机那份。
+// 只有在「本机解锁过但没存下口令」（旧版本解锁 / 手动清了缓存）时才会亮一次提示，
+// 让用户回关于页重新解锁一次，之后就彻底安静了。
+function ensureToken() {
+  const token = getToken();
+  if (token) return token;
+  hintReunlock();
+  return "";
+}
+
+let hinting = false;
+
+function hintReunlock() {
+  if (hinting) return;
+  hinting = true;
+  wx.showModal({
+    title: "需要重新解锁一次",
+    content: "本机还没有管理口令。请回到「关于」页连击标题 5 次，重新解锁管理后台即可。",
+    showCancel: false,
+    confirmText: "知道了",
+    complete: () => {
+      hinting = false;
+    },
+  });
+}
+
 module.exports = {
   getToken,
   hasToken,
@@ -133,4 +162,5 @@ module.exports = {
   promptToken,
   isUnlocked,
   setUnlocked,
+  ensureToken,
 };

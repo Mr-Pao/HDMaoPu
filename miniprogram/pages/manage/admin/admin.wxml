@@ -1,13 +1,10 @@
 <!--pages/manage/admin/admin.wxml-->
 <view class="container">
 
-  <!-- 本页没有口令锁屏：右上角「口令」输一次永久存本机 -->
+  <!-- 本页没有口令锁屏：关于页解锁时口令已存进本机，这里直接读写，不再问口令 -->
   <view class="head">
     <view class="head-title">{{pageTitle}}</view>
-    <view class="head-lock" bindtap="editToken">口令</view>
   </view>
-  <view class="head-tip">提交时会带上本机保存的管理口令；口令不对，后台会直接丢弃，所以请先在右上角「口令」里设置一次。</view>
-  <view class="token-tip" wx:if="{{!hasToken}}" bindtap="editToken">还没设置管理口令，点这里设置一次（提交需要）</view>
 
   <!-- 入口在「关于 → 管理后台」的三项里，本页不再有 tab 切换 -->
 
@@ -171,5 +168,3 @@
   </block>
 
 </view>
-<!-- 管理口令弹层：原生 input，键盘右下角「完成」= 确认（不是换行） -->
-<passcode-modal />

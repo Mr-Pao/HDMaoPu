@@ -4,10 +4,8 @@
   <!-- 公告管理：列表 + 新建 + 改 + 删都在这页，「猫抓板」普通页面不再有任何管理按钮 -->
   <view class="head">
     <view class="head-title">猫抓板公告</view>
-    <view class="head-lock" bindtap="editToken">口令</view>
   </view>
   <view class="head-tip">增删改都会提交到后台，几分钟内自动汇总生效。</view>
-  <view class="token-tip" wx:if="{{!hasToken}}" bindtap="editToken">还没设置管理口令，点这里设置一次（提交需要）</view>
 
   <view class="toolbar">
     <view class="btn-add" bindtap="createNews">＋ 新建公告</view>
@@ -35,5 +33,3 @@
   </view>
 
 </view>
-<!-- 管理口令弹层：原生 input，键盘右下角「完成」= 确认（不是换行） -->
-<passcode-modal />

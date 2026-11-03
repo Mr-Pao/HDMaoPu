@@ -1,13 +1,11 @@
 <!--pages/manage/review/review.wxml-->
 <view class="container">
 
-  <!-- 本页没有口令锁屏：右上角「口令」输一次永久存本机 -->
+  <!-- 本页没有口令门：关于页解锁时口令已存进本机，这里直接提交，不再问口令 -->
   <view class="head">
     <view class="head-title">待审核 {{items.length}} 条</view>
-    <view class="head-lock" bindtap="editToken">口令</view>
   </view>
   <view class="head-tip">提交后将在下一次聚合（1 小时内）生效</view>
-  <view class="token-tip" wx:if="{{!hasToken}}" bindtap="editToken">还没设置管理口令，点这里设置一次（审核提交需要）</view>
 
   <view class="loading" wx:if="{{loading}}">加载中…</view>
 
@@ -43,5 +41,3 @@
   </view>
 
 </view>
-<!-- 管理口令弹层：原生 input，键盘右下角「完成」= 确认（不是换行） -->
-<passcode-modal />
