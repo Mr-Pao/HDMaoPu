@@ -13,7 +13,7 @@
 ## 技术栈与目录
 
 - 微信原生小程序，无框架。`miniprogramRoot: miniprogram/`，appid `wx5d52c6c8f098ed5e`，`libVersion: 2.24.7`，`nodeModules: false`
-- 页面：`app.json` 注册 **27 页 + 分包 `pages/packageA` 1 页**（v4.0.63 管理后台重构删 4 页：imProcess/checkPhotos/checkAdoption/pageSettings，31→27）（v4.0.35 加 newsAdmin，30→31）（v4.0.17 删徽章 38→34；v4.0.23 删用户档案页 34→30）
+- 页面：`app.json` 注册 **26 页 + 分包 `pages/packageA` 1 页**（v4.0.65 删「审核队列」review 页，27→26）（v4.0.63 管理后台重构删 4 页：imProcess/checkPhotos/checkAdoption/pageSettings，31→27）（v4.0.35 加 newsAdmin，30→31）（v4.0.17 删徽章 38→34；v4.0.23 删用户档案页 34→30）
 - `miniprogram/utils/datasource.js`（1321 行）：自研的 mpserverless 兼容层，实现 `createJsonServerless({baseUrl})`
 - `miniprogram/utils/writeback.js`：COS inbox 写入通道（客户端零密钥）
 - `data/`：19 个 JSON，即"数据库"（删徽章三件套后从 22 降下来）
@@ -109,6 +109,7 @@ NODE="C:/Users/yzx49/Program/HBuilderX/plugins/node/node.exe"
 - **不要 force push**；push 失败就报告，不重试、不 `pull` 硬合并
 - `issue_comment` 事件**只读默认分支**（`master`）的 workflow；`schedule` 同理。所以 `process-inbox` 的 cron 定义在 `master`，但 job 内 checkout `cos` 运行并回写 `cos`
 - `sync-data.yml` 的 `branches` 必须是 `cos`，`paths` 是 `data/**`（曾因分支改名未跟改，导致 COS 数据停在旧版）
+- ⚠️ **`GITHUB_TOKEN` 推送产生的 commit 不会触发其他 workflow**（GitHub 防递归的既定行为）。所以「聚合 job 提交 data/ → 靠 sync-data.yml 上传 COS」这条链路**根本不存在**，`sync-data.yml` 实际上只对**人**手工 push 的 `data/**` 生效。**任何会写 `data/` 的 workflow 必须自己调 `scripts/upload-data.js` 直传 COS**。2026-11-03 的「管理页加了位置、小程序看不到」事故就是这个原因（聚合提交 `613bd56` 改了 `data/setting.json` 但 COS 停在 11-02 版本）。已修：`process-inbox.yml` 与 `review.yml` 的 **`cos` 和 `master` 两份**都补了 `- name: Upload data to COS`（`if: always() && steps.xxx.outputs.flush_ok/ok == '1'`），并实测通过（run `41576091873` 该 step `success`，COS `Last-Modified` 立刻更新）。`review.yml` 的 master 版原来还是**旧版**：`permissions.contents: read`、`checkout` 没写 `ref`（默认 master）、且**整段 commit 步骤缺失** → 审核通过的照片记录从来上不了线，已整份对齐 cos 版
 - fork 仓库的 scheduled workflow 默认禁用，需在 Actions 页手动 Enable
 - `concurrency.cancel-in-progress: false` 不能改成 true：上传中途被杀会留下传了一半的数据
 - Actions secrets 只需 4 个 COS 变量；管理口令统一读 `data/gate.json` 的 `code`（v4.0.42 起），`REVIEW_PASSCODE` 只作老部署兜底、可不配
@@ -144,7 +145,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.64`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.65`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -161,7 +162,15 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-03）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.64`
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.65`
+- **v4.0.65：管理后台按「一个对象一个入口」重组（2026-11-03）** — 起因：用户问「猫资料编辑和猫猫管理不重复吗」。结论是**确实重复**，且照片操作有一半是假写。判据：**一个对象只留一个入口；凡服务端没有 action 的按钮一律删掉，不再假装能点**。
+  - 删 `pages/manage/admin` 的 cat tab（与 catManage 改同一批 cat 字段，且 patch 只覆盖 14/19 白名单字段）和 photo tab（下架/恢复搬进 catInfoTab 照片卡）。`admin` 现在**只剩友情链接**：`admin.js` 552→约 300 行，`admin.wxml` 170→约 62 行，`TAB_META`/`data.tab`/`loadCurrentTab`/`loadCats`/`submitToast`/`GENDER_OPTIONS`/`ADOPT_OPTIONS`/`formatDate` 与 wxss 的 `.picker-row`/`.photo-*` 段全部删除；`onLoad()` 改无参、标题固定「友情链接」。菜单路径同步去掉 `?tab=link`。
+  - **删 `pages/manage/review/` 整个目录**（页面+app.json 注册+`utils/msg.js` 引用）。原因：`review_queue.json` 永不传 COS（`upload-data.js:38` 的 `UPLOAD_DENYLIST`），小程序端读到的恒为空 → 这条「审核队列」入口名不副实。真实审核在 GitHub Issue 里评论 `/ok`。⚠️ 以后要恢复审核能力，必须先改上传白名单（会公开未审数据）或另做服务端接口。
+  - `catInfoTab` 照片按钮重做：删 `deletePhoto`/`doDelectPhoto`（`api.managePhoto({type:'delete'})` 假写）/`inputPher`/`updatePher`（假写且 wxml 无绑定）。新增 `photoMore(e)`（ActionSheet：下架/恢复 + 移动到其他猫猫）与 `togglePhotoHidden()`（真写 `managePhoto`），`reverseBest()` 改真写 `setBestPhoto` 并在成功后 `reloadPhotos()` 整表刷新（否则同猫另一张的精选角标残留）。wxml 加 `.hidden-badge`「已下架」角标，按钮文案「删除/转移」→「下架/转移」。
+  - **服务端新增 `setBestPhoto` action**（`scripts/process-inbox.js` 的 `handleManage` 现支持 9 个 action）：`manageSetBestPhoto()` 会先把同猫其它 `best` 置 false、再置这一张，并调 `recalcPhotoCountBest()` 重算 `cat.photo_count_best` —— 否则破 `scripts/verify-demo-data.js` 的「每猫最多 1 张 best」「photo_count_best 与 best 张数一致」两条不变量。自测已补 3 条用例（正常/错 token/照片不存在）。
+  - `catManage` 修正：`activeTab` 默认 `'relation'` → **`'info'`**；删 `handleCreateNewCat`/`onCatCreated`/`onInfoTabModeChange`/`isNewMode`/`hasShownInfoModal`（聚合端没有新建猫 action，点了也是死路）；`onLoad` 不再在 `wx:if` 未渲染时 `selectComponent('#catInfoTab')`（原来恒 null）；无选中猫时统一 toast「先搜索并选择一只猫猫」。位置展示改 `area ? campus + ' ' + area : campus`（真实数据 area 全空串）。
+  - `info.js` 管理菜单 **9 项 → 6 项**：操作手册 / 猫猫管理（新增 `num:"numChkPhotos"` 角标）/ 反馈处理 / 猫抓板公告 / 位置区域花色 / 友情链接。
+  - 验证：改动 JS 全过 `node --check`、`app.json` 注册 26 页 × 4 文件齐全、47 单测全过、66 项数据校验全过、`DRY_RUN=1 node scripts/process-inbox.js` 输出含 `ok:photo-best-set` 且各项 drop 原因符合预期。
 - **v4.0.64：提交后自动返回，防重复提交（2026-11-03）** — 新增统一收尾函数 `utils/syncTip.js` 的 `backAfterSubmit(content, opts)`：`wx.showToast` + `setTimeout(wx.navigateBack, delay)`，模块级 `backing` 布尔防重入（`navigateBack` 的 `complete` 里复位，避免旧锁让下一次提交毫无反应）。
   - 表单型页提交成功即返回：`pages/news/createNews`（另加 `data.submitting` 锁 + 按钮 `disabled="{{submitting}}"`）、`pages/genealogy/detailCat/ratingDetail`、`pages/genealogy/feedbackDetail`（成功返回、失败留在页上）、`pages/genealogy/addPhoto`（只在待上传列表清空时返回）、`components/catInfoTab`、`components/relationTab`、`pages/manage/admin` 的 cat/link 两个 tab。
   - **列表型/容器型不返回**，只加防重锁：`pages/manage/review`（靠 `showLoading mask`）、`pages/manage/checkFeedbacks`（新增 `this.checking`）、`pages/manage/newsAdmin`（新增 `this.removing`）、`pages/manage/replyFeedback`（新增 `this.replying`）、`pages/genealogy/commentBoard`、`pages/manage/admin` 的 photo tab。

@@ -27,24 +27,6 @@
   margin-bottom: 26rpx;
 }
 
-/* ==================== 选择器 ==================== */
-.picker-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--color-surface);
-  border-radius: 20rpx;
-  padding: 26rpx;
-  font-size: 28rpx;
-  color: var(--color-primary-text);
-  margin-bottom: 22rpx;
-}
-
-.picker-value {
-  color: var(--color-primary, #0C5F03);
-  font-size: 28rpx;
-}
-
 /* ==================== 表单 ==================== */
 .card {
   background: var(--color-surface);
@@ -153,59 +135,6 @@
 .save-btn[disabled] {
   background: var(--color-primary-light, #8FBC94);
   color: var(--color-surface);
-}
-
-/* ==================== 照片审核 ==================== */
-.photo-card {
-  display: flex;
-  align-items: center;
-  background: var(--color-surface);
-  border-radius: 20rpx;
-  padding: 20rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-}
-
-.photo-thumb {
-  width: 200rpx;
-  height: 150rpx;
-  border-radius: 20rpx;
-  background: var(--color-gray-light, #F2F2F2);
-  flex-shrink: 0;
-}
-
-.photo-info {
-  flex: 1;
-  margin-left: 24rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 16rpx;
-}
-
-.photo-state {
-  font-size: 24rpx;
-  color: var(--color-primary, #0C5F03);
-}
-
-.photo-state.state-hidden {
-  color: #D93025;
-}
-
-.photo-btn {
-  padding: 10rpx 36rpx;
-  border-radius: 28rpx;
-  font-size: 26rpx;
-}
-
-.btn-hide {
-  color: var(--color-surface);
-  background: #D93025;
-}
-
-.btn-restore {
-  color: var(--color-surface);
-  background: var(--color-primary, #0C5F03);
 }
 
 /* ==================== 友情链接 ==================== */

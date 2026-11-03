@@ -200,6 +200,19 @@
   letter-spacing: 1rpx;
 }
 
+/* 已下架角标：放右上角，和精选角标（底部）不冲突 */
+.hidden-badge {
+  position: absolute;
+  top: 12rpx;
+  right: 12rpx;
+  background-color: rgba(217, 48, 37, 0.9);
+  color: #FFFFFF;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  line-height: 1.4;
+}
+
 /* 照片信息 */
 .photo-info {
   padding: 24rpx;

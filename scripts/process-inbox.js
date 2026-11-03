@@ -829,6 +829,7 @@ function handleManage(p) {
   if (data.action === 'managePageSettings') return managePageSettings(data);
   if (data.action === 'saveFilter') return manageSaveFilter(data);
   if (data.action === 'movePhoto') return manageMovePhoto(data);
+  if (data.action === 'setBestPhoto') return manageSetBestPhoto(data);
   return 'drop:bad-action';
 }
 
@@ -866,6 +867,49 @@ function managePhoto(data) {
   photo.hidden = !!data.hidden;
   markTouched('photo');
   return 'ok:photo-hidden';
+}
+
+// 「设为精选 / 取消精选」。
+// 头像链路取的是 { cat_id, verified:true, best:true }，而 verify-demo-data.js 强校验
+// 「每只猫最多 1 张 best」「photo_count_best 与 best 张数一致」，所以这里不能只翻一张：
+//   设精选 → 先把同猫其它 best 全置 false，再置这张 true，最后重算 photo_count_best。
+//   取消精选 → 只把这张置 false，再重算。
+// 统计口径与 verify-demo-data.js 一致：只数 deleted 不为 true 的照片。
+function recalcPhotoCountBest(catId) {
+  const data = loadData('photo');
+  const n = data.items.filter(it => it && it.cat_id === catId && it.best === true && it.deleted !== true).length;
+  const cat = findItem('cat', catId);
+  if (cat) cat.photo_count_best = n;
+  return n;
+}
+
+function manageSetBestPhoto(data) {
+  const photoId = data.photo_id;
+  if (!photoId) return 'drop:no-photo-id';
+
+  const photo = findItem('photo', photoId);
+  if (!photo) return 'drop:photo-not-found';
+
+  const catId = photo.cat_id;
+  if (!catId) return 'drop:no-cat-id';
+  const cat = findItem('cat', catId);
+  if (!cat) return 'drop:cat-not-found';
+
+  const wantBest = data.best !== false;
+  const photos = loadData('photo');
+
+  if (wantBest) {
+    // 同猫旧 best 全部下掉，保证「每只猫最多 1 张 best」
+    photos.items.forEach(it => {
+      if (it && it.cat_id === catId && it._id !== photoId && it.best === true) it.best = false;
+    });
+  }
+  photo.best = wantBest;
+
+  recalcPhotoCountBest(catId);
+  markTouched('photo');
+  markTouched('cat');
+  return wantBest ? 'ok:photo-best-set' : 'ok:photo-best-unset';
 }
 
 // 友情链接：整体覆盖 setting 里 _id='friendLink' 的 apps。
@@ -1623,6 +1667,10 @@ function selftestObjects() {
     // manage 自测：token 取 data/gate.json 的 code，代码里不出现真实口令
     mk('manage', 'openid-a', { action: 'updateCat', token: SELFTEST_TOKEN, cat_id: cat, patch: { name: '大橘（自测改名）', characteristics: '亲人；自测晒太阳' } }, 15),
     mk('manage', 'openid-a', { action: 'managePhoto', token: SELFTEST_TOKEN, photo_id: photo, hidden: true }, 16),
+    // v4.0.65 新增：设/取消精选。服务端要保证「每猫最多 1 张 best」+ 同步 photo_count_best
+    mk('manage', 'openid-a', { action: 'setBestPhoto', token: SELFTEST_TOKEN, photo_id: photo, best: true }, 16),
+    mk('manage', 'openid-a', { action: 'setBestPhoto', token: 'definitely-wrong-token', photo_id: photo, best: true }, 16), // 口令错，应被丢弃
+    mk('manage', 'openid-a', { action: 'setBestPhoto', token: SELFTEST_TOKEN, photo_id: '__NONE__', best: true }, 16), // 照片不存在，应被丢弃
     mk('manage', 'openid-a', { action: 'updateCat', token: 'definitely-wrong-token', cat_id: cat, patch: { name: '不该生效' } }, 17), // 口令错，应被丢弃
     mk('manage', 'openid-a', { action: 'updateCat', token: SELFTEST_TOKEN, cat_id: cat, patch: { popularity: 999, name: '也不该生效' } }, 18), // 白名单外字段，整条拒绝
     mk('manage', 'openid-a', { action: 'deleteEverything', token: SELFTEST_TOKEN }, 19), // 未知 action，应被丢弃

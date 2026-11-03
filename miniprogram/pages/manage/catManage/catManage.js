@@ -1,209 +1,134 @@
+// 猫猫管理（v4.0.65 起是**唯一**的猫资料入口）
+//
+// 历史：以前「关于 → 管理后台」里同时有「猫资料编辑」(admin?tab=cat) 和「猫猫管理」两个入口，
+// 改的是同一批 cat 字段，前者是简版表单、后者是全功能版。v4.0.65 删掉了简版，
+// 照片的下架/精选/转移也一并收进本页的照片卡（原来在 admin?tab=photo）。
+//
+// 本页只做三件事，全部是真实写入（putInbox → COS inbox/manage/ → Actions 聚合）：
+//   1. 搜猫 → 选中
+//   2. <cat-info-tab> 改资料（updateCat，白名单 19 字段）
+//   3. <relation-tab> 改猫际关系（updateCat，patch.relations）
+//
+// ⚠️ 聚合端没有新建猫的 action，所以本页不提供「新建猫」入口（点了也落不了库）。
+
 import { checkAuth } from "../../../utils/user";
 import { getAvatar, getCatItem } from "../../../utils/cat";
 import config from "../../../config";
+
 const app = getApp();
+
 Page({
-  /**
-   * 页面的初始数据
-   */
   data: {
     auth: false,
-    activeTab: 'relation', // 默认激活关系选项卡
+    activeTab: 'info', // info | relation，默认进资料编辑
     selectedCat: null, // 当前选中的猫咪
     showSearchResults: false, // 是否显示搜索结果
     searchKeyword: '', // 搜索关键词
     searchResults: [], // 搜索结果列表
-    catInfoTab: null, // 信息编辑组件实例
-    isNewMode: false, // 新增模式标志
-    hasShownInfoModal: false, // 是否已显示过添加猫咪的提示框
 
     text_cfg: config.text, // 文本配置
   },
 
-  /**
-   * 生命周期函数--监听页面加载
-   */
   async onLoad(options) {
-    // 检查用户权限
-    if (await checkAuth(this, 2)) {
-      this.setData({
-        auth: true,
-        catInfoTab: this.selectComponent('#catInfoTab')
-      });
+    if (!(await checkAuth(this, 2))) return;
 
-      // 加载对应猫
-      if (options.cat_id) {
-        this.getCatById(options.cat_id);
-      }
+    this.setData({ auth: true });
 
-      // 切换到对应选项卡
-      if (options.activeTab) {
-        this.setData({ activeTab: options.activeTab });
-      }
+    // 加载对应猫
+    if (options.cat_id) {
+      this.getCatById(options.cat_id);
+    }
+
+    // 切换到对应选项卡（checkFeedbacks 长按猫名会带 activeTab=info 进来）
+    if (options.activeTab === 'info' || options.activeTab === 'relation') {
+      this.setData({ activeTab: options.activeTab });
     }
   },
 
-  /**
-   * 切换选项卡
-   */
+  // 切换选项卡
   switchTab(e) {
     const tab = e.currentTarget.dataset.tab;
-    this.setData({
-      activeTab: tab,
-      catInfoTab: this.selectComponent('#catInfoTab')
-    });
+    this.setData({ activeTab: tab });
 
     if (tab === 'info' && this.data.selectedCat) {
+      // cat-info-tab 在 info tab 才渲染，等一帧再取组件实例
       setTimeout(() => {
         const catInfoTab = this.selectComponent('#catInfoTab');
-        if (catInfoTab) {
-          catInfoTab.loadCatData(this.data.selectedCat);
-        }
+        if (catInfoTab) catInfoTab.loadCatData(this.data.selectedCat);
       }, 300);
     }
 
-    // 如果切换到信息但没有选中猫，引导用户创建新猫
-    if (tab === 'info' && !this.data.selectedCat && !this.data.hasShownInfoModal) {
-      const infoTab = this.selectComponent('#catInfoTab');
-      if (infoTab) {
-        wx.showModal({
-          title: '提示',
-          content: '是否要添加新猫？',
-          confirmText: '添加新猫',
-          cancelText: '取消',
-          success: (res) => {
-            if (res.confirm) {
-              infoTab.createNewCat();
-              // 更新新建模式状态
-              this.setData({
-                isNewMode: true
-              });
-            }
-            // 无论用户是否确认，都标记为已显示过弹窗
-            this.setData({
-              hasShownInfoModal: true
-            });
-          }
-        });
-      } else {
-        // 没有找到组件实例也标记为已显示过弹窗，避免重复弹出
-        this.setData({
-          hasShownInfoModal: true
-        });
-      }
+    // 没选猫时提示先搜猫 —— 以前这里会弹「是否添加新猫」，但聚合端没有新建猫的 action
+    if (tab === 'info' && !this.data.selectedCat) {
+      wx.showToast({ title: '先搜索并选择一只猫猫', icon: 'none', duration: 2000 });
     }
   },
 
-  /**
-   * 搜索输入事件
-   */
   onSearchInput(e) {
-    this.setData({
-      searchKeyword: e.detail.value
-    });
-    // 清除输入框时隐藏搜索结果
+    this.setData({ searchKeyword: e.detail.value });
     if (!e.detail.value.trim()) {
-      this.setData({
-        showSearchResults: false
-      });
+      this.setData({ showSearchResults: false });
     }
   },
 
-  /**
-   * 搜索猫咪
-   */
   async searchCat() {
     const keyword = this.data.searchKeyword.trim();
-    if (!keyword) {
-      return;
-    }
+    if (!keyword) return;
 
     try {
       wx.showLoading({ title: '搜索中...' });
-      // 搜索名称或昵称
       const { result } = await app.mpServerless.db.collection('cat').find({
         $or: [
-          { name: { $regex: keyword} },
-          { nickname: { $regex: keyword} },
+          { name: { $regex: keyword } },
+          { nickname: { $regex: keyword } },
         ]
       }, { limit: 10 });
 
-      // 加载头像
       const cats = [];
       for (const cat of result) {
         cat.avatar = await getAvatar(cat._id, cat.photo_count_best);
         cats.push(cat);
       }
 
-      this.setData({
-        searchResults: cats,
-        showSearchResults: true
-      });
-
+      this.setData({ searchResults: cats, showSearchResults: true });
       wx.hideLoading();
     } catch (error) {
       console.error("搜索猫咪失败:", error);
       wx.hideLoading();
-      wx.showToast({
-        title: '搜索失败',
-        icon: 'none'
-      });
+      wx.showToast({ title: '搜索失败', icon: 'none' });
     }
   },
 
-  /**
-   * 选择搜索结果
-   */
   selectCat(e) {
     const catId = e.currentTarget.dataset.id;
     this.getCatById(catId);
-    this.setData({
-      showSearchResults: false,
-      searchKeyword: '',
-      hasShownInfoModal: false // 重置弹窗标志，以便下次未选猫时能够再次弹出
-    });
+    this.setData({ showSearchResults: false, searchKeyword: '' });
   },
 
-  /**
-   * 生命周期函数--监听页面显示
-   */
   onShow() {
-    // 如果有选中的猫咪，刷新数据
+    // 如果有选中的猫咪，刷新数据（保存后返回这里要看到最新值）
     if (this.data.selectedCat) {
       this.getCatById(this.data.selectedCat._id);
     }
   },
 
-  /**
-   * 通过ID获取猫咪信息
-   */
   async getCatById(catId) {
     if (!catId) return;
 
     try {
       wx.showLoading({ title: '加载中...' });
 
-      // 获取猫咪基本信息和头像
       const cat = await getCatItem(catId);
       cat.avatar = await getAvatar(cat._id, cat.photo_count_best);
 
+      this.setData({ selectedCat: cat });
 
-      this.setData({
-        selectedCat: cat,
-        isNewMode: false // 重置新建模式
-      });
-
-
-      // 确保catInfoTab加载最新的猫咪信息
+      // 确保 catInfoTab 加载最新的猫咪信息
       setTimeout(() => {
         const catInfoTab = this.selectComponent('#catInfoTab');
         if (catInfoTab && this.data.activeTab === 'info') {
           try {
-            // 先初始化必要属性
-            catInfoTab.setData({
-              selectedCat: cat
-            });
-            // 调用loadCat
+            catInfoTab.setData({ selectedCat: cat });
             catInfoTab.loadCat(catId);
           } catch (error) {
             console.error('调用catInfoTab.loadCat出错:', error);
@@ -214,10 +139,7 @@ Page({
     } catch (error) {
       console.error("加载猫咪信息失败:", error);
       wx.hideLoading();
-      wx.showToast({
-        title: '加载猫咪信息失败',
-        icon: 'none'
-      });
+      wx.showToast({ title: '加载猫咪信息失败', icon: 'none' });
     }
   },
 
@@ -229,86 +151,38 @@ Page({
     });
   },
 
-  // 添加记录
+  // 关系选项卡：添加一条关系
   handleAddRecord() {
-    if (!this.data.selectedCat) {
-      return;
-    }
-
-    // 关系选项卡直接添加关系
-    if (this.data.activeTab === 'relation') {
-      const relationTab = this.selectComponent('#relationTab');
-      if (relationTab) {
-        relationTab.addRelation();
-      }
-    }
+    if (!this.data.selectedCat) return;
+    const relationTab = this.selectComponent('#relationTab');
+    if (relationTab) relationTab.addRelation();
   },
 
-  // 新建猫咪
-  handleCreateNewCat() {
-    // 先设置新建模式状态
-    this.setData({
-      isNewMode: true
-    });
-    const infoTab = this.selectComponent('#catInfoTab');
-    if (infoTab) {
-      infoTab.createNewCat();
-      this.setData({
-        catInfoTab: infoTab
-      });
-    } else {
-    }
-    // 如果当前不在信息选项卡，则切换到信息选项卡
-    if (this.data.activeTab !== 'info') {
-      this.setData({ activeTab: 'info' });
-    }
-  },
-
-  // 保存猫咪信息
+  // 保存猫咪信息（保存成功由 cat-info-tab 的 backAfterSubmit 收尾并返回上一页）
   handleSaveCat() {
     const infoTab = this.selectComponent('#catInfoTab');
-    if (infoTab) {
-      infoTab.saveCat();
-    }
-  },
-
-  // 创建新猫成功
-  onCatCreated(e) {
-    const catId = e.detail.catId;
-    if (catId) {
-      this.getCatById(catId);
-      // 成功提示与「提交后自动返回」统一由 catInfoTab 的 backAfterSubmit 负责，
-      // 这里不再重复 toast，避免把它的提示盖掉。
-    }
+    if (infoTab) infoTab.saveCat();
   },
 
   // 更新信息
   onCatUpdated(e) {
-    const catId = e.detail.catId;
+    const catId = e.detail && e.detail.catId;
     if (catId && this.data.selectedCat) {
       this.getCatById(catId);
     }
   },
 
-  // 信息选项卡模式变化
-  onInfoTabModeChange(e) {
-    const isNewCat = e.detail.isNewCat;
-    this.setData({
-      isNewMode: isNewCat
-    });
-  },
-
-  // 按钮
+  // 右下角浮动按钮：按当前 tab 决定是「加关系」还是「保存资料」
   handleActionButtonClick() {
-    const { activeTab } = this.data;
+    const { activeTab, selectedCat } = this.data;
+    if (!selectedCat) {
+      wx.showToast({ title: '先搜索并选择一只猫猫', icon: 'none' });
+      return;
+    }
     if (activeTab === 'relation') {
       this.handleAddRecord();
-    } else if (activeTab === 'info') {
-      if (this.data.selectedCat || this.data.isNewMode) {
-        this.handleSaveCat();
-      } else {
-        this.handleCreateNewCat();
-      }
+    } else {
+      this.handleSaveCat();
     }
   },
-}) 
+})

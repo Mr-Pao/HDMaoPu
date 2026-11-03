@@ -1,9 +1,8 @@
 import { text as text_cfg, cat_status_adopt } from "../../config";
-import { checkAuth, fillUserInfo } from "../../utils/user";
+import { fillUserInfo } from "../../utils/user";
 import { loadFilter } from "../../utils/page";
 import { getCatItemMulti } from "../../utils/cat";
 import { signCosUrl } from "../../utils/common";
-import api from "../../utils/cloudApi";
 import passcode from "../../utils/passcode";
 import { putInbox } from "../../utils/writeback";
 import { backAfterSubmit } from "../../utils/syncTip";
@@ -497,97 +496,91 @@ Component({
       backAfterSubmit('猫资料已提交，后台几分钟内汇总生效', { delay: 1400 });
       return true;
     },
-    async deletePhoto(e) {
+    // 照片操作入口：只提供「有服务端 action」的两件事——下架/恢复、转移到别的猫。
+    // 早期还有「删除照片」「改摄影师」，聚合端没有对应 action，点了只是本地假成功，
+    // v4.0.65 起全部删掉，不再给用户一个假装能点的按钮。
+    async photoMore(e) {
       const photo = e.currentTarget.dataset.photo;
-      const ActionRes = await wx.showActionSheet({
-        itemList: ['删除照片', '移动到其他猫猫']
-      });
+      const index = e.currentTarget.dataset.index;
+      if (!photo || !photo._id) return;
 
-      // 删除
-      if (ActionRes.tapIndex === 0) {
-        await this.doDelectPhoto(photo);
+      const hiddenLabel = photo.hidden ? '恢复这张（重新展示）' : '下架这张（不在前台显示）';
+      let ActionRes;
+      try {
+        ActionRes = await wx.showActionSheet({
+          itemList: [hiddenLabel, '移动到其他猫猫']
+        });
+      } catch (err) {
+        // 用户取消选择不算错误
         return;
       }
 
-      // 移动照片
+      if (ActionRes.tapIndex === 0) {
+        await this.togglePhotoHidden(photo, index);
+        return;
+      }
       if (ActionRes.tapIndex === 1) {
         await this.showMovePhoto(photo);
         return;
       }
     },
 
-    async doDelectPhoto(photo) {
-      const modalRes = await wx.showModal({
-        title: '提示',
-        content: '确定删除？',
-      });
+    // 下架 / 恢复：真实写入，聚合端 managePhoto 只改 photo.hidden
+    async togglePhotoHidden(photo, index) {
+      const token = passcode.ensureToken();
+      if (!token) return;
 
-      if (!modalRes.confirm) {
+      const nextHidden = !photo.hidden;
+      wx.showLoading({ title: '提交中', mask: true });
+      const ok = await putInbox('manage', {
+        action: 'managePhoto',
+        token: token,
+        photo_id: photo._id,
+        hidden: nextHidden,
+      });
+      wx.hideLoading();
+
+      if (!ok) {
+        wx.showToast({ title: '提交失败，请检查网络', icon: 'none' });
         return;
       }
 
-      await api.managePhoto({
-        type: "delete",
-        photo: photo
-      });
-
-      wx.showToast({
-        title: '删除成功',
-      });
-      await this.reloadPhotos();
+      // 本地先翻状态，真正的落库要等下一次聚合
+      this.setData({ ['photo[' + index + '].hidden']: nextHidden });
+      wx.showToast({ title: nextHidden ? '已提交下架' : '已提交恢复', icon: 'none' });
     },
 
-    // 设置 / 取消 照片精选
+    // 设置 / 取消 照片精选：真实写入。
+    // 聚合端 setBestPhoto 会先把同猫其它 best 置 false 再置这张，并重算 photo_count_best，
+    // 所以这里不能只改本地这一张——必须整表刷新，否则同猫另一张的「精选」角标会残留。
     async reverseBest(e) {
       const photo = e.currentTarget.dataset.photo;
-      const index = e.currentTarget.dataset.index;
+      if (!photo || !photo._id) return;
+
+      const token = passcode.ensureToken();
+      if (!token) return;
+
       const set_best = !photo.best;
-      await api.managePhoto({
-        type: "setBest",
-        photo: photo,
-        best: set_best
+      wx.showLoading({ title: '提交中', mask: true });
+      const ok = await putInbox('manage', {
+        action: 'setBestPhoto',
+        token: token,
+        photo_id: photo._id,
+        best: set_best,
       });
+      wx.hideLoading();
 
-      await wx.showModal({
-        title: '完成',
-        content: '设置成功',
+      if (!ok) {
+        wx.showToast({ title: '提交失败，请检查网络', icon: 'none' });
+        return;
+      }
+
+      wx.showModal({
+        title: '已提交',
+        content: set_best ? '后台几分钟内汇总生效，这张会成为该猫的封面' : '后台几分钟内汇总生效，该猫会换成另一张封面',
         showCancel: false,
       });
-
-      this.setData({
-        ['photo[' + index + '].best']: set_best
-      });
-    },
-    inputPher(e) {
-      if (!this.jsData) {
-        this.jsData = { cat_id: null, phers: {} };
-      }
-      const input = e.detail.value;
-      const pid = e.currentTarget.dataset.pid;
-      this.jsData.phers[pid] = input;
-    },
-    async updatePher(e) {
-      if (!this.jsData) {
-        this.jsData = { cat_id: null, phers: {} };
-      }
-      const photo = e.currentTarget.dataset.photo;
-      const index = e.currentTarget.dataset.index;
-      const pid = photo._id;
-      const photographer = this.jsData.phers[pid];
-      await api.managePhoto({
-        type: "setPher",
-        photo: photo,
-        photographer: photographer
-      });
-      await wx.showModal({
-        title: '完成',
-        content: '设置成功',
-        showCancel: false,
-      });
-
-      this.setData({
-        ['photo[' + index + '].photographer']: photographer
-      });
+      await this.reloadPhotos();
     },
     async switchOnlyBest() {
       const only_best_photo = this.data.only_best_photo;

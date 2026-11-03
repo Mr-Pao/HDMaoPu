@@ -25,30 +25,27 @@
     <image class="cat-avatar" mode="aspectFill" src="{{selectedCat.avatar.photo_compressed || selectedCat.avatar.photo_id}}"></image>
     <view class="cat-info">
       <view class="cat-name">{{selectedCat.name}}</view>
-      <view class="cat-details">{{selectedCat.campus}} {{selectedCat.area}}</view>
+      <!-- area 在真实数据里大多是空串，不能直接拼空格 -->
+      <view class="cat-details">{{selectedCat.area ? selectedCat.campus + ' ' + selectedCat.area : selectedCat.campus}}</view>
     </view>
   </view>
 
   <!-- 内容区域 -->
-  <view class="content" wx:if="{{selectedCat || activeTab === 'info'}}">
+  <view class="content" wx:if="{{selectedCat}}">
     <!-- 关系组件 -->
     <relation-tab wx:if="{{activeTab === 'relation'}}" selected-cat="{{selectedCat}}" id="relationTab"></relation-tab>
 
     <!-- 猫咪信息编辑组件 -->
-    <cat-info-tab wx:if="{{activeTab === 'info'}}" 
-                 selected-cat="{{selectedCat}}" 
-                 cat_id="{{selectedCat._id || ''}}" 
-                 auth="{{auth}}" 
+    <cat-info-tab wx:if="{{activeTab === 'info'}}"
+                 selected-cat="{{selectedCat}}"
+                 cat_id="{{selectedCat._id || ''}}"
+                 auth="{{auth}}"
                  id="catInfoTab"
-                 is-new-cat="{{isNewMode && !selectedCat}}"
-                 bind:catCreated="onCatCreated" 
-                 bind:catUpdated="onCatUpdated" 
-                 bind:modeChange="onInfoTabModeChange"></cat-info-tab>
-    
-    <!-- 浮动添加按钮 -->
+                 bind:catUpdated="onCatUpdated"></cat-info-tab>
+
+    <!-- 浮动操作按钮：relation=加关系 / info=保存资料 -->
     <view class="floating-actions">
-      <!-- 主按钮 -->
-      <view class="iconfont {{activeTab === 'info' && (selectedCat || isNewMode) ? 'icon-success' : 'icon-plus'}} action-button"
+      <view class="iconfont {{activeTab === 'info' ? 'icon-success' : 'icon-plus'}} action-button"
             bindtap="handleActionButtonClick"></view>
     </view>
   </view>
@@ -60,7 +57,7 @@
         <image class="search-cat-avatar" mode="aspectFill" src="{{item.avatar.photo_compressed || item.avatar.photo_id}}"></image>
         <view class="search-cat-info">
           <view class="search-cat-name">{{item.name}}</view>
-          <view class="search-cat-details">{{item.campus}} {{item.area}}</view>
+          <view class="search-cat-details">{{item.area ? item.campus + ' ' + item.area : item.campus}}</view>
         </view>
       </view>
     </block>
@@ -68,10 +65,9 @@
   </view>
 
   <!-- 提示信息 -->
-  <view class="tips" wx:if="{{!selectedCat && !isNewMode}}">
+  <view class="tips" wx:if="{{!selectedCat}}">
     <view class="tip-icon">🔍</view>
     <view class="tip-text">请搜索并选择一只猫猫进行管理</view>
-    <view class="tip-text" wx:if="{{activeTab === 'info'}}">或点击右下角按钮添加新猫</view>
   </view>
 </view>
 

@@ -173,6 +173,7 @@
         <view class="photo-container">
           <image mode="aspectFill" src="{{item.photo_compressed === undefined ? item.photo_id: item.photo_compressed}}" class="photo-image"></image>
           <view class="best-badge" wx:if="{{item.best}}">精选</view>
+          <view class="hidden-badge" wx:if="{{item.hidden}}">已下架</view>
         </view>
         
         <view class="photo-info">
@@ -193,7 +194,7 @@
           </view>
           
           <view class="action-buttons">
-            <button class="action-button danger-button" bindtap="deletePhoto" data-photo="{{item}}">删除/转移</button>
+            <button class="action-button danger-button" bindtap="photoMore" data-photo="{{item}}" data-index="{{index}}">下架/转移</button>
             <button class="action-button {{item.best ? 'secondary-button' : 'primary-button'}}" bindtap="reverseBest" data-photo="{{item}}" data-index="{{index}}">{{item.best? '取消精选': '设为精选'}}</button>
           </view>
         </view>

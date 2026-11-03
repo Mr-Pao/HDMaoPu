@@ -1,170 +1,56 @@
 <!--pages/manage/admin/admin.wxml-->
+<!-- 管理后台 · 友情链接
+     v4.0.65 起本页只剩友情链接：猫资料编辑合并进「猫猫管理」，照片审核并入那边的照片卡。 -->
 <view class="container">
 
-  <!-- 本页没有口令锁屏：关于页解锁时口令已存进本机，这里直接读写，不再问口令 -->
   <view class="head">
     <view class="head-title">{{pageTitle}}</view>
   </view>
 
-  <!-- 入口在「关于 → 管理后台」的三项里，本页不再有 tab 切换 -->
+  <view class="head-tip link-tip">「关于」页的友情链接，可增可删；改完点底部「保存」整批提交，后台几分钟内自动汇总生效。</view>
 
-  <!-- Tab1 猫资料编辑 -->
-  <block wx:if="{{tab === 'cat'}}">
-    <view class="head-tip">改完点底部「保存」，后台几分钟内自动汇总生效。</view>
-    <picker mode="selector" range="{{catNames}}" bindchange="onCatPick">
-      <view class="picker-row">
-        <text>选择猫猫</text>
-        <text class="picker-value">{{catIndex >= 0 ? catNames[catIndex] : '点此选择'}}</text>
-      </view>
-    </picker>
+  <view class="loading" wx:if="{{linkLoading}}">加载中…</view>
 
-    <view class="card" wx:if="{{catIndex >= 0}}">
-      <view class="field">
-        <text class="label">名字</text>
-        <input class="input" value="{{form.name}}" data-field="name" bindinput="onFieldInput" />
+  <block wx:else>
+    <view class="link-row" wx:for="{{links}}" wx:key="appid">
+      <image class="link-logo" src="{{item.logoPreview || item.logo}}" mode="aspectFill" wx:if="{{item.logoPreview || item.logo}}" />
+      <view class="link-logo link-logo-ph" wx:else>链</view>
+      <view class="link-main">
+        <view class="link-name">{{item.name}}</view>
+        <view class="link-appid">{{item.appid}}</view>
       </view>
-      <view class="field">
-        <text class="label">昵称</text>
-        <input class="input" value="{{form.nickname}}" data-field="nickname" bindinput="onFieldInput" />
-      </view>
-      <picker mode="selector" range="{{genderOptions}}" bindchange="onGenderPick">
-        <view class="field">
-          <text class="label">性别</text>
-          <text class="picker-value">{{form.gender}}</text>
-        </view>
-      </picker>
-      <view class="field">
-        <text class="label">位置</text>
-        <input class="input" value="{{form.campus}}" data-field="campus" bindinput="onFieldInput" />
-      </view>
-      <view class="field">
-        <text class="label">区域</text>
-        <input class="input" value="{{form.area}}" data-field="area" bindinput="onFieldInput" />
-      </view>
-      <view class="field">
-        <text class="label">花色</text>
-        <input class="input" value="{{form.colour}}" data-field="colour" bindinput="onFieldInput" />
-      </view>
-      <picker mode="date" value="{{form.birthday}}" bindchange="onBirthdayPick">
-        <view class="field">
-          <text class="label">生日</text>
-          <text class="picker-value">{{form.birthday || '未设置'}}</text>
-        </view>
-      </picker>
-      <view class="field">
-        <text class="label">性格特点</text>
-        <input class="input" value="{{form.characteristics}}" data-field="characteristics" bindinput="onFieldInput" />
-      </view>
-      <view class="field">
-        <text class="label">撸猫指南</text>
-        <input class="input" value="{{form.tutorial}}" data-field="tutorial" bindinput="onFieldInput" />
-      </view>
-      <view class="field">
-        <text class="label">已绝育</text>
-        <switch checked="{{form.sterilized}}" data-field="sterilized" bindchange="onSwitch" color="#0C5F03" />
-      </view>
-      <picker mode="selector" range="{{adoptOptions}}" bindchange="onAdoptPick">
-        <view class="field">
-          <text class="label">领养状态</text>
-          <text class="picker-value">{{adoptOptions[form.adopt]}}</text>
-        </view>
-      </picker>
-      <picker mode="date" value="{{form.adoptTime}}" bindchange="onAdoptTimePick">
-        <view class="field">
-          <text class="label">领养日期</text>
-          <text class="picker-value">{{form.adoptTime || '未设置'}}</text>
-        </view>
-      </picker>
-      <view class="field">
-        <text class="label">失踪</text>
-        <switch checked="{{form.missing}}" data-field="missing" bindchange="onSwitch" color="#0C5F03" />
-      </view>
-      <view class="field">
-        <text class="label">返回喵星</text>
-        <switch checked="{{form.to_star}}" data-field="to_star" bindchange="onSwitch" color="#0C5F03" />
-      </view>
-
-      <button class="save-btn" bindtap="saveCat" disabled="{{saving}}">{{saving ? '提交中…' : '保存'}}</button>
+      <view class="link-op" data-appid="{{item.appid}}" data-dir="up" bindtap="moveLink">↑</view>
+      <view class="link-op" data-appid="{{item.appid}}" data-dir="down" bindtap="moveLink">↓</view>
+      <view class="link-op link-del" data-appid="{{item.appid}}" bindtap="deleteLink">删除</view>
     </view>
 
-    <view class="empty" wx:else>先在上面选择一只猫猫</view>
-  </block>
+    <view class="empty" wx:if="{{!links.length}}">还没有友情链接，在下面添加</view>
 
-  <!-- Tab2 照片审核 -->
-  <block wx:elif="{{tab === 'photo'}}">
-    <picker mode="selector" range="{{catNames}}" bindchange="onPhotoCatPick">
-      <view class="picker-row">
-        <text>选择猫猫</text>
-        <text class="picker-value">{{photoCatIndex >= 0 ? catNames[photoCatIndex] : '点此选择'}}</text>
+    <view class="card add-card">
+      <view class="add-title">新增一项</view>
+      <view class="field">
+        <text class="label">AppID</text>
+        <input class="input" value="{{draft.appid}}" data-field="appid" bindinput="onDraftInput" placeholder="wx 开头 18 位" />
       </view>
-    </picker>
-
-    <view class="loading" wx:if="{{photoLoading}}">加载中…</view>
-
-    <view class="empty" wx:elif="{{photoCatIndex < 0}}">选择猫猫查看它的照片</view>
-    <view class="empty" wx:elif="{{!photos.length}}">这只猫猫还没有照片</view>
-
-    <view class="photo-card" wx:for="{{photos}}" wx:key="_id">
-      <image class="photo-thumb" src="{{item.url}}" mode="aspectFill" lazy-load />
-      <view class="photo-info">
-        <view class="photo-state {{item.hidden ? 'state-hidden' : ''}}">{{item.hidden ? '已下架' : '展示中'}}</view>
-        <view
-          class="photo-btn {{item.hidden ? 'btn-restore' : 'btn-hide'}}"
-          data-id="{{item._id}}"
-          data-hidden="{{item.hidden}}"
-          bindtap="togglePhoto"
-        >{{item.hidden ? '恢复' : '下架'}}</view>
+      <view class="field">
+        <text class="label">名称</text>
+        <input class="input" value="{{draft.name}}" data-field="name" bindinput="onDraftInput" maxlength="20" placeholder="显示名，最多 20 字" />
       </view>
-    </view>
-  </block>
-
-  <!-- 友情链接 -->
-  <block wx:elif="{{tab === 'link'}}">
-    <view class="head-tip link-tip">「关于」页的友情链接，可增可删；改完点底部「保存」整批提交，后台几分钟内自动汇总生效。</view>
-
-    <view class="loading" wx:if="{{linkLoading}}">加载中…</view>
-
-    <block wx:else>
-      <view class="link-row" wx:for="{{links}}" wx:key="appid">
-        <image class="link-logo" src="{{item.logoPreview || item.logo}}" mode="aspectFill" wx:if="{{item.logoPreview || item.logo}}" />
-        <view class="link-logo link-logo-ph" wx:else>链</view>
-        <view class="link-main">
-          <view class="link-name">{{item.name}}</view>
-          <view class="link-appid">{{item.appid}}</view>
-        </view>
-        <view class="link-op" data-appid="{{item.appid}}" data-dir="up" bindtap="moveLink">↑</view>
-        <view class="link-op" data-appid="{{item.appid}}" data-dir="down" bindtap="moveLink">↓</view>
-        <view class="link-op link-del" data-appid="{{item.appid}}" bindtap="deleteLink">删除</view>
-      </view>
-
-      <view class="empty" wx:if="{{!links.length}}">还没有友情链接，在下面添加</view>
-
-      <view class="card add-card">
-        <view class="add-title">新增一项</view>
-        <view class="field">
-          <text class="label">AppID</text>
-          <input class="input" value="{{draft.appid}}" data-field="appid" bindinput="onDraftInput" placeholder="wx 开头 18 位" />
-        </view>
-        <view class="field">
-          <text class="label">名称</text>
-          <input class="input" value="{{draft.name}}" data-field="name" bindinput="onDraftInput" maxlength="20" placeholder="显示名，最多 20 字" />
-        </view>
-        <view class="field field-col">
-          <text class="label">Logo</text>
-          <view class="logo-pick">
-            <image class="logo-pick-img" src="{{draft.logoPreview || draft.logo}}" mode="aspectFill" wx:if="{{draft.logoPreview || draft.logo}}" />
-            <view class="logo-pick-ph" wx:else>未选</view>
-            <view class="logo-pick-btns">
-              <button class="logo-btn" bindtap="pickLinkLogo" disabled="{{logoUploading}}">{{logoUploading ? '上传中…' : (draft.logoPreview || draft.logo ? '换一张' : '选择图片')}}</button>
-              <button class="logo-btn logo-btn-ghost" bindtap="clearLinkLogo" wx:if="{{draft.logoPreview || draft.logo}}">清除</button>
-            </view>
+      <view class="field field-col">
+        <text class="label">Logo</text>
+        <view class="logo-pick">
+          <image class="logo-pick-img" src="{{draft.logoPreview || draft.logo}}" mode="aspectFill" wx:if="{{draft.logoPreview || draft.logo}}" />
+          <view class="logo-pick-ph" wx:else>未选</view>
+          <view class="logo-pick-btns">
+            <button class="logo-btn" bindtap="pickLinkLogo" disabled="{{logoUploading}}">{{logoUploading ? '上传中…' : (draft.logoPreview || draft.logo ? '换一张' : '选择图片')}}</button>
+            <button class="logo-btn logo-btn-ghost" bindtap="clearLinkLogo" wx:if="{{draft.logoPreview || draft.logo}}">清除</button>
           </view>
         </view>
-        <button class="add-btn" bindtap="addLink">添加到列表</button>
       </view>
+      <button class="add-btn" bindtap="addLink">添加到列表</button>
+    </view>
 
-      <button class="save-btn" bindtap="saveLinks" disabled="{{linkSaving}}">{{linkSaving ? '提交中…' : (linkDirty ? '保存（有未提交的改动）' : '保存')}}</button>
-    </block>
+    <button class="save-btn" bindtap="saveLinks" disabled="{{linkSaving}}">{{linkSaving ? '提交中…' : (linkDirty ? '保存（有未提交的改动）' : '保存')}}</button>
   </block>
 
 </view>

@@ -23,7 +23,6 @@
     "pages/manage/checkFeedbacks/checkFeedbacks",
     "pages/manage/replyFeedback/replyFeedback",
     "pages/manage/catManage/catManage",
-    "pages/manage/review/review",
     "pages/manage/admin/admin",
     "pages/manage/newsAdmin/newsAdmin",
     "pages/manage/dashboard/dashboard"

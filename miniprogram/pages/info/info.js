@@ -40,6 +40,9 @@ Page({
       manager: false,
     },
     // 菜单列表
+    // v4.0.65 按「一个对象一个入口」重组：删掉「审核队列」（review_queue.json 永不上 CDN，
+    // 小程序端恒为空态，真正的审核在 GitHub Issue 里评论 /ok）、「猫资料编辑」（与猫猫管理重复）、
+    // 「照片审核」（已并入猫猫管理的照片卡）。
     menuList: [
       {
         title: "管理后台",
@@ -52,24 +55,10 @@ Page({
             dot: true
           },
           {
-            name: "审核队列",
-            path: "/pages/manage/review/review",
-            icon: "icon-check-square-o"
-          },
-          {
-            name: "猫资料编辑",
-            path: "/pages/manage/admin/admin?tab=cat",
-            icon: "icon-edit"
-          },
-          {
-            name: "照片审核",
-            path: "/pages/manage/admin/admin?tab=photo",
-            icon: "icon-photo-o"
-          },
-          {
-            name: "友情链接",
-            path: "/pages/manage/admin/admin?tab=link",
-            icon: "icon-cluster-o"
+            name: "猫猫管理",
+            path: "/pages/manage/catManage/catManage",
+            num: "numChkPhotos",
+            icon: "icon-manager-o"
           },
           {
             name: "反馈处理",
@@ -88,9 +77,9 @@ Page({
             icon: "icon-location-o"
           },
           {
-            name: "猫猫管理",
-            path: "/pages/manage/catManage/catManage",
-            icon: "icon-manager-o"
+            name: "友情链接",
+            path: "/pages/manage/admin/admin",
+            icon: "icon-cluster-o"
           }
         ]
       }

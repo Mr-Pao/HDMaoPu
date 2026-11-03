@@ -176,3 +176,88 @@
   - `miniprogram/pages/manage/dashboard/dashboard.wxml`：在「领养情况」卡**之前**插入两张 `.bento-card.large`——`.trend-card`（标题 + `.trend-legend` 三点图例 #0C5F03/#14801F/rgba(12,95,3,0.28)；`.trend-chart` 每列三根 `.trend-bar`，`height` 用 `stats.trendMax > 0 ? (item.x / stats.trendMax) * 100 : 0`%；空态「暂无趋势数据」）与 `.timeline-card`（标题 + `.more-button`「本月事件」`bindtap="showEventsPopup"`；`.timeline-list` 每行 `.timeline-axis`{dot+line} + `.timeline-body`{date/summary + `.timeline-tag` 按 type 映射五种 class}；空态「暂无时间轴数据」）。
   - `miniprogram/pages/manage/dashboard/dashboard.wxss`：文件末尾追加样式块（`.card,.box...{border-radius:20rpx}` 之后）。颜色只用品牌绿与既有语义色（missing `#C65A00`、deceased `#636366`），**零新增色值族**；`trend-chart` 高 260rpx、`trend-bar` 宽 14rpx、`timeline-list` `max-height:640rpx;overflow-y:auto`、`timeline-dot` 16rpx + 6rpx 光环。
   - 验收：`node --check` 过、单测 **47/47**、`verify-demo-data.js` **66/66**、WXML 标签平衡 view 221/221 block 6/6 text 46/46 popup 3/3 image 3/3、WXSS 花括号平衡。`tests/datasource.test.js:243` 断言的 timeline 是**领养申请**的 timeline，与看板无关，未受影响。
+
+---
+
+## v4.0.53：全量代码审计优化落地（2026-11-01，原 AGENTS.md 条目）
+
+- **v4.0.53：全量代码审计优化落地（2026-11-01）** — 用户指令「除六（可加功能）其余全做」。改动：①B1 下架照片露出——`cat.js`(getBestPhoto/getLatestPhoto)、`datasource.js`(_getCatLocations)、`gallery.js`、`detailCat.js` 相册均过滤 `hidden`/`deleted`；②B2 `detailCat.js` likeCat/likeCountChanged 改 async + `await putInbox('like',...)`；③B3 服务端新增 `deleteComment` kind + `handleDeleteComment`（仅作者删/幂等/软删），客户端 `commentBoard.js` 真 putInbox；④B4 `handleDecision` 新增 `approvePhoto` 真复制 pending→catimg 并 append `photo.json`、cat.photo_count_total+1；⑤二 6 处 `api.curdOp` 假写→真 putInbox：`inter`(图库点赞)/`relationTab`/`checkFeedbacks`/`replyFeedback`/`pageSettings`/`filters`/`catInfoTab`(movePhoto)，服务端补 `manageFeedback`/`managePageSettings`/`saveFilter`/`movePhoto` action（白名单+永不throw+markTouched）；⑥三 删 `leaderboard`/`components/photoRank`/`components/achievementRank` 死页与孤儿组件 + `news.js` clickScience + `info.js` clearCache + `cloudApi.getMpCode`；⑦四 `gallery` PER_ROW 12→8、genealogy 并发池5、删 `common.js` convertToWebP/getOptimizedImageUrl 死代码；⑧五 删 252 处调试 console.log；⑨七 新建 `utils/nickname.js`（NICKNAME_MAX=20）应用到 commentBoard/feedbackDetail/modifyNews（3 页非 4 页，addPhoto 已匿名直传无昵称）；管理页口令壳评估后不抽（`promptToken` 已是共享 API）；`datasource.js` 不拆。验收：47 单测 + 66 verify + DRY_RUN 自测全过；提交 `1e48b71`。⚠️ 用户自有改动 `app_logo.png`/`图片.pptx` 未纳入审计提交。
+
+---
+
+## v4.0.54：五维评分雷达图（2026-11-02，原 AGENTS.md 条目）
+
+- **v4.0.54：五维评分雷达图（2026-11-02）** — 用户从审计「六·可加功能」里选了「五维评分可视化」（m00339）。在详情页「猫友评价」卡**展开详情**里，原本的 5 行 `star-rating` 替换为 **canvas-2d 五维雷达图**：`detailCat.js` 新增 `drawRatingRadar()`（用 `wx.createSelectorQuery().select('#rating-radar').fields({node:true,size:true})`，按 `cat.rating.catRatings` 的 `{name,score}` 画五边形，`#0C5F03` 描点、`#14801F` 描边、`rgba(20,128,31,0.18)` 填充，4 圈同心网格+维度标签；dpr 取 `wx.getWindowInfo().pixelRatio`，兜底 2），`bindDetailRating` 展开时与 `onShow`（`showDetailRating` 为真时）各重绘一次；`detailCat.wxml` 用 `<canvas type="2d" id="rating-radar">` + `count===0` 时显示「暂无评分，快来当第一个～」；`detailCat.wxss` 新增 `.rating-radar`(高440rpx)/`.rating-radar-empty`。设计依据：五维 = `utils/rating.js` 的 `ratingMap`（r1猫德/r2颜值/r3社交/r4干饭/r5活力），值来自 `cat.rating.dimAvg`（已由 `process-inbox` 的 `handleRating` 重算）。**只动视觉、不碰数据结构、不引依赖、主题色不变**。验收：47 单测 + 66 verify 全过（canvas 渲染只能在微信开发者工具里目测，node 测试不覆盖）。提交见 v4.0.54 commit。
+
+---
+
+## v4.0.42：管理口令收敛为 data/gate.json 一处（2026-11-01，原 AGENTS.md 行 177–183）
+
+- **v4.0.42：管理口令收敛为 `data/gate.json` 一处（2026-11-01）**
+  - **用户原话（m01906）：「我只是想在小程序端加一个密码，输入了之后就能进入管理界面管理数据，怎么搞得这么麻烦啊，一定要搞什么REVIEW_PASSCODE吗」**——此前口令分两处：界面进不进认 `data/gate.json` 的 `code`，提交能不能过认 Actions secret `REVIEW_PASSCODE`，两处不一致就表现为「进去了但提交没反应」，而 secret 在手机上根本看不到。
+  - **`scripts/process-inbox.js` 新增 `currentGateCode()`**：`loadData('gate').items.find(it => it._id === 'gate')` 取 `code` 并 trim，读失败 `console.warn` 后返回空串；`tokenOk(token)` 改为 `const expect = currentGateCode() || REVIEW_PASSCODE || ''`。**`REVIEW_PASSCODE` 降级为兜底**（gate.json 缺失或 code 为空时才用），老部署可继续留着，新部署完全不用配。
+  - `selftestObjects()` 里 14 处 `REVIEW_PASSCODE || 'wrong'` 改为 `SELFTEST_TOKEN`（函数开头 `const SELFTEST_TOKEN = currentGateCode() || REVIEW_PASSCODE || 'wrong'`），自测不再依赖环境变量；末尾警告改判 `!currentGateCode() && !REVIEW_PASSCODE`。
+  - `.github/workflows/process-inbox.yml` 给 `REVIEW_PASSCODE` 那行加注释说明只作兜底；`data/gate.json` 的 `note` 改成「全站只有这一处口令」并说明服务端也读它；`miniprogram/utils/passcode.js` 顶部口诀同步修正。
+  - 验证：`DRY_RUN=1` **不带 REVIEW_PASSCODE** 跑 30 条自测，manage 生效 6 条；临时把 gate code 改成 `zzz-temp` → manage 全部 `drop:bad-token`，改回 `0000` → 恢复生效，**证明服务端确实读 gate.json**；单测 47/47、verify 66/66。
+  - 提交 `9d11c92`（7 files）。⚠️ 当时本地领先 `origin/cos` 11 个提交，push 被拒（远端 Actions 提交了 `130eeab chore(data): 聚合 inbox 写入`），用 `git rebase origin/cos`（带 `rebase.autoStash=true` 避开用户自己改的 `app_logo.png`/`图片.pptx`）后才推上去。
+
+---
+
+## v4.0.36：关于页按参考图重构布局（2026-11-01，原 AGENTS.md 行 184–198）
+
+- **v4.0.36：关于页按参考图重构布局（2026-11-01）**
+  - **用户原话（m01124）：「能再派一个子智能体改关于界面么，风格不变，布局参考这张图，连击五次可以改到火大猫谱字上，管理后台卡片可以放在关于上方，如果不是管理员就隐藏」**。参考图是一款叫 SpaceLaunch 的 App 的「我的」页：居中圆 logo → 大标题 → 灰字副标语 → 三格数据条（竖分隔）→ 淡色提示卡 → 分节标题「探索」→ 2 列卡片 → 分节标题「关于」→ 竖列表行组 → 底部小字。
+  - **改动 3 个文件，`info.js` 一字未动**：`info.wxml` 104→**133 行**（+43 −14）、`info.wxss` 465→**621 行**（**纯追加 156 行，0 删除**，v5.5 块从 **:468** 起）、`config.js`（`app_version` v4.0.35→**v4.0.36**，`text.info` 新增 **11 键**）。
+  - **分节顺序（自上而下）**：`.nav`（保留 `padding-top: {{statusBarHeight}}px`）→ ① `.mina-info` 白卡（圆 logo + `.title` + `.dev` 灰字标语）→ ② 两行 × 三格数据条（6 个数全保留）→ ③ `.tip-card` 淡色提示卡 → ④ 「探索」`.card-container` 两列卡片 → ⑤ 友情链接 → ⑥ **管理后台 3 列宫格 15 项** → ⑦ 「关于」`.about-list` 竖列表 3 行 → ⑧ `.foot-note` 底部小字 → `.plus` 客服悬浮按钮 → tabBar 占位。
+  - **连击位置迁移（用户明确要求）**：`info.wxml:8` 的 `.nav-title`（「关于」）**去掉 `catchtap`**；`info.wxml:16` 的 `.title`（`{{text_cfg.app_name}}`，即「火大猫谱」）**加 `catchtap="onTitleTap"`** + `hover-class="tap-dim"`。**`info.js` 的 `TAP_TO_UNLOCK=5` / `TAP_WINDOW=800` / `onTitleTap` / `askAdminPasscode` / `loadGateCode` 全部原样未动**。必须用 `catchtap` 不是 `bindtap`（防冒泡）。
+  - **管理后台卡上移到「关于」分节之前**；显隐仍靠 `showCond[menu.show]`（`showCond.manager` 由 `isUnlocked()` 控制，非管理员恒 false → 整块隐藏）。⚠️ `showCond[menu.show]` 在 wxml 里**必须是 2 处**（第 81 行工具组、第 93 行管理后台组），别合并——两组用 `menu.title != '管理后台'` / `== '管理后台'` 分流。
+  - **`text.info` 新增 11 键**：`explore:"探索"`、`friends:"友情链接"`、`about:"关于"`、`tip_title:"照片和便利贴会在审核后展示"`、`tip_desc:"后台每几分钟自动汇总一次，稍后刷新就能看到啦"`、`row_version:"版本"`、`row_feedback:"信息反馈"`、`row_feedback_value:"去反馈"`、`row_contact:"联系作者"`、`row_contact_value:"发消息"`、`footer:"火大猫谱 · 中山大学校园流浪猫谱系"`。原有 `share_tip`、`slogan` 保留。wxml 里只剩 6 个统计标签（只猫猫/张照片/张便利贴/现存猫猫/领养率/绝育率）和导航栏「关于」是硬编码中文（均为原有内容）。
+  - **版本号从 slogan 行挪进「关于→版本」行**：原 `{{version ? version + "\n" : ""}} {{slogan}}` 改成 `.dev` 只放 `text_cfg.info.slogan`，`.about-row` 里 `{{version || '-'}}` 显示版本。想改回头部就在 `info.wxml:17`。
+  - **「联系作者」用 `<button class="about-row about-row-btn" open-type="contact">` 包整行**：`.about-row-btn` 清微信默认外观（`width:100%;margin:0;background:transparent;border:none;border-radius:0;line-height:inherit;text-align:left;font-size:inherit;color:inherit`）+ `::after{border:none;display:none}` 去掉伪元素边框；行间分隔靠 `.about-row + .about-row { border-top: 1rpx solid var(--dk-line) }`。
+  - **故意没加「清理缓存」行**：`info.js` 的 `clickbtn` 里 `actionMap = { clearCache: () => this.clearCache(), guide: () => this.guide(e) }`，但 **`this.clearCache()` 方法根本不存在**（历史遗留，调用必报错）。别去实现，也别加这一行行入口。
+  - **样式零新增 hex**：唯一色值字面量是 `.about-list` 阴影 `rgba(12,95,3,0.035)`（与同文件 v5.2 块 `.block` 既有阴影写法一致）；圆角走 `var(--dk-radius)`（26rpx 是对齐 `.block`/`.card` 的既有值）。触感反馈 `.tap-dim`（标题按下变 `--dk-accent-soft`）、`.row-hover`（行按下变 `--dk-accent-soft`）。
+  - **分节标题沿用 `.block-name`（19rpx / 3rpx 字距 / uppercase / 灰）**，没改成参考图的中等加粗字号——理由是「风格不变」优先于「像素级还原参考图」。想放大就在 wxss 末尾追加 `.block-name{font-size:24rpx;letter-spacing:0;text-transform:none;color:var(--dk-text)}`。
+  - 验证：`node --check info.js/config.js` 通过、`info.json` 解析通过、`node --test` **47 例全过**（基线保持）、wxml 标签平衡 view 59/59 block 3/3 button 2/2 image 4/4 text 12/12、wxss 花括号 86/86、`hidden` 0 处、`<svg>` 0 处。
+  - 提交 `090bb1b`（3 files, +215 −15）。**`app.wxss` / `app.json` / `data/` / `scripts/` / `tests/` 零改动。**
+
+
+---
+
+## v4.0.35：公告管理独立入口 + 普通页零权限判断（2026-11-01，原 AGENTS.md 行 199–219）
+
+- **v4.0.35：公告管理独立入口 + 普通页零权限判断（2026-11-01）**
+  - **用户原话（m00650）：「把公告管理也单独做一个入口放在管理后台吧」；（m00684）：「还有哪些需要管理的都在管理后台做个单独入口，这样普通页面就不用做判断了」**。
+  - **新建 `miniprogram/pages/manage/newsAdmin/`（4 文件）**：`newsAdmin.js`（`putInbox` + `text_cfg` + `passcode`；`EXCERPT_LEN=60`；`formatDate(iso)`→`YYYY-MM-DD`；data `{hasToken, loading, items}`；方法 `onLoad/onShow/onPullDownRefresh/editToken/ensureToken/loadList/preview/createNews/modifyNews/removeNews`；`loadList` 用 `app.mpServerless.db.collection("news").find({}, {sort:{date:-1}})` 映射 `{_id,title,class,dateText,excerpt}`；`removeNews` 走 `putInbox("manage",{action:"manageNews",op:"remove",token:passcode.getToken(),news_id:id})`）。`newsAdmin.wxml` 结构照 `review.wxml`（`.head`+`.head-lock` bindtap=editToken / `.head-tip` / `.token-tip` `wx:if="{{!hasToken}}"` / `.toolbar>.btn-add` / `.card` 循环含 `.tag/.time/.title/.excerpt/.actions`）。`newsAdmin.wxss` 照抄 `review.wxss` + `.toolbar`/`.btn-add`/`.excerpt`(-webkit-line-clamp:2)。`newsAdmin.json` = `{"navigationBarTitleText":"猫抓板公告","backgroundColor":"#F7F7FA","enablePullDownRefresh":true}`。
+  - **接入**：`miniprogram/app.json:32` 注册 `"pages/manage/newsAdmin/newsAdmin",`（在 `pages/manage/admin/admin` 与 `pages/manage/dashboard/dashboard` 之间）；`project.config.json` 的 `packOptions.ignore` **没有**它（能打包）。`miniprogram/pages/info/info.js:104-107` 「猫抓板公告」菜单 `path` 由 `/pages/news/createNews/createNews` 改为 `/pages/manage/newsAdmin/newsAdmin`。
+  - **公告写入链路改走 inbox 聚合**（原来是只写本地覆盖层的假写）：`scripts/process-inbox.js` 的 `handleManage`（`:695`）加 `if (data.action === 'manageNews') return manageNews(data);`；`:776-1008` 新增公告段（`NEWS_CLASSES=['领养','救助','活动','其他']`、标题≤30/正文≤5000/昵称≤30/图≤9/路径≤400、`NEWS_UPDATE_FIELDS` 十键**不含** `_id`/`date`/`show`、`newsString/newsPath/newsPathList/normalizeNewsFields/genNewsId/manageNews`）。`manageNews(data)` **永不 throw**：op 非 add/update/remove → `drop:bad-op`；add → `_id=genNewsId(title)`（ASCII slug ≤24 → `news-<slug>`，否则 `news-<ts36>`，撞号加 -2/-3）、`date` 用**服务端时间**、昵称空兜底 `'猫谱管理员'`、`show:true` → `ok:news-add`；update → `news_id` 校验 + 白名单过滤 + `dateLastModify` 补服务端时间 → `ok:news-update`；remove → `ok:news-remove`；三种都 `markTouched('news')`。
+  - ⚠️ **`MAX_OBJECT_BYTES` 从 4096 放宽到 `16384`**（`scripts/process-inbox.js:59-64`）：800 字中文正文 UTF-8 约 2400B + 9 张图两组 COS URL 约 1700B 会顶破 4096 被误杀。`pending/*` 的 512KB 闸门**不变**。`tests/process-inbox.test.js:33/:36/:38` 同步改阈值 + body `'x'.repeat(20000)`；`:41-57` 新增回归「公告正文接近上限仍可通过」。
+  - **`createNews.js` / `modifyNews.js`**：`api.curdOp` → `putInbox("manage",{action:"manageNews",op:"add"|"update",token:passcode.getToken(),news:data})`；`createNews.js` 的口令检查**提到上传图片之前**（`:317-318`），`date: new Date().toISOString()`（`:339`）；成功用 `received_tip` 2000ms + `setTimeout(wx.navigateBack,1200)`，失败用 `offline_tip` 2500ms 不返回。两页 `data.auth` 由 `false` 改 **`auth: true`**、`onLoad` **删掉 `checkAuth(this,2)`**（口令门已在 `newsAdmin` 那一页把过，本页不再重复判）——两页 wxml 的 `<form wx:if="{{auth}}">` 保留，`{{tipText}}/{{tipBtn}}` 兜底块成为死保护（未删）。
+  - **普通页权限判断全清**：
+    - `detailNews.js/wxml` **退化为纯展示页**：删 `isManagerAsync`/`api`/`sleep` 引入、data `showManager`、`modifyNews()/_doRemove()/removeNews()` 三方法；`detailNews.wxml:33-36` 删「删除/修改」按钮块（**这是「公告谁都能改」的直接病根**）。
+    - `news.js`：删 `import { checkAuth }`、data `auth:false`、`onLoad` 里 `await checkAuth(this, 2)`——`news.wxml` 里 **0 处**用 `auth`，纯死调用。
+    - `genealogy.js`：删 `bindManageCat`（长按猫卡跳 `catManage`）+ `genealogy.wxml:86` 的 `bindlongpress`。
+    - `commentBoard.js`：删 `isManagerAsync` 与 `onLoad` 里 `var manager = await isManagerAsync(1)` 整段、data `is_manager`；`commentBoard.wxml:15` 改 `can-delete="{{item.user_openid === user.openid}}"`（仅本人可删）。
+    - `feedbackDetail.js/wxml/wxss`：删 `.adminEntry` 整块（管理员「添加猫际关系」入口）、`toAddRelation()`、data `isManager`、import；wxss 删 4 段样式后留一行注释说明。
+    - `detailCat.js`：删 `isManagerAsync` import 与 `onLoad` 里 `is_manager` setData（wxml 本无引用，死字段）。
+  - **`miniprogram/utils/passcode.js` 扩到 6 个导出**：新增 `UNLOCK_KEY="admin_unlocked"`、`isUnlocked()`、`setUnlocked(v)`（原 `KEY="manage_passcode"` 与 `getToken/hasToken/setToken/promptToken` 不变）。
+  - **`miniprogram/utils/user.js` 的 `isManagerAsync` 加了前提**：先 `if (!passcode.isUnlocked()) return false;`，再查 `user.manager >= req`——因为 `datasource._userOp('get')` 的 `remoteConfirmedEmpty` 分支会给**每个新访客** `manager=99`（`data/user.json` 空表时恒真），单看 `user.manager` 等于人人管理员。
+  - 自检口径：`miniprogram/pages/` 下**非 manage 页**已无 `isManagerAsync` 调用（只剩 `tools/inviteUser`，该页在 `packOptions.ignore` 里未启用）；非 manage 页已无 `checkAuth(`（只剩 `packageA/pages/recognize` 的 `this.checkAuth()`，那是相机授权，同名无关）。管理页保留 `checkAuth` 是**正确的**（本就该有）。
+  - 验证：14 个改动 .js `node --check` 全过；`node --test` **47 例全过**；`verify-demo-data.js` **66/66**；`DRY_RUN=1 REVIEW_PASSCODE=test node scripts/process-inbox.js` exit 0，逐条 `ok:news-add/ok:news-update/ok:news-remove/drop:bad-news/drop:no-news/drop:bad-token`。
+  - 提交 `42556b6`（25 files, +870 −218）。
+  - ⚠️ **遗留未修**：另 16 处 `api.curdOp`（catInfoTab/relationTab/commentBoard/ratingDetail/feedbackDetail/addCat/addRelations/checkComment/checkFeedbacks/filters/managers/pageSettings/replyFeedback/rewards/achievement.js/inter.js）**同样是只写本地覆盖层的假写**，包括 `commentBoard.js` 的 `deleteComment`。`scripts/process-inbox.js:576 handleDecision` 里照片审核通过只 `console.log` 不落库（`:605-609`，注释还写着「上传入口目前关闭」，但 v4.0.18 起已开放）。
+
+
+---
+
+## v4.0.34：管理后台改为「关于页连击 5 次 + 口令」解锁（2026-11-01，原 AGENTS.md 行 220–229）
+
+- **v4.0.34：管理后台改为「关于页连击 5 次 + 口令」解锁（2026-11-01）**
+  - **用户原话（m00416）：「openid 也不好 / 改成关于页面，连击关于5次，输入管理密码，然后显示管理后台」**。此前评估过的 A（去掉 `remoteConfirmedEmpty` 分支）与 B（`data/user.json` 白名单 openid）两个方案**全部作废**——B 要求用户真实 openid，而 `datasource.js:27` 的 `OPENID_STORAGE_KEY='fake_openid'` 是 `guest_xxxxxxxx`，换设备/清缓存就变，不可靠。
+  - **口令明文存 `data/gate.json` 的 `code` 字段**（用户要求「密码可以存在cos，我能直接后台修改就行」，所以**废弃 SHA-256 哈希版**，也不需要任何计算脚本）。文件结构：`{"version":"<ts>","items":[{"_id":"gate","code":"0000","note":"..."}]}`。留空 = 管理入口不可解锁。
+  - **`miniprogram/pages/info/info.js`**：常量 `TAP_TO_UNLOCK = 5`、`TAP_WINDOW = 800`（超时就重新计数，「连击」不是「累计」）、`UNLOCK_KEY = 'admin_unlocked'`；`jsData` 加 `tapCount/tapAt`；`onShow` 里 `this.setData({ "showCond.manager": this.isUnlocked() })`；新增 `isUnlocked()`/`setUnlocked(v)`/`loadGateCode()`/`onTitleTap()`/`askAdminPasscode()`/`refreshManagerNums()`。
+  - ⚠️ **`loadGateCode()` 故意不缓存**：每次连击都现拉 `gate` 集合 `_id='gate'` 的 `code`，这样改完 `data/gate.json` 下次连击就生效，不用发版也不用重启（`2908f0f` 就是修这个）。
+  - ⚠️ **`data/` 是公开 CDN，口令等于公开**——它只是「别让普通用户误入」的 UX 门。**v4.0.42 起服务端 `tokenOk()` 也读同一个 `data/gate.json` 的 `code`**（原先读 Actions secret `REVIEW_PASSCODE`），所以改这一处就同时决定「界面能不能进」和「提交能不能过」，不用配 secret；口令不对的提交仍是 `drop:bad-token` 静默丢弃。
+  - `miniprogram/pages/info/info.wxml:8` `.nav-title` 加 `catchtap="onTitleTap"`（v4.0.36 已迁到「火大猫谱」标题）；`scripts/set-admin-passcode.js` 曾建后**已删除**。
+  - ⚠️ **`data/gate.json` 必须真的传到 COS**：只在本地会出现「管理入口未启用」——`datasource` 对 404 有 `NOT_FOUND_COOLDOWN = CACHE_TTL`（10 分钟）冷却，改完要等冷却或重开小程序。上传方法见「COS 上传踩坑」一节。
+  - 提交 `34d1634` + `2908f0f`。
+- **v4.0.33 去掉管理口令锁屏门**：用户要「可以去掉口令」→ 只去掉**客户端输入门**，页面不再锁屏；**提交仍带口令**，服务端 `process-inbox.js` 的 `tokenOk()` 与 `REVIEW_PASSCODE` 一字未动（唯一真权限边界）。明确否决：口令写死进 `config.js`（小程序包可解）、服务端也去掉校验。**新增 `miniprogram/utils/passcode.js`**：`KEY=\"manage_passcode\"`，导出 `getToken/hasToken/setToken/promptToken`；`promptToken` 用 `wx.showModal({editable:true})` 且**绝不能传 `content`**，输入在 `res.content`，回调 `options.onSaved`；口令**永久有效**（已删 24h TTL 与 `hasValidPasscode`）。`admin.js`/`review.js` 删掉 gate 整块，`.head-lock` 由「退出管理/锁定」改成「口令」，新增 `editToken()`/`ensureToken(token)`；三个提交点 `saveCat`/`togglePhoto`/`saveLinks` 都是 `const token = this.getToken()` → `ensureToken` → `putInbox` **复用同一 token 变量**。⚠️ `review.wxml` 从 65 行缩到 18 行（gate 块占大头），别以为被截断。
