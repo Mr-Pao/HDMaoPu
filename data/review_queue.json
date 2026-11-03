@@ -1,5 +1,5 @@
 {
-  "version": "v1793729121886",
+  "version": "v1793747706761",
   "items": [
     {
       "_id": "rv-1793523110816-mvxn89c2ujk8cp",
@@ -83,7 +83,7 @@
       "kind": "feedback",
       "openid": "guest_8d786c29",
       "ts": 1793703461896,
-      "status": "pending",
+      "status": "rejected",
       "create_time": "2026-11-03T10:57:41.896Z",
       "data": {
         "cat_id": "cat-jinbeiyinchuang",
@@ -92,7 +92,8 @@
         "contactInfo": "",
         "nickname": "匿名猫友",
         "repliable": false
-      }
+      },
+      "decide_time": "2026-11-03T23:15:06.761Z"
     }
   ]
 }

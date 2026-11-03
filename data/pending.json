@@ -1,20 +1,4 @@
 {
-  "version": "v1793729122169",
-  "items": [
-    {
-      "_id": "rv-1793703461896-mw1008da8h57ap",
-      "kind": "feedback",
-      "ts": 1793703461896,
-      "create_time": "2026-11-03T10:57:41.896Z",
-      "preview_url": "",
-      "data": {
-        "cat_id": "cat-jinbeiyinchuang",
-        "cat_name": "金被银床",
-        "feedbackInfo": "不对",
-        "contactInfo": "",
-        "nickname": "匿名猫友",
-        "repliable": false
-      }
-    }
-  ]
+  "version": "v1793747706994",
+  "items": []
 }
