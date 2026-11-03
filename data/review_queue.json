@@ -1,5 +1,5 @@
 {
-  "version": "v1793698834936",
+  "version": "v1793729121886",
   "items": [
     {
       "_id": "rv-1793523110816-mvxn89c2ujk8cp",
@@ -66,12 +66,29 @@
       "kind": "feedback",
       "openid": "guest_298bc2b3",
       "ts": 1793694029093,
-      "status": "pending",
+      "status": "rejected",
       "create_time": "2026-11-03T08:20:29.093Z",
       "data": {
         "cat_id": "cat-guayintuoqiang",
         "cat_name": "挂印拖枪",
         "feedbackInfo": "你好",
+        "contactInfo": "",
+        "nickname": "匿名猫友",
+        "repliable": false
+      },
+      "decide_time": "2026-11-03T18:05:21.885Z"
+    },
+    {
+      "_id": "rv-1793703461896-mw1008da8h57ap",
+      "kind": "feedback",
+      "openid": "guest_8d786c29",
+      "ts": 1793703461896,
+      "status": "pending",
+      "create_time": "2026-11-03T10:57:41.896Z",
+      "data": {
+        "cat_id": "cat-jinbeiyinchuang",
+        "cat_name": "金被银床",
+        "feedbackInfo": "不对",
         "contactInfo": "",
         "nickname": "匿名猫友",
         "repliable": false
