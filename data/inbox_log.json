@@ -1,5 +1,5 @@
 {
-  "version": "v1793550413474",
+  "version": "v1793675208471",
   "items": [
     {
       "_id": "follow|guest_908baf6f|cat-jinbeiyinchuang",
@@ -318,6 +318,22 @@
         "r3": 4,
         "r4": 4,
         "r5": 4
+      }
+    },
+    {
+      "_id": "rating|guest_8d786c29|cat-nuomi",
+      "k": "rating|guest_8d786c29|cat-nuomi",
+      "kind": "rating",
+      "openid": "guest_8d786c29",
+      "target": "cat-nuomi",
+      "state": 4,
+      "ts": 1793659770813,
+      "dims": {
+        "r1": 5,
+        "r2": 5,
+        "r3": 4,
+        "r4": 3,
+        "r5": 3
       }
     }
   ]
