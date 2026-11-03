@@ -13,7 +13,7 @@
 ## 技术栈与目录
 
 - 微信原生小程序，无框架。`miniprogramRoot: miniprogram/`，appid `wx5d52c6c8f098ed5e`，`libVersion: 2.24.7`，`nodeModules: false`
-- 页面：`app.json` 注册 **26 页 + 分包 `pages/packageA` 1 页**（v4.0.65 删「审核队列」review 页，27→26）（v4.0.63 管理后台重构删 4 页：imProcess/checkPhotos/checkAdoption/pageSettings，31→27）（v4.0.35 加 newsAdmin，30→31）（v4.0.17 删徽章 38→34；v4.0.23 删用户档案页 34→30）
+- 页面：`app.json` 注册 **28 页 + 分包 `pages/packageA` 1 页**（v4.0.67 加回「审核队列」review 页，26→28）（v4.0.65 删 review 页，27→26）（v4.0.63 管理后台重构删 4 页：imProcess/checkPhotos/checkAdoption/pageSettings，31→27）（v4.0.35 加 newsAdmin，30→31）（v4.0.17 删徽章 38→34；v4.0.23 删用户档案页 34→30）
 - `miniprogram/utils/datasource.js`（1321 行）：自研的 mpserverless 兼容层，实现 `createJsonServerless({baseUrl})`
 - `miniprogram/utils/writeback.js`：COS inbox 写入通道（客户端零密钥）
 - `data/`：19 个 JSON，即"数据库"（删徽章三件套后从 22 降下来）
@@ -145,7 +145,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.65`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.67`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -162,7 +162,14 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-03）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.66`
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.67`
+- **v4.0.67：小程序端审核能力恢复（2026-11-03）** — 起因：用户问「小程序端不能审核吗」，实测发现小程序审核页读的 `review_queue.json` 永不传 COS，而 COS 又不允许匿名列举 `pending/`，所以「看不到有哪些要审」。方案是聚合端另发一份**脱敏待审快照**。
+  - `scripts/process-inbox.js` 新增 `writePendingSnapshot()`：把 `review_queue.items` 里 `status === 'pending'` 的项按 `ts` 倒序导出成 `data/pending.json`（只留 `{_id, kind, ts, create_time, data}`，**剥掉 openid / status / applied_comment_id**），tmp+rename 原子写。`main()` 里两处调用（正常分支 `flushData()` 之后、以及「本轮没有新提交」的早退分支——上一轮被通过/驳回的项也要从审核页消失）。DRY 时直接返回 0 不写文件。
+  - **`data/pending.json` 会被正常公开上传**（`scripts/upload-data.js:38` 的 `UPLOAD_DENYLIST` 只有 `inbox_log.json`/`review_queue.json`）——这正是设计：审核页要读它。
+  - 重建 `miniprogram/pages/manage/review/`（4 文件）：读 `collection("pending").get()`，照片用 `data.photo_key` 拼 `${data_base_url}/${key}` 预览，便利贴显示 `content`/`nickname`；通过/驳回发 `putInbox("decision",{item_id,action,token})`并本地移除该项。`deciding` 锁防重复点。**旧版（v4.0.65 删掉的那份）把 `data.url` 当图片地址，而 photo 的 `data` 里其实叫 `photo_key`，所以旧页照片永远不显示**——这是重写的理由之一。
+  - `miniprogram/app.json` 重新注册 -> **28 页**；`info.js` menuList 首项加回「审核队列」（`num:"numPending"`，两处统计各加 `collection('pending').count({})`）。管理菜单现为 **6 项**。
+  - **修 `approvePhoto` 的序号覆盖 bug**：原来 `const nnn = '000';` 硬编码，同一只猫通过多张会全部写到 `catimg/<区域>/<猫>/000.<ext>` 互相覆盖。新增 `nextPhotoSeq(catId, areaSlug, catSlug)`：从 `loadData('photo')` 里扫该猫已有 URL，取 `catimg/<area>/<cat>/` 之后 `^(\d+)\.` 的最大编号 +1，3 位补零。纯内存推导，不请求 COS。
+  - 验证：`node --check` 全过、`app.json` 注册 28 页 × 4 文件 `missing=0`、47 单测全过、66 项数据校验全过、`DRY_RUN=1` 输出符合预期。
 - **v4.0.66：去掉「操作手册」菜单（2026-11-03）** — 该项只是 `info.js` 的 `guide()` 弹一个「文档请查看 github 仓库文档链接」的 modal，没有任何实际功能，用户要求去掉。已删 `menuList` 里的条目、`clickbtn()` 的 `actionMap`（原本只有 guide 一个分支，整块删掉，直接 `wx.navigateTo`）、`guide()` 方法；`info.wxml:72` 的 `{{item.dot}}` 小红点节点与 `info.wxss` 的 `.dot` 规则一并删除（只有操作手册用过 `dot:true`）。管理菜单现为 **5 项**：猫猫管理 / 反馈处理 / 猫抓板公告 / 位置区域花色 / 友情链接。
 - **v4.0.65：管理后台按「一个对象一个入口」重组（2026-11-03）** — 起因：用户问「猫资料编辑和猫猫管理不重复吗」。结论是**确实重复**，且照片操作有一半是假写。判据：**一个对象只留一个入口；凡服务端没有 action 的按钮一律删掉，不再假装能点**。
   - 删 `pages/manage/admin` 的 cat tab（与 catManage 改同一批 cat 字段，且 patch 只覆盖 14/19 白名单字段）和 photo tab（下架/恢复搬进 catInfoTab 照片卡）。`admin` 现在**只剩友情链接**：`admin.js` 552→约 300 行，`admin.wxml` 170→约 62 行，`TAB_META`/`data.tab`/`loadCurrentTab`/`loadCats`/`submitToast`/`GENDER_OPTIONS`/`ADOPT_OPTIONS`/`formatDate` 与 wxss 的 `.picker-row`/`.photo-*` 段全部删除；`onLoad()` 改无参、标题固定「友情链接」。菜单路径同步去掉 `?tab=link`。

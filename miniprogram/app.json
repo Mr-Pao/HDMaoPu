@@ -22,6 +22,7 @@
     "pages/manage/filters/filters",
     "pages/manage/checkFeedbacks/checkFeedbacks",
     "pages/manage/replyFeedback/replyFeedback",
+    "pages/manage/review/review",
     "pages/manage/catManage/catManage",
     "pages/manage/admin/admin",
     "pages/manage/newsAdmin/newsAdmin",

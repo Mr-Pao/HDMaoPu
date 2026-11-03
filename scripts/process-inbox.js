@@ -674,6 +674,24 @@ function campusSlug(campus) {
   return 'qita';
 }
 
+// 该猫在 catimg/<area>/<cat>/ 下已有的最大序号 + 1，三位补零。
+// 原实现硬编码 '000'，导致同一只猫通过多张照片时互相覆盖（2026-11-03 修）。
+// 序号来源是 data/photo.json 里已落库的 photo_compressed URL，不额外请求 COS。
+function nextPhotoSeq(catId, areaSlug, catSlug) {
+  const photos = loadData('photo');
+  const prefix = `catimg/${areaSlug}/${catSlug}/`;
+  let max = 0;
+  for (const it of photos.items) {
+    if (!it || it.cat_id !== catId) continue;
+    const url = String(it.photo_compressed || it.photo_id || '');
+    const idx = url.indexOf(prefix);
+    if (idx < 0) continue;
+    const m = /^(\d+)\./.exec(url.slice(idx + prefix.length));
+    if (m) max = Math.max(max, Number(m[1]));
+  }
+  return String(max + 1).padStart(3, '0');
+}
+
 // 照片审核通过落库：把 pending/<openid>-<ts>.<ext> 复制到 catimg/<area-slug>/<cat-slug>/<nnn>.<ext>
 // （公开读），再 append 一条 photo.json 记录。三 URL 同源指向 catimg 目标。
 // ⚠️ 真实 COS 复制只在非 DRY_RUN 且配了 COS 凭据时执行；pending 源不存在时参考
@@ -684,7 +702,7 @@ async function approvePhoto(item) {
   const catSlug = catId.startsWith('cat-') ? catId.slice('cat-'.length) : catId;
   const areaSlug = campusSlug(cat && cat.campus);
   const ext = extOfKey(item.data.photo_key);
-  const nnn = '000'; // 真实序号由 relink/编号工具管理；聚合只负责首次落库占位
+  const nnn = nextPhotoSeq(catId, areaSlug, catSlug);
   const targetKey = `catimg/${areaSlug}/${catSlug}/${nnn}.${ext}`;
   const photoUrl = publicUrlOf(targetKey);
 
@@ -737,6 +755,36 @@ async function approvePhoto(item) {
   }
 
   return photoId;
+}
+
+// 把 review_queue 里的 pending 项导出成**脱敏快照** data/pending.json，供小程序审核页读取。
+//
+// 为什么需要它：review_queue.json 在 scripts/upload-data.js 的 UPLOAD_DENYLIST 里，
+// 永不上 CDN（文件含用户 openid），所以小程序端 collection('review_queue') 恒为空。
+// 这里剥掉 openid / status / applied_comment_id 等内部字段，只留审核页需要的
+// { _id, kind, ts, create_time, data }，再交给 upload-data.js 公开出去。
+//
+// 快照与 review_queue 同轮生成，所以点通过/驳回后下一次聚合就会从列表里消失。
+function writePendingSnapshot() {
+  if (DRY) return 0;
+  const queue = loadData('review_queue');
+  const pending = queue.items
+    .filter(it => it && it._id && it.status === 'pending')
+    .sort((a, b) => Number(b.ts || 0) - Number(a.ts || 0))
+    .map(it => ({
+      _id: it._id,
+      kind: it.kind,
+      ts: it.ts,
+      create_time: it.create_time,
+      data: it.data,
+    }));
+  // 保留 _id：upload-data.js 会校验每条都有 _id
+  const doc = { version: 'v' + Date.now(), items: pending };
+  const finalPath = dataFile('pending');
+  const tmpPath = finalPath + '.tmp';
+  fs.writeFileSync(tmpPath, JSON.stringify(doc, null, 2) + '\n', 'utf8');
+  fs.renameSync(tmpPath, finalPath);
+  return pending.length;
 }
 
 function trimQueue() {
@@ -2007,7 +2055,9 @@ async function main() {
   console.log(`inbox/ 下待处理对象：${listed.length} 个`);
 
   if (!listed.length) {
-    console.log('没有待处理内容，结束。');
+    // 即使这轮没有新提交，也要刷新脱敏快照：上一轮被通过/驳回的项要从审核页消失。
+    const pend0 = writePendingSnapshot();
+    console.log(`没有待处理内容，结束。待审快照 data/pending.json：${pend0} 条`);
     return;
   }
 
@@ -2040,6 +2090,9 @@ async function main() {
   const trimmed = trimQueue();
   const written = flushData();
 
+  // review_queue 已定稿，导出脱敏快照给小程序审核页（review_queue.json 本身不上 CDN）
+  const pendingCount = writePendingSnapshot();
+
   // flush 成功后输出标记：workflow 的 commit step 据此判断可以提交。
   // 注意：删除 inbox 失败不影响此标记（data/ 已写好，应该照常提交）。
   if (process.env.GITHUB_OUTPUT) {
@@ -2048,6 +2101,7 @@ async function main() {
 
   printStats(stats);
   if (trimmed) console.log(`审核队列裁剪：移除 ${trimmed} 条超出上限的已决定旧记录`);
+  console.log(`待审快照 data/pending.json：${pendingCount} 条`);
   console.log('写入文件：' + (written.length ? written.join(', ') : '（无变化）'));
 
   const deleteList = toDelete.concat(doneKeys);

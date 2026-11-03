@@ -44,11 +44,19 @@ Page({
     // 小程序端恒为空态，真正的审核在 GitHub Issue 里评论 /ok）、「猫资料编辑」（与猫猫管理重复）、
     // 「照片审核」（已并入猫猫管理的照片卡）。
     // v4.0.66 再去掉「操作手册」：它原本只弹一个「文档见 GitHub 仓库」的 modal，没有实际功能。
+    // v4.0.67 加回「审核队列」：聚合端现在会把待审项导出成脱敏快照 data/pending.json
+    // （剥掉 openid）上 CDN，小程序端终于读得到了。
     menuList: [
       {
         title: "管理后台",
         show: "manager",
         items: [
+          {
+            name: "审核队列",
+            path: "/pages/manage/review/review",
+            num: "numPending",
+            icon: "icon-todo-list-o"
+          },
           {
             name: "猫猫管理",
             path: "/pages/manage/catManage/catManage",
@@ -217,12 +225,14 @@ Page({
       return;
     }
 
-    // 待处理照片 / 反馈
+    // 待处理照片 / 反馈 / 待审核项（pending 快照）
     const { result: numChkPhotos } = await app.mpServerless.db.collection('photo').count({ verified: false });
     const { result: numFeedbacks } = await app.mpServerless.db.collection('feedback').count({ dealed: false });
+    const { result: numPending } = await app.mpServerless.db.collection('pending').count({});
     this.setData({
       "nums.numChkPhotos": numChkPhotos,
       "nums.numFeedbacks": numFeedbacks,
+      "nums.numPending": numPending,
       "showCond.manager": true,
     });
   },
@@ -315,9 +325,11 @@ Page({
     try {
       const { result: numChkPhotos } = await app.mpServerless.db.collection('photo').count({ verified: false });
       const { result: numFeedbacks } = await app.mpServerless.db.collection('feedback').count({ dealed: false });
+      const { result: numPending } = await app.mpServerless.db.collection('pending').count({});
       this.setData({
         "nums.numChkPhotos": numChkPhotos,
         "nums.numFeedbacks": numFeedbacks,
+        "nums.numPending": numPending,
         "showCond.manager": true,
       });
     } catch (e) {
