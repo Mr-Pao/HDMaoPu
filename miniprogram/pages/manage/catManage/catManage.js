@@ -277,10 +277,8 @@ Page({
     const catId = e.detail.catId;
     if (catId) {
       this.getCatById(catId);
-      wx.showToast({
-        title: '创建成功',
-        icon: 'success'
-      });
+      // 成功提示与「提交后自动返回」统一由 catInfoTab 的 backAfterSubmit 负责，
+      // 这里不再重复 toast，避免把它的提示盖掉。
     }
   },
 
@@ -289,10 +287,6 @@ Page({
     const catId = e.detail.catId;
     if (catId && this.data.selectedCat) {
       this.getCatById(catId);
-      wx.showToast({
-        title: '更新成功',
-        icon: 'success'
-      });
     }
   },
 

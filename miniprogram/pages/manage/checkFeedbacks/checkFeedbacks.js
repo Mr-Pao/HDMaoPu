@@ -138,24 +138,39 @@ Page({
   },
 
   async bindCheck(e) {
+    // 防重复提交：确认弹窗到聚合提交之间可能被连点
+    if (this.checking) return;
+    this.checking = true;
     const feedback = e.currentTarget.dataset.feedback;
     const modalRes = await wx.showModal({
       title: '提示',
       content: '确定已完成该反馈处理？',
     })
     if (!modalRes.confirm) {
+      this.checking = false;
       return;
     }
 
     // 口令在关于页解锁时已存进本机，直接取；取不到会提示重新解锁，不弹输入框
     const token = passcode.ensureToken();
-    if (!token) return;
-    await putInbox('manage', {
+    if (!token) {
+      this.checking = false;
+      return;
+    }
+    wx.showLoading({ title: '提交中', mask: true });
+    const ok = await putInbox('manage', {
       action: 'manageFeedback',
       token: token,
       feedback_id: feedback._id,
       patch: { status: 'done' },
     });
+    wx.hideLoading();
+    this.checking = false;
+
+    if (!ok) {
+      wx.showToast({ title: '提交失败，请检查网络', icon: 'none' });
+      return;
+    }
 
     // 直接从列表里去掉这个反馈，不完全加载了
     const feedbacks = this.data.feedbacks;

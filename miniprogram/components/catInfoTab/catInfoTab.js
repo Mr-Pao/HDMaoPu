@@ -6,6 +6,7 @@ import { signCosUrl } from "../../utils/common";
 import api from "../../utils/cloudApi";
 import passcode from "../../utils/passcode";
 import { putInbox } from "../../utils/writeback";
+import { backAfterSubmit } from "../../utils/syncTip";
 const app = getApp();
 
 const photoStep = 5; // 每次加载的图片数量
@@ -436,19 +437,51 @@ Component({
         return false;
       }
 
+      // 旧实现走 api.updateCat → 落到 datasource 的 unionOp 兼容层，
+      // 该 action 未实现，恒返回 { ok:true, data:null } 的假成功，改不到 data/。
+      // 现在统一走 putInbox('manage',{action:'updateCat'})，由 Actions 聚合端真写。
+      // 聚合端只有 updateCat，没有新建猫的 action，所以没有 cat_id 时不提交。
+      if (!this.jsData || !this.jsData.cat_id) {
+        wx.showToast({ title: '暂时只能修改已有猫猫，新建暂未开放', icon: 'none', duration: 2500 });
+        return false;
+      }
+      const token = passcode.ensureToken();
+      if (!token) return false;
+
       wx.showLoading({
         title: '更新中...',
+        mask: true,
       });
-      var res = await api.updateCat({
-        cat: this.data.cat,
-        cat_id: this.jsData.cat_id
+
+      // 只提交白名单字段，类型必须合聚合端 MANAGE_CAT_PATCH_TYPES，
+      // 任何白名单外的键都会让整条提交被 drop。
+      const patch = {};
+      const src = this.data.cat || {};
+      const strFields = ['name', 'nickname', 'gender', 'campus', 'area', 'colour',
+        'birthday', 'characteristics', 'tutorial', 'sterilized_time', 'adopt_time'];
+      strFields.forEach(k => {
+        if (src[k] !== undefined && src[k] !== null) patch[k] = String(src[k]);
       });
-      if (res.insertedId) {
-        this.jsData.cat_id = res.insertedId;
+      const boolFields = ['sterilized', 'missing', 'to_star'];
+      boolFields.forEach(k => {
+        if (src[k] !== undefined && src[k] !== null) patch[k] = src[k] === true;
+      });
+      if (src.adopt !== undefined && src.adopt !== null) patch.adopt = Number(src.adopt) || 0;
+      if (Array.isArray(src.relations)) patch.relations = src.relations;
+
+      const ok = await putInbox('manage', {
+        action: 'updateCat',
+        token,
+        cat_id: this.jsData.cat_id,
+        patch,
+      });
+      wx.hideLoading();
+
+      if (!ok) {
+        wx.showToast({ title: '提交失败，请检查网络', icon: 'none' });
+        return false;
       }
-      wx.showToast({
-        title: '操作成功',
-      });
+
       // 刷新缓存
       await getCatItemMulti([this.jsData.cat_id], { nocache: true });
 
@@ -459,6 +492,10 @@ Component({
       } else {
         this.triggerEvent('catUpdated', { catId: this.jsData.cat_id, cat: this.data.cat });
       }
+
+      // 提交完成后自动返回上一页，避免在表单上重复提交
+      backAfterSubmit('猫资料已提交，后台几分钟内汇总生效', { delay: 1400 });
+      return true;
     },
     async deletePhoto(e) {
       const photo = e.currentTarget.dataset.photo;

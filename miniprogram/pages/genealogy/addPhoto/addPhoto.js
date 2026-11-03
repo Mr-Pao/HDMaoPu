@@ -14,7 +14,7 @@ import {
 import config from "../../../config";
 import { getCurrentUserOpenid } from "../../../utils/common";
 import { putInbox } from "../../../utils/writeback";
-import { markPending, submittedModal } from "../../../utils/syncTip";
+import { markPending, submittedModal, backAfterSubmit } from "../../../utils/syncTip";
 const app = getApp();
 Page({
   /**
@@ -145,7 +145,13 @@ Page({
     wx.hideLoading();
     if (ok) {
       markPending("photo", { cat_id: (this.data.cat || {})._id, label: "照片" });
-      submittedModal(config.text.sync.received_tip);
+      // 列表里已经没有待传的照片了，就说明这一页填完了：提示 + 自动返回，
+      // 免得用户停在空表单上再点一次上传（会重复提交同一张）。
+      if (!this.data.photos.length) {
+        backAfterSubmit(config.text.sync.received_tip, { delay: 1200 });
+      } else {
+        submittedModal(config.text.sync.received_tip);
+      }
     } else {
       submittedModal(config.text.sync.offline_tip);
     }
@@ -193,7 +199,12 @@ Page({
     wx.hideLoading();
     if (allOk) {
       markPending("photo", { cat_id: (this.data.cat || {})._id, label: "照片" });
-      submittedModal(config.text.sync.received_tip);
+      // 批量传完就没剩下要传的了，提示后直接返回详情页，避免重复点「全部上传」
+      if (!this.data.photos.length) {
+        backAfterSubmit(config.text.sync.received_tip, { delay: 1200 });
+      } else {
+        submittedModal(config.text.sync.received_tip);
+      }
     } else {
       submittedModal(config.text.sync.offline_tip);
     }

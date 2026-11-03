@@ -55,7 +55,7 @@
 
     <view class="line"></view>
 
-    <button class='submitButton' form-type='submit'>发布公告</button>
+    <button class='submitButton' form-type='submit' disabled="{{submitting}}">{{submitting ? '提交中…' : '发布公告'}}</button>
 </form>
 <view wx:else class='unAuth'>
     <text>{{tipText}}</text>

@@ -144,7 +144,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.63`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.64`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -160,8 +160,15 @@ cos-version  从上游错误派生，废弃
 月成本 ≤ 5 元。所以：不引服务器/SCF/CloudBase，不用 PAYG 服务，Actions 用公开仓库免费额度。
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
-### 当前状态（2026-11-01）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.63`
+### 当前状态（2026-11-03）
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.64`
+- **v4.0.64：提交后自动返回，防重复提交（2026-11-03）** — 新增统一收尾函数 `utils/syncTip.js` 的 `backAfterSubmit(content, opts)`：`wx.showToast` + `setTimeout(wx.navigateBack, delay)`，模块级 `backing` 布尔防重入（`navigateBack` 的 `complete` 里复位，避免旧锁让下一次提交毫无反应）。
+  - 表单型页提交成功即返回：`pages/news/createNews`（另加 `data.submitting` 锁 + 按钮 `disabled="{{submitting}}"`）、`pages/genealogy/detailCat/ratingDetail`、`pages/genealogy/feedbackDetail`（成功返回、失败留在页上）、`pages/genealogy/addPhoto`（只在待上传列表清空时返回）、`components/catInfoTab`、`components/relationTab`、`pages/manage/admin` 的 cat/link 两个 tab。
+  - **列表型/容器型不返回**，只加防重锁：`pages/manage/review`（靠 `showLoading mask`）、`pages/manage/checkFeedbacks`（新增 `this.checking`）、`pages/manage/newsAdmin`（新增 `this.removing`）、`pages/manage/replyFeedback`（新增 `this.replying`）、`pages/genealogy/commentBoard`、`pages/manage/admin` 的 photo tab。
+  - `pages/manage/filters` 的 `uploadFilters(e)` 用 `isFinal = !!(e && e.currentTarget)` 区分「页面内静默保存」与「底部确定上传」（后者才返回）；并补上原来缺失的 `putInbox` 返回值判断、失败 toast 与 `wx.hideLoading()`；`doUploadCampus` 只 toast 不返回（页内中间步骤）。
+  - **修真实 bug**：`pages/manage/replyFeedback` 原来 `bindReply` 提交后再调 `bindCheck()` 又发一次 `manageFeedback`（只带 `status`），等于同一件事提交两遍 —— 已删 `bindCheck`，改为一次 patch 带 `status+replyInfo+replyDate`。
+  - **catInfoTab 假写转真写**：`saveCat()` 原来走 `api.updateCat` → `datasource.function.invoke` 未实现 → `{ok:true,data:null}` 假成功；现改 `passcode.ensureToken()` + `putInbox('manage',{action:'updateCat',patch})`，`patch` 只收 `MANAGE_CAT_PATCH_FIELDS` 白名单 19 字段（聚合端白名单外的键会让整条 drop）。**聚合端没有新建猫的 action**，所以无 `cat_id` 时直接提示「暂时只能修改已有猫猫，新建暂未开放」。
+  - 验证：14 个改动 JS `node --check` 全过、47 单测全过、66 项数据校验全过。
 - **v4.0.63：管理后台重构，删掉 19 个无用目录（2026-11-03）** — 判据：页面是否有真实 `putInbox` 写链路（走 `api.curdOp`/`api.adoptionOp`/`api.vaccineOp` 的全是**本地假写**，因为 `datasource.js:1332-1360` 的 `function.invoke` 只实现 6 个 action，其余返回 `{result:{ok:true,data:null}}`）。
   - 已删目录：`pages/manage/{addCat,addRelations,checkComment,checkPhotos,checkAdoption,imProcess,managers,medicalManage,photoManagement,rewards,pageSettings}`、`pages/tools/{inviteUser,updateUserRole}`（`pages/tools` 空目录一并删）、`pages/info/{myFootprint,myAchievement}`、`pages/genealogy/applyMapAccess`、`pages/genealogy/detailCat/relationGraph`、`pages/map`、`packages/tencentcloud`、`components/vaccineTab`；文件：`utils/achievement.js`、`utils/cloudAccess.js`（`cloudAccess`+`tencentcloud`+`addCat`/`addRelations` 曾是闭环引用，一起删）。
   - `info.js` 管理菜单 15 项 → **9 项**：操作手册(guide)/审核队列/猫资料编辑(?tab=cat)/照片审核(?tab=photo)/友情链接(?tab=link)/反馈处理(**去掉 disabled，已可用**)/猫抓板公告/位置区域花色/猫猫管理(catManage，新增入口)。`loadAdminNums` 与 `refreshManagerNums` 同步删掉 `numChkComments`/`numImProcess` 统计。
@@ -221,7 +228,7 @@ cos-version  从上游错误派生，废弃
 - `README.md` 是上游原文，写着"阿里云 EMAS + MongoDB + OSS"，**完全过时**，别据此判断架构；以本文件为准
 - `functionsEMAS/unionOp/node_modules` 残缺（源目录 3866 个占位丢约 400 个），`dev` 线要用得重装
 - 桶里 962 个对象 / 239.9 MB（2026-11-01 清理后实测）。其中 `东苑/`(136) `校外/`(113) `其它/`(42) `校内/`(2) `undefined/`(5) `compressed/`(298) `watermark/`(298) 都是 EMAS 时代的历史猫照，**无归属关系可恢复**——EMAS 里的 photo 表已随空间删除，别承诺恢复。容量大头是 `watermark/` 139.1 MB（原图带水印）与 `校外/` 41.5 MB，两者都只有对象读权限（私有，匿名 GET 403），不占对外流量
-- **已无「注册但静默 no-op」的页面**（v4.0.63 已把这类页全部删除）。`catManage` 现在是真能写：`<cat-info-tab>` 的 `putInbox('manage',{action:'movePhoto'})`、`<relation-tab>` 的 `putInbox('manage',{action:'updateCat',patch:{relations}})`（v4.0.63 修了服务端缺 `relations` 类型的 bug）。⚠️ 仍有假写残留：`components/catInfoTab/catInfoTab.js` 里部分字段走 `api.updateCat` → `callUnionOp` → `datasource.function.invoke` 未实现 → 返回 `{ok:true,data:null}`，看着成功实则没落盘。
+- **已无「注册但静默 no-op」的页面**（v4.0.63 已把这类页全部删除）。`catManage` 现在是真能写：`<cat-info-tab>` 的 `saveCat()`（v4.0.64 起改 `putInbox('manage',{action:'updateCat',patch})`，白名单 19 字段）、`putInbox('manage',{action:'movePhoto'})`、`<relation-tab>` 的 `putInbox('manage',{action:'updateCat',patch:{relations}})`（v4.0.63 修了服务端缺 `relations` 类型的 bug）。⚠️ `datasource.function.invoke` 对 `unionOp` 仍未实现 `updateCat`/`managePhoto`/`vaccineOp` 等，走 `api.xxx` 的调用依旧返回 `{result:{ok:true,data:null}}` 假成功 —— **新增写操作一律用 `putInbox`，不要用 `api.*`**。
 - 遗留死代码：`news.js:149 clickScience()` 跳 `/pages/science/science`（页面不存在，wxml 未绑定不触发）；`packages/tencentcloud/` 内还留着 `miniprogram/packages` 下别的包，别整体扫。（注：`pages/leaderboard/`、`components/photoRank`、`components/achievementRank` 已在 v4.0.53 删除；19 个管理/工具死页已在 v4.0.63 删除）
 - 首页封面/榜单/地图的照片查询过滤问题已在 v4.0.53 审计中修复（B1）：`cat.js` 的 `getBestPhoto/getLatestPhoto`、`datasource.js` 的 `_getCatLocations`、`gallery.js` 查询、`detailCat.js` 相册均已过滤 `hidden`/`deleted`，下架照片不再在其他位置露出
 - `--color-comment-paper-white` 这类被误伤的命名残留已还原，但 `packages/weui/weui-wxss/dist/style/weui.wxss` 也曾被批量替换过（等价改动，未回滚）

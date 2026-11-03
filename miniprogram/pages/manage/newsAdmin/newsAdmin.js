@@ -88,6 +88,8 @@ Page({
   // ---------- 删除 ----------
 
   async removeNews(e) {
+    // 防重复提交：从点按钮到聚合提交完成之间可能被连点
+    if (this.removing) return;
     const { id, title } = e.currentTarget.dataset;
     if (!id) return;
     // 口令在关于页解锁时已存好，直接取；取不到会提示重新解锁
@@ -105,6 +107,7 @@ Page({
     });
     if (!res) return;
 
+    this.removing = true;
     // putInbox 永远不 reject，失败只返回 false —— 所以必须检查返回值，
     // 不能像旧代码那样 await 完就当成功了。
     const ok = await putInbox("manage", {
@@ -113,6 +116,7 @@ Page({
       token,
       news_id: id,
     });
+    this.removing = false;
 
     if (!ok) {
       wx.showModal({

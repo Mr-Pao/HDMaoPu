@@ -7,6 +7,7 @@ import {
 import { putInbox } from "../../../utils/writeback";
 import { text as text_cfg } from "../../../config";
 import { uploadFile } from "../../../utils/common"
+import { backAfterSubmit } from "../../../utils/syncTip";
 const passcode = require("../../../utils/passcode");
 const app = getApp();
 Page({
@@ -31,6 +32,7 @@ Page({
     cover_path: "",
     cover_pathId: "",
     uploading: false,
+    submitting: false,
     buttons: [{
       id: 0,
       name: '领养',
@@ -298,6 +300,8 @@ Page({
   async bindSubmit(e) {
     var submitData = e.detail.value;
     const that = this;
+    // 提交中直接忽略，防止连点发布出两条一模一样的公告
+    if (this.data.submitting) return;
     if (!submitData.title) {
       wx.showToast({
         title: '请填写标题后再发布哦',
@@ -310,6 +314,8 @@ Page({
     // 放在上传图片之前，免得口令没设置还白传一堆图。
     const token = passcode.ensureToken();
     if (!token) return;
+
+    this.setData({ submitting: true });
 
     // 上传图片
     await this.uploadCover();
@@ -351,19 +357,17 @@ Page({
     });
 
     if (ok) {
-      wx.showToast({
-        title: text_cfg.sync.received_tip,
-        icon: 'none',
-        duration: 2000
-      });
-      setTimeout(wx.navigateBack, 1200);
-    } else {
-      wx.showToast({
-        title: text_cfg.sync.offline_tip,
-        icon: 'none',
-        duration: 2500
-      });
+      // 发布成功后自动返回公告列表，避免用户停在原地重复点「发布公告」
+      backAfterSubmit(text_cfg.sync.received_tip, { delay: 1200 });
+      return;
     }
+
+    this.setData({ submitting: false });
+    wx.showToast({
+      title: text_cfg.sync.offline_tip,
+      icon: 'none',
+      duration: 2500
+    });
   },
 
   // 没有权限，返回上一页

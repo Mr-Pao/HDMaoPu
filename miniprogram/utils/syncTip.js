@@ -134,6 +134,45 @@ function submittedModal(content, title) {
   }
 }
 
+// 防重入：同一次提交只返回一次，避免连点导致连续 navigateBack
+let backing = false;
+
+/**
+ * 表单一类的提交成功后统一收尾：先 toast，再自动返回上一页。
+ * 目的是「填完就走」，用户在返回后的页面上没法再点一次提交按钮。
+ * @param {string} [content] 提示文案，默认「已收到，审核后就会展示出来啦」
+ * @param {object} [opts]
+ * @param {number} [opts.delay] 延迟毫秒，默认 1000
+ */
+function backAfterSubmit(content, opts) {
+  if (backing) return;
+  backing = true;
+  const delay = (opts && opts.delay) || 1000;
+  try {
+    wx.showToast({
+      title: content || config.text.sync.received_tip,
+      icon: "none",
+      duration: delay > 800 ? delay : 1200,
+    });
+  } catch (e) {
+    console.warn("[syncTip] backAfterSubmit toast 异常", (e && e.message) || e);
+  }
+  setTimeout(() => {
+    try {
+      wx.navigateBack({
+        complete() {
+          // 返回动作已完成（成功或失败）就把锁放开，
+          // 否则用户下一次进别的表单页提交时会因为旧锁而毫无反应。
+          backing = false;
+        },
+      });
+    } catch (e) {
+      console.warn("[syncTip] backAfterSubmit 返回异常", (e && e.message) || e);
+      backing = false;
+    }
+  }, delay);
+}
+
 /**
  * 详情页提示条文案
  * @param {number} n 待同步条数
@@ -153,5 +192,6 @@ module.exports = {
   getPendingCount,
   clearPending,
   submittedModal,
+  backAfterSubmit,
   pendingText,
 };

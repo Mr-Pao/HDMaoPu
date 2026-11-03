@@ -55,6 +55,8 @@ Page({
 
   async bindReply(e) {
     var submitData = e.detail.value;
+    // 防重复提交：确认弹窗到回写完成之间可能被连点，重复回复会触发两次订阅消息
+    if (this.replying) return;
     if (!submitData.replyInfo) {
       wx.showToast({
         title: '请填写回复后再提交哦',
@@ -68,6 +70,7 @@ Page({
     });
 
     if (res.confirm) {
+      this.replying = true;
       wx.showLoading({
         title: '正在提交...',
         mask: true
@@ -80,9 +83,12 @@ Page({
         const token = passcode.ensureToken();
         if (!token) {
           wx.hideLoading();
+          this.replying = false;
           return;
         }
-        await putInbox('manage', {
+        // 一次提交把状态和回复内容一起带上；原来后面还紧跟一次 bindCheck()
+        // 又发了一遍 manageFeedback（只带 status），等于同一件事提交两次。
+        const ok = await putInbox('manage', {
           action: 'manageFeedback',
           token: token,
           feedback_id: that.data.feedback._id,
@@ -93,10 +99,12 @@ Page({
           },
         });
 
-        // 直接调用标记为已处理函数，避免网络延迟导致的重回复bug   
-        // dataTime : 2025/09/05 20:53 
-        // author: Light_House
-        await this.bindCheck();
+        if (!ok) {
+          wx.hideLoading();
+          this.replying = false;
+          wx.showToast({ title: '提交失败，请检查网络', icon: 'none' });
+          return;
+        }
 
         // 发送刷新事件
         app.globalData.eventBus.$emit('feedbackUpdated', {
@@ -136,20 +144,6 @@ Page({
         });
       }
     }
-  },
-
-  async bindCheck() {
-    const feedback = this.data.feedback;
-    const token = passcode.ensureToken();
-    if (!token) return;
-
-    // 更新反馈状态为已处理（真实写入：走 COS inbox 聚合链路）
-    await putInbox('manage', {
-      action: 'manageFeedback',
-      token: token,
-      feedback_id: feedback._id,
-      patch: { status: 'done' },
-    });
   },
 })
 

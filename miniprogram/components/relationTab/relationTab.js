@@ -2,6 +2,7 @@ import { getCatItem, getAvatar } from "../../utils/cat";
 import api from "../../utils/cloudApi";
 import passcode from "../../utils/passcode";
 import { putInbox } from "../../utils/writeback";
+import { backAfterSubmit } from "../../utils/syncTip";
 const app = getApp();
 
 // 添加全局缓存
@@ -402,27 +403,30 @@ Component({
         // 不再假写本地覆盖层——本地覆盖层只写不回传，关系改动线上永远看不到。
         // 口令在关于页解锁时已存进本机，直接取；取不到会提示重新解锁，不弹输入框
         const token = passcode.ensureToken();
-        if (!token) return;
-        await putInbox('manage', {
+        if (!token) return false;
+        const ok = await putInbox('manage', {
           action: 'updateCat',
           token: token,
           cat_id: cat._id,
           patch: { relations: relations },
         });
+        if (!ok) {
+          wx.showToast({ title: '保存失败，请检查网络', icon: 'none' });
+          return false;
+        }
 
         // 清除缓存，强制重新加载
         delete globalRelationsCache[cat._id];
         // 重新加载最新数据
         await this.loadRelations();
 
-        wx.showToast({
-          title: '保存成功',
-        });
-
         // 保存成功，通知父组件数据已更新
         this.triggerEvent('save', {
           cat: this.data.cat
         });
+
+        // 提交完成后自动返回上一页，避免重复提交
+        backAfterSubmit('猫际关系已提交，后台几分钟内汇总生效', { delay: 1200 });
       } catch (error) {
         console.error("保存关系列表失败:", error);
         wx.showToast({

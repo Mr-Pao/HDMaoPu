@@ -1,7 +1,7 @@
 import { convertRatingList, genDefaultRating } from "../../../../utils/rating";
 import api from "../../../../utils/cloudApi";
 import { putInbox } from "../../../../utils/writeback";
-import { markPending } from "../../../../utils/syncTip";
+import { markPending, backAfterSubmit } from "../../../../utils/syncTip";
 import { text as text_cfg } from "../../../../config";
 
 const app = getApp();
@@ -171,18 +171,16 @@ Page({
 
     if (ok) {
       markPending("rating", { cat_id, label: "评分" });
-      wx.showToast({
-        title: text_cfg.sync.received_tip,
-        icon: 'none',
-        duration: 2000,
-      });
-    } else {
-      wx.showToast({
-        title: text_cfg.sync.offline_tip,
-        icon: 'none',
-        duration: 2500,
-      });
+      // 评分是一次性表单，提交成功就返回详情页，防止重复提交把分刷高
+      backAfterSubmit(text_cfg.sync.received_tip, { delay: 1200 });
+      return;
     }
+
+    wx.showToast({
+      title: text_cfg.sync.offline_tip,
+      icon: 'none',
+      duration: 2500,
+    });
     this.jsData.submitting = false;
   }
 })

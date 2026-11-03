@@ -2,7 +2,7 @@ import { getCurrentPath, shareTo } from "../../../utils/utils";
 import { getUser, checkCanFeedback } from "../../../utils/user";
 import { requestNotice, sendNotifyChkFeeedback } from "../../../utils/msg";
 import { putInbox } from "../../../utils/writeback";
-import { markPending } from "../../../utils/syncTip";
+import { markPending, backAfterSubmit } from "../../../utils/syncTip";
 import { getNickname, saveNickname } from "../../../utils/nickname";
 import { text as text_cfg } from "../../../config";
 import { getCurrentUserOpenid } from "../../../utils/common";
@@ -152,29 +152,27 @@ Page({
     await this.askNotice();
     wx.hideLoading();
     await sendNotifyChkFeeedback();
-    // 提交后要等 Actions 聚合 + 人工审核才展示，提示里说明延迟
-    wx.showToast({
-      title: ok ? text_cfg.sync.received_tip : text_cfg.sync.offline_tip,
-      icon: 'none',
-      duration: 2000
-    })
+    // 提交后要等 Actions 聚合 + 人工审核才展示，提示里说明延迟；
+    // 填完这一页就没别的事了，成功走「提示 + 自动返回上一页」，防止重复提交。
+    // 失败不返回：留在页面上，输入的内容还在，用户可以再点一次。
+    if (ok) {
+      backAfterSubmit(text_cfg.sync.received_tip, { delay: 1400 });
+    } else {
+      wx.showToast({ title: text_cfg.sync.offline_tip, icon: 'none', duration: 2500 });
+    }
   },
 
   async askNotice() {
     let repliable = await requestNotice('feedback'); // 请求订阅消息推送
 
-    const res = await api.curdOp({
+    // 只负责把订阅消息意愿写回本地覆盖层，是否返回上一页交给调用方的 backAfterSubmit，
+    // 否则这里先 navigateBack 会把后面的 hideLoading / toast 变成无效调用。
+    await api.curdOp({
       operation: "update",
       collection: "feedback",
       item_id: this.data.feedbackId,
       data: { repliable: repliable },
     });
-
-    if (res.ok) {
-      wx.navigateBack();
-    } else {
-    }
-
   },
 
   async changeAgreement(e) {

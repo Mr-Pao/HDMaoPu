@@ -17,6 +17,7 @@ import { text as text_cfg } from "../../../config";
 import config from "../../../config";
 import { getCurrentUserOpenid } from "../../../utils/common";
 import { compressImage } from "../../../utils/utils";
+import { backAfterSubmit } from "../../../utils/syncTip";
 
 const passcode = require("../../../utils/passcode");
 
@@ -234,7 +235,9 @@ Page({
       wx.showToast({ title: "提交失败，请检查网络", icon: "none" });
       return;
     }
-    this.submitToast();
+    // 三个 tab 各自是独立入口（?tab=），改完这一只猫就没别的事要在这页做了，
+    // 直接返回上一页，避免用户留在表单上反复点「保存」。
+    backAfterSubmit("猫资料已提交，后台几分钟内汇总生效", { delay: 1400 });
   },
 
   // ---------- Tab2 照片审核 ----------
@@ -543,6 +546,7 @@ Page({
     } else {
       this.setData({ linkDirty: false });
     }
-    this.submitToast();
+    // 友情链接是这一页唯一的收尾动作，保存完就返回，避免重复整批提交
+    backAfterSubmit("友情链接已提交，后台几分钟内汇总生效", { delay: 1400 });
   },
 });
