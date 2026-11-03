@@ -43,17 +43,12 @@ Page({
     // v4.0.65 按「一个对象一个入口」重组：删掉「审核队列」（review_queue.json 永不上 CDN，
     // 小程序端恒为空态，真正的审核在 GitHub Issue 里评论 /ok）、「猫资料编辑」（与猫猫管理重复）、
     // 「照片审核」（已并入猫猫管理的照片卡）。
+    // v4.0.66 再去掉「操作手册」：它原本只弹一个「文档见 GitHub 仓库」的 modal，没有实际功能。
     menuList: [
       {
         title: "管理后台",
         show: "manager",
         items: [
-          {
-            name: "操作手册",
-            path: "guide",
-            icon: "icon-description",
-            dot: true
-          },
           {
             name: "猫猫管理",
             path: "/pages/manage/catManage/catManage",
@@ -358,14 +353,6 @@ Page({
       });
       return false;
     }
-    const actionMap = {
-      guide: () => this.guide(e),
-      // 可扩展
-    };
-    const action = actionMap[to];
-    if (action) {
-      return action();
-    }
     wx.navigateTo({
       url: to,
     });
@@ -385,14 +372,5 @@ Page({
         console.error(e)
       }
     }) 
-  },
-
-  // 打开管理员手册tx文档
-  guide(e) {
-    wx.showModal({
-      title: '操作文档请查看github仓库文档链接',
-      content: 'laf版文档链接也在仓库md文件中',
-      showCancel: true,
-    })
   },
 });

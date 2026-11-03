@@ -219,16 +219,6 @@ page {
   padding: 4rpx
 }
 
-.dot {
-  position: absolute;
-  top: 35rpx;
-  right: 70rpx;
-  width: 11rpx;
-  height: 11rpx;
-  background-color: red;
-  border-radius: 50%;
-}
-
 /* 各项数据 */
 .num-info {
   display: flex;

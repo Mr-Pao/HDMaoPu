@@ -162,7 +162,8 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-03）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.65`
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.66`
+- **v4.0.66：去掉「操作手册」菜单（2026-11-03）** — 该项只是 `info.js` 的 `guide()` 弹一个「文档请查看 github 仓库文档链接」的 modal，没有任何实际功能，用户要求去掉。已删 `menuList` 里的条目、`clickbtn()` 的 `actionMap`（原本只有 guide 一个分支，整块删掉，直接 `wx.navigateTo`）、`guide()` 方法；`info.wxml:72` 的 `{{item.dot}}` 小红点节点与 `info.wxss` 的 `.dot` 规则一并删除（只有操作手册用过 `dot:true`）。管理菜单现为 **5 项**：猫猫管理 / 反馈处理 / 猫抓板公告 / 位置区域花色 / 友情链接。
 - **v4.0.65：管理后台按「一个对象一个入口」重组（2026-11-03）** — 起因：用户问「猫资料编辑和猫猫管理不重复吗」。结论是**确实重复**，且照片操作有一半是假写。判据：**一个对象只留一个入口；凡服务端没有 action 的按钮一律删掉，不再假装能点**。
   - 删 `pages/manage/admin` 的 cat tab（与 catManage 改同一批 cat 字段，且 patch 只覆盖 14/19 白名单字段）和 photo tab（下架/恢复搬进 catInfoTab 照片卡）。`admin` 现在**只剩友情链接**：`admin.js` 552→约 300 行，`admin.wxml` 170→约 62 行，`TAB_META`/`data.tab`/`loadCurrentTab`/`loadCats`/`submitToast`/`GENDER_OPTIONS`/`ADOPT_OPTIONS`/`formatDate` 与 wxss 的 `.picker-row`/`.photo-*` 段全部删除；`onLoad()` 改无参、标题固定「友情链接」。菜单路径同步去掉 `?tab=link`。
   - **删 `pages/manage/review/` 整个目录**（页面+app.json 注册+`utils/msg.js` 引用）。原因：`review_queue.json` 永不传 COS（`upload-data.js:38` 的 `UPLOAD_DENYLIST`），小程序端读到的恒为空 → 这条「审核队列」入口名不副实。真实审核在 GitHub Issue 里评论 `/ok`。⚠️ 以后要恢复审核能力，必须先改上传白名单（会公开未审数据）或另做服务端接口。

@@ -61,7 +61,7 @@
   </view>
 </block>
 
-<!-- ⑤ 管理后台：宫格式布局（9 项，3 列），待处理数量右上角红点标记 -->
+<!-- ⑤ 管理后台：宫格式布局（5 项，3 列），待处理数量右上角红点标记 -->
 <!--    showCond.manager 由 isUnlocked() 控制，非管理员恒 false → 整块隐藏 -->
 <block wx:for="{{menuList}}" wx:key="title" wx:for-item="menu" wx:if="{{showCond[menu.show]}}">
   <view wx:if="{{menu.title == '管理后台'}}" class='block-name'>{{menu.title}}</view>
@@ -69,7 +69,6 @@
       <view wx:for="{{menu.items}}" wx:key="name" class="grid-item {{item.disabled ? 'grid-item-disabled' : ''}}" bindtap='clickbtn' data-to='{{item.path}}' data-disabled='{{item.disabled}}'>
           <view class="iconfont {{item.icon}}"></view>
           <text wx:if="{{nums[item.num]}}" class="badge">{{nums[item.num]}}</text>
-          <view wx:if="{{item.dot}}" class="dot"></view>
           <text class="grid-text">{{item.name}}</text>
           <text wx:if="{{item.disabled}}" class="grid-disabled-tip">此功能需服务端支持，暂未开放</text>
       </view>
