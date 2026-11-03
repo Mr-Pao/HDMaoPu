@@ -1,5 +1,5 @@
 {
-  "version": "v1793677508824",
+  "version": "v1793698834938",
   "items": [
     {
       "_id": "cat-huihui",
@@ -549,10 +549,10 @@
         }
       },
       "photo_count_best": 1,
-      "photo_count_total": 69,
+      "photo_count_total": 70,
       "comment_count": 0,
       "follow_count": 0,
-      "like_count": 0,
+      "like_count": 1,
       "latitude": null,
       "longitude": null,
       "mphoto": 1791417600000,
@@ -622,7 +622,7 @@
       "photo_count_total": 4,
       "comment_count": 0,
       "follow_count": 0,
-      "like_count": 0,
+      "like_count": 1,
       "latitude": null,
       "longitude": null,
       "mphoto": 1791504000000,

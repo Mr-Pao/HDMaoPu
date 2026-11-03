@@ -1,5 +1,5 @@
 {
-  "version": "v1793675208471",
+  "version": "v1793698834938",
   "items": [
     {
       "_id": "follow|guest_908baf6f|cat-jinbeiyinchuang",
@@ -335,6 +335,24 @@
         "r4": 3,
         "r5": 3
       }
+    },
+    {
+      "_id": "catlike|guest_352e1fac|cat-naicha",
+      "k": "catlike|guest_352e1fac|cat-naicha",
+      "kind": "catlike",
+      "openid": "guest_352e1fac",
+      "target": "cat-naicha",
+      "state": true,
+      "ts": 1793693695972
+    },
+    {
+      "_id": "catlike|guest_352e1fac|cat-naigai",
+      "k": "catlike|guest_352e1fac|cat-naigai",
+      "kind": "catlike",
+      "openid": "guest_352e1fac",
+      "target": "cat-naigai",
+      "state": true,
+      "ts": 1793693706796
     }
   ]
 }

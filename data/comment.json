@@ -1,4 +1,23 @@
 {
-  "version": "1793462400000",
-  "items": []
+  "version": "v1793698834936",
+  "items": [
+    {
+      "_id": "cm-1793523110816-mw0hz2t3n5z7f8",
+      "cat_id": "cat-daimao",
+      "content": "好",
+      "nickname": "匿名猫友",
+      "_openid": "guest_908baf6f",
+      "create_date": "2026-11-01T08:51:50.816Z",
+      "deleted": false
+    },
+    {
+      "_id": "cm-1793548639600-mw0hz2aq4xzmhb",
+      "cat_id": "cat-naigai",
+      "content": "可爱",
+      "nickname": "匿名猫友",
+      "_openid": "guest_2d5041ef",
+      "create_date": "2026-11-01T15:57:19.600Z",
+      "deleted": false
+    }
+  ]
 }

@@ -1,54 +1,19 @@
 {
-  "version": "v1793692191025",
+  "version": "v1793698835661",
   "items": [
     {
-      "_id": "rv-1793548639600-mvy1lw2o0ydn8g",
-      "kind": "comment",
-      "ts": 1793548639600,
-      "create_time": "2026-11-01T15:57:19.600Z",
+      "_id": "rv-1793694029093-mw0hz2t3xbg7he",
+      "kind": "feedback",
+      "ts": 1793694029093,
+      "create_time": "2026-11-03T08:20:29.093Z",
       "preview_url": "",
       "data": {
-        "cat_id": "cat-naigai",
-        "content": "可爱",
-        "nickname": "匿名猫友"
-      }
-    },
-    {
-      "_id": "rv-1793541691002-mvy1lw2psdhjk8",
-      "kind": "photo",
-      "ts": 1793541691002,
-      "create_time": "2026-11-01T14:01:31.002Z",
-      "preview_url": "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/preview/pending/guest_2d5041ef-1793541690633.png",
-      "data": {
-        "photo_key": "pending/guest_2d5041ef-1793541690633.png",
-        "cat_id": "cat-naigai",
-        "photographer": "一只狍",
-        "shooting_date": "2026-02"
-      }
-    },
-    {
-      "_id": "rv-1793523110816-mvxn89c2ujk8cp",
-      "kind": "comment",
-      "ts": 1793523110816,
-      "create_time": "2026-11-01T08:51:50.816Z",
-      "preview_url": "",
-      "data": {
-        "cat_id": "cat-daimao",
-        "content": "好",
-        "nickname": "匿名猫友"
-      }
-    },
-    {
-      "_id": "rv-1793520873817-mvxn89c3j4cx0f",
-      "kind": "photo",
-      "ts": 1793520873817,
-      "create_time": "2026-11-01T08:14:33.817Z",
-      "preview_url": "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/preview/pending/guest_2b62ccfb-1793520873598.png",
-      "data": {
-        "photo_key": "pending/guest_2b62ccfb-1793520873598.png",
-        "cat_id": "cat-daimao",
-        "photographer": "",
-        "shooting_date": "2026-11"
+        "cat_id": "cat-guayintuoqiang",
+        "cat_name": "挂印拖枪",
+        "feedbackInfo": "你好",
+        "contactInfo": "",
+        "nickname": "匿名猫友",
+        "repliable": false
       }
     }
   ]

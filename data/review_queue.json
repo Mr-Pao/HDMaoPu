@@ -1,58 +1,80 @@
 {
-  "version": "v1793550413474",
+  "version": "v1793698834936",
   "items": [
     {
       "_id": "rv-1793523110816-mvxn89c2ujk8cp",
       "kind": "comment",
       "openid": "guest_908baf6f",
       "ts": 1793523110816,
-      "status": "pending",
+      "status": "approved",
       "create_time": "2026-11-01T08:51:50.816Z",
       "data": {
         "cat_id": "cat-daimao",
         "content": "好",
         "nickname": "匿名猫友"
-      }
+      },
+      "decide_time": "2026-11-03T09:40:34.935Z",
+      "applied_comment_id": "cm-1793523110816-mw0hz2t3n5z7f8"
     },
     {
       "_id": "rv-1793520873817-mvxn89c3j4cx0f",
       "kind": "photo",
       "openid": "guest_2b62ccfb",
       "ts": 1793520873817,
-      "status": "pending",
+      "status": "rejected",
       "create_time": "2026-11-01T08:14:33.817Z",
       "data": {
         "photo_key": "pending/guest_2b62ccfb-1793520873598.png",
         "cat_id": "cat-daimao",
         "photographer": "",
         "shooting_date": "2026-11"
-      }
+      },
+      "decide_time": "2026-11-03T09:40:34.935Z"
     },
     {
       "_id": "rv-1793548639600-mvy1lw2o0ydn8g",
       "kind": "comment",
       "openid": "guest_2d5041ef",
       "ts": 1793548639600,
-      "status": "pending",
+      "status": "approved",
       "create_time": "2026-11-01T15:57:19.600Z",
       "data": {
         "cat_id": "cat-naigai",
         "content": "可爱",
         "nickname": "匿名猫友"
-      }
+      },
+      "decide_time": "2026-11-03T09:40:34.274Z",
+      "applied_comment_id": "cm-1793548639600-mw0hz2aq4xzmhb"
     },
     {
       "_id": "rv-1793541691002-mvy1lw2psdhjk8",
       "kind": "photo",
       "openid": "guest_2d5041ef",
       "ts": 1793541691002,
-      "status": "pending",
+      "status": "approved",
       "create_time": "2026-11-01T14:01:31.002Z",
       "data": {
         "photo_key": "pending/guest_2d5041ef-1793541690633.png",
         "cat_id": "cat-naigai",
         "photographer": "一只狍",
         "shooting_date": "2026-02"
+      },
+      "decide_time": "2026-11-03T09:40:34.274Z"
+    },
+    {
+      "_id": "rv-1793694029093-mw0hz2t3xbg7he",
+      "kind": "feedback",
+      "openid": "guest_298bc2b3",
+      "ts": 1793694029093,
+      "status": "pending",
+      "create_time": "2026-11-03T08:20:29.093Z",
+      "data": {
+        "cat_id": "cat-guayintuoqiang",
+        "cat_name": "挂印拖枪",
+        "feedbackInfo": "你好",
+        "contactInfo": "",
+        "nickname": "匿名猫友",
+        "repliable": false
       }
     }
   ]
