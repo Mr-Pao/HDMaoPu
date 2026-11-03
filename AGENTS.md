@@ -145,7 +145,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.68`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.69`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -162,8 +162,12 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-03）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.68`
-- **v4.0.68：待审照片改用签名预览 URL（2026-11-03）** — v4.0.67 上线后实测发现审核队列里**照片会白图**：`pending/*` 被**桶策略显式 Deny 匿名 GetObject**（`Deny` 语句 `deny-anon-read-private-prefixes`，Resource 覆盖 `inbox/*`、`pending/*`、`rejected/*`），所以拼公开 URL 的 `<image src>` 必然 403。
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.69`
+- **v4.0.69：审核队列白图的最后一层兜底（2026-11-03）** — v4.0.68 上线后用户真机截图仍是白图，原因不是服务端没写 `preview_url`（线上 `data/pending.json` 已带），而是**小程序端 `datasource` 是 SWR**：`_load(name)` 先返回 `ds_cache_pending` 旧快照（那时还没有 `preview_url` 字段），10 分钟内不会重新拉，`photoUrlOf` 拿到的 `previewUrl` 是 `undefined` → 退回拼 `pending/` 地址 → 403。
+  - 修法：`miniprogram/pages/manage/review/review.js` 的 `photoUrlOf` 加中间一级兜底——`previewUrl` 缺失时**按确定性规则自己推** `preview/pending/<photo_key 的 basename>`（常量 `PREVIEW_PREFIX = "preview/pending/"`），不再退回 `pending/` 原地址。因为 `process-inbox.js` 的 `previewKeyOf()` 就是取 basename，两边规则一致，所以缓存还没刷到也能拼对。
+  - 三级顺序：`preview_url` → 自推 `preview/pending/<basename>` → 原始 `photo_key`（理论上到不了）。单测四种输入全对（实测两条推导 URL 均 GET 200 / 61935B、127155B）。
+  - 另一个好处：以后即使快照里 `preview_url` 缺字段（例如聚合失败只 warn），页面也不会白图。
+- **v4.0.68：待审照片改用公开预览副本（2026-11-03）** — v4.0.67 上线后实测发现审核队列里**照片会白图**：`pending/*` 被**桶策略显式 Deny 匿名 GetObject**（`Deny` 语句 `deny-anon-read-private-prefixes`，Resource 覆盖 `inbox/*`、`pending/*`、`rejected/*`），所以拼公开 URL 的 `<image src>` 必然 403。
   - ⚠️ **踩坑记录**：用 `curl -I` / `Invoke-WebRequest -Method Head` 测 `pending/xxx.png` 会返回 **200**，但 `GET` 返回 **403** —— COS 的 Deny 只拦 `GetObject`，`HeadObject` 不在其中，**以后判断"能不能访问"必须用 GET，不能信 HEAD**。
   - 修法（**改了两版，第一版被 GitHub 拒收**，务必记住）：v1 打算给待审图签 7 天临时链写进快照 —— `cos.getObjectUrl({Sign:true})` 的 URL 里带 `q-ak=<SecretId>`，`git push` 被 **GH013 push protection** 判成「泄露腾讯云 Secret ID」直接拒收（报错定位到 `data/pending.json:21` / `:46`）。**任何写进仓库 JSON 的 URL 都不许带签名参数**。
   - v2 最终方案：聚合时把待审图**复制一份到 `preview/pending/<basename>` 并给对象级 `public-read`**（`PENDING_PREVIEW_PREFIX = 'preview/pending/'`），快照里 `preview_url` 只写 `publicUrlOf(toKey)` —— 不带任何密钥。新增 `ensurePendingPreview(cos, photoKey)`（源存在才复制、幂等、失败只 warn 返回空串）与 `prunePendingPreviews(cos, keepKeys)`（列出 `preview/pending/` 下已不再待审的副本并删掉，审核完的图不会继续公开挂着）。`writePendingSnapshot` 因此改成 **async 且必须传 cos**（`main()` 两处调用都改成 `await`），DRY 时仍直接 `return 0`。

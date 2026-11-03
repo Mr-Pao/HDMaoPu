@@ -9,7 +9,10 @@
 // （文件里带用户 openid）。pending.json 由 scripts/process-inbox.js 的 writePendingSnapshot()
 // 生成，只保留 pending 项且剥掉 openid。
 //
-// 待审图本身在 pending/ 前缀下是匿名可读的（桶是公有读），所以 <image src> 直接可用。
+// ⚠️ 待审图不能直接用 pending/ 的地址：桶策略有一条 Deny 匿名 GetObject 覆盖
+// inbox/*、pending/*、rejected/*（Sid deny-anon-read-private-prefixes），GET 会 403 白图。
+// 聚合时会复制一份到 preview/pending/<basename> 并给对象级 public-read，
+// 快照里的 preview_url 指向那里。注意 HEAD 请求不在 Deny 里，会返回 200 骗人——判可用性必须用 GET。
 
 import { putInbox } from "../../../utils/writeback";
 import { data_base_url } from "../../../config";
@@ -31,16 +34,29 @@ function formatTime(iso) {
   return `${d.getMonth() + 1}月${pad(d.getDate())}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-// 待审图的预览地址由服务端在聚合时签好（见 scripts/process-inbox.js 的
-// writePendingSnapshot）。桶策略 Deny 了 pending/* 的匿名 GET，直接拼公开 URL 会 403 白图。
-// 这里只做兜底：快照里没带 preview_url 才退回拼公开地址。
+// 待审图预览地址的取法（三级兜底）：
+//   1. 快照里的 preview_url（聚合时写好，永远最新）
+//   2. 客户端按确定性规则推出来的 preview/pending/<basename>
+//      —— 这一级是关键：datasource 是 SWR，本地缓存里可能还是服务端发 preview_url
+//         之前的旧快照（只有 data.photo_key），那时若拼 pending/* 会 403 白图。
+//         而 preview 副本的 key 是确定的（见 process-inbox.js 的 previewKeyOf），
+//         所以不用等缓存刷新也能拼对。
+//   3. 原始 photo_key（理论上到不了；桶策略 Deny 了 pending/* 的匿名 GET）
+const PREVIEW_PREFIX = "preview/pending/";
+
 function photoUrlOf(previewUrl, photoKey) {
   if (previewUrl && /^https?:\/\//i.test(previewUrl)) return previewUrl;
+
   const key = String(photoKey || "").replace(/^\/+/, "");
   if (!key) return "";
   if (/^https?:\/\//i.test(key)) return key;
+
   const base = String(data_base_url || "").replace(/\/+$/, "");
-  return base ? `${base}/${key}` : "";
+  if (!base) return "";
+
+  const basename = key.split("/").pop();
+  if (basename) return `${base}/${PREVIEW_PREFIX}${basename}`;
+  return `${base}/${key}`;
 }
 
 Page({
