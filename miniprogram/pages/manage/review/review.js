@@ -64,6 +64,8 @@ Page({
     loading: false,
     items: [],
     error: "",
+    // 正在提交的那一条，按钮置灰防连点（服务端 inbox_log 会去重，但别让用户以为没反应）
+    decidingId: "",
   },
 
   jsData: {
@@ -76,6 +78,18 @@ Page({
 
   onPullDownRefresh() {
     this.loadQueue().then(() => wx.stopPullDownRefresh());
+  },
+
+  onRefreshTap() {
+    if (this.data.loading) return;
+    this.loadQueue();
+  },
+
+  // 待审图缩略图看不够清楚，点开看原图
+  previewPhoto(e) {
+    const url = e.currentTarget.dataset.url;
+    if (!url) return;
+    wx.previewImage({ current: url, urls: [url] });
   },
 
   async loadQueue() {
@@ -125,13 +139,15 @@ Page({
   async decide(e) {
     const { id, action } = e.currentTarget.dataset;
     if (!id || !action) return;
-    if (this.deciding) return;
-    this.deciding = id;
+    if (this.decidingId) return;
+    this.decidingId = id;
+    this.setData({ decidingId: id });
 
     // 口令在关于页解锁时已存好，直接取；取不到会提示重新解锁
     const token = passcode.ensureToken();
     if (!token) {
-      this.deciding = "";
+      this.decidingId = "";
+      this.setData({ decidingId: "" });
       return;
     }
 
@@ -142,7 +158,8 @@ Page({
       token,
     });
     wx.hideLoading();
-    this.deciding = "";
+    this.decidingId = "";
+    this.setData({ decidingId: "" });
 
     if (!ok) {
       wx.showToast({ title: "提交失败，请检查网络", icon: "none" });

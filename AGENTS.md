@@ -145,7 +145,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.69`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.70`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -162,7 +162,13 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-03）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.69`
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.70`
+- **v4.0.70：审核队列 UI 重排（2026-11-03）** — 用户真机截图反馈「UI 布局调羹一下」，实测有三处硬伤：
+  - **页面被压成中间一条**：`app.wxss:211` 有个全局 `.container{display:flex;flex-direction:column;align-items:center}`，`review.wxml` 的根节点就叫 `.container`，于是卡片被压成内容宽度并居中。本页 wxss 必须显式 `display:block;width:100%` 覆盖（**以后任何新页用 `.container` 作根节点都要检查这条**）。
+  - 头部只有一行「待审核 4 条」，改成「待审核 + 大号计数」+ 右上「刷新」胶囊（新增 `onRefreshTap()`）。
+  - 照片 `mode="aspectFill"` 会裁掉横图两侧（年会背景那类横幅图最明显）→ 改 `aspectFit` 并加 `.photo-wrap` 容器；新增点图 `wx.previewImage` 看大图（`previewPhoto`）。
+  - 信息区合并成单行 `.info`（评论显示「来自 X」，照片显示「摄影师 / 拍摄」），不再出现空行；按钮等高 76rpx 胶囊，提交中通过 `decidingId` 让两个按钮同时 `opacity:0.5` 置灰防连点。
+  - 顺带修 `decide()` 里的锁：原来用 `this.deciding`（非 data，无法驱动 UI），改 `this.decidingId` + `data.decidingId` 双写。
 - **v4.0.69：审核队列白图的最后一层兜底（2026-11-03）** — v4.0.68 上线后用户真机截图仍是白图，原因不是服务端没写 `preview_url`（线上 `data/pending.json` 已带），而是**小程序端 `datasource` 是 SWR**：`_load(name)` 先返回 `ds_cache_pending` 旧快照（那时还没有 `preview_url` 字段），10 分钟内不会重新拉，`photoUrlOf` 拿到的 `previewUrl` 是 `undefined` → 退回拼 `pending/` 地址 → 403。
   - 修法：`miniprogram/pages/manage/review/review.js` 的 `photoUrlOf` 加中间一级兜底——`previewUrl` 缺失时**按确定性规则自己推** `preview/pending/<photo_key 的 basename>`（常量 `PREVIEW_PREFIX = "preview/pending/"`），不再退回 `pending/` 原地址。因为 `process-inbox.js` 的 `previewKeyOf()` 就是取 basename，两边规则一致，所以缓存还没刷到也能拼对。
   - 三级顺序：`preview_url` → 自推 `preview/pending/<basename>` → 原始 `photo_key`（理论上到不了）。单测四种输入全对（实测两条推导 URL 均 GET 200 / 61935B、127155B）。

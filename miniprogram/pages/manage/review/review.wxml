@@ -3,15 +3,19 @@
 
   <!-- 本页没有口令门：关于页解锁时口令已存进本机，这里直接提交，不再问口令 -->
   <view class="head">
-    <view class="head-title">待审核 {{items.length}} 条</view>
+    <view class="head-left">
+      <view class="head-title">待审核</view>
+      <view class="head-count">{{items.length}}</view>
+    </view>
+    <view class="head-refresh" bindtap="onRefreshTap">刷新</view>
   </view>
-  <view class="head-tip">提交后将在下一次聚合（几分钟内）生效</view>
+  <view class="head-tip">通过或驳回后，下一次聚合（几分钟内）生效</view>
 
   <view class="loading" wx:if="{{loading}}">加载中…</view>
 
   <view class="empty" wx:elif="{{!items.length}}">
     <view class="empty-icon">🌿</view>
-    <view>暂无待审核内容</view>
+    <view class="empty-text">暂无待审核内容</view>
     <view class="empty-sub">{{error || '有新内容时会出现在这里'}}</view>
   </view>
 
@@ -22,26 +26,38 @@
       <view class="time">{{item.timeText}}</view>
     </view>
 
-    <image
-      class="photo"
+    <view
+      class="photo-wrap"
       wx:if="{{item.url}}"
-      src="{{item.url}}"
-      mode="aspectFill"
-      lazy-load
-    />
-
-    <view class="photo-meta" wx:if="{{item.kind === 'photo'}}">
-      <text>摄影师：{{item.photographer || '未填'}}</text>
-      <text>拍摄：{{item.shootingDate || '未填'}}</text>
+      bindtap="previewPhoto"
+      data-url="{{item.url}}"
+    >
+      <!-- 审核要看全图，用 aspectFit 不裁切（aspectFill 会把年会背景那种横图切掉两侧） -->
+      <image class="photo" src="{{item.url}}" mode="aspectFit" lazy-load />
+      <view class="photo-hint">点击看大图</view>
     </view>
 
     <view class="content" wx:if="{{item.content}}">{{item.content}}</view>
 
-    <view class="meta" wx:if="{{item.kind === 'comment'}}">来自 {{item.nickname}}</view>
+    <view class="info">
+      <text class="info-item" wx:if="{{item.kind === 'comment'}}">来自 {{item.nickname}}</text>
+      <text class="info-item" wx:if="{{item.kind === 'photo'}}">摄影师 {{item.photographer || '未填'}}</text>
+      <text class="info-item" wx:if="{{item.kind === 'photo'}}">拍摄 {{item.shootingDate || '未填'}}</text>
+    </view>
 
     <view class="actions">
-      <view class="btn btn-reject" data-id="{{item._id}}" data-action="reject" bindtap="decide">驳回</view>
-      <view class="btn btn-approve" data-id="{{item._id}}" data-action="approve" bindtap="decide">通过</view>
+      <view
+        class="btn btn-reject {{decidingId === item._id ? 'is-busy' : ''}}"
+        data-id="{{item._id}}"
+        data-action="reject"
+        bindtap="decide"
+      >驳回</view>
+      <view
+        class="btn btn-approve {{decidingId === item._id ? 'is-busy' : ''}}"
+        data-id="{{item._id}}"
+        data-action="approve"
+        bindtap="decide"
+      >通过</view>
     </view>
   </view>
 
