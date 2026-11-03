@@ -73,7 +73,9 @@ jobs:
         run: node review.js
 
       # 审核通过时 review.js 会把照片记录追加进 data/photo.json，
-      # 这里提交 data/ 变更回 cos 分支（触发 sync-data.yml 上传 COS）。
+      # 这里提交 data/ 变更回 cos 分支。
+      # ⚠️ 不能指望这次提交触发 sync-data.yml：GITHUB_TOKEN 推的 commit 不会触发
+      #    其他 workflow（GitHub 防递归的既定行为），所以下面必须自己传 COS。
       - name: Commit photo data
         if: always() && steps.guard.outputs.ok == 'true'
         run: |
@@ -87,3 +89,13 @@ jobs:
           git commit -m "chore(data): 审核通过照片落库"
           git pull --rebase origin cos || { sleep 5; git pull --rebase origin cos; }
           git push || { sleep 5; git pull --rebase origin cos; git push; }
+
+      - name: Upload data to COS
+        if: always() && steps.guard.outputs.ok == 'true'
+        working-directory: scripts
+        env:
+          COS_SECRET_ID: ${{ secrets.COS_SECRET_ID }}
+          COS_SECRET_KEY: ${{ secrets.COS_SECRET_KEY }}
+          COS_BUCKET: ${{ secrets.COS_BUCKET }}
+          COS_REGION: ${{ secrets.COS_REGION }}
+        run: node upload-data.js
