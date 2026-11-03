@@ -145,7 +145,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.67`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.68`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -162,7 +162,13 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-03）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.67`
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.68`
+- **v4.0.68：待审照片改用签名预览 URL（2026-11-03）** — v4.0.67 上线后实测发现审核队列里**照片会白图**：`pending/*` 被**桶策略显式 Deny 匿名 GetObject**（`Deny` 语句 `deny-anon-read-private-prefixes`，Resource 覆盖 `inbox/*`、`pending/*`、`rejected/*`），所以拼公开 URL 的 `<image src>` 必然 403。
+  - ⚠️ **踩坑记录**：用 `curl -I` / `Invoke-WebRequest -Method Head` 测 `pending/xxx.png` 会返回 **200**，但 `GET` 返回 **403** —— COS 的 Deny 只拦 `GetObject`，`HeadObject` 不在其中，**以后判断"能不能访问"必须用 GET，不能信 HEAD**。
+  - 修法（**改了两版，第一版被 GitHub 拒收**，务必记住）：v1 打算给待审图签 7 天临时链写进快照 —— `cos.getObjectUrl({Sign:true})` 的 URL 里带 `q-ak=<SecretId>`，`git push` 被 **GH013 push protection** 判成「泄露腾讯云 Secret ID」直接拒收（报错定位到 `data/pending.json:21` / `:46`）。**任何写进仓库 JSON 的 URL 都不许带签名参数**。
+  - v2 最终方案：聚合时把待审图**复制一份到 `preview/pending/<basename>` 并给对象级 `public-read`**（`PENDING_PREVIEW_PREFIX = 'preview/pending/'`），快照里 `preview_url` 只写 `publicUrlOf(toKey)` —— 不带任何密钥。新增 `ensurePendingPreview(cos, photoKey)`（源存在才复制、幂等、失败只 warn 返回空串）与 `prunePendingPreviews(cos, keepKeys)`（列出 `preview/pending/` 下已不再待审的副本并删掉，审核完的图不会继续公开挂着）。`writePendingSnapshot` 因此改成 **async 且必须传 cos**（`main()` 两处调用都改成 `await`），DRY 时仍直接 `return 0`。
+  - ⚠️ `preview/pending/` 是**新增公开前缀**（需对象级 ACL `public-read`，桶策略没动），只放「正在待审」的副本，审核完即删。
+  - `module.exports` 增加 `writePendingSnapshot`（便于本地 `require` 单跑重签快照，不必等 cron）。
 - **v4.0.67：小程序端审核能力恢复（2026-11-03）** — 起因：用户问「小程序端不能审核吗」，实测发现小程序审核页读的 `review_queue.json` 永不传 COS，而 COS 又不允许匿名列举 `pending/`，所以「看不到有哪些要审」。方案是聚合端另发一份**脱敏待审快照**。
   - `scripts/process-inbox.js` 新增 `writePendingSnapshot()`：把 `review_queue.items` 里 `status === 'pending'` 的项按 `ts` 倒序导出成 `data/pending.json`（只留 `{_id, kind, ts, create_time, data}`，**剥掉 openid / status / applied_comment_id**），tmp+rename 原子写。`main()` 里两处调用（正常分支 `flushData()` 之后、以及「本轮没有新提交」的早退分支——上一轮被通过/驳回的项也要从审核页消失）。DRY 时直接返回 0 不写文件。
   - **`data/pending.json` 会被正常公开上传**（`scripts/upload-data.js:38` 的 `UPLOAD_DENYLIST` 只有 `inbox_log.json`/`review_queue.json`）——这正是设计：审核页要读它。

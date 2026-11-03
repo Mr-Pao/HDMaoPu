@@ -31,8 +31,11 @@ function formatTime(iso) {
   return `${d.getMonth() + 1}月${pad(d.getDate())}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-// pending/xxx.png → https://<bucket>.cos.../pending/xxx.png
-function photoUrlOf(photoKey) {
+// 待审图的预览地址由服务端在聚合时签好（见 scripts/process-inbox.js 的
+// writePendingSnapshot）。桶策略 Deny 了 pending/* 的匿名 GET，直接拼公开 URL 会 403 白图。
+// 这里只做兜底：快照里没带 preview_url 才退回拼公开地址。
+function photoUrlOf(previewUrl, photoKey) {
+  if (previewUrl && /^https?:\/\//i.test(previewUrl)) return previewUrl;
   const key = String(photoKey || "").replace(/^\/+/, "");
   if (!key) return "";
   if (/^https?:\/\//i.test(key)) return key;
@@ -86,7 +89,7 @@ Page({
           kindLabel: KIND_LABEL[it.kind] || it.kind,
           catName: catNames[it.data && it.data.cat_id] || (it.data && it.data.cat_id) || "未知猫猫",
           content: (it.data && it.data.content) || "",
-          url: it.kind === "photo" ? photoUrlOf(it.data && it.data.photo_key) : "",
+          url: it.kind === "photo" ? photoUrlOf(it.preview_url, it.data && it.data.photo_key) : "",
           nickname: (it.data && it.data.nickname) || "匿名猫友",
           photographer: (it.data && it.data.photographer) || "",
           shootingDate: (it.data && it.data.shooting_date) || "",

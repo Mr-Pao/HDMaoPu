@@ -765,19 +765,105 @@ async function approvePhoto(item) {
 // { _id, kind, ts, create_time, data }，再交给 upload-data.js 公开出去。
 //
 // 快照与 review_queue 同轮生成，所以点通过/驳回后下一次聚合就会从列表里消失。
-function writePendingSnapshot() {
+// 待审图的预览地址：**不能直接拼公开 URL，也不能签临时链**。
+//   · 桶策略有一条 Deny 匿名 GetObject 覆盖 inbox/* pending/* rejected/*
+//     → https://<bucket>.cos.../pending/xxx.png 匿名 GET 是 403
+//     （⚠️ HEAD 反而不拦，用 curl -I 测会误判成「公开可读」，判断可访问性必须用 GET）
+//   · 签名 URL（cos.getObjectUrl Sign:true）里带 `q-ak=<SecretId>`，
+//     2026-11-03 实测被 GitHub push protection 判成「泄露腾讯云 Secret ID」拒收 → 绝不能用
+// 所以改成：聚合时把待审图**复制一份到 preview/pending/ 并给对象级 public-read**，
+// 快照里只写这个不带任何密钥的公开地址。审核完（不再是 pending）后由本轮清理删掉副本。
+const PENDING_PREVIEW_PREFIX = 'preview/pending/';
+
+function previewKeyOf(photoKey) {
+  const base = String(photoKey || '').split('/').pop();
+  return base ? PENDING_PREVIEW_PREFIX + base : '';
+}
+
+// 保证 preview/pending/<basename> 存在且是 public-read，返回可匿名访问的 URL。
+// 源不在了（已被审核删掉）或复制失败都只 warn，返回空串让页面退化成无图。
+async function ensurePendingPreview(cos, photoKey) {
+  const toKey = previewKeyOf(photoKey);
+  if (!toKey) return '';
+  try {
+    if (!(await objectExists(cos, toKey))) {
+      if (!(await objectExists(cos, photoKey))) {
+        console.warn(`  [pending] 待审图源对象不存在，跳过预览复制：${photoKey}`);
+        return '';
+      }
+      await putObjectCopy(cos, photoKey, toKey);
+    }
+    return publicUrlOf(toKey);
+  } catch (err) {
+    console.warn(`  [pending] 预览副本生成失败（降级为无图）：${photoKey} ${err.message || err}`);
+    return '';
+  }
+}
+
+// 删掉 preview/pending/ 下本轮已不再待审的副本，避免审核过的图继续公开挂着。
+async function prunePendingPreviews(cos, keepKeys) {
+  const keep = new Set(keepKeys);
+  let removed = 0;
+  const loop = marker =>
+    new Promise((resolve, reject) => {
+      cos.getBucket(
+        { Bucket: COS_BUCKET, Region: COS_REGION, Prefix: PENDING_PREVIEW_PREFIX, Marker: marker, MaxKeys: 1000 },
+        (err, data) => (err ? reject(err) : resolve(data))
+      );
+    });
+  let marker;
+  for (;;) {
+    const data = await loop(marker);
+    const contents = (data && data.Contents) || [];
+    for (const c of contents) {
+      if (!c.Key || c.Key === PENDING_PREVIEW_PREFIX || c.Key.endsWith('/')) continue;
+      if (keep.has(c.Key)) continue;
+      try {
+        await deleteObject(cos, c.Key);
+        removed += 1;
+      } catch (err) {
+        console.warn(`  [pending] 清理旧预览副本失败（忽略）：${c.Key} ${err.message || err}`);
+      }
+    }
+    if (!data || !data.IsTruncated) break;
+    marker = data.NextMarker;
+    if (!marker) break;
+  }
+  return removed;
+}
+
+async function writePendingSnapshot(cos) {
   if (DRY) return 0;
   const queue = loadData('review_queue');
-  const pending = queue.items
-    .filter(it => it && it._id && it.status === 'pending')
-    .sort((a, b) => Number(b.ts || 0) - Number(a.ts || 0))
-    .map(it => ({
+  const pending = [];
+  const keepPreviewKeys = [];
+  for (const it of queue.items) {
+    if (!it || !it._id || it.status !== 'pending') continue;
+    let previewUrl = '';
+    if (it.kind === 'photo' && it.data && it.data.photo_key && cos) {
+      previewUrl = await ensurePendingPreview(cos, it.data.photo_key);
+      const k = previewKeyOf(it.data.photo_key);
+      if (k) keepPreviewKeys.push(k);
+    }
+    pending.push({
       _id: it._id,
       kind: it.kind,
       ts: it.ts,
       create_time: it.create_time,
+      // preview_url 是 preview/pending/ 下的公开副本，不含任何密钥
+      preview_url: previewUrl,
       data: it.data,
-    }));
+    });
+  }
+  pending.sort((a, b) => Number(b.ts || 0) - Number(a.ts || 0));
+  if (cos) {
+    try {
+      const pruned = await prunePendingPreviews(cos, keepPreviewKeys);
+      if (pruned) console.log(`清理过期待审预览副本：${pruned} 个`);
+    } catch (err) {
+      console.warn(`  [pending] 清理旧预览副本失败（忽略）：${err.message || err}`);
+    }
+  }
   // 保留 _id：upload-data.js 会校验每条都有 _id
   const doc = { version: 'v' + Date.now(), items: pending };
   const finalPath = dataFile('pending');
@@ -2056,7 +2142,7 @@ async function main() {
 
   if (!listed.length) {
     // 即使这轮没有新提交，也要刷新脱敏快照：上一轮被通过/驳回的项要从审核页消失。
-    const pend0 = writePendingSnapshot();
+    const pend0 = await writePendingSnapshot(cos);
     console.log(`没有待处理内容，结束。待审快照 data/pending.json：${pend0} 条`);
     return;
   }
@@ -2091,7 +2177,7 @@ async function main() {
   const written = flushData();
 
   // review_queue 已定稿，导出脱敏快照给小程序审核页（review_queue.json 本身不上 CDN）
-  const pendingCount = writePendingSnapshot();
+  const pendingCount = await writePendingSnapshot(cos);
 
   // flush 成功后输出标记：workflow 的 commit step 据此判断可以提交。
   // 注意：删除 inbox 失败不影响此标记（data/ 已写好，应该照常提交）。
@@ -2145,4 +2231,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { validateInboxItem, applyRatingToCat, normalizeDims };
+module.exports = { validateInboxItem, applyRatingToCat, normalizeDims, writePendingSnapshot };
