@@ -1,5 +1,5 @@
 {
-  "version": "v1793675208471",
+  "version": "v1793677508824",
   "items": [
     {
       "_id": "cat-huihui",
@@ -11,14 +11,14 @@
       "area": "",
       "birthday": "",
       "colour": "白色",
-      "gender": "",
+      "gender": "公",
       "characteristics": "通体雪白，冰蓝眼，草丛里的小团子；警觉又好奇，人一靠近先退半步，确认没威胁才慢慢探出脑袋",
       "tutorial": "先蹲下来别站着俯视它，把手指放低等它自己凑过来闻；它不主动蹭你就别硬抱，耐心等它绕到脚边，摸下巴它不会躲",
       "popularity": 3,
       "sterilized": false,
       "sterilized_time": null,
       "adopt": 0,
-      "adopt_time": null,
+      "adopt_time": "",
       "missing": false,
       "missing_time": null,
       "to_star": false,
