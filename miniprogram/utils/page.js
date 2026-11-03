@@ -82,16 +82,13 @@ function showTab(page) {
   }
 }
 
-// 跳转到设置页，并发起提示
+// 跳转到设置页，并发起提示（页面配置页已下线，这里退化成一句提示，不再跳转）
 function toSettings(tip) {
-  const curPath = getCurrentPath();
-  const url = "pages/manage/pageSettings/pageSettings";
-  if (curPath == url) {
-    return;
-  }
-  wx.navigateTo({
-    url: `/${url}?tip=${encodeURIComponent(tip)}`,
-  })
+  wx.showToast({
+    title: tip || "页面设置暂未开放",
+    icon: "none",
+    duration: 2500,
+  });
 }
 module.exports = {
   loadFilter,

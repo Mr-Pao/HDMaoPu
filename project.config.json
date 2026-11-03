@@ -66,37 +66,8 @@
           "scene": null
         },
         {
-          "name": "审核照片",
-          "pathName": "pages/manage/checkPhotos/checkPhotos",
-          "query": "",
-          "scene": null
-        },
-        {
-          "name": "添加猫",
-          "pathName": "pages/manage/addCat/addCat",
-          "query": "cat_id=XE6ZFHkPDdDCJ4MO",
-          "scene": null
-        },
-        {
-          "name": "测试滑动",
-          "pathName": "pages/testSw/testSw",
-          "query": ""
-        },
-        {
-          "name": "科普页",
-          "pathName": "pages/science/science",
-          "query": "",
-          "scene": null
-        },
-        {
           "name": "关于页",
           "pathName": "pages/info/info",
-          "query": "",
-          "scene": null
-        },
-        {
-          "name": "照片排行榜",
-          "pathName": "pages/info/photoRank/photoRank",
           "query": "",
           "scene": null
         },
@@ -120,31 +91,13 @@
         },
         {
           "name": "科普分类",
-          "pathName": "pages/science/sciDetail/sciDetail",
+          "pathName": "pages/news/sciDetail/sciDetail",
           "query": "cate=1",
-          "scene": null
-        },
-        {
-          "name": "调试debug",
-          "pathName": "pages/debug/debug",
-          "query": "",
-          "scene": null
-        },
-        {
-          "name": "图片处理",
-          "pathName": "pages/manage/imProcess/imProcess",
-          "query": "",
           "scene": null
         },
         {
           "name": "过滤器管理",
           "pathName": "pages/manage/filters/filters",
-          "query": "",
-          "scene": null
-        },
-        {
-          "name": "管理管理员",
-          "pathName": "pages/manage/managers/managers",
           "query": "",
           "scene": null
         },
@@ -159,13 +112,6 @@
           "pathName": "pages/manage/checkFeedbacks/checkFeedbacks",
           "query": "",
           "scene": null
-        },
-        {
-          "name": ">>>部署指引<<<",
-          "pathName": "pages/debug/deployTip/deployTip",
-          "query": "",
-          "launchMode": "default",
-          "scene": null
         }
       ]
     }
@@ -173,76 +119,8 @@
   "packOptions": {
     "ignore": [
       {
-        "type": "folder",
-        "value": "pages/manage/photoManagement"
-      },
-      {
-        "type": "folder",
-        "value": "pages/manage/medicalManage"
-      },
-      {
-        "type": "folder",
-        "value": "pages/info/myFootprint"
-      },
-      {
-        "type": "folder",
-        "value": "pages/info/myAchievement"
-      },
-      {
-        "type": "folder",
-        "value": "pages/genealogy/applyMapAccess"
-      },
-      {
-        "type": "folder",
-        "value": "pages/genealogy/detailCat/relationGraph"
-      },
-      {
-        "type": "folder",
-        "value": "pages/tools/updateUserRole"
-      },
-      {
-        "type": "folder",
-        "value": "pages/tools/inviteUser"
-      },
-      {
-        "type": "folder",
-        "value": "pages/debug"
-      },
-      {
-        "type": "folder",
-        "value": "pages/map"
-      },
-      {
-        "type": "folder",
-        "value": "pages/manage/addCat"
-      },
-      {
-        "type": "folder",
-        "value": "pages/manage/addRelations"
-      },
-      {
-        "type": "folder",
-        "value": "pages/manage/managers"
-      },
-      {
-        "type": "folder",
-        "value": "pages/manage/checkComment"
-      },
-      {
-        "type": "folder",
-        "value": "pages/manage/rewards"
-      },
-      {
-        "type": "folder",
-        "value": "components/achievementRank"
-      },
-      {
-        "type": "folder",
-        "value": "images/markers"
-      },
-      {
-        "type": "folder",
-        "value": "packages/tencentcloud"
+        "value": "images/markers",
+        "type": "folder"
       }
     ],
     "include": []

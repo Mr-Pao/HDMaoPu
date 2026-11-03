@@ -1,6 +1,0 @@
-{
-  "usingComponents": {
-    "popup": "/components/popup/popup"
-  },
-  "navigationBarTitleText": "管理猫际关系"
-}

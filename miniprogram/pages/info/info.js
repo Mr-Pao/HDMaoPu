@@ -72,18 +72,10 @@ Page({
             icon: "icon-cluster-o"
           },
           {
-            name: "便利贴审核",
-            path: "/pages/manage/checkComment/checkComment",
-            num: "numChkComments",
-            icon: "icon-smile-comment-o",
-            disabled: true
-          },
-          {
             name: "反馈处理",
             path: "/pages/manage/checkFeedbacks/checkFeedbacks",
             num: "numFeedbacks",
-            icon: "icon-envelop-o",
-            disabled: true
+            icon: "icon-envelop-o"
           },
           {
             name: "猫抓板公告",
@@ -91,43 +83,14 @@ Page({
             icon: "icon-edit"
           },
           {
-            name: "领养审核",
-            path: "/pages/manage/checkAdoption/checkAdoption",
-            icon: "icon-friends-o"
-          },
-          {
             name: "位置/区域/花色",
             path: "/pages/manage/filters/filters",
             icon: "icon-location-o"
           },
           {
-            name: "人员管理",
-            path: "/pages/manage/managers/managers",
-            icon: "icon-manager-o",
-            disabled: true
-          },
-          {
-            name: "特邀用户",
-            path: "/pages/tools/inviteUser/inviteUser",
-            icon: "icon-star-o",
-            disabled: true
-          },
-          {
-            name: "页面配置",
-            path: "/pages/manage/pageSettings/pageSettings",
-            icon: "icon-newspaper-o"
-          },
-          {
-            name: "投喂记录",
-            path: "/pages/manage/rewards/rewards",
-            icon: "icon-balance-o",
-            disabled: true
-          },
-          {
-            name: "照片处理",
-            path: "/pages/manage/imProcess/imProcess",
-            num: "numImProcess",
-            icon: "icon-todo-list-o"
+            name: "猫猫管理",
+            path: "/pages/manage/catManage/catManage",
+            icon: "icon-manager-o"
           }
         ]
       }
@@ -270,17 +233,12 @@ Page({
       return;
     }
 
-    // 待处理照片
-    const imProcessQf = { photo_compressed: { $in: [undefined, ''] }, verified: true };
+    // 待处理照片 / 反馈
     const { result: numChkPhotos } = await app.mpServerless.db.collection('photo').count({ verified: false });
-    const { result: numChkComments } = await app.mpServerless.db.collection('comment').count({ needVerify: true });
     const { result: numFeedbacks } = await app.mpServerless.db.collection('feedback').count({ dealed: false });
-    const { result: numImProcess } = await app.mpServerless.db.collection('photo').count(imProcessQf);
     this.setData({
       "nums.numChkPhotos": numChkPhotos,
-      "nums.numChkComments": numChkComments,
       "nums.numFeedbacks": numFeedbacks,
-      "nums.numImProcess": numImProcess,
       "showCond.manager": true,
     });
   },
@@ -328,8 +286,8 @@ Page({
     if (this.jsData.tapCount < TAP_TO_UNLOCK) return;
 
     this.jsData.tapCount = 0;
-    // 已经解锁过就别再骚扰
-    if (this.isUnlocked()) {
+    // 已解锁且本机还有口令就别再骚扰；只解锁没口令（旧版本状态）要补一次
+    if (this.isUnlocked() && passcode.hasToken()) {
       this.setData({ "showCond.manager": true });
       return;
     }
@@ -371,16 +329,11 @@ Page({
   // 解锁后补算管理角标（onShow 的早退分支不会再跑一遍）
   async refreshManagerNums() {
     try {
-      const imProcessQf = { photo_compressed: { $in: [undefined, ''] }, verified: true };
       const { result: numChkPhotos } = await app.mpServerless.db.collection('photo').count({ verified: false });
-      const { result: numChkComments } = await app.mpServerless.db.collection('comment').count({ needVerify: true });
       const { result: numFeedbacks } = await app.mpServerless.db.collection('feedback').count({ dealed: false });
-      const { result: numImProcess } = await app.mpServerless.db.collection('photo').count(imProcessQf);
       this.setData({
         "nums.numChkPhotos": numChkPhotos,
-        "nums.numChkComments": numChkComments,
         "nums.numFeedbacks": numFeedbacks,
-        "nums.numImProcess": numImProcess,
         "showCond.manager": true,
       });
     } catch (e) {

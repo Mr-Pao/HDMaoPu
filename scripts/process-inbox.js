@@ -800,6 +800,7 @@ const MANAGE_CAT_PATCH_TYPES = {
   missing_time: 'string',
   to_star: 'boolean',
   deceased_time: 'string',
+  relations: 'array',
 };
 
 function patchValueOk(field, value) {

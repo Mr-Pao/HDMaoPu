@@ -130,28 +130,55 @@ function legacyPrompt(done) {
 
 // 统一的提交前取口令入口。**绝不弹输入框**——
 // 用户既然已经进到管理后台，就一定在关于页输过口令，这里直接读本机那份。
-// 只有在「本机解锁过但没存下口令」（旧版本解锁 / 手动清了缓存）时才会亮一次提示，
-// 让用户回关于页重新解锁一次，之后就彻底安静了。
+// 只有在「本机解锁过但没存下口令」（旧版本解锁 / 手动清了缓存）时才会自动补录一次：
+// 解锁标记既然还在，就直接拿 data/gate.json 的 code 填回本机，不再打扰用户。
 function ensureToken() {
   const token = getToken();
   if (token) return token;
-  hintReunlock();
+  autoRestore();
   return "";
 }
 
-let hinting = false;
+let restoring = false;
 
-function hintReunlock() {
-  if (hinting) return;
-  hinting = true;
-  wx.showModal({
-    title: "需要重新解锁一次",
-    content: "本机还没有管理口令。请回到「关于」页连击标题 5 次，重新解锁管理后台即可。",
-    showCancel: false,
-    confirmText: "知道了",
-    complete: () => {
-      hinting = false;
-    },
+// 静默补录：读远端 gate code 填进本机 storage。用户只需再点一次提交即可。
+function autoRestore() {
+  if (restoring) return;
+  restoring = true;
+  loadGateCode().then(code => {
+    restoring = false;
+    if (!code) {
+      wx.showModal({
+        title: "管理入口未启用",
+        content: "远端还没有配置管理口令（data/gate.json 的 code 为空）。",
+        showCancel: false,
+      });
+      return;
+    }
+    setToken(code);
+    setUnlocked(true);
+    wx.showToast({
+      title: "已补录管理口令，请再提交一次",
+      icon: "none",
+      duration: 2500,
+    });
+  });
+}
+
+// 读远端管理口令（data/gate.json 的 code）。失败一律当空串，不抛。
+function loadGateCode() {
+  return new Promise(resolve => {
+    try {
+      const app = getApp();
+      const db = app && app.mpServerless && app.mpServerless.db;
+      if (!db) return resolve("");
+      db.collection("gate")
+        .findOne({ _id: "gate" })
+        .then(res => resolve(String((res && res.result && res.result.code) || "").trim()))
+        .catch(() => resolve(""));
+    } catch (e) {
+      resolve("");
+    }
   });
 }
 

@@ -178,7 +178,7 @@ async function sendNotifyVertifyNotice(numUnchkPhotos) {
       touser: manager['openid'],
       data: data,
       templateId: cfg.ID,
-      page: 'pages/manage/checkPhotos/checkPhotos',
+      page: 'pages/manage/admin/admin?tab=photo',
     });
 
     if (res.errCode === 0) {
@@ -317,7 +317,7 @@ async function sendNotifyVertifyCommentNotice(numUnchkComment) {
       touser: manager['openid'],
       data: data,
       templateId: cfg.ID,
-      page: 'pages/manage/checkPhotos/checkPhotos',
+      page: 'pages/manage/review/review',
     });
 
     if (res.errCode === 0) {

@@ -8,7 +8,7 @@ const secrets = require('./appSecret.js');
 
 module.exports = {
   // 版本号
-  app_version: "v4.0.62",
+  app_version: "v4.0.63",
   // 【离线 Demo 模式】
   // true  = 不连任何后端，使用 utils/demo.js 里的假数据（11 只猫 + 照片 + 设置）
   // false = 走下面的 data_base_url（COS 上的静态 JSON）
@@ -219,19 +219,6 @@ module.exports = {
     // 猫图，pages/gallery/gallery
     gallery: {
       share_tip: "猫图墙",
-    },
-    // 精选，pages/inviteUser/inviteUser
-    inviteUser: {
-      share_tip: "该分享无法激活特邀哦",
-      share_title: "[6小时内] 点击成为特邀用户~",
-      default_tip: "哦吼，这里空空如也，去首页看看猫猫吧~",
-      invite_tip: "猫猫正在检查邀请函...",
-      manager_tip: "分享至聊天，普通用户点击后将成为特邀，邀请有效期6小时~",
-      expired_title: "出问题",
-      success_title: "完成",
-      expired_tip: "邀请链接已过期...请联系管理员~",
-      already_tip: "你已经是特邀用户啦~",
-      success_tip: "`已成为特邀用户~",
     },
   }
 }

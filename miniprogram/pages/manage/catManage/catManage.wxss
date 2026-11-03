@@ -303,53 +303,6 @@
   }
 }
 
-/* 疫苗选项弹出动画 */
-.vaccine-options {
-  position: absolute;
-  bottom: 120rpx;
-  right: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 20rpx;
-  opacity: 0;
-  transform: translateY(20rpx);
-  pointer-events: none;
-  transition: all 0.3s ease;
-}
-
-.vaccine-options.show {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-
-.vaccine-option {
-  display: flex;
-  align-items: center;
-  background: var(--color-surface);
-  padding: 10rpx 20rpx;
-  border-radius: 50rpx;
-  box-shadow: 0 4rpx 15rpx rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
-}
-
-.vaccine-option:active {
-  transform: scale(0.95);
-  box-shadow: 0 2rpx 5rpx rgba(0, 0, 0, 0.1);
-}
-
-.option-text {
-  font-size: 26rpx;
-  color: var(--color-black-light);
-  margin-right: 10rpx;
-  white-space: nowrap;
-}
-
-.option-icon {
-  color: var(--color-black-light);
-  font-size: 36rpx;
-} 
 /* =========================================================
    v5.1 全站统一外观（二级页自动套用）
    与首页/图库/详情页同一套：白底、细描边、大圆角、无重阴影
