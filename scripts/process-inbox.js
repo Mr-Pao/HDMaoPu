@@ -1667,8 +1667,7 @@ function selftestObjects() {
     // manage 自测：token 取 data/gate.json 的 code，代码里不出现真实口令
     mk('manage', 'openid-a', { action: 'updateCat', token: SELFTEST_TOKEN, cat_id: cat, patch: { name: '大橘（自测改名）', characteristics: '亲人；自测晒太阳' } }, 15),
     mk('manage', 'openid-a', { action: 'managePhoto', token: SELFTEST_TOKEN, photo_id: photo, hidden: true }, 16),
-    // v4.0.65 新增：设/取消精选。服务端要保证「每猫最多 1 张 best」+ 同步 photo_count_best
-    mk('manage', 'openid-a', { action: 'setBestPhoto', token: SELFTEST_TOKEN, photo_id: photo, best: true }, 16),
+    // v4.0.65 新增 setBestPhoto 的两条「应被丢弃」路径（正常路径在下方 fixture 之后）
     mk('manage', 'openid-a', { action: 'setBestPhoto', token: 'definitely-wrong-token', photo_id: photo, best: true }, 16), // 口令错，应被丢弃
     mk('manage', 'openid-a', { action: 'setBestPhoto', token: SELFTEST_TOKEN, photo_id: '__NONE__', best: true }, 16), // 照片不存在，应被丢弃
     mk('manage', 'openid-a', { action: 'updateCat', token: 'definitely-wrong-token', cat_id: cat, patch: { name: '不该生效' } }, 17), // 口令错，应被丢弃
@@ -1895,6 +1894,45 @@ function selftestObjects() {
     best: false,
   });
 
+  // ---- 猫/照片 fixture（供 setBestPhoto 正常路径自测指向）----
+  // 用独立 _id，避免影响其它用例里「demo-cat-1 不存在 → drop:cat-not-found」的预期。
+  loadData('cat').items.push({
+    _id: 'best-cat-1',
+    name: '自测精选猫',
+    campus: '校内',
+    area: '',
+    photo_count_total: 2,
+    photo_count_best: 1,
+    deleted: false,
+  });
+  loadData('photo').items.push({
+    _id: 'best-ph-a',
+    cat_id: 'best-cat-1',
+    url: 'https://example.com/best-ph-a.jpg',
+    compressed_url: 'https://example.com/best-ph-a.jpg',
+    watermark_url: 'https://example.com/best-ph-a.jpg',
+    verified: true,
+    best: true,
+    deleted: false,
+  });
+  loadData('photo').items.push({
+    _id: 'best-ph-b',
+    cat_id: 'best-cat-1',
+    url: 'https://example.com/best-ph-b.jpg',
+    compressed_url: 'https://example.com/best-ph-b.jpg',
+    watermark_url: 'https://example.com/best-ph-b.jpg',
+    verified: true,
+    best: false,
+    deleted: false,
+  });
+
+  objects.push(
+    // 把 B（现在是 false）设为精选 → 期望 ok:photo-best-set，且 A 被自动置 false、photo_count_best 仍为 1
+    mk('manage', 'openid-a', { action: 'setBestPhoto', token: SELFTEST_TOKEN, photo_id: 'best-ph-b', best: true }, 46),
+    // 再取消 B 的精选 → 期望 ok:photo-best-unset，photo_count_best 归 0
+    mk('manage', 'openid-a', { action: 'setBestPhoto', token: SELFTEST_TOKEN, photo_id: 'best-ph-b', best: false }, 47),
+  );
+
   return objects;
 }
 
@@ -1902,6 +1940,9 @@ function snapshot() {
   const cat = findItem('cat', 'demo-cat-1');
   const photo = findItem('photo', 'demo-photo-1');
   const friendLink = findItem('setting', 'friendLink');
+  const bestCat = findItem('cat', 'best-cat-1');
+  const bestA = findItem('photo', 'best-ph-a');
+  const bestB = findItem('photo', 'best-ph-b');
   return {
     catPop: cat ? cat.popularity : null,
     catFollow: cat ? cat.follow_count : null,
@@ -1914,6 +1955,9 @@ function snapshot() {
     friendLogos: friendLink ? JSON.stringify((friendLink.apps || []).map(a => a.logo || '')) : null,
     newsTitles: JSON.stringify(loadData('news').items.map(it => it.title)),
     queue: loadData('review_queue').items.length,
+    bestA: bestA ? bestA.best : null,
+    bestB: bestB ? bestB.best : null,
+    countBest: bestCat ? bestCat.photo_count_best : null,
   };
 }
 
