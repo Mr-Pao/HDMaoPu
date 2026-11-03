@@ -10,9 +10,11 @@ name: process-inbox
 #   约 30 秒，一个月约 4.3 小时 = 约 258 分钟，仍在免费额度内，零成本。
 #   若未来频次压力过大，可回调到每小时（"7 * * * *"）而不影响功能。
 #
-# 注意：这个 job 提交 data/ 之后会触发 sync-data.yml 上传 COS，
-# 这是设计意图（一处写文件，一处负责上传）。它自己只监听 schedule
-# 和 workflow_dispatch，不会被 push 触发，所以不会形成循环。
+# ⚠️ 上传 COS 必须在本 job 里自己做（见最后一步），不能指望 sync-data.yml：
+#   GitHub 用 GITHUB_TOKEN 推送产生的 commit **不会触发其他 workflow**（防递归
+#   循环的既定行为）。所以这条聚合提交永远叫不醒 sync-data.yml，COS 上的
+#   data/*.json 会一直停在旧版，直到有人手工 push 一次 data/。
+#   2026-11-03 的「位置加了不显示」事故就是这个原因。
 
 on:
   schedule:
@@ -78,3 +80,18 @@ jobs:
           # 远端可能有上一轮触发的 sync-data 提交，先 rebase 再推；失败重试一次
           git pull --rebase origin cos || { sleep 5; git pull --rebase origin cos; }
           git push || { sleep 5; git pull --rebase origin cos; git push; }
+
+      # 直接把 data/*.json 传 COS。
+      #
+      # 为什么不在上一步 push 之后等 sync-data.yml：GITHUB_TOKEN 推的 commit
+      # 不触发其他 workflow（见文件头注释），等不到。所以这一步必须在这里。
+      # 提交之后再传：即使 GitHub 推送失败，COS 也已经是新数据，用户能立刻看到。
+      - name: Upload data to COS
+        if: always() && steps.aggregate.outputs.flush_ok == '1'
+        working-directory: scripts
+        env:
+          COS_SECRET_ID: ${{ secrets.COS_SECRET_ID }}
+          COS_SECRET_KEY: ${{ secrets.COS_SECRET_KEY }}
+          COS_BUCKET: ${{ secrets.COS_BUCKET }}
+          COS_REGION: ${{ secrets.COS_REGION }}
+        run: node upload-data.js
