@@ -3,6 +3,7 @@ import api from "../../../../utils/cloudApi";
 import { putInbox } from "../../../../utils/writeback";
 import { markPending, backAfterSubmit } from "../../../../utils/syncTip";
 import { text as text_cfg } from "../../../../config";
+import { blockInReview } from "../../../../utils/review";
 
 const app = getApp();
 Page({
@@ -24,6 +25,7 @@ Page({
    * 生命周期函数--监听页面加载
    */
   async onLoad(options) {
+    if (await blockInReview("评分暂未开放")) return;
     // current-user 可能为空（无档案体系），?.item 兜底成 {} 避免 TypeError
     this.setData({
       cat_id: options.cat_id,

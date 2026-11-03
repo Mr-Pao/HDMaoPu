@@ -2,7 +2,7 @@
   "name": "laf-app",
   "description": "the app engine service of lat",
   "scripts": {
-    "test": "node --test tests/datasource.test.js tests/cache.test.js tests/process-inbox.test.js"
+    "test": "node --test tests/datasource.test.js tests/cache.test.js tests/process-inbox.test.js tests/review.test.js"
   },
   "dependencies": {
     "laf-cli": "^1.0.0"

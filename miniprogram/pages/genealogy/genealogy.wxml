@@ -6,7 +6,8 @@
   <view class='nav-row'>
     <view class='nav-l'>
       <text class='nav-k'>MAOPU / CAMPUS CAT</text>
-      <text class='nav-t'>火大猫谱</text>
+      <!-- 连击 5 次 → 管理口令 → 版本切换面板（catchtap 防冒泡） -->
+      <text class='nav-t' catchtap='onTitleTap' hover-class='nav-t-hover'>火大猫谱</text>
     </view>
   </view>
 
@@ -64,7 +65,8 @@
   <view class='hero' bindtap='toDashboard'>
     <view class='hero-head'>
       <view class='hero-k'>CAMPUS CAT INDEX</view>
-      <view class='hero-link'>
+      <!-- 审核态不给「数据看板」入口：那是管理向页面 -->
+      <view class='hero-link' wx:if='{{!reviewMode}}'>
         <text class='hero-link-t'>数据看板</text>
         <text class='hero-link-arrow'>›</text>
       </view>
@@ -160,4 +162,38 @@
       bind:cancelEvent="_cancelEvent"  
       bind:confirmEvent="_confirmEvent">
     </newsModal>
+</view>
+<!-- 口令弹层（首页是唯一挂载点，管理后台各页共用已存 token） -->
+<passcode-modal />
+
+<!-- 暗门面板：标题连击 5 次 + 口令通过后出现 -->
+<view class='dbg-mask' wx:if='{{debug_show}}' bindtap='closeDebugPanel' catchtouchmove='voidMove'>
+  <view class='dbg-panel' catchtap='voidMove'>
+    <view class='dbg-title'>版本切换</view>
+    <view class='dbg-info'>
+      <text class='dbg-k'>运行环境</text>
+      <text class='dbg-v'>{{debug_env}}</text>
+    </view>
+    <view class='dbg-info'>
+      <text class='dbg-k'>当前版本</text>
+      <text class='dbg-v'>{{debug_version}}</text>
+    </view>
+    <view class='dbg-info' wx:if='{{debug_override}}'>
+      <text class='dbg-k'>本机覆盖</text>
+      <text class='dbg-v dbg-v--on'>{{debug_override}}</text>
+    </view>
+
+    <input class='dbg-input' type='text' placeholder='模拟版本号，如 v4.0.72' placeholder-class='dbg-ph' value='{{debug_input}}' confirm-type='done' bindinput='onDebugInput' bindconfirm='applySimVersion' />
+
+    <view class='dbg-btns'>
+      <view class='dbg-btn dbg-btn--main' bindtap='applySimVersion'>模拟版本</view>
+      <view class='dbg-btn' bindtap='forceReview'>强制审核态</view>
+    </view>
+    <view class='dbg-btns'>
+      <view class='dbg-btn' bindtap='forceNormal'>强制正常态</view>
+      <view class='dbg-btn' bindtap='clearOverride'>清除覆盖</view>
+    </view>
+    <view class='dbg-go' bindtap='goManage'>去管理后台 ›</view>
+    <view class='dbg-tip'>覆盖只在本机生效，重进小程序仍保留</view>
+  </view>
 </view>

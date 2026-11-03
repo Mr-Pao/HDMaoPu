@@ -27,6 +27,7 @@ import { signCosUrl, signPhotoUrls } from "../../../utils/common";
 import api from "../../../utils/cloudApi";
 import { putInbox } from "../../../utils/writeback";
 import { getPendingCount, pendingText } from "../../../utils/syncTip";
+import { isReview, isReviewSync } from "../../../utils/review";
 
 const app = getApp();
 
@@ -68,6 +69,8 @@ Page({
     hideBgBlock: false, // 隐藏背景黄块
     canvas: {}, // 画布的宽高
     canUpload: false, // 是否可以上传照片
+    // 审核态：详情页所有 UGC 入口（上传/便利贴/评分/纠错/申请领养）一律隐藏
+    reviewMode: false,
     showGallery: false,
     galleryPhotos: [],
     currentImg: 0, // 预览组件当前预览的图片
@@ -128,6 +131,12 @@ Page({
    * 生命周期函数--监听页面初次渲染完成
    */
   onReady: async function () {
+    // 审核态：详情页所有 UGC 入口（上传喵照/便利贴/评分/纠错/申请领养）都不给
+    // 先读同步结论，避免入口闪一下；再等远端判定校正
+    if (isReviewSync()) {
+      this.setData({ reviewMode: true });
+    }
+
     // 获取一下屏幕高度
     wx.getSystemInfo({
       success: res => {
@@ -148,10 +157,19 @@ Page({
       checkCanUpload(),
       checkCanComment(),
     ]);
+    // 远端开关校正（失败保持现状，绝不影响正常使用）
+    let reviewMode = this.data.reviewMode;
+    try {
+      reviewMode = await isReview();
+    } catch (e) {
+      reviewMode = this.data.reviewMode;
+    }
+
     this.setData({
-      // v4.0 上传暂未开放（config.photo_upload_enabled），直接隐藏入口
-      canUpload: !!canUpload && config.photo_upload_enabled === true,
-      canComment: canComment
+      reviewMode: reviewMode,
+      // 审核态一律不给上传入口；正常态按后端配置 + 全局开关
+      canUpload: !reviewMode && !!canUpload && config.photo_upload_enabled === true,
+      canComment: !reviewMode && canComment
     });
   },
 

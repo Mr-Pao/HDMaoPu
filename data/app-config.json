@@ -1,0 +1,10 @@
+{
+  "version": "1793700000000",
+  "items": [
+    {
+      "_id": "app-config",
+      "reviewVersions": [],
+      "note": "审核态开关：reviewVersions 非空 = 审核中（只留首页、去掉 tabBar、隐藏详情页上传入口）；提审前写入要审的版本号，过审发布后清回 []。改完 push cos，sync-data.yml 自动传到 COS data/app-config.json。"
+    }
+  ]
+}

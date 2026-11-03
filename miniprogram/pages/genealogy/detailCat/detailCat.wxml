@@ -36,7 +36,7 @@
         <image mode='aspectFill' class='gender' wx:if='{{cat.gender === "公"}}' src="/pages/public/images/card/card/male.png"></image>
         <image mode='aspectFill' class='gender' wx:if='{{cat.gender === "母"}}' src="/pages/public/images/card/card/female.png"></image>
       </block>
-      <view class='count comment' bindtap="toComment">
+      <view class='count comment' wx:if='{{!reviewMode}}' bindtap="toComment">
         <view class='iconfont icon-chat'></view>
         <text> {{cat.comment_count || 0}}</text>
       </view>
@@ -47,7 +47,7 @@
     </view>
 
     <view class="tags">
-      <text class='tag tag-link' wx:if="{{cat.adopt == 1}}" bindtap="bindApplyAdoption">{{adopt_desc[cat.adopt]}} · 申请领养</text>
+      <text class='tag tag-link' wx:if="{{cat.adopt == 1 && !reviewMode}}" bindtap="bindApplyAdoption">{{adopt_desc[cat.adopt]}} · 申请领养</text>
       <text class='tag' wx:elif="{{cat.adopt != undefined}}">{{adopt_desc[cat.adopt]}}</text>
       <text class='tag'>{{cat.sterilized? text_cfg.detail_cat.sterilized_true: text_cfg.detail_cat.sterilized_false}}</text>
       <text class='tag to_star' wx:if='{{cat.to_star}}'>{{text_cfg.genealogy.to_star_tip}}</text>
@@ -76,7 +76,7 @@
             <view class="iconfont icon-newspaper-o"></view>
             猫猫档案
           </view>
-          <view class="badge-all" bindtap="bindTapFeedback">{{text_cfg.detail_cat.button_feedback}}</view>
+          <view class="badge-all" wx:if='{{!reviewMode}}' bindtap="bindTapFeedback">{{text_cfg.detail_cat.button_feedback}}</view>
         </view>
 
         <view class='item long' wx:if="{{cat.nickname && cat.nickname.length > 0}}">
@@ -111,7 +111,7 @@
             <view class="iconfont icon-star-o"></view>
             猫友评价
           </view>
-          <view class="badge-all" bindtap="bindRating">我要评分</view>
+          <view class="badge-all" wx:if='{{!reviewMode}}' bindtap="bindRating">我要评分</view>
         </view>
 
         <view class="rating-body">

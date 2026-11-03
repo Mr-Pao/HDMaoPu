@@ -1,5 +1,6 @@
 import { checkUpdateVersion, getDateWithDiffHours } from './utils/utils';
 import { app_version, demo_mode, data_base_url } from "./config";
+import { isReview } from "./utils/review";
 import eventBus from './utils/eventBus';
 import { createMockMpServerless } from './utils/demo';
 import { createJsonServerless } from './utils/datasource';
@@ -93,15 +94,36 @@ App({
     this.initCos().then(() => {
       this.globalData.isReady = true;
       console.log(`[PERF] App launched in ${Date.now() - launchStartTime}ms`);
+      // 预判一次审核态并落盘，供 tabBar / showTab 这类同步读取方使用
+      this.refreshReviewMode();
       // 应用就绪后预加载 tab 数据
       this.preloadTabData();
     }).catch((e) => {
       console.warn('[COS] 初始化失败:', e && e.message);
       this.globalData.isReady = true;
+      this.refreshReviewMode();
       this.preloadTabData();
     });
 
     checkUpdateVersion();
+  },
+
+  // 拉远端 app-config 算出审核态并落盘（失败按完整态兜底，永不 throw）
+  refreshReviewMode() {
+    const done = review => {
+      this.globalData.reviewMode = !!review;
+    };
+    try {
+      const db = this.mpServerless && this.mpServerless.db;
+      const p = isReview({ db: db });
+      if (p && typeof p.then === 'function') {
+        p.then(done).catch(() => done(false));
+      } else {
+        done(false);
+      }
+    } catch (e) {
+      done(false);
+    }
   },
 
   async preloadTabData() {

@@ -1,4 +1,5 @@
 import { getCacheItem, setCacheItem, cacheTime } from "./cache";
+import { isReviewSync } from "./review";
 const app = getApp();
 
 function _getSettingCacheKey(setting_id) {
@@ -74,7 +75,8 @@ function showTab(page) {
   }
 
   // 只有在 tabBarHeight 变化时才更新
-  var tabBarHeight = wx.getStorageSync('tabBarHeight') || 80;
+  // 审核态整条 tabBar 不显示，底部占位也必须给 0，否则页面底部会空出一条
+  var tabBarHeight = isReviewSync() ? 0 : (wx.getStorageSync('tabBarHeight') || 80);
   if (page.data && page.data.tabBarHeight !== tabBarHeight) {
     page.setData({
       tabBarHeight: tabBarHeight

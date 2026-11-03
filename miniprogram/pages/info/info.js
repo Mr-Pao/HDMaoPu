@@ -13,17 +13,10 @@ const app = getApp();
 
 const { applyNav } = require('../../utils/nav');
 
-// 连击「关于」标题多少次才弹管理口令
-const TAP_TO_UNLOCK = 5;
-// 两次点击间隔超过这个毫秒数就重新计数（「连击」而不是「累计」）
-const TAP_WINDOW = 800;
-
 Page({
   // 非渲染数据（不进 setData，避免无谓的视图层通信）
   jsData: {
     linkFetchedAt: 0,
-    tapCount: 0,
-    tapAt: 0,
   },
 
   data: {
@@ -237,104 +230,10 @@ Page({
     });
   },
 
-  // ---------- 管理后台入口：连击「关于」标题 5 次 → 口令 → 解锁 ----------
-  //
-  // 口令存在 data/gate.json 的 code 字段，改完 push cos 自动同步 COS，无需发版。
-  // data/ 是公开 CDN，口令等于公开——它只是「别让普通用户误入」的 UX 门，
-  // 真正的写入权限仍在 Actions 端 REVIEW_PASSCODE。
-
+  // 管理入口已迁到首页（连击「火大猫谱」标题 5 次 → 口令 → 版本切换面板）。
+  // 这里只保留「是否已解锁」的读取：管理菜单仍在本页，靠它显隐。
   isUnlocked() {
-    // 统一走 utils/passcode：关于页和管理后台必须看同一个标记，
-    // 否则会出现「已解锁管理后台，但提交时说没设置口令」的矛盾。
     return passcode.isUnlocked();
-  },
-
-  setUnlocked(v) {
-    passcode.setUnlocked(v);
-    if (!v) {
-      // 退出解锁时一并清掉提交用的口令，避免留下一个用不了的 token
-      passcode.setToken("");
-    }
-  },
-
-  // 远端读口令。不缓存：改完 data/gate.json 下次连击就生效，不用重启小程序
-  async loadGateCode() {
-    try {
-      const { result } = await app.mpServerless.db.collection('gate').findOne({ _id: 'gate' });
-      return String((result && result.code) || '').trim();
-    } catch (e) {
-      console.warn('[INFO] 口令配置读取失败', e);
-      return '';
-    }
-  },
-
-  // 连击计数：间隔超 TAP_WINDOW 就重新从 1 数
-  onTitleTap() {
-    const now = Date.now();
-    if (now - (this.jsData.tapAt || 0) > TAP_WINDOW) {
-      this.jsData.tapCount = 0;
-    }
-    this.jsData.tapAt = now;
-    this.jsData.tapCount = (this.jsData.tapCount || 0) + 1;
-
-    if (this.jsData.tapCount < TAP_TO_UNLOCK) return;
-
-    this.jsData.tapCount = 0;
-    // 已解锁且本机还有口令就别再骚扰；只解锁没口令（旧版本状态）要补一次
-    if (this.isUnlocked() && passcode.hasToken()) {
-      this.setData({ "showCond.manager": true });
-      return;
-    }
-    this.askAdminPasscode();
-  },
-
-  async askAdminPasscode() {
-    const code = await this.loadGateCode();
-    if (!code) {
-      wx.showModal({
-        title: '管理入口未启用',
-        content: '远端还没有配置管理口令（data/gate.json 的 code 为空）。',
-        showCancel: false,
-      });
-      return;
-    }
-
-    // 走自绘弹层：原生 input，键盘右下角「完成」= 确认（不是换行）。
-    // 用 promptToken 而不是 wx.showModal，口令校验由 validate 回调负责，
-    // 错了停在弹层里显示红字，不关掉重新弹。
-    passcode.promptToken({
-      title: '管理口令',
-      placeholder: '输入管理口令',
-      confirmText: '进入',
-      validate: input => (input === code ? '' : '口令不对'),
-      onSaved: input => {
-        this.setUnlocked(true);
-        // 连击时输的就是管理口令，顺手存下来：管理后台提交要用同一个值，
-        // 不存的话进去还会再弹一次「还没设置管理口令」。
-        passcode.setToken(input);
-        this.setData({ "showCond.manager": true });
-        wx.showToast({ title: '已进入管理后台', icon: 'none' });
-        // 解锁后补拉一次待处理数量
-        this.refreshManagerNums && this.refreshManagerNums();
-      },
-    });
-  },
-
-  // 解锁后补算管理角标（onShow 的早退分支不会再跑一遍）
-  async refreshManagerNums() {
-    try {
-      const { result: numChkPhotos } = await app.mpServerless.db.collection('photo').count({ verified: false });
-      const { result: numFeedbacks } = await app.mpServerless.db.collection('feedback').count({ dealed: false });
-      const { result: numPending } = await app.mpServerless.db.collection('pending').count({});
-      this.setData({
-        "nums.numChkPhotos": numChkPhotos,
-        "nums.numFeedbacks": numFeedbacks,
-        "nums.numPending": numPending,
-        "showCond.manager": true,
-      });
-    } catch (e) {
-      console.warn('[INFO] 管理角标刷新失败', e);
-    }
   },
 
   /**

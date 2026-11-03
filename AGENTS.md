@@ -18,7 +18,7 @@
 - `miniprogram/utils/writeback.js`：COS inbox 写入通道（客户端零密钥）
 - `data/`：19 个 JSON，即"数据库"（删徽章三件套后从 22 降下来）
 - `scripts/`：Actions 专用脚本，**独立 `package.json`**（只依赖 `cos-nodejs-sdk-v5 ^3.0.0`）
-- `tests/`：`datasource` / `cache` / `process-inbox` 三个测试文件，共 **47 例**
+- `tests/`：`datasource` / `cache` / `process-inbox` / `review` 四个测试文件，共 **62 例**
 - `.github/workflows/`：7 个（aggregate、bundle-size、process-inbox、review、set-inbox-policy、sync-assets、sync-data）
 - `functionsEMAS/`、`initDatabase/`、`initStorage/`：上游遗留，EMAS 空间已删，**基本是死代码**
 
@@ -28,10 +28,10 @@
 ```bash
 NODE="C:/Users/yzx49/Program/HBuilderX/plugins/node/node.exe"
 ```
-- 单测（47 例）：`"$NODE" --test tests/datasource.test.js tests/cache.test.js tests/process-inbox.test.js`
+- 单测（62 例）：`"$NODE" --test tests/datasource.test.js tests/cache.test.js tests/process-inbox.test.js tests/review.test.js`
   - **必须显式列文件**；`node --test tests/` 会把目录当单个测试文件跑并报 fail
   - 用 `plugins/node18/node.exe`（v18.20.0）会挂 1 例：`mock.timers.enable` 不支持 `Date` → `ERR_INVALID_ARG_VALUE`
-- 数据端到端校验（66 项，真实数据不变量口径）：`"$NODE" scripts/verify-demo-data.js`
+- 数据端到端校验（70 项，真实数据不变量口径）：`"$NODE" scripts/verify-demo-data.js`
 - 重新生成演示数据：`"$NODE" scripts/gen-demo-data.js [--dry-run]`（固定种子、幂等）
 - 颜色硬编码 → token：`"$NODE" scripts/recolor-tokens.js [--dry-run]`
 - inbox 聚合自测：`DRY_RUN=1 "$NODE" scripts/process-inbox.js`（管理口令读 `data/gate.json` 的 `code`，不需要环境变量）
@@ -145,7 +145,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.71`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.72`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -162,7 +162,19 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-03）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.71`
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.72`
+- **v4.0.72：审核态开关（版本号白名单）+ 管理暗门迁到首页（2026-11-03）** — 照搬 SpaceLaunch 的「通过版本号规避审核」做法，另把连击口令入口从关于页搬到首页标题。
+  - **开关文件 `data/app-config.json`**（新）：`{"version":"1793700000000","items":[{"_id":"app-config","reviewVersions":[]}]}`。**必须是 `{version, items:[]}` 信封**（`datasource._requestCollection` 只认这个格式），不能照抄 SpaceLaunch 的裸对象。`scripts/upload-data.js` 自动扫 `data/*.json`，不用改白名单。语义：`reviewVersions` **非空 = 审核中**，`[]` = 正常期。提审前写 `["v4.0.72"]`，过审发布后清回 `[]`。
+  - **判定模块 `miniprogram/utils/review.js`**（新，267 行）：导出 `envName/runtimeVersion/applyVersionRule/readOverride/setOverride/getDebugInfo/getConfig/isReview/isReviewSync/blockInReview`。⚠️ **文件里必须写 `const config = require("../config")` 而不是 `import`** —— 它被 `tests/review.test.js` 直接 `require` 做单测，ESM import 会 `ERR_MODULE_NOT_FOUND`。
+  - **判定口径**（`applyVersionRule(raw, override)`，纯函数）：布尔覆盖最优先 → 有模拟版本号时不走 devtools 放行 → 无 `reviewVersions` 数组则退回 `Boolean(cfg.review)` → 空列表 = 正常 → `develop`/`trial` 且白名单非空 = 审核态（**审核员跑开发版，拿不到版本号**，这是真正起作用的那条）→ `release` 按 `sim || app_version` 匹配白名单，拿不到版本号兜底审核态。远端拉不到 → 正常态兜底。
+  - **缓存三键**：`appReviewConfig`（`{ts,data}` 远端原文，TTL 5 分钟）、`appReviewResolved`（`{review,ts}` 判定结论，给 tabBar/showTab 这类**同步**读者用）、`appReviewConfigOverride`（`{version}` 或 `{review}` 本机覆盖）。
+  - **审核态表现**：① `custom-tab-bar` 加 `reviewMode`，`index.wxml` 根节点多一个 `review-hidden`，wxss 用 `display:none`（**不是 `.hidden` 的 opacity**，否则透明按钮还能点到跳 tab）；② `utils/page.js` 的 `showTab(page)` 改 `isReviewSync() ? 0 : (wx.getStorageSync('tabBarHeight') || 80)` —— 原来 `|| 80` 会把 0 吞掉；③ 首页隐藏「数据看板」hero 入口与识猫入口；④ 详情页 5 个 UGC 入口全部 `wx:if='{{!reviewMode}}'`（便利贴数 / 申请领养 tag / 信息纠错 / 我要评分 / 上传喵照）；⑤ 5 个 UGC 页 `onLoad` 首行 `if (await blockInReview(tip)) return;`（addPhoto/commentBoard/ratingDetail/feedbackDetail/applyAdoption），防深链与历史栈。
+  - ⚠️ **`attached()` 量 tabBar 高度必须判 `rect && rect.height > 0` 再写缓存**：审核态 DOM 是 `display:none`，高度 0 一旦写进 `tabBarHeight`，之后「清除覆盖」回到正常态，所有页底部占位会永远变 0，直到重启小程序。
+  - **暗门迁到首页**：`genealogy.wxml:9` 的 `.nav-t` 加 `catchtap='onTitleTap'`（**catchtap 不是 bindtap**，防冒泡）；连击 5 次（`TAP_WINDOW=800` 超时重置）→ 已解锁直接开面板，否则读 `data/gate.json` 的 code 弹口令 → 通过后开「版本切换」面板（`genealogy.wxml` 末尾 `.dbg-mask` z-index **8800**，口令弹层是 9000）。面板四件事：模拟版本号 `setOverride(v)` / 强制审核态 `setOverride(true)` / 强制正常态 `setOverride(false)` / 清除覆盖 `setOverride(null)`，每次改完 `wx.reLaunch` 重载。
+  - **关于页那套已整体删除**：`info.js` 删掉 `TAP_TO_UNLOCK`/`TAP_WINDOW`/`setUnlocked`/`loadGateCode`/`onTitleTap`/`askAdminPasscode`/`refreshManagerNums`（105 行），只留 `isUnlocked()`；`info.wxml` 的 `.title` 去掉 `catchtap`，末尾 `<passcode-modal />` 删除。**现在 `<passcode-modal />` 全站唯一挂载点是 `genealogy.wxml` 末尾**。
+  - 文案同步：`utils/user.js:204` 与 `utils/passcode.js`、`pages/manage/admin/admin.js` 注释里的「关于页连击」统一改成「首页连击『火大猫谱』标题」。
+  - 测试：新建 `tests/review.test.js`（15 例，覆盖 devtools/develop/trial/release/命中/不命中/空白名单/布尔覆盖/老配置/非法 raw/数字版本号/`getAccountInfoSync` 抛错），**单测 47 → 62 例**；`package.json` 的 `scripts.test` 已加该文件；`scripts/verify-demo-data.js` 新增「【审核态开关 / app-config】」4 项，**66 → 70 项**。
+  - 本机验证方式：首页标题连击 5 次 → 输入口令（`data/gate.json` 的 code，当前 `0000`）→ 面板点「强制审核态」→ 应只剩首页、无 tabBar、详情页无 UGC 入口 → 再连击点「清除覆盖」恢复正常。
 - **v4.0.71：反馈链路打通（2026-11-03）** — 起因：用户问「反馈处理还有用吗」，实测答案是**没用，那个页面永远 0 条**。根因不是没提交，而是提交走错了通道：
   - `pages/genealogy/feedbackDetail/feedbackDetail.js` 原来先 `api.curdOp add feedback`（写本地覆盖层，假写，永不落 `data/feedback.json`），真正发出去的是 `putInbox('comment',{...,type:'feedback'})` —— 走**评论**通道。
   - 而 `scripts/process-inbox.js` 的 `handleComment` 只取 `cat_id`/`content`/`nickname`，**`type:'feedback'` 被直接丢弃**，入队 `kind:'comment'`；`handleDecision` 对 comment approve 只落 `data/comment.json`。所以反馈内容要么被当便利贴，要么石沉大海，`feedback.json` 永远是 `items: []`。
@@ -259,7 +271,7 @@ cos-version  从上游错误派生，废弃
   - COS 上曾出现过一条 `relink-photo-1`（指向 `photos/demo-cat-12/0001.jpg`，猫 `demo-cat-12 奶盖`），是误把 `photos/demo-cat-1/cover.jpg` 复制过来当新照片的假数据。**2026-11-01 已彻底清除**（远端只剩 11 条 photo、11 只 cat，孤儿对象 `photos/demo-cat-12/0001.jpg` 已删）。
 - 其余演示规模：comment 48 / rating 48 / user 9 / news 8 …
 - UI 已全站统一白底大圆角（v5.2），图库是横向漂流墙（8 行宽窄交替 marquee）
-- 审核/管理**已无口令锁屏门**（v4.0.33）：关于页连击「火大猫谱」5 次 → 输口令 → 解锁并顺手存本地 storage `manage_passcode`（`utils/passcode.js` 统一读写，解锁标记 `admin_unlocked`）；真正校验在 `process-inbox.js` 的 `tokenOk()`，**读 `data/gate.json` 的 `code`**（v4.0.42 起；`REVIEW_PASSCODE` 仅兜底），token 不对的提交直接 `drop:bad-token` 静默丢弃
+- 审核/管理**已无口令锁屏门**（v4.0.33）：**首页**（v4.0.72 从关于页迁来）连击「火大猫谱」标题 5 次 → 输口令 → 解锁并顺手存本地 storage `manage_passcode`（`utils/passcode.js` 统一读写，解锁标记 `admin_unlocked`）；真正校验在 `process-inbox.js` 的 `tokenOk()`，**读 `data/gate.json` 的 `code`**（v4.0.42 起；`REVIEW_PASSCODE` 仅兜底），token 不对的提交直接 `drop:bad-token` 静默丢弃
 - **徽章（勋章）功能已全站删除**（v4.0.17）：10 个页面 40 个文件、`components/badgeModal`、`components/badgeRank`（只有死页 leaderboard 引用）、`utils/badge.js`、`cloudApi.js` 的 `getBadge/giveBadge/genBadgeCode/loadBadgeCode`、`data/{badge,badge_def,badge_rank}.json`、11 张图片、`config.badge_rank_*_img` 常量、`gen-demo-data.js` 的 BADGE_DEFS 段、`verify-demo-data.js` 的 8 个校验项全部清除。`app.json` 页面 38→34、分包 3→1。`info` 页删「徽章口袋」card 与「徽章管理」菜单。`ratingDetail.wxss` 原有 `@import "../badgeDetail/badgeDetail.wxss"`，已内联所需的 `.bd-block`/`.bd-title`；`app.wxss` 里零引用的 `--color-badge-A/B/C` 三个 token 也已删（文件其余 token 不动）
 - **「猫际关系」卡按数据显隐**（v4.0.18）：外层条件改为 `{{cat.relations && cat.relations.length}}`（不再对管理员单向开放），没有关系时整张卡不显示；卡内「+ 添加关系」入口删除，`detailCat.js` 的 `toAddRelation()` 一并删除，**改到「猫咪信息纠错」页**（`feedbackDetail`）——仅管理员可见（`isManagerAsync(3)`），`.adminEntry` 块在 `.userInfo` 之后
 - 详情页整体信息架构（v4.0.17 重构）：猫猫档案卡（去绿条 label-block、扁平两列）→ 猫友评价卡 → 疫苗卡 → 猫际关系卡 → 相册；卡片间距统一 24rpx
@@ -292,6 +304,6 @@ cos-version  从上游错误派生，废弃
 1. 改了什么数据？→ 是否需要同步 `data/` + 推 `cos`（触发 `sync-data.yml`）
 2. 新页面/组件？→ `app.json` 注册 **且** 从 `packOptions.ignore` 移除
 3. 改样式？→ 只动 hex，别动颜色关键字；`app.wxss` 排除
-4. 改完跑：单测 47 例 + `verify-demo-data.js` 66 项（真实数据不变量口径；一次就够，不要来回验）
+4. 改完跑：单测 62 例 + `verify-demo-data.js` 70 项（真实数据不变量口径；一次就够，不要来回验）
 5. 升 `config.js` 的 `app_version`，commit message 带版本号
 6. 有持久价值的新结论 → 追加到本文件（不要写 `.workbuddy/memory/`）

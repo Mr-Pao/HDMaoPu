@@ -18,6 +18,12 @@ import config from "../../config";
 import { loadFilter, getGlobalSettings, showTab } from "../../utils/page";
 import { checkCanShowNews } from "../../utils/user";
 import { signCosUrl } from "../../utils/common";
+import passcode from "../../utils/passcode";
+import { isReview, getDebugInfo, setOverride } from "../../utils/review";
+
+// 连击「火大猫谱」标题 5 次 → 管理口令 → 版本切换面板
+const TAP_TO_UNLOCK = 5;
+const TAP_WINDOW = 800;
 
 const default_png = undefined;
 const share_text = config.text.app_name + ' - ' + config.text.genealogy.share_tip;
@@ -69,7 +75,15 @@ Page({
     // 识猫入口显隐（MeowID 配好项目 ID + API Key 才显示）
     showRecognize: false,
     // 新增：下拉刷新状态
-    refreshing: false
+    refreshing: false,
+    // 审核态：只留首页（藏数据卡/识猫/看板入口，tabBar 由组件自己隐）
+    reviewMode: false,
+    // 暗门面板
+    debug_show: false,
+    debug_env: '',
+    debug_version: '',
+    debug_override: '',
+    debug_input: ''
   },
 
   jsData: {
@@ -77,7 +91,10 @@ Page({
     loadingLock: 0,
     pageLoadingLock: false,
     // 新增：待处理的scene参数
-    pendingScene: null
+    pendingScene: null,
+    // 连击计数
+    tapCount: 0,
+    tapAt: 0
   },
 
   /**
@@ -89,9 +106,13 @@ Page({
         catsStep: 12,
         loadingLock: 0,
         pageLoadingLock: false,
-        pendingScene: null
+        pendingScene: null,
+        tapCount: 0,
+        tapAt: 0
       };
     }
+    if (this.jsData.tapCount === undefined) this.jsData.tapCount = 0;
+    if (this.jsData.tapAt === undefined) this.jsData.tapAt = 0;
     
     if (options.scene) {
       const scene = decodeURIComponent(options.scene);
@@ -136,6 +157,15 @@ Page({
     }
     
     this.jsData.catsStep = settings['catsStep'] || 12;
+
+    // 审核态判定（远端 app-config + 本机覆盖）。失败一律按完整态，绝不影响使用
+    let reviewMode = false;
+    try {
+      reviewMode = await isReview();
+    } catch (e) {
+      reviewMode = false;
+    }
+    this.setData({ reviewMode: reviewMode });
 
     this.setData({
       main_lower_threshold: settings['main_lower_threshold'] || 50,
@@ -283,6 +313,11 @@ Page({
   },
 
   loadRecognize: async function () {
+    // 审核态不给识猫入口（会消耗额度，也不希望被审核员当成功能点去试）
+    if (this.data.reviewMode) {
+      this.setData({ showRecognize: false });
+      return;
+    }
     const env = __wxConfig.envVersion === 'release' || __wxConfig.envVersion === 'develop' ? 'recognize' : 'recognize_test';
     const settings = await getGlobalSettings(env) || {};
     // MeowID：项目 ID 和 API Key 都填了才显示识猫入口
@@ -598,11 +633,134 @@ Page({
 
   voidMove: function () { },
 
-  // 首页 → 数据看板
+  // 首页 → 数据看板（审核态不给入口：那是管理向页面）
   toDashboard: function () {
+    if (this.data.reviewMode) {
+      wx.showToast({ title: '当前不可用', icon: 'none' });
+      return;
+    }
     wx.navigateTo({
       url: "/pages/manage/dashboard/dashboard",
     });
+  },
+
+  // ===== 暗门：连击标题 5 次 → 管理口令 → 版本切换面板 =====
+  // 普通用户永远看不到；审核态下也是灰的（tabBar 都没了，但标题还在）。
+  onTitleTap: function () {
+    const now = Date.now();
+    if (now - this.jsData.tapAt > TAP_WINDOW) {
+      this.jsData.tapCount = 0;
+    }
+    this.jsData.tapAt = now;
+    this.jsData.tapCount = (this.jsData.tapCount || 0) + 1;
+    if (this.jsData.tapCount < TAP_TO_UNLOCK) {
+      return;
+    }
+    this.jsData.tapCount = 0;
+    // 已经解锁过（本次生命周期内输过口令）就直接开面板
+    if (passcode.isUnlocked() && passcode.hasToken()) {
+      this.openDebugPanel();
+      return;
+    }
+    this.askAdminPasscode();
+  },
+
+  // 读 data/gate.json 的 code（故意不缓存，改完下次连击即生效）
+  async loadGateCode() {
+    try {
+      const { result } = await app.mpServerless.db.collection('gate').findOne({ _id: 'gate' });
+      return (result && result.code) || '';
+    } catch (e) {
+      return '';
+    }
+  },
+
+  async askAdminPasscode() {
+    const code = await this.loadGateCode();
+    if (!code) {
+      wx.showToast({ title: '管理入口未启用', icon: 'none' });
+      return;
+    }
+    passcode.promptToken({
+      title: '管理口令',
+      placeholder: '输入管理口令',
+      confirmText: '进入',
+      validate: input => (input === code ? '' : '口令不对'),
+      onSaved: input => {
+        passcode.setUnlocked(true);
+        passcode.setToken(input);
+        wx.showToast({ title: '已解锁', icon: 'none' });
+        this.openDebugPanel();
+      },
+    });
+  },
+
+  // 面板里的现场信息：环境 / 当前版本 / 本机覆盖
+  openDebugPanel() {
+    const info = getDebugInfo();
+    const override = info.override || {};
+    this.setData({
+      debug_show: true,
+      debug_env: info.envVersion,
+      debug_version: info.version,
+      debug_override: override.review === true
+        ? '强制审核态'
+        : override.review === false
+          ? '强制正常态'
+          : (override.version || ''),
+      debug_input: override.version || '',
+    });
+  },
+
+  closeDebugPanel() {
+    this.setData({ debug_show: false });
+  },
+
+  onDebugInput(e) {
+    this.setData({ debug_input: e.detail.value });
+  },
+
+  // 模拟某个版本号（用于在本机验证「这个版本算不算审核中」）
+  applySimVersion() {
+    const v = String(this.data.debug_input || '').trim();
+    if (!v) {
+      wx.showToast({ title: '请填版本号，如 v4.0.72', icon: 'none' });
+      return;
+    }
+    setOverride(v);
+    this.reloadForDebug();
+  },
+
+  // 强制两种状态，跳过程序判定
+  forceReview() {
+    setOverride(true);
+    this.reloadForDebug();
+  },
+
+  forceNormal() {
+    setOverride(false);
+    this.reloadForDebug();
+  },
+
+  // 清除本机覆盖，回到远端开关的真实判定
+  clearOverride() {
+    setOverride(null);
+    this.reloadForDebug();
+  },
+
+  reloadForDebug() {
+    wx.reLaunch({
+      url: '/pages/genealogy/genealogy',
+      fail() {
+        wx.showToast({ title: '切换失败，请重试', icon: 'none' });
+      },
+    });
+  },
+
+  // 已解锁时直接进管理后台（管理菜单还在「关于」页）
+  goManage() {
+    this.closeDebugPanel();
+    wx.switchTab({ url: '/pages/info/info' });
   },
   
   fCheckLegal: function (filters) {

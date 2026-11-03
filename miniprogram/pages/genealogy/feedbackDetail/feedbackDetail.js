@@ -7,6 +7,7 @@ import { getNickname, saveNickname } from "../../../utils/nickname";
 import { text as text_cfg } from "../../../config";
 import { getCurrentUserOpenid } from "../../../utils/common";
 import api from "../../../utils/cloudApi";
+import { blockInReview } from "../../../utils/review";
 const app = getApp();
 Page({
   /**
@@ -25,6 +26,7 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: async function (options) {
+    if (await blockInReview("信息纠错暂未开放")) return;
     if (options.cat_id != undefined) {
       const { result: catRes } = await app.mpServerless.db.collection('cat').findOne({ _id: options.cat_id }, { projection: { name: 1, _id: 1 } })
       this.setData({

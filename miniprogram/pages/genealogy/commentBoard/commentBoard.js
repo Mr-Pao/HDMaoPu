@@ -8,6 +8,7 @@ import {
   fillUserInfo,
   checkCanComment
 } from "../../../utils/user";
+import { blockInReview } from "../../../utils/review";
 import {
   getCurrentUserOpenid
 } from "../../../utils/common";
@@ -61,6 +62,7 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: async function (options) {
+    if (await blockInReview("便利贴暂未开放")) return;
     this.jsData.cat_id = options.cat_id;
     this.setData({
       canComment: await checkCanComment()

@@ -4,6 +4,7 @@ import { getUser } from "../../../utils/user";
 import { formatDate } from "../../../utils/utils";
 import api from "../../../utils/cloudApi";
 import config from "../../../config";
+import { blockInReview } from "../../../utils/review";
 
 const app = getApp();
 
@@ -46,6 +47,7 @@ Page({
   },
 
   async onLoad(options) {
+    if (await blockInReview("领养申请暂未开放")) return;
     this.jsData.cat_id = options.cat_id;
     if (!this.jsData.cat_id) {
       wx.showToast({ title: '缺少猫咪信息', icon: 'none' });

@@ -316,6 +316,20 @@ async function main() {
     check('user 为空或存在真实账号', all.length === 0 || all.every((u) => !String(u._id).startsWith('demo-user-')));
   }
 
+  console.log('\n【审核态开关 / app-config】');
+  {
+    const cfg = (await db.collection('app-config').findOne({ _id: 'app-config' })).result;
+    check('app-config 存在且可查询', !!cfg);
+    check('reviewVersions 是数组', !!cfg && Array.isArray(cfg.reviewVersions), cfg && JSON.stringify(cfg.reviewVersions));
+    check('reviewVersions 元素都是非空字符串',
+      !!cfg && cfg.reviewVersions.every((v) => typeof v === 'string' && v.trim()),
+      cfg && JSON.stringify(cfg.reviewVersions));
+    // 空数组 = 正常期。这条是提醒：提交前别忘了确认当前处于哪个状态
+    check('当前处于正常期（reviewVersions 为空）',
+      !!cfg && cfg.reviewVersions.length === 0,
+      cfg && `当前 ${cfg.reviewVersions.length} 个白名单版本${cfg.reviewVersions.length ? '→审核态！' : ''}`);
+  }
+
   // ---------------------------------------------------------------- 汇总
   const bad = results.filter((r) => !r.ok);
   console.log('\n' + '─'.repeat(50));

@@ -180,7 +180,7 @@ async function getPageUserInfo(page) {
 }
 
 // 是否管理员
-// ⚠️ 唯一判据是「关于页连击 5 次 + 口令」解锁后的本机标记，**不再看 user.manager**。
+// ⚠️ 唯一判据是「首页连击标题 5 次 + 口令」解锁后的本机标记，**不再看 user.manager**。
 // 原因有两个：
 //   1) data/user.json 为空表时，datasource._userOp('get') 会给每个新访客自动发
 //      manager=99（remoteConfirmedEmpty 分支），只看 manager 等于人人都是管理员；
@@ -201,7 +201,7 @@ async function checkAuth(page, level) { // eslint-disable-line no-unused-vars
     return true;
   }
   page.setData({
-    tipText: "管理后台还没解锁：请回到「关于」页连击标题 5 次，输入一次管理口令",
+    tipText: "管理后台还没解锁：请回首页连击「火大猫谱」标题 5 次，输入一次管理口令",
     tipBtn: true,
   });
   return false;
