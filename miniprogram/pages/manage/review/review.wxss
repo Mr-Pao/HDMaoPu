@@ -117,6 +117,12 @@
   color: var(--color-primary);
 }
 
+/* 信息纠错：与评论/照片区分开，用中性灰底（不抢绿色主色） */
+.tag-feedback {
+  background: var(--color-gray-light);
+  color: var(--color-text-secondary);
+}
+
 .cat {
   margin-left: 12rpx;
   font-size: 26rpx;
@@ -167,6 +173,13 @@
   line-height: 1.6;
   color: var(--color-text);
   word-break: break-all;
+}
+
+/* 反馈的联系方式是次要信息，比正文小一号、颜色淡 */
+.content.sub {
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  color: var(--color-text-secondary);
 }
 
 /* 一行小字信息，评论/照片共用，避免出现空行 */

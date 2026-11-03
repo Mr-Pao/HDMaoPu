@@ -38,9 +38,11 @@
     </view>
 
     <view class="content" wx:if="{{item.content}}">{{item.content}}</view>
+    <view class="content sub" wx:if="{{item.contactInfo}}">联系方式：{{item.contactInfo}}</view>
 
     <view class="info">
       <text class="info-item" wx:if="{{item.kind === 'comment'}}">来自 {{item.nickname}}</text>
+      <text class="info-item" wx:if="{{item.kind === 'feedback'}}">来自 {{item.nickname}}{{item.repliable ? '（可回复）' : '（未订阅，无法回复）'}}</text>
       <text class="info-item" wx:if="{{item.kind === 'photo'}}">摄影师 {{item.photographer || '未填'}}</text>
       <text class="info-item" wx:if="{{item.kind === 'photo'}}">拍摄 {{item.shootingDate || '未填'}}</text>
     </view>

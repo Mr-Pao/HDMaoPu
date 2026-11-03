@@ -24,6 +24,7 @@ const app = getApp();
 const KIND_LABEL = {
   comment: "评论",
   photo: "照片",
+  feedback: "信息纠错",
 };
 
 function formatTime(iso) {
@@ -117,8 +118,10 @@ Page({
           _id: it._id,
           kind: it.kind,
           kindLabel: KIND_LABEL[it.kind] || it.kind,
-          catName: catNames[it.data && it.data.cat_id] || (it.data && it.data.cat_id) || "未知猫猫",
-          content: (it.data && it.data.content) || "",
+          catName: catNames[it.data && it.data.cat_id] || (it.data && it.data.cat_id) || (it.kind === 'feedback' ? '信息反馈' : '未知猫猫'),
+          content: (it.data && (it.data.content || it.data.feedbackInfo)) || "",
+          contactInfo: (it.data && it.data.contactInfo) || "",
+          repliable: !!(it.data && it.data.repliable),
           url: it.kind === "photo" ? photoUrlOf(it.preview_url, it.data && it.data.photo_key) : "",
           nickname: (it.data && it.data.nickname) || "匿名猫友",
           photographer: (it.data && it.data.photographer) || "",

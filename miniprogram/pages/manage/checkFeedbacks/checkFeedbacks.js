@@ -89,8 +89,10 @@ Page({
       dealed: this.data.checkHistory
     });
 
+    // datasource 的 count() 返回的是数字（{ result: n }），不是 mpserverless 的 { total }。
+    // 原来写 fbRes.total 恒为 undefined，页头「共有 N 条」一直是空的。
     this.setData({
-      total: fbRes.total,
+      total: typeof fbRes === 'number' ? fbRes : (fbRes && fbRes.total) || 0,
     });
     this.data.feedbacks = []; // 清空，loadFeedbacks再填充
     await this.loadFeedbacks();

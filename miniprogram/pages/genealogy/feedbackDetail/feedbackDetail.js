@@ -106,50 +106,41 @@ Page({
       title: '正在提交...',
       mask: true,
     })
+    // 订阅意愿必须在用户点击后立刻问（wx.requestSubscribeMessage 要求用户手势）。
+    // 结果一并提交给服务端：管理员看到 repliable=false 就不显示「回复」按钮。
+    const repliable = await requestNotice('feedback');
+
     // 用户记录拿不到时兜底取 openid，保证每条反馈都能追到人
     const openid = (this.data.user && this.data.user.openid) || await getCurrentUserOpenid();
     var data = {
       openid: openid,
-      openDate: api.getDate(),
       feedbackInfo: submitData.feedbackInfo,
-      contactInfo: submitData.contactInfo,
-      dealed: false,
+      contactInfo: submitData.contactInfo || '',
+      repliable: repliable === true,
     };
     if (this.data.cat != undefined) {
       data.cat_id = this.data.cat._id;
       data.cat_name = this.data.cat.name;
     }
-    const res = await api.curdOp({
-      operation: "add",
-      collection: "feedback",
-      data: data
-    });
 
-    if (!res.ok) {
-      return;
-    }
-
-    // 同步到 COS inbox，由 Action 聚合进审核队列（kind 复用 comment，带 type 标记；
-    // handleComment 要求 cat_id 非空，无关联猫猫时用占位标记，审核页可见即可）
-    // 昵称取输入框的值，空则匿名；顺手记到本机（换设备自然丢失）
+    // 反馈走独立 kind（v4.0.71 起）：服务端 handleFeedback 会把它放进审核队列，
+    // 审核通过后落 data/feedback.json —— 管理端「反馈处理」页才有数据可处理。
+    // 以前借道 kind='comment'，服务端把 type:'feedback' 直接丢了，反馈永远进不了 feedback 表。
     if (this.data.nickname) {
       saveNickname(this.data.nickname);
     }
-    const inboxCatId = data.cat_id || '(feedback)';
-    const ok = await putInbox('comment', {
-      cat_id: inboxCatId,
-      content: data.feedbackInfo + (data.contactInfo ? `\n联系方式: ${data.contactInfo}` : ''),
+    const ok = await putInbox('feedback', {
+      cat_id: data.cat_id || '',
+      cat_name: data.cat_name || '',
+      feedbackInfo: data.feedbackInfo,
+      contactInfo: data.contactInfo,
       nickname: this.data.nickname || '匿名猫友',
-      type: 'feedback',
+      repliable: data.repliable,
     });
     if (ok) {
-      markPending("comment", { cat_id: inboxCatId, label: "信息纠错" });
+      markPending("feedback", { cat_id: data.cat_id, label: "信息纠错" });
     }
 
-    this.setData({
-      feedbackId: res.insertedId
-    });
-    await this.askNotice();
     wx.hideLoading();
     await sendNotifyChkFeeedback();
     // 提交后要等 Actions 聚合 + 人工审核才展示，提示里说明延迟；
@@ -160,19 +151,6 @@ Page({
     } else {
       wx.showToast({ title: text_cfg.sync.offline_tip, icon: 'none', duration: 2500 });
     }
-  },
-
-  async askNotice() {
-    let repliable = await requestNotice('feedback'); // 请求订阅消息推送
-
-    // 只负责把订阅消息意愿写回本地覆盖层，是否返回上一页交给调用方的 backAfterSubmit，
-    // 否则这里先 navigateBack 会把后面的 hideLoading / toast 变成无效调用。
-    await api.curdOp({
-      operation: "update",
-      collection: "feedback",
-      item_id: this.data.feedbackId,
-      data: { repliable: repliable },
-    });
   },
 
   async changeAgreement(e) {

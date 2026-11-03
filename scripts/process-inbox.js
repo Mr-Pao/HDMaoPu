@@ -73,7 +73,7 @@ const MAX_KEY_FAILURES = 3;
 // pop 跨运行限频：同一 openid+cat 12 小时内只记一次人气
 const POP_COOLDOWN_MS = 12 * 60 * 60 * 1000;
 
-const VALID_KINDS = ['like', 'follow', 'pop', 'rating', 'comment', 'decision', 'manage', 'photo', 'deleteComment'];
+const VALID_KINDS = ['like', 'follow', 'pop', 'rating', 'comment', 'decision', 'manage', 'photo', 'deleteComment', 'feedback'];
 
 // ---- 写通道防刷增强（零成本，纯 Actions 脚本端校验，不引入任何服务器/SCF）----
 // openid 格式约束：微信 openid 形如 oXXXX，由字母数字组成；这里放宽允许 _ 和 -。
@@ -508,6 +508,36 @@ function handleComment(p) {
   return 'ok:queue';
 }
 
+// 信息反馈（v4.0.71 起独立 kind）：用户在小程序「猫咪信息纠错 / 信息反馈」页提交。
+// 以前借道 kind='comment' 并带 type:'feedback'，但 handleComment 只挑 cat_id/content/nickname，
+// type 被直接丢掉 → 审核通过后落进 comment.json 变成普通便利贴，data/feedback.json 永远是空的，
+// 管理端「反馈处理」页（读 dealed:false）也就永远显示 0 条。现在单独走 feedback kind。
+// 与 comment 的差别：不要求 cat_id（关于页的「信息反馈」没有关联猫猫），多带 contactInfo 与
+// repliable（用户是否授权订阅消息回复通知，管理端据此决定显不显示「回复」按钮）。
+function handleFeedback(p) {
+  const { openid, data, ts } = p;
+  const content = String((data && data.feedbackInfo) || '').trim();
+  if (!content) return 'drop:no-content';
+  const queue = loadData('review_queue');
+  queue.items.push({
+    _id: genId('rv', ts),
+    kind: 'feedback',
+    openid,
+    ts,
+    status: 'pending',
+    create_time: new Date(ts || Date.now()).toISOString(),
+    data: {
+      cat_id: String(data.cat_id || ''),
+      cat_name: String(data.cat_name || '').slice(0, 40),
+      feedbackInfo: content.slice(0, 500),
+      contactInfo: String(data.contactInfo || '').slice(0, 200),
+      nickname: String(data.nickname || '匿名猫友').slice(0, 30),
+      repliable: data.repliable === true,
+    },
+  });
+  markTouched('review_queue');
+  return 'ok:queue';
+}
 // 普通用户删除自己的评论（作者删自己的，软删，不需要管理员口令）。
 // 与 handleDecision 的 delete 分支（管理员针对 review_queue 项的操作）区分开：
 // 这里走普通 inbox kind，openid 即提交者本人，只校验「评论作者 == 提交 openid」。
@@ -650,6 +680,27 @@ async function handleDecision(p) {
       // 真实 COS 复制只在非 DRY_RUN 且配了 COS 凭据时执行；DRY 下只做内存 append，
       // 保证自测能验证落库逻辑不崩。
       await approvePhoto(item);
+    } else if (item.kind === 'feedback') {
+      // 信息反馈审核通过：落 data/feedback.json，管理端「反馈处理」页才有数据可处理。
+      // 字段形状对齐 verify-demo-data.js 的校验（openid 与 _openid 都要有、repliable 必须是布尔）。
+      const feedbacks = loadData('feedback');
+      const fbId = genId('fb', item.ts);
+      feedbacks.items.unshift({
+        _id: fbId,
+        openid: item.openid,
+        _openid: item.openid,
+        openDate: new Date(item.ts || Date.now()).toISOString(),
+        feedbackInfo: item.data.feedbackInfo,
+        contactInfo: item.data.contactInfo || '',
+        cat_id: item.data.cat_id || undefined,
+        cat_name: item.data.cat_name || undefined,
+        nickname: item.data.nickname || '匿名猫友',
+        repliable: item.data.repliable === true,
+        dealed: false,
+        status: 'pending',
+      });
+      item.applied_feedback_id = fbId;
+      markTouched('feedback');
     }
   } else if (action === 'delete') {
     // 评论删除：落库通过的评论（review_queue 的 comment item 已带 applied_comment_id）
@@ -1452,7 +1503,9 @@ function manageNews(data) {
 // ---------------------------------------------------------------------------
 
 // feedback 允许被服务端覆写的字段
-const FEEDBACK_PATCH_FIELDS = ['status', 'handled_by'];
+// replyInfo / replyDate 是 v4.0.71 补的：replyFeedback 页一次提交要把回复内容一起带上
+// （以前 patch 只认 status，管理员填的回复正文会被 drop:bad-patch-field 整条丢弃）。
+const FEEDBACK_PATCH_FIELDS = ['status', 'handled_by', 'replyInfo', 'replyDate'];
 
 function manageFeedback(data) {
   const feedbackId = data.feedback_id;
@@ -1475,10 +1528,23 @@ function manageFeedback(data) {
   if (patch.status !== undefined) {
     if (typeof patch.status !== 'string' || !patch.status) return 'drop:bad-patch-type';
     item.status = patch.status;
+    // dealed 是数据里真正被消费的字段（checkFeedbacks 用 find({dealed:false}) 拉待处理），
+    // 页面提交的是 status:'done'，这里同步过去，否则标了「已处理」还留在待处理列表里。
+    item.dealed = patch.status === 'done';
   }
   if (patch.handled_by !== undefined) {
     if (typeof patch.handled_by !== 'string') return 'drop:bad-patch-type';
     item.handled_by = patch.handled_by;
+  }
+  if (patch.replyInfo !== undefined) {
+    if (typeof patch.replyInfo !== 'string') return 'drop:bad-patch-type';
+    item.replyInfo = patch.replyInfo.slice(0, 500);
+  }
+  if (patch.replyDate !== undefined) {
+    // 客户端传的是 api.getDate() 的 Date 序列化结果，统一存 ISO 字符串
+    const d = new Date(patch.replyDate);
+    if (isNaN(d.getTime())) return 'drop:bad-patch-type';
+    item.replyDate = d.toISOString();
   }
 
   markTouched('feedback');
@@ -1593,6 +1659,7 @@ const HANDLERS = {
   pop: handlePop,
   rating: handleRating,
   comment: handleComment,
+  feedback: handleFeedback,
   photo: handlePhoto,
   decision: handleDecision,
   manage: handleManage,
@@ -1880,6 +1947,24 @@ function selftestObjects() {
       feedback_id: 'fb-selftest-1',
       patch: { status: 'done', evil_field: 'x' }, // 未知字段 → drop:bad-patch-field
     }, 32),
+    // 回复反馈：一次提交带 status + replyInfo + replyDate（v4.0.71 起白名单才认这两个字段）
+    mk('manage', 'openid-a', {
+      action: 'manageFeedback',
+      token: SELFTEST_TOKEN,
+      feedback_id: 'fb-selftest-1',
+      patch: { status: 'done', replyInfo: '已按你的反馈修改', replyDate: new Date(now + 50).toISOString() },
+    }, 39),
+    // 信息反馈提交（v4.0.71 新 kind）：应进 review_queue 等审核，不再借道 comment
+    mk('feedback', 'openid-a', {
+      cat_id: cat,
+      cat_name: '大橘',
+      feedbackInfo: '自测：这只猫的位置写错了',
+      contactInfo: 'wx: selftest',
+      nickname: '自测',
+      repliable: false,
+    }, 50),
+    // 空内容的反馈应被丢弃
+    mk('feedback', 'openid-a', { feedbackInfo: '   ' }, 51),
     mk('manage', 'openid-a', {
       action: 'managePageSettings',
       token: SELFTEST_TOKEN,
@@ -1952,6 +2037,23 @@ function selftestObjects() {
     create_time: new Date(now + 32).toISOString(),
     data: { photo_key: 'pending/openid-a-99999.jpg', cat_id: cat, photographer: '自测', shooting_date: '2026-05-10' },
   });
+  // v4.0.71 新增：信息反馈审核通过后要落 data/feedback.json（以前借道 comment，永远落不了库）
+  loadData('review_queue').items.push({
+    _id: 'rv-selftest-fb',
+    kind: 'feedback',
+    openid: 'openid-a',
+    ts: now + 33,
+    status: 'pending',
+    create_time: new Date(now + 33).toISOString(),
+    data: {
+      cat_id: cat,
+      cat_name: '大橘',
+      feedbackInfo: '自测反馈：名字写错了',
+      contactInfo: '',
+      nickname: '自测',
+      repliable: true,
+    },
+  });
 
   // 把 B3/B4 的 decision 用例追加进自测数组（在 review item 入队之后）。
   objects.push(
@@ -1983,6 +2085,14 @@ function selftestObjects() {
         data: { item_id: 'rv-selftest-cm', action: 'delete', token: SELFTEST_TOKEN },
       }),
     }, // 幂等：重复 delete 不报错
+    // 信息反馈审核通过 → 落 data/feedback.json（dealed:false, repliable:true）
+    {
+      key: `inbox/decision/${now + 35}-fb-appr-aaaa.json`,
+      body: JSON.stringify({
+        v: 1, kind: 'decision', openid: 'openid-a', ts: now + 35,
+        data: { item_id: 'rv-selftest-fb', action: 'approve', token: SELFTEST_TOKEN },
+      }),
+    },
   );
 
   // ---- B3 评论删除（普通用户删自己的评论）自测 ----

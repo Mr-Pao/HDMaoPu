@@ -145,7 +145,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.70`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.71`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -162,7 +162,18 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-03）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.70`
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.71`
+- **v4.0.71：反馈链路打通（2026-11-03）** — 起因：用户问「反馈处理还有用吗」，实测答案是**没用，那个页面永远 0 条**。根因不是没提交，而是提交走错了通道：
+  - `pages/genealogy/feedbackDetail/feedbackDetail.js` 原来先 `api.curdOp add feedback`（写本地覆盖层，假写，永不落 `data/feedback.json`），真正发出去的是 `putInbox('comment',{...,type:'feedback'})` —— 走**评论**通道。
+  - 而 `scripts/process-inbox.js` 的 `handleComment` 只取 `cat_id`/`content`/`nickname`，**`type:'feedback'` 被直接丢弃**，入队 `kind:'comment'`；`handleDecision` 对 comment approve 只落 `data/comment.json`。所以反馈内容要么被当便利贴，要么石沉大海，`feedback.json` 永远是 `items: []`。
+  - 修法（反馈独立成一个 kind）：
+    - `VALID_KINDS`（`:76`）加 `'feedback'`（现 10 个）；新增 `handleFeedback(p)`：`feedbackInfo` trim 后为空 → `drop:no-content`，否则入 `review_queue`（`kind:'feedback'`，字段 `cat_id/cat_name/feedbackInfo/contactInfo/nickname/repliable`，字符串各自限长），**不要求 cat_id**（关于页的信息反馈没有关联猫）。
+    - `handleDecision` 的 approve 分支新增 `else if (item.kind === 'feedback')`：落 `data/feedback.json`（`_id=genId('fb',item.ts)`、`openid` 与 `_openid` 都写、`openDate`、`repliable` 布尔、`dealed:false`），回写 `item.applied_feedback_id`。字段形状对齐 `verify-demo-data.js` 的三条校验。
+    - `FEEDBACK_PATCH_FIELDS` 由 `['status','handled_by']` 扩为 **`['status','handled_by','replyInfo','replyDate']`** —— 原来 `replyFeedback` 一次提交带的 `replyInfo`/`replyDate` 会被整条 `drop:bad-patch-field` 丢掉，回复永远存不上。
+    - `manageFeedback` 里 `patch.status` 赋值后同步 `item.dealed = patch.status === 'done'`（`checkFeedbacks` 用 `find({dealed:false})` 拉列表，不同步会导致标了已处理还留在列表）；新增 `replyInfo`（≤500）与 `replyDate`（ISO 字符串，非法则 `drop:bad-patch-type`）。
+    - `feedbackDetail.js` 删掉假写分支与整个 `askNotice()`，改为 `putInbox('feedback', {...})`，订阅意愿在 `wx.showLoading` 之后立刻 `await requestNotice('feedback')` 问（必须用户手势后）。
+    - 审核队列支持新 kind：`review.js` 的 `KIND_LABEL` 加 `feedback:"信息纠错"`，映射 `contactInfo`/`repliable`，`content` 回落 `feedbackInfo`，无 `cat_id` 时猫名显示「信息反馈」；`review.wxml` 多一行「联系方式」与「可回复/无法回复」；`review.wxss` 加 `.tag-feedback`、`.content.sub`。
+  - ⚠️ **顺带修的坑**：`checkFeedbacks.js` 的 `total` 原来写 `fbRes.total`，但 `datasource` 的 `count()` 返回的是**数字** `{ result: n }`（不是 mpserverless 的 `{ total }`），所以页头「共有 N 条」一直是空的。现改 `typeof fbRes === 'number' ? fbRes : (fbRes && fbRes.total) || 0`。
 - **v4.0.70：审核队列 UI 重排（2026-11-03）** — 用户真机截图反馈「UI 布局调羹一下」，实测有三处硬伤：
   - **页面被压成中间一条**：`app.wxss:211` 有个全局 `.container{display:flex;flex-direction:column;align-items:center}`，`review.wxml` 的根节点就叫 `.container`，于是卡片被压成内容宽度并居中。本页 wxss 必须显式 `display:block;width:100%` 覆盖（**以后任何新页用 `.container` 作根节点都要检查这条**）。
   - 头部只有一行「待审核 4 条」，改成「待审核 + 大号计数」+ 右上「刷新」胶囊（新增 `onRefreshTap()`）。
