@@ -1,0 +1,40 @@
+/* miniprogram/pages/info/versionLog/versionLog.wxss */
+@import '../reward/reward.wxss';
+
+page {
+  background-color: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+/* 卡片圆角统一到 20rpx 档 */
+.card, .box, .item-card, .list-item, .cell {
+  border-radius: 20rpx;
+}
+
+/* 版本记录：一条一行头（版本号 + 日期），下面跟条目 */
+.v-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 30rpx;
+  padding-bottom: 8rpx;
+  border-bottom: 1rpx solid var(--dk-line);
+}
+
+.v-version {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--dk-accent);
+}
+
+.v-time {
+  font-size: 24rpx;
+  color: var(--color-gray-max);
+}
+
+.v-item {
+  font-size: 26rpx;
+  color: var(--color-black-light);
+  line-height: 46rpx;
+  padding-left: 8rpx;
+}

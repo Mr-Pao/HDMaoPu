@@ -11,6 +11,7 @@
     "pages/info/reward/reward",
     "pages/info/feedback/feedback",
     "pages/info/devTeam/devTeam",
+    "pages/info/versionLog/versionLog",
     "pages/info/agreement/agreement",
     "pages/followFeed/followFeed",
     "pages/news/news",

@@ -13,7 +13,7 @@
 ## 技术栈与目录
 
 - 微信原生小程序，无框架。`miniprogramRoot: miniprogram/`，appid `wx5d52c6c8f098ed5e`，`libVersion: 2.24.7`，`nodeModules: false`
-- 页面：`app.json` 注册 **28 页 + 分包 `pages/packageA` 1 页**（v4.0.67 加回「审核队列」review 页，26→28）（v4.0.65 删 review 页，27→26）（v4.0.63 管理后台重构删 4 页：imProcess/checkPhotos/checkAdoption/pageSettings，31→27）（v4.0.35 加 newsAdmin，30→31）（v4.0.17 删徽章 38→34；v4.0.23 删用户档案页 34→30）
+- 页面：`app.json` 注册 **28 页 + 分包 `pages/packageA` 1 页**（v4.0.76 加 versionLog 27→28）（v4.0.67 加回「审核队列」review 页，26→28）（v4.0.65 删 review 页，27→26）（v4.0.63 管理后台重构删 4 页：imProcess/checkPhotos/checkAdoption/pageSettings，31→27）（v4.0.35 加 newsAdmin，30→31）（v4.0.17 删徽章 38→34；v4.0.23 删用户档案页 34→30）
 - `miniprogram/utils/datasource.js`（1321 行）：自研的 mpserverless 兼容层，实现 `createJsonServerless({baseUrl})`
 - `miniprogram/utils/writeback.js`：COS inbox 写入通道（客户端零密钥）
 - `data/`：19 个 JSON，即"数据库"（删徽章三件套后从 22 降下来）
@@ -146,7 +146,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.75`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.76`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -163,7 +163,8 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-03）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.75`
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.76`
+- **v4.0.76：版本记录独立成页（2026-11-04）** — 用户要求把「程序开发」页里的更新日志拿出来，补一条 `v4.0.0 / 2026/11/04`，统一放进版本页。新建 `pages/info/versionLog/`（4 文件，`navigationBarTitleText: 版本记录`，wxss `@import '../reward/reward.wxss'` 复用 `.block/.title/.desc`），`update_log` 数组从 `devTeam.js` 整体搬来并置顶 v4.0.0 条目；`app.json` 注册 → **28 页**；关于页「版本」行从纯文本改成 `bindtap='clickbtn' data-to='/pages/info/versionLog/versionLog'`（右值后加 `›`）。`devTeam.js` 删 `update_log`（-81 行）、`devTeam.wxml` 删「更新日志」整块，该页只剩本校开发 + 开源代码团队。
 - **v4.0.75：详情页去掉「分享喵ID」（2026-11-04）** — 用户要求删掉相册区的分享海报入口。改动：`detailCat.wxml` 删 `.album-tools` 里的第二个 `.tool`（`bindtap="showPoster"` + `shareMeowId.svg` + 文案「分享喵ID」）与文件末尾的 `<poster id="posterComponent" ...>`；`.album-tools` 整体加 `wx:if='{{canUpload}}'`（否则只剩一个按钮时仍会渲染出一条空工具条），内层 `.tool` 的 `wx:if` 去掉（外层已判）；`detailCat.js` 删 `showPoster()`；`detailCat.json` 的 `usingComponents` 删 `"poster": "/components/poster/poster"`。**`components/poster/` 组件本身保留**，`packages/weui/gallery/gallery.wxml:28` 仍在用它（图库大图页的海报），别整目录删。`shareMeowId.svg` 已无引用但文件保留。
 - **v4.0.74：审核开关改成「直接改 COS」，不再走仓库（2026-11-04）** — 起因：用户指出「spacelaunch 我是直接改 cos 里的就行了」，而 v4.0.73 的开关放在 `data/app-config.json`，会被 `sync-data.yml` 每次覆盖。
   - **`scripts/upload-data.js` 的 `UPLOAD_DENYLIST` 加 `app-config.json`**（现三条：`inbox_log.json` / `review_queue.json` / `app-config.json`）。这是让「直接改 COS」成立的关键：聚合 job 每 5 分钟就可能写 `data/*.json` 触发上传，若开关也在上传列表里，线上手改的值会被刷回仓库旧值。

@@ -1,0 +1,14 @@
+<view class='block'>
+  <view class='title'>版本记录</view>
+  <view class='desc'>
+    <block wx:for="{{update_log}}" wx:key="version">
+      <view class='v-head'>
+        <text class='v-version'>{{item.version}}</text>
+        <text class='v-time'>{{item.time}}</text>
+      </view>
+      <view class='v-item' wx:for="{{item.content}}" wx:for-item="line" wx:key="*this">- {{line}}</view>
+    </block>
+  </view>
+</view>
+
+<view style="height: 40rpx;"></view>

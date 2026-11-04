@@ -16,15 +16,4 @@
     <!-- <button class="primary" bindtap='copyOpenSourceLink'>点击复制到剪切板</button> -->
   </view>
 </view>
-<view class='block'>
-  <view class='title'>更新日志</view>
-  <view class='desc'>
-    <block wx:for="{{update_log}}" wx:key="*this">
-      <view class='sub-title hl'>{{item.version}}</view>
-      <view class='sub-detail' wx:for="{{item.content}}" wx:key="*this">- {{item}}</view>
-      <view class='sub-detail'>- {{item.time}}</view>
-    </block>
-    </view>
-</view>
-
 <view style="height: 20rpx;"></view>

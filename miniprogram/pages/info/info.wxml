@@ -78,9 +78,9 @@
 <!-- ⑥ 关于：竖列表行组（左标题 / 右值 + ›） -->
 <view class='block-name'>{{text_cfg.info.about}}</view>
 <view class="about-list">
-  <view class="about-row">
+  <view class="about-row" bindtap='clickbtn' data-to='/pages/info/versionLog/versionLog' hover-class="row-hover" hover-stay-time="80">
     <view class="about-k">{{text_cfg.info.row_version}}</view>
-    <view class="about-v">{{version || '-'}}</view>
+    <view class="about-v">{{version || '-'}}<text class="about-arrow">›</text></view>
   </view>
   <view class="about-row" bindtap='clickbtn' data-to='/pages/info/reward/reward' hover-class="row-hover" hover-stay-time="80">
     <view class="about-k">{{text_cfg.info.row_reward}}</view>
