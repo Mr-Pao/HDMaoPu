@@ -202,5 +202,3 @@
     <view class='dbg-tip'>覆盖只在本机生效，重进小程序仍保留。审核开关在 COS 的 data/app-config.json：reviewVersions 非空 = 审核中，空 = 正常期。</view>
   </view>
 </view>
-  </view>
-</view>
