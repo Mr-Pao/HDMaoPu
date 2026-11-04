@@ -1448,6 +1448,10 @@ page {
   color: #10160F;
 }
 
+.dbg-input + .dbg-input {
+  margin-top: 20rpx;
+}
+
 .dbg-ph {
   color: #B4BCB7;
 }

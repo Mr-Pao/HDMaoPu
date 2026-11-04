@@ -78,9 +78,10 @@ Page({
     refreshing: false,
     // 审核态：只留首页（藏数据卡/识猫/看板入口，tabBar 由组件自己隐）
     reviewMode: false,
-    // 版本切换面板（连击标题 5 次打开）
+    // 版本切换面板（连击标题 5 次打开）：版本号 + 管理口令
     debug_show: false,
-    debug_input: ''
+    debug_input: '',
+    debug_pass: ''
   },
 
   jsData: {
@@ -667,34 +668,13 @@ Page({
     }
   },
 
-  // 只有「进管理后台」这一步要口令
-  async askAdminPasscode() {
-    const code = await this.loadGateCode();
-    if (!code) {
-      wx.showToast({ title: '管理入口未启用', icon: 'none' });
-      return;
-    }
-    passcode.promptToken({
-      title: '管理口令',
-      placeholder: '输入管理口令',
-      confirmText: '进入',
-      validate: input => (input === code ? '' : '口令不对'),
-      onSaved: input => {
-        passcode.setUnlocked(true);
-        passcode.setToken(input);
-        this.setData({ debug_show: false });
-        wx.showToast({ title: '已解锁', icon: 'none' });
-        wx.switchTab({ url: '/pages/info/info' });
-      },
-    });
-  },
-
-  // 版本切换面板（照搬 SpaceLaunch：只有输入框 + 模拟 / 清除）
+  // 面板：版本号 + 管理口令（照搬 SpaceLaunch：版本号在外，口令用于进管理后台）
   openDebugPanel() {
     const ov = readOverride();
     this.setData({
       debug_show: true,
       debug_input: ov && ov.version ? ov.version : '',
+      debug_pass: '',
     });
   },
 
@@ -706,14 +686,31 @@ Page({
     this.setData({ debug_input: e.detail.value });
   },
 
-  // 模拟版本号：填什么就当自己跑在哪个正式版上（本机生效，重进仍在）
-  applySimVersion() {
-    const v = String(this.data.debug_input || '').trim();
-    if (!v) {
-      wx.showToast({ title: '请填版本号，如 4.0.72', icon: 'none' });
+  onDebugPass(e) {
+    this.setData({ debug_pass: e.detail.value });
+  },
+
+  // 确定：先校验管理口令，通过后写入口令、可选地写入模拟版本号，再重载
+  async confirmDebug() {
+    const code = await this.loadGateCode();
+    if (!code) {
+      wx.showToast({ title: '管理入口未启用', icon: 'none' });
       return;
     }
-    setOverride(v);
+    const pass = String(this.data.debug_pass || '').trim();
+    if (!pass) {
+      wx.showToast({ title: '请输入管理口令', icon: 'none' });
+      return;
+    }
+    if (pass !== code) {
+      wx.showToast({ title: '口令不对', icon: 'none' });
+      return;
+    }
+    passcode.setUnlocked(true);
+    passcode.setToken(pass);
+    const v = String(this.data.debug_input || '').trim();
+    setOverride(v || null);
+    wx.showToast({ title: '已解锁', icon: 'none' });
     this.reloadForDebug();
   },
 
@@ -740,11 +737,6 @@ Page({
         wx.hideLoading();
         this.closeDebugPanel();
       });
-  },
-
-  // 进管理后台：这一步才要口令
-  goManage() {
-    this.askAdminPasscode();
   },
 
   fCheckLegal: function (filters) {
