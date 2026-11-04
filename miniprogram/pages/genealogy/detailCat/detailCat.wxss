@@ -1236,3 +1236,18 @@ swiper-item image {
 .info .identity image.gender {
   padding-bottom: 0;
 }
+
+/* 标签行强制靠左（用 .info 前缀提高优先级，避免被 .tags 或 weui 的同名规则覆盖） */
+.info .tags {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  flex-wrap: wrap;
+  width: 100% !important;
+  text-align: left !important;
+}
+.info .tags .tag {
+  margin-right: 14rpx;
+  margin-left: 0;
+}
