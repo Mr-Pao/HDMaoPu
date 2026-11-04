@@ -19,7 +19,7 @@ import { loadFilter, getGlobalSettings, showTab } from "../../utils/page";
 import { checkCanShowNews } from "../../utils/user";
 import { signCosUrl } from "../../utils/common";
 import passcode from "../../utils/passcode";
-import { isReview, getDebugInfo, setOverride } from "../../utils/review";
+import { isReview, isReviewSync, getConfig, getDebugInfo } from "../../utils/review";
 
 // 连击「火大猫谱」标题 5 次 → 管理口令 → 版本切换面板
 const TAP_TO_UNLOCK = 5;
@@ -78,12 +78,13 @@ Page({
     refreshing: false,
     // 审核态：只留首页（藏数据卡/识猫/看板入口，tabBar 由组件自己隐）
     reviewMode: false,
-    // 暗门面板
+    // 暗门面板（只读：现场版本 vs COS 白名单）
     debug_show: false,
     debug_env: '',
     debug_version: '',
-    debug_override: '',
-    debug_input: ''
+    debug_online: '',
+    debug_normal: '',
+    debug_review: false
   },
 
   jsData: {
@@ -695,20 +696,30 @@ Page({
     });
   },
 
-  // 面板里的现场信息：环境 / 当前版本 / 本机覆盖
-  openDebugPanel() {
+  // 面板：只读展示「包内版本号 vs COS 白名单」，不做任何模拟
+  async openDebugPanel() {
     const info = getDebugInfo();
-    const override = info.override || {};
     this.setData({
       debug_show: true,
       debug_env: info.envVersion,
       debug_version: info.version,
-      debug_override: override.review === true
-        ? '强制审核态'
-        : override.review === false
-          ? '强制正常态'
-          : (override.version || ''),
-      debug_input: override.version || '',
+      debug_online: info.onlineVersion || '（开发版/体验版为空）',
+      debug_normal: '读取中…',
+      debug_review: false,
+    });
+    const raw = await getConfig(true);
+    const list = (raw && Array.isArray(raw.normalVersions))
+      ? raw.normalVersions.map(v => String(v).trim()).filter(Boolean)
+      : [];
+    let review = false;
+    try {
+      review = await isReview({ force: true });
+    } catch (e) {
+      review = isReviewSync();
+    }
+    this.setData({
+      debug_normal: list.length ? list.join(' / ') : '（未配置，门禁未启用）',
+      debug_review: review,
     });
   },
 
@@ -716,45 +727,23 @@ Page({
     this.setData({ debug_show: false });
   },
 
-  onDebugInput(e) {
-    this.setData({ debug_input: e.detail.value });
-  },
-
-  // 模拟某个版本号（用于在本机验证「这个版本算不算审核中」）
-  applySimVersion() {
-    const v = String(this.data.debug_input || '').trim();
-    if (!v) {
-      wx.showToast({ title: '请填版本号，如 v4.0.72', icon: 'none' });
-      return;
-    }
-    setOverride(v);
-    this.reloadForDebug();
-  },
-
-  // 强制两种状态，跳过程序判定
-  forceReview() {
-    setOverride(true);
-    this.reloadForDebug();
-  },
-
-  forceNormal() {
-    setOverride(false);
-    this.reloadForDebug();
-  },
-
-  // 清除本机覆盖，回到远端开关的真实判定
-  clearOverride() {
-    setOverride(null);
-    this.reloadForDebug();
-  },
-
+  // 重新拉一次远端配置并重载页面（改完 COS 后立刻看到效果，不用等 5 分钟 TTL）
   reloadForDebug() {
-    wx.reLaunch({
-      url: '/pages/genealogy/genealogy',
-      fail() {
-        wx.showToast({ title: '切换失败，请重试', icon: 'none' });
-      },
-    });
+    wx.showLoading({ title: '重新拉取配置', mask: true });
+    getConfig(true)
+      .then(() => {
+        wx.hideLoading();
+        wx.reLaunch({
+          url: '/pages/genealogy/genealogy',
+          fail() {
+            wx.showToast({ title: '刷新失败，请重试', icon: 'none' });
+          },
+        });
+      })
+      .catch(() => {
+        wx.hideLoading();
+        this.closeDebugPanel();
+      });
   },
 
   // 已解锁时直接进管理后台（管理菜单还在「关于」页）

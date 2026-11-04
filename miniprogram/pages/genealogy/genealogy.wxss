@@ -1467,6 +1467,25 @@ page {
   color: #14801F;
 }
 
+.dbg-state {
+  margin-top: 24rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 18rpx;
+  font-size: 27rpx;
+  font-weight: 600;
+  text-align: center;
+}
+
+.dbg-state--normal {
+  color: #0C5F03;
+  background-color: #E8F3EA;
+}
+
+.dbg-state--review {
+  color: #B45309;
+  background-color: #FDF3E3;
+}
+
 .dbg-input {
   margin-top: 24rpx;
   height: 84rpx;

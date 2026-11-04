@@ -316,18 +316,21 @@ async function main() {
     check('user 为空或存在真实账号', all.length === 0 || all.every((u) => !String(u._id).startsWith('demo-user-')));
   }
 
-  console.log('\n【审核态开关 / app-config】');
+  console.log('\n【审核态门禁 / app-config】');
   {
     const cfg = (await db.collection('app-config').findOne({ _id: 'app-config' })).result;
     check('app-config 存在且可查询', !!cfg);
-    check('reviewVersions 是数组', !!cfg && Array.isArray(cfg.reviewVersions), cfg && JSON.stringify(cfg.reviewVersions));
-    check('reviewVersions 元素都是非空字符串',
-      !!cfg && cfg.reviewVersions.every((v) => typeof v === 'string' && v.trim()),
-      cfg && JSON.stringify(cfg.reviewVersions));
-    // 空数组 = 正常期。这条是提醒：提交前别忘了确认当前处于哪个状态
-    check('当前处于正常期（reviewVersions 为空）',
-      !!cfg && cfg.reviewVersions.length === 0,
-      cfg && `当前 ${cfg.reviewVersions.length} 个白名单版本${cfg.reviewVersions.length ? '→审核态！' : ''}`);
+    check('normalVersions 是数组', !!cfg && Array.isArray(cfg.normalVersions), cfg && JSON.stringify(cfg.normalVersions));
+    check('normalVersions 元素都是非空字符串',
+      !!cfg && Array.isArray(cfg.normalVersions) &&
+      cfg.normalVersions.every((v) => typeof v === 'string' && v.trim()),
+      cfg && JSON.stringify(cfg.normalVersions));
+    // 门禁语义：只有列表里的版本号显示正常态，其它一律审核态。
+    // 校验版本号格式，避免误写成空串/脏值导致门禁形同虚设
+    check('normalVersions 形如 vX.Y.Z',
+      !!cfg && Array.isArray(cfg.normalVersions) && cfg.normalVersions.length > 0 &&
+      cfg.normalVersions.every((v) => /^v?\d+\.\d+\.\d+$/.test(String(v).trim())),
+      cfg && JSON.stringify(cfg.normalVersions));
   }
 
   // ---------------------------------------------------------------- 汇总
