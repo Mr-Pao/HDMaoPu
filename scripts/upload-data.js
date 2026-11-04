@@ -33,9 +33,13 @@ const CACHE_CONTROL = 'max-age=300';
 // 这里仍然显式传 public-read 是**冗余保险**：万一哪天桶被改回私有，data/ 不会跟着全站 403。
 const OBJECT_ACL = 'public-read';
 
-// 禁止公网上传的文件：上传对象全部是 public-read，这两份文件
-// 含用户 openid（inbox_log）和未审核内容（review_queue），不能公开。
-const UPLOAD_DENYLIST = new Set(['inbox_log.json', 'review_queue.json']);
+// 禁止公网上传的文件：
+// - inbox_log.json / review_queue.json 含用户 openid 和未审核内容，不能公开；
+// - app-config.json 是「审核期总开关」，必须在 COS 控制台直接改、并且
+//   永远不被 CI 覆盖。若它也走本脚本上传，任何一次 data/ 改动（聚合 job
+//   每 5 分钟就可能写 data/*.json）都会把线上手改的开关刷回仓库里的旧值。
+//   所以这份文件只在 COS 上维护，仓库里的 data/app-config.json 仅作留档。
+const UPLOAD_DENYLIST = new Set(['inbox_log.json', 'review_queue.json', 'app-config.json']);
 
 function assertEnv() {
   const missing = [];

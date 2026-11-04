@@ -9,9 +9,12 @@
 //   真正起作用的是「白名单非空 + 拿不到版本号 → 审核态」这条兜底。
 //   reviewVersions 实际语义 = 审核期总开关：非空 = 审核中，空 = 正常期。
 //
-// 提审流程（全程只改这一处）：
+// 提审流程（全程只改 COS 上这一个文件，不用改仓库、不用发版）：
+//   COS 控制台 → 桶 maopu-1258113633 → data/app-config.json → 编辑
 //   提审前 → { "reviewVersions": ["4.0.73"] }（版本号随意，关键是不能为空）
 //   过审发布后 → { "reviewVersions": [] }
+//   ⚠️ 这份文件不参与 data/ 自动上传（scripts/upload-data.js 的 UPLOAD_DENYLIST
+//   已排除），所以 CI 永远不会把它刷回仓库里的旧值。
 //
 // 环境分派：
 //   - devtools（开发者工具）→ 永远完整态，本机开发不受开关影响
@@ -23,7 +26,8 @@
 // 设计约束（照搬 SpaceLaunch）：
 // - 请求失败一律按完整态兜底，绝不影响正常使用
 // - 审核环境是全新安装（无本地缓存），首次打开必然拉一次远程，所以开关一定生效
-// - COS 直连域名无 CDN 缓存层，控制台改完即生效
+// - COS 直连域名无 CDN 缓存层，控制台改完即生效（对象 Cache-Control 是 max-age=300，
+//   小程序侧还有 5 分钟内存/本地缓存，所以最迟 5 分钟内生效）
 //
 // 注意：本文件用 require 而不是 import —— tests/review.test.js 直接 require 它做单测。
 
@@ -113,25 +117,44 @@ function applyVersionRule(raw, simulated) {
 }
 
 // 拉一次远端配置。失败返回 null。
-// db 可以不传：不传时从 getApp().mpServerless.db 取；
-// app.js 的 onLaunch 里 getApp() 可能还是 undefined，那里会把 db 显式传进来。
-function request(db) {
+//
+// 与 SpaceLaunch 一致：直接 GET COS 上那一个 json，不经数据集合层。
+// 这样 COS 上放裸对象 { "reviewVersions": [...] } 也行，
+// 放 { version, items: [{ reviewVersions }] } 信封也行，两种都认。
+// 开关文件**不参与 data/ 的自动上传**（scripts/upload-data.js 的 DENYLIST），
+// 所以 CI 永远不会把它刷回仓库里的旧值 —— 直接在 COS 控制台改就生效。
+function request() {
   return new Promise(resolve => {
     try {
-      let handle = db;
-      if (!handle) {
-        const app = getApp();
-        handle = app && app.mpServerless && app.mpServerless.db;
-      }
-      if (!handle) return resolve(null);
-      handle
-        .collection("app-config")
-        .findOne({ _id: "app-config" })
-        .then(res => {
-          const item = res && res.result;
-          resolve(item && typeof item === "object" ? item : null);
-        })
-        .catch(() => resolve(null));
+      const base = String(config.data_base_url || "").replace(/\/+$/, "");
+      if (!base) return resolve(null);
+      wx.request({
+        url: base + "/data/app-config.json",
+        method: "GET",
+        timeout: 8000,
+        success(res) {
+          if (!res || res.statusCode !== 200 || !res.data) return resolve(null);
+          let body = res.data;
+          if (typeof body === "string") {
+            try {
+              body = JSON.parse(body);
+            } catch (e) {
+              return resolve(null);
+            }
+          }
+          if (!body || typeof body !== "object") return resolve(null);
+          // 信封格式：取 items 里 _id='app-config' 那条
+          if (Array.isArray(body.items)) {
+            const item = body.items.filter(it => it && it._id === "app-config")[0];
+            return resolve(item && typeof item === "object" ? item : null);
+          }
+          // 裸对象格式（SpaceLaunch 的写法）：本身就是配置
+          resolve(body);
+        },
+        fail() {
+          resolve(null);
+        },
+      });
     } catch (e) {
       resolve(null);
     }
@@ -207,10 +230,10 @@ function setOverride(val) {
  * 拉一次开关，网络抖动时重试一次 ——
  * 审核场景拉不到开关会退回完整内容，宁可多等一秒。
  */
-async function fetchOnce(db) {
-  const first = await request(db);
+async function fetchOnce() {
+  const first = await request();
   if (first) return first;
-  return request(db);
+  return request();
 }
 
 /**
@@ -218,7 +241,7 @@ async function fetchOnce(db) {
  * 同一份缓存要能被「真实版本号」和「模拟版本号」两种口径分别解释，
  * 所以缓存只存原文，绝不在写入时就把 review 算死。
  */
-async function loadRaw(db) {
+async function loadRaw() {
   if (mem && Date.now() - mem.ts < TTL) return mem.data;
   if (inflight) return inflight;
 
@@ -228,7 +251,7 @@ async function loadRaw(db) {
       mem = { data: local, ts: Date.now() };
       return local;
     }
-    const remote = await fetchOnce(db);
+    const remote = await fetchOnce();
     const data = remote || {};
     mem = { data, ts: Date.now() };
     // 远程拉取成功才落缓存；失败结果不缓存，下次进页面再试
@@ -244,8 +267,8 @@ async function loadRaw(db) {
 }
 
 // 绕过一切缓存拉一次远程，并刷新本地缓存 —— 给暗门面板看「远程现在到底是什么」
-async function refreshRemote(db) {
-  const remote = await fetchOnce(db);
+async function refreshRemote() {
+  const remote = await fetchOnce();
   if (remote) {
     mem = { data: remote, ts: Date.now() };
     writeLocal(remote);
@@ -279,12 +302,12 @@ function isReviewSync() {
 }
 
 // 解析开关（优先级：本机覆盖 > 非正式版完整态 > 内存/本地缓存 > 远程）
-function resolveConfig(db) {
+function resolveConfig() {
   const ov = readOverride();
 
   // 本机覆盖：模拟某个版本号 → 走正式版口径
   if (ov && ov.version) {
-    return loadRaw(db).then(raw => applyVersionRule(raw, ov.version));
+    return loadRaw().then(raw => applyVersionRule(raw, ov.version));
   }
   // 本机覆盖：强制审核态 / 强制完整态
   if (ov && typeof ov.review === "boolean") {
@@ -293,17 +316,16 @@ function resolveConfig(db) {
   // 开发者工具：永远完整态
   if (envName() === "devtools") return Promise.resolve({ review: false });
 
-  return loadRaw(db).then(raw => applyVersionRule(raw));
+  return loadRaw().then(raw => applyVersionRule(raw));
 }
 
 // 取展示开关，永远 resolve 一个对象（任何失败都兜底 review:false）
 async function getConfig(opts) {
   const force = !!(opts && opts.force);
-  const db = (opts && opts.db) || null;
   if (force) {
-    await refreshRemote(db);
+    await refreshRemote();
   }
-  const c = await resolveConfig(db);
+  const c = await resolveConfig();
   writeResolved(c && c.review);
   return c;
 }

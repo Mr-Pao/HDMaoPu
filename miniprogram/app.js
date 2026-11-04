@@ -108,14 +108,13 @@ App({
     checkUpdateVersion();
   },
 
-  // 拉远端 app-config 算出审核态并落盘（失败按完整态兜底，永不 throw）
+  // 拉远端 data/app-config.json 算出审核态并落盘（失败按完整态兜底，永不 throw）
   refreshReviewMode() {
     const done = review => {
       this.globalData.reviewMode = !!review;
     };
     try {
-      const db = this.mpServerless && this.mpServerless.db;
-      const p = isReview({ db: db });
+      const p = isReview();
       if (p && typeof p.then === 'function') {
         p.then(done).catch(() => done(false));
       } else {

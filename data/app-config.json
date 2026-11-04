@@ -4,7 +4,7 @@
     {
       "_id": "app-config",
       "reviewVersions": [],
-      "note": "审核期总开关（与 SpaceLaunch 同一套逻辑）：reviewVersions 非空 = 审核中（只留首页、去掉 tabBar、隐藏详情页全部上传入口）；空数组 = 正常期。提审前写入任意版本号（如 [\"4.0.73\"]），过审发布后清回 []。改完 push cos，sync-data.yml 自动传到 COS data/app-config.json。"
+      "note": "审核期总开关（与 SpaceLaunch 同一套逻辑）：reviewVersions 非空 = 审核中，空 = 正常期。⚠️ 这份本地文件只是留档，不参与 data/ 自动上传（scripts/upload-data.js 的 UPLOAD_DENYLIST 已排除 app-config.json）。真正生效的是 COS 上的 data/app-config.json，直接在 COS 控制台改它即可：提审前填 [\"4.0.73\"]，过审发布后清回 []。COS 上放裸对象 {\"reviewVersions\":[...]} 或本信封格式都能被小程序识别。"
     }
   ]
 }
