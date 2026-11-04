@@ -316,21 +316,21 @@ async function main() {
     check('user 为空或存在真实账号', all.length === 0 || all.every((u) => !String(u._id).startsWith('demo-user-')));
   }
 
-  console.log('\n【审核态门禁 / app-config】');
+  console.log('\n【审核期开关 / app-config】');
   {
     const cfg = (await db.collection('app-config').findOne({ _id: 'app-config' })).result;
     check('app-config 存在且可查询', !!cfg);
-    check('normalVersions 是数组', !!cfg && Array.isArray(cfg.normalVersions), cfg && JSON.stringify(cfg.normalVersions));
-    check('normalVersions 元素都是非空字符串',
-      !!cfg && Array.isArray(cfg.normalVersions) &&
-      cfg.normalVersions.every((v) => typeof v === 'string' && v.trim()),
-      cfg && JSON.stringify(cfg.normalVersions));
-    // 门禁语义：只有列表里的版本号显示正常态，其它一律审核态。
-    // 校验版本号格式，避免误写成空串/脏值导致门禁形同虚设
-    check('normalVersions 形如 vX.Y.Z',
-      !!cfg && Array.isArray(cfg.normalVersions) && cfg.normalVersions.length > 0 &&
-      cfg.normalVersions.every((v) => /^v?\d+\.\d+\.\d+$/.test(String(v).trim())),
-      cfg && JSON.stringify(cfg.normalVersions));
+    check('reviewVersions 是数组', !!cfg && Array.isArray(cfg.reviewVersions), cfg && JSON.stringify(cfg.reviewVersions));
+    check('reviewVersions 元素都是非空字符串',
+      !!cfg && Array.isArray(cfg.reviewVersions) &&
+      cfg.reviewVersions.every((v) => typeof v === 'string' && v.trim()),
+      cfg && JSON.stringify(cfg.reviewVersions));
+    // 与 SpaceLaunch 同一套语义：非空 = 审核中，空数组 = 正常期。
+    // 这里只校验格式，不断言当前是空还是非空（提审期本来就该非空）。
+    check('reviewVersions 元素形如 X.Y.Z（或 vX.Y.Z）',
+      !!cfg && Array.isArray(cfg.reviewVersions) &&
+      cfg.reviewVersions.every((v) => /^v?\d+\.\d+\.\d+$/.test(String(v).trim())),
+      cfg && JSON.stringify(cfg.reviewVersions));
   }
 
   // ---------------------------------------------------------------- 汇总

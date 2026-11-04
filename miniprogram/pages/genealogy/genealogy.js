@@ -19,7 +19,7 @@ import { loadFilter, getGlobalSettings, showTab } from "../../utils/page";
 import { checkCanShowNews } from "../../utils/user";
 import { signCosUrl } from "../../utils/common";
 import passcode from "../../utils/passcode";
-import { isReview, isReviewSync, getConfig, getDebugInfo } from "../../utils/review";
+import { isReview, isReviewSync, getConfig, getDebugInfo, setOverride } from "../../utils/review";
 
 // 连击「火大猫谱」标题 5 次 → 管理口令 → 版本切换面板
 const TAP_TO_UNLOCK = 5;
@@ -78,11 +78,12 @@ Page({
     refreshing: false,
     // 审核态：只留首页（藏数据卡/识猫/看板入口，tabBar 由组件自己隐）
     reviewMode: false,
-    // 暗门面板（只读：现场版本 vs COS 白名单）
+    // 暗门面板（版本切换：现场信息 + 模拟版本号 / 强制布尔 / 清除）
     debug_show: false,
     debug_env: '',
     debug_version: '',
-    debug_online: '',
+    debug_override: '',
+    debug_input: '',
     debug_normal: '',
     debug_review: false
   },
@@ -645,8 +646,9 @@ Page({
     });
   },
 
-  // ===== 暗门：连击标题 5 次 → 管理口令 → 版本切换面板 =====
-  // 普通用户永远看不到；审核态下也是灰的（tabBar 都没了，但标题还在）。
+  // ===== 暗门：连击标题 5 次 → 版本面板（不需要口令） =====
+  // 版本号是给开发/自测用的，和「管理后台」不是一回事：
+  // 连击即开，不弹口令；要从面板进管理后台才需要口令。
   onTitleTap: function () {
     const now = Date.now();
     if (now - this.jsData.tapAt > TAP_WINDOW) {
@@ -658,12 +660,7 @@ Page({
       return;
     }
     this.jsData.tapCount = 0;
-    // 已经解锁过（本次生命周期内输过口令）就直接开面板
-    if (passcode.isUnlocked() && passcode.hasToken()) {
-      this.openDebugPanel();
-      return;
-    }
-    this.askAdminPasscode();
+    this.openDebugPanel();
   },
 
   // 读 data/gate.json 的 code（故意不缓存，改完下次连击即生效）
@@ -676,6 +673,7 @@ Page({
     }
   },
 
+  // 只有「进管理后台」这一步要口令
   async askAdminPasscode() {
     const code = await this.loadGateCode();
     if (!code) {
@@ -690,26 +688,35 @@ Page({
       onSaved: input => {
         passcode.setUnlocked(true);
         passcode.setToken(input);
+        this.setData({ debug_show: false });
         wx.showToast({ title: '已解锁', icon: 'none' });
-        this.openDebugPanel();
+        wx.switchTab({ url: '/pages/info/info' });
       },
     });
   },
 
-  // 面板：只读展示「包内版本号 vs COS 白名单」，不做任何模拟
+  // 面板：版本切换（与 SpaceLaunch 的 rockets 暗门一致）
   async openDebugPanel() {
     const info = getDebugInfo();
+    const ov = info.override;
+    let overrideText = '';
+    if (ov) {
+      overrideText = typeof ov.review === 'boolean'
+        ? (ov.review ? '强制审核态' : '强制完整态')
+        : ov.version;
+    }
     this.setData({
       debug_show: true,
       debug_env: info.envVersion,
-      debug_version: info.version,
-      debug_online: info.onlineVersion || '（开发版/体验版为空）',
+      debug_version: info.version || '（开发版/体验版为空）',
       debug_normal: '读取中…',
-      debug_review: false,
+      debug_review: isReviewSync(),
+      debug_override: overrideText,
+      debug_input: ov && ov.version ? ov.version : '',
     });
-    const raw = await getConfig(true);
-    const list = (raw && Array.isArray(raw.normalVersions))
-      ? raw.normalVersions.map(v => String(v).trim()).filter(Boolean)
+    const raw = await getConfig({ force: true });
+    const list = (raw && Array.isArray(raw.reviewVersions))
+      ? raw.reviewVersions.map(v => String(v).trim()).filter(Boolean)
       : [];
     let review = false;
     try {
@@ -718,7 +725,7 @@ Page({
       review = isReviewSync();
     }
     this.setData({
-      debug_normal: list.length ? list.join(' / ') : '（未配置，门禁未启用）',
+      debug_normal: list.length ? list.join(' / ') : '（空 = 正常期）',
       debug_review: review,
     });
   },
@@ -727,10 +734,40 @@ Page({
     this.setData({ debug_show: false });
   },
 
+  onDebugInput(e) {
+    this.setData({ debug_input: e.detail.value });
+  },
+
+  // 模拟版本号：填什么就当自己跑在哪个正式版上（本机生效，重进仍在）
+  applySimVersion() {
+    const v = String(this.data.debug_input || '').trim();
+    if (!v) {
+      wx.showToast({ title: '请填版本号，如 4.0.72', icon: 'none' });
+      return;
+    }
+    setOverride(v);
+    this.reloadForDebug();
+  },
+
+  forceReview() {
+    setOverride(true);
+    this.reloadForDebug();
+  },
+
+  forceNormal() {
+    setOverride(false);
+    this.reloadForDebug();
+  },
+
+  clearOverride() {
+    setOverride(null);
+    this.reloadForDebug();
+  },
+
   // 重新拉一次远端配置并重载页面（改完 COS 后立刻看到效果，不用等 5 分钟 TTL）
   reloadForDebug() {
     wx.showLoading({ title: '重新拉取配置', mask: true });
-    getConfig(true)
+    getConfig({ force: true })
       .then(() => {
         wx.hideLoading();
         wx.reLaunch({
@@ -746,12 +783,11 @@ Page({
       });
   },
 
-  // 已解锁时直接进管理后台（管理菜单还在「关于」页）
+  // 进管理后台：这一步才要口令
   goManage() {
-    this.closeDebugPanel();
-    wx.switchTab({ url: '/pages/info/info' });
+    this.askAdminPasscode();
   },
-  
+
   fCheckLegal: function (filters) {
     for (const row of filters) {
       if (row.all_active) continue;

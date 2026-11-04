@@ -82,13 +82,3 @@
 }
 .tab-bar-item.active .tab-bar-img { position: relative; z-index: 1; }
 .tab-bar-item.active .tab-bar-title { position: relative; z-index: 1; color: #14801F; font-weight: 700; }
-
-/* =========================================================
-   审核态：整条 tabBar 完全撤掉（不留占位、不吃点击）
-   .hidden 是 opacity:0 但还占着 fixed 层，审核态要更彻底，
-   否则底部仍能点到「透明按钮」跳去别的 tab。
-   ========================================================= */
-
-.tab-bar.review-hidden {
-  display: none;
-}

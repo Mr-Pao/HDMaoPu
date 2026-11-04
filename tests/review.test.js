@@ -1,152 +1,153 @@
-// 单元测试：miniprogram/utils/review.js 的审核态判定（版本号门禁）
-// 语义：包内版本号（config.app_version）在 COS 的 normalVersions 白名单里 → 正常态；
-//       不在、或白名单为空以外的任何异常 → 审核态。devtools 永远放行。
-// 只测纯函数，不碰网络。
+// 审核期开关（reviewVersions）判定单测 —— 逻辑与 SpaceLaunch 的 utils/config.js 同源
+// 语义：reviewVersions 非空 = 审核中；空 = 正常期。
+const test = require("node:test");
+const assert = require("node:assert");
 
-const assert = require('node:assert');
-const test = require('node:test');
+const store = {};
 
-let envVersion = 'develop';
-let accountInfoThrows = false;
-
-// review.js 顶层 require 了 config（会 require appSecret.js），且判定时读 wx
 global.wx = {
   getAccountInfoSync() {
-    if (accountInfoThrows) throw new Error('not supported');
-    return { miniProgram: { envVersion } };
+    return { miniProgram: { envVersion: global.__env || "release", version: global.__ver || "" } };
   },
-  getStorageSync() {
-    return '';
+  getStorageSync(k) {
+    return store[k];
   },
-  setStorageSync() {},
-  removeStorageSync() {},
+  setStorageSync(k, v) {
+    store[k] = v;
+  },
+  removeStorageSync(k) {
+    delete store[k];
+  },
 };
 
-const review = require('../miniprogram/utils/review.js');
-const config = require('../miniprogram/config.js');
+const review = require("../miniprogram/utils/review.js");
 
-const APP_VERSION = config.app_version;
-
-function setEnv(v) {
-  envVersion = v;
-  accountInfoThrows = false;
+function setEnv(env, ver) {
+  global.__env = env;
+  global.__ver = ver === undefined ? "" : ver;
 }
 
-// ---- 核心：版本号对得上才正常 ----
-
-test('release：包内版本号在白名单里 = 正常态', () => {
-  setEnv('release');
-  assert.strictEqual(review.applyVersionRule({ normalVersions: [APP_VERSION] }), false);
+test("reviewVersions 为空：任何环境都是正常态", () => {
+  const raw = { reviewVersions: [] };
+  setEnv("release", "4.0.72");
+  assert.strictEqual(review.applyVersionRule(raw).review, false);
+  setEnv("develop", "");
+  assert.strictEqual(review.applyVersionRule(raw).review, false);
+  setEnv("trial", "");
+  assert.strictEqual(review.applyVersionRule(raw).review, false);
 });
 
-test('release：包内版本号不在白名单 = 审核态', () => {
-  setEnv('release');
-  assert.strictEqual(review.applyVersionRule({ normalVersions: ['v9.9.9'] }), true);
+test("reviewVersions 非空 + release 命中：审核态（列表里的版本就是要藏起来的那版）", () => {
+  setEnv("release", "4.0.72");
+  assert.strictEqual(review.applyVersionRule({ reviewVersions: ["4.0.72"] }).review, true);
 });
 
-test('release：白名单有多个时命中任一即正常', () => {
-  setEnv('release');
-  assert.strictEqual(
-    review.applyVersionRule({ normalVersions: ['v9.9.9', APP_VERSION, 'v0.0.1'] }),
-    false
-  );
+test("reviewVersions 非空 + release 不命中：正常态", () => {
+  setEnv("release", "4.0.71");
+  assert.strictEqual(review.applyVersionRule({ reviewVersions: ["4.0.72"] }).review, false);
 });
 
-test('develop（审核员）：新包版本号对不上 = 审核态', () => {
-  setEnv('develop');
-  assert.strictEqual(review.applyVersionRule({ normalVersions: ['v0.0.9'] }), true);
+test("多版本白名单，命中任意一个即审核态", () => {
+  setEnv("release", "4.0.71");
+  assert.strictEqual(review.applyVersionRule({ reviewVersions: ["4.0.72", "4.0.71"] }).review, true);
 });
 
-test('develop：版本号恰好对上 = 正常态（审核员也可能拿旧包）', () => {
-  setEnv('develop');
-  assert.strictEqual(review.applyVersionRule({ normalVersions: [APP_VERSION] }), false);
+test("reviewVersions 非空 + develop（审核员）拿不到版本号：审核态", () => {
+  setEnv("develop", "");
+  assert.strictEqual(review.applyVersionRule({ reviewVersions: ["4.0.72"] }).review, true);
 });
 
-test('trial（体验版）：同样按版本号判定', () => {
-  setEnv('trial');
-  assert.strictEqual(review.applyVersionRule({ normalVersions: ['v0.0.9'] }), true);
-  assert.strictEqual(review.applyVersionRule({ normalVersions: [APP_VERSION] }), false);
+test("reviewVersions 非空 + trial（体验版）拿不到版本号：审核态", () => {
+  setEnv("trial", "");
+  assert.strictEqual(review.applyVersionRule({ reviewVersions: ["4.0.72"] }).review, true);
 });
 
-test('devtools：永远正常态（本机开发不受影响）', () => {
-  setEnv('devtools');
-  assert.strictEqual(review.applyVersionRule({ normalVersions: ['v9.9.9'] }), false);
+test("develop 环境拿到版本号且命中：审核态", () => {
+  setEnv("develop", "4.0.72");
+  assert.strictEqual(review.applyVersionRule({ reviewVersions: ["4.0.72"] }).review, true);
 });
 
-// ---- 门禁未启用 / 异常兜底 ----
-
-test('白名单为空 = 门禁未启用 = 正常态', () => {
-  setEnv('release');
-  assert.strictEqual(review.applyVersionRule({ normalVersions: [] }), false);
+test("devtools 永远正常态，无论白名单是否非空", () => {
+  setEnv("devtools", "");
+  assert.strictEqual(review.applyVersionRule({ reviewVersions: ["4.0.72"] }).review, false);
+  assert.strictEqual(review.applyVersionRule({ reviewVersions: ["9.9.9"] }).review, false);
 });
 
-test('白名单全是空白项 → 过滤后为空 → 正常态', () => {
-  setEnv('release');
-  assert.strictEqual(review.applyVersionRule({ normalVersions: ['  ', ''] }), false);
+test("devtools 下给了模拟版本号则走真实规则（用于本机看审核态）", () => {
+  setEnv("devtools", "");
+  assert.strictEqual(review.applyVersionRule({ reviewVersions: ["4.0.72"] }, "4.0.72").review, true);
+  assert.strictEqual(review.applyVersionRule({ reviewVersions: ["4.0.72"] }, "3.1.0").review, false);
 });
 
-test('远端配置为空 / 非法 / 字段缺失：一律正常态', () => {
-  setEnv('release');
-  assert.strictEqual(review.applyVersionRule(null), false);
-  assert.strictEqual(review.applyVersionRule(undefined), false);
-  assert.strictEqual(review.applyVersionRule('oops'), false);
-  assert.strictEqual(review.applyVersionRule({}), false);
+test("模拟版本号在白名单为空时仍是正常态", () => {
+  setEnv("devtools", "");
+  assert.strictEqual(review.applyVersionRule({ reviewVersions: [] }, "9.9.9").review, false);
 });
 
-test('白名单里的数字项被规范化成字符串再比对', () => {
-  setEnv('release');
-  // 4 与 "4" 不等 —— 版本号是带 v 的字符串，这里只验证不会崩
-  assert.strictEqual(review.applyVersionRule({ normalVersions: [4] }), true);
+test("没有 reviewVersions 字段时回落到布尔 review", () => {
+  setEnv("release", "4.0.72");
+  assert.strictEqual(review.applyVersionRule({ review: true }).review, true);
+  assert.strictEqual(review.applyVersionRule({ review: false }).review, false);
 });
 
-// ---- 兼容老配置（SpaceLaunch 语义，仅兜底） ----
-
-test('老配置 reviewVersions 非空 = 审核态', () => {
-  setEnv('develop');
-  assert.strictEqual(review.applyVersionRule({ reviewVersions: ['v1.0.0'] }), true);
+test("raw 为空/非法时一律正常态，绝不因开关读不到而锁功能", () => {
+  setEnv("release", "4.0.72");
+  [null, undefined, "oops", 0, {}].forEach(raw => {
+    assert.strictEqual(review.applyVersionRule(raw).review, false, String(raw));
+  });
 });
 
-test('老配置 reviewVersions 为空 = 正常态', () => {
-  setEnv('develop');
-  assert.strictEqual(review.applyVersionRule({ reviewVersions: [] }), false);
+test("白名单元素是数字也能正确比较（配置写错不容崩）", () => {
+  setEnv("release", "4");
+  assert.strictEqual(review.applyVersionRule({ reviewVersions: [4] }).review, true);
+  setEnv("release", "4.0.72");
+  assert.strictEqual(review.applyVersionRule({ reviewVersions: [4] }).review, false);
 });
 
-test('更老的布尔 review 仍被识别', () => {
-  setEnv('release');
-  assert.strictEqual(review.applyVersionRule({ review: true }), true);
-  assert.strictEqual(review.applyVersionRule({ review: false }), false);
+test("release 但拿不到版本号：白名单非空即审核态", () => {
+  setEnv("release", "");
+  assert.strictEqual(review.applyVersionRule({ reviewVersions: ["4.0.72"] }).review, true);
 });
 
-test('normalVersions 优先于老字段：同时存在时按 normalVersions 判', () => {
-  setEnv('release');
-  assert.strictEqual(
-    review.applyVersionRule({ normalVersions: [APP_VERSION], reviewVersions: ['v9.9.9'] }),
-    false
-  );
+test("getAccountInfoSync 抛错时按 devtools 口径放行", () => {
+  const backup = global.wx.getAccountInfoSync;
+  global.wx.getAccountInfoSync = () => {
+    throw new Error("no api");
+  };
+  try {
+    assert.strictEqual(review.envName(), "devtools");
+    assert.strictEqual(review.applyVersionRule({ reviewVersions: ["4.0.72"] }).review, false);
+  } finally {
+    global.wx.getAccountInfoSync = backup;
+  }
 });
 
-// ---- 环境与版本号读取 ----
-
-test('getAccountInfoSync 不存在：按 devtools 放行', () => {
-  accountInfoThrows = true;
-  assert.strictEqual(review.envName(), 'devtools');
-  assert.strictEqual(review.applyVersionRule({ normalVersions: ['v1.0.0'] }), false);
+test("readOverride / setOverride 四种形态", () => {
+  setEnv("release", "4.0.72");
+  review.setOverride("3.1.0");
+  assert.deepStrictEqual(review.readOverride(), { version: "3.1.0" });
+  review.setOverride(true);
+  assert.deepStrictEqual(review.readOverride(), { review: true });
+  review.setOverride(false);
+  assert.deepStrictEqual(review.readOverride(), { review: false });
+  review.setOverride(null);
+  assert.strictEqual(review.readOverride(), null);
 });
 
-test('runtimeVersion 就等于 config.app_version（包内版本，不依赖线上 version）', () => {
-  setEnv('release');
-  assert.strictEqual(review.runtimeVersion(), APP_VERSION);
+test("runtimeVersion 读线上版本号，packagedVersion 读包内 app_version", () => {
+  setEnv("release", "4.0.72");
+  assert.strictEqual(review.runtimeVersion(), "4.0.72");
+  const config = require("../miniprogram/config.js");
+  assert.strictEqual(review.packagedVersion(), String(config.app_version).trim());
 });
 
-test('onlineVersion 在开发版/体验版为空串时返回空串，不回落包内版本', () => {
-  setEnv('develop');
-  assert.strictEqual(review.onlineVersion(), '');
-});
-
-test('getDebugInfo 只吐现场信息，不做判定', () => {
-  setEnv('release');
+test("getDebugInfo 给出环境、线上版本、包内版本、覆盖", () => {
+  setEnv("develop", "");
+  review.setOverride("3.1.0");
   const info = review.getDebugInfo();
-  assert.strictEqual(info.envVersion, 'release');
-  assert.strictEqual(info.version, APP_VERSION);
-  assert.strictEqual(typeof info.onlineVersion, 'string');
+  assert.strictEqual(info.envVersion, "develop");
+  assert.strictEqual(info.version, "");
+  assert.ok(info.packagedVersion);
+  assert.deepStrictEqual(info.override, { version: "3.1.0" });
+  review.setOverride(null);
 });

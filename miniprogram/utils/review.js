@@ -1,128 +1,121 @@
-// 审核态判定（版本号门禁）
+// 远程展示开关（审核模式）—— 与 SpaceLaunch 完全同一套逻辑
 //
-// 语义：**只有包内版本号与 COS 上登记的那个版本号对上了，才显示正常态；
-// 其它任何时候（提审中的新版本、审核员拿到的版本、白名单没配）都是审核态。**
+// COS 上 data/app-config.json 里只有一个字段：
+//   { "reviewVersions": [] }
 //
-// 开关文件：data/app-config.json（COS 上 data/app-config.json），沿用项目信封：
-//   { "version": "...", "items": [ { "_id": "app-config", "normalVersions": ["v4.0.72"] } ] }
+// 实测口径（2026-10-25，微信开放社区官方确认 + 用户真机验证）：
+//   审核员跑的是 develop 环境（开发版口径），version 字段为空——
+//   不是 release！所以白名单匹配对审核员永远不命中，
+//   真正起作用的是「白名单非空 + 拿不到版本号 → 审核态」这条兜底。
+//   reviewVersions 实际语义 = 审核期总开关：非空 = 审核中，空 = 正常期。
 //
-// normalVersions = 「允许正常显示」的版本号白名单（一般只放一个，就是**已经过审发布**的那个版本）。
-//
-// 提审/发布流程（全程只改两处）：
-//   提审前：config.js 的 app_version 升到要提审的新版本（如 v4.0.73）
-//           COS 上的 normalVersions 保持「上一个已发布版本」（如 ["v4.0.72"]）
-//           → 审核员跑的是新包 v4.0.73，与 COS 对不上 → 审核态（只留首页、无 tabBar、隐藏 UGC）
-//   过审发布后：把 COS 的 normalVersions 改成 ["v4.0.73"] → 恢复正常
-//
-// 为什么用「包内 app_version」而不是 wx.getAccountInfoSync().miniProgram.version：
-//   - 审核员跑的是 develop（开发版），miniProgram.version 为空；
-//   - 开发版/体验版也拿不到版本号。
-//   所以以编译进包的 app_version 为准，拿不到线上版本号时用它兜底 ——
-//   这样「版本号对不对得上」这件事在任何环境都可判定，且测的就是真包。
+// 提审流程（全程只改这一处）：
+//   提审前 → { "reviewVersions": ["4.0.73"] }（版本号随意，关键是不能为空）
+//   过审发布后 → { "reviewVersions": [] }
 //
 // 环境分派：
-//   - devtools（开发者工具）：永远正常态（本机开发不受影响）
-//   - 其它（develop 真机/体验版/正式版）：按 app_version 与 COS 白名单比对
-//   - 远端拉不到 / 解析失败：正常态（绝不影响正常使用）
-//   - 白名单为空数组：门禁未启用，正常态
+//   - devtools（开发者工具）→ 永远完整态，本机开发不受开关影响
+//   - develop 真机（= 审核员）/ trial（体验版，version 也为空）→ 白名单非空即审核态
+//   - release（正式版用户）→ 有版本号：按白名单匹配；白名单为空 → 完整态
 //
-// 同步读取：`isReviewSync()` 读 storage 里的判定结论 `appReviewResolved`，
-// 给 tabBar / showTab 这类同步场景用；异步场景请用 `isReview()`。
+// 真机/开发者工具想看审核态：用本机覆盖暗门 setOverride('4.0.73')。
+//
+// 设计约束（照搬 SpaceLaunch）：
+// - 请求失败一律按完整态兜底，绝不影响正常使用
+// - 审核环境是全新安装（无本地缓存），首次打开必然拉一次远程，所以开关一定生效
+// - COS 直连域名无 CDN 缓存层，控制台改完即生效
+//
+// 注意：本文件用 require 而不是 import —— tests/review.test.js 直接 require 它做单测。
 
-// 用 require 而不是 import：本文件同时被 tests/review.test.js 直接 require 做单测，
-// 走 CJS 才能被 Node 原生 test runner 加载。
 const config = require("../config");
 
 const CONFIG_KEY = "appReviewConfig"; // { ts, data } 远端原文缓存
-const RESOLVED_KEY = "appReviewResolved"; // { review, ts } 判定结论（给同步读取方）
+// 判定结论（布尔）单独落一份，给 custom-tab-bar 与 showTab 这类同步读者用
+const RESOLVED_KEY = "appReviewResolved";
+const OVERRIDE_KEY = CONFIG_KEY + "Override"; // 本机覆盖（开发者暗门）
+const TTL = 5 * 60 * 1000;
 
-const TTL = 5 * 60 * 1000; // 远端配置缓存 5 分钟
+// 会话内存缓存：tabBar、首页、详情页多处调用共享一次请求
+let mem = null;
+let inflight = null;
 
-// 当前运行环境：develop（开发版/审核员）/ trial（体验版）/ release（线上）
+/**
+ * 当前运行环境。envVersion：
+ *   devtools = 开发者工具；develop = 真机开发版（审核员就是这个）；
+ *   trial = 体验版（version 同样为空）；release = 正式版（version 有值）。
+ * API 不存在（基础库 < 2.2.2）→ 返回 devtools 口径放行。
+ */
 function envName() {
   try {
-    const info = wx.getAccountInfoSync && wx.getAccountInfoSync();
-    const env = info && info.miniProgram && info.miniProgram.envVersion;
-    return env || "unknown";
+    return (wx.getAccountInfoSync().miniProgram || {}).envVersion || "unknown";
   } catch (e) {
-    // 基础库 < 2.2.2 或非小程序环境：当开发者工具处理，放行
     return "devtools";
   }
 }
 
-// 线上版本号；开发版/体验版为空串，此时不回落到 app_version ——
-// 判定一律以包内 app_version 为准，见文件头的说明。
-function onlineVersion() {
+/**
+ * 当前运行的小程序版本号（线上 versionName，如 "4.0.72"）。
+ * 开发版/体验版返回空串，正式版返回线上版本号。
+ */
+function runtimeVersion() {
   try {
-    const info = wx.getAccountInfoSync && wx.getAccountInfoSync();
+    const info = wx.getAccountInfoSync();
     return String((info && info.miniProgram && info.miniProgram.version) || "").trim();
   } catch (e) {
     return "";
   }
 }
 
-// 包内版本号（就是 config.js 的 app_version，随包编译进去）
-function runtimeVersion() {
+// 包内版本号（config.js 的 app_version），仅用于暗门面板展示，不参与判定
+function packagedVersion() {
   return String((config && config.app_version) || "").trim();
 }
 
-// 纯函数：给定远端配置，算出是否审核态。刻意无副作用，方便单测直接调。
-function applyVersionRule(raw) {
+/**
+ * 按远程配置算出这台设备该不该进审核态（纯函数，单测直接调）。
+ *
+ * 判定顺序：
+ *   1. 开发者工具且没指定模拟版本号 → 永远完整态（保护本机开发）
+ *   2. 配了 reviewVersions 且当前版本在其中 → 审核态
+ *   3. 配了 reviewVersions 但拿不到版本号 → 审核态
+ *      （审核员是 develop 环境，version 恒为空 —— 就是这条兜底拦住审核员）
+ *   4. 其它（白名单为空）→ 完整态
+ *
+ * simulated：暗门里填的模拟版本号。给了它就跳过环境判断，
+ * 用这个假版本号代替真实版本号 —— 开发者工具也能看到审核员视角。
+ */
+function applyVersionRule(raw, simulated) {
   const cfg = raw && typeof raw === "object" ? raw : {};
+  const out = Object.assign({}, cfg);
+  const sim = typeof simulated === "string" && simulated ? simulated : null;
 
-  // 兼容 SpaceLaunch 那套老配置：没有 normalVersions 时看 reviewVersions
-  // （旧语义是「非空 = 审核中」，方向相反，这里只做兜底识别，不再推荐使用）
-  const list = Array.isArray(cfg.normalVersions)
-    ? cfg.normalVersions.map(v => String(v).trim()).filter(Boolean)
-    : null;
-
-  if (list === null) {
-    if (Array.isArray(cfg.reviewVersions)) {
-      return cfg.reviewVersions.map(v => String(v).trim()).filter(Boolean).length > 0;
-    }
-    // 老格式：布尔 review
-    return Boolean(cfg.review);
+  if (!sim && envName() === "devtools") {
+    out.review = false;
+    return out;
   }
 
-  // 白名单为空 = 门禁未启用（新部署 / 刚建文件时不会误伤所有人）
-  if (!list.length) return false;
-
-  // 开发者工具永远正常态，本机开发不受影响
-  if (envName() === "devtools") return false;
-
-  // 版本号对上了才正常；对不上（含拿不到线上版本号 → 回落到包内 app_version）一律审核态
-  const v = runtimeVersion();
-  return !(v && list.indexOf(v) !== -1);
-}
-
-function readResolved() {
-  try {
-    const raw = wx.getStorageSync(RESOLVED_KEY);
-    if (!raw || typeof raw !== "object") return null;
-    return raw;
-  } catch (e) {
-    return null;
+  // 旧格式兼容：配置里没有 reviewVersions 字段时才看布尔 review
+  if (!Array.isArray(cfg.reviewVersions)) {
+    out.review = Boolean(cfg.review);
+    return out;
   }
-}
 
-function writeResolved(review) {
-  try {
-    wx.setStorageSync(RESOLVED_KEY, { review: !!review, ts: Date.now() });
-  } catch (e) {
-    // 写不进去也无所谓，下次重新算
+  const list = cfg.reviewVersions.map(String);
+  if (!list.length) {
+    out.review = false;
+    return out;
   }
+
+  // 拿不到版本号：正式版必有版本号，拿不到的只可能是审核环境，保审核
+  const v = sim || runtimeVersion();
+  out.review = v ? list.indexOf(v) !== -1 : true;
+  return out;
 }
 
-// 同步读取判定结论：用上次算好的结论；从没算过就当正常态（保守，不影响正常用户）
-function isReviewSync() {
-  const r = readResolved();
-  return r ? !!r.review : false;
-}
-
-// 拉远端配置。失败返回 null（调用方按正常态兜底）。
-// db 可以不传：不传时从 getApp().mpServerless.db 取（页面/组件里调用都走这条）；
-// app.js 的 onLaunch 里 getApp() 可能还是 undefined，所以那里会把 db 显式传进来。
-function fetchConfig(db) {
+// 拉一次远端配置。失败返回 null。
+// db 可以不传：不传时从 getApp().mpServerless.db 取；
+// app.js 的 onLaunch 里 getApp() 可能还是 undefined，那里会把 db 显式传进来。
+function request(db) {
   return new Promise(resolve => {
     try {
       let handle = db;
@@ -145,46 +138,202 @@ function fetchConfig(db) {
   });
 }
 
-// 取远端配置（5 分钟本地缓存）
-async function getConfig(force, db) {
-  const now = Date.now();
-  if (!force) {
-    try {
-      const cached = wx.getStorageSync(CONFIG_KEY);
-      if (cached && cached.ts && now - cached.ts < TTL && cached.data) {
-        return cached.data;
-      }
-    } catch (e) {
-      // 落到下面重新拉
-    }
+function readLocal() {
+  try {
+    const v = wx.getStorageSync(CONFIG_KEY);
+    if (v && v.ts && v.data && Date.now() - v.ts < TTL) return v.data;
+  } catch (e) {
+    // Storage 不可用时只当没有缓存
   }
-  const data = await fetchConfig(db);
-  if (data) {
-    try {
-      wx.setStorageSync(CONFIG_KEY, { ts: now, data });
-    } catch (e) {
-      // 存不下就每次重拉，不影响正确性
-    }
-  }
-  return data;
+  return null;
 }
 
-// 完整判定：异步，带缓存。force = true 时绕过缓存重新拉远端。
-async function isReview(opts) {
+function writeLocal(data) {
+  try {
+    wx.setStorageSync(CONFIG_KEY, { ts: Date.now(), data });
+  } catch (e) {
+    // 写不进去就算了，下次再拉远程
+  }
+}
+
+/**
+ * 本机覆盖（开发者暗门用）：写在 storage 里的强制值，优先级高于远程开关
+ * —— 只影响本机，审核员的设备拿不到。
+ *   { version: '4.0.73' }  模拟运行在正式版 4.0.73，走真实白名单判定
+ *   { review: true }       不讲道理地强制审核态（旧用法，保留）
+ */
+function readOverride() {
+  try {
+    const o = wx.getStorageSync(OVERRIDE_KEY);
+    if (!o || typeof o !== "object") return null;
+    if (typeof o.version === "string" && o.version) return o;
+    if (typeof o.review === "boolean") return o;
+  } catch (e) {
+    // 没有覆盖
+  }
+  return null;
+}
+
+/**
+ * 写本机覆盖。
+ *   setOverride('4.0.73')  模拟版本号
+ *   setOverride(true)      强制审核态
+ *   setOverride(false)     强制完整态
+ *   setOverride(null)      清除，回到环境默认
+ */
+function setOverride(val) {
+  try {
+    if (val === null || val === undefined || val === "") {
+      wx.removeStorageSync(OVERRIDE_KEY);
+    } else if (typeof val === "string") {
+      wx.setStorageSync(OVERRIDE_KEY, { version: val.trim() });
+    } else if (typeof val === "object") {
+      if (typeof val.version === "string" && val.version) {
+        wx.setStorageSync(OVERRIDE_KEY, { version: val.version.trim() });
+      } else if (typeof val.review === "boolean") {
+        wx.setStorageSync(OVERRIDE_KEY, { review: val.review });
+      } else {
+        wx.removeStorageSync(OVERRIDE_KEY);
+      }
+    } else {
+      wx.setStorageSync(OVERRIDE_KEY, { review: Boolean(val) });
+    }
+  } catch (e) {
+    // 写不进去就当没设置
+  }
+}
+
+/**
+ * 拉一次开关，网络抖动时重试一次 ——
+ * 审核场景拉不到开关会退回完整内容，宁可多等一秒。
+ */
+async function fetchOnce(db) {
+  const first = await request(db);
+  if (first) return first;
+  return request(db);
+}
+
+/**
+ * 取原始配置（含 reviewVersions），判定每次现算 ——
+ * 同一份缓存要能被「真实版本号」和「模拟版本号」两种口径分别解释，
+ * 所以缓存只存原文，绝不在写入时就把 review 算死。
+ */
+async function loadRaw(db) {
+  if (mem && Date.now() - mem.ts < TTL) return mem.data;
+  if (inflight) return inflight;
+
+  inflight = (async () => {
+    const local = readLocal();
+    if (local) {
+      mem = { data: local, ts: Date.now() };
+      return local;
+    }
+    const remote = await fetchOnce(db);
+    const data = remote || {};
+    mem = { data, ts: Date.now() };
+    // 远程拉取成功才落缓存；失败结果不缓存，下次进页面再试
+    if (remote) writeLocal(data);
+    return data;
+  })();
+
+  try {
+    return await inflight;
+  } finally {
+    inflight = null;
+  }
+}
+
+// 绕过一切缓存拉一次远程，并刷新本地缓存 —— 给暗门面板看「远程现在到底是什么」
+async function refreshRemote(db) {
+  const remote = await fetchOnce(db);
+  if (remote) {
+    mem = { data: remote, ts: Date.now() };
+    writeLocal(remote);
+  }
+  return remote;
+}
+
+// 把判定结论写一份给 tabBar / showTab 这类同步读者
+function writeResolved(review) {
+  try {
+    wx.setStorageSync(RESOLVED_KEY, { review: !!review, ts: Date.now() });
+  } catch (e) {
+    // 写不进去就靠页面 onShow 兜底
+  }
+}
+
+function readResolved() {
+  try {
+    const r = wx.getStorageSync(RESOLVED_KEY);
+    if (r && typeof r === "object") return r;
+  } catch (e) {
+    // 没算过
+  }
+  return null;
+}
+
+// 同步读取判定结论：从没算过就当完整态（保守，不影响正常用户）
+function isReviewSync() {
+  const r = readResolved();
+  return r ? !!r.review : false;
+}
+
+// 解析开关（优先级：本机覆盖 > 非正式版完整态 > 内存/本地缓存 > 远程）
+function resolveConfig(db) {
+  const ov = readOverride();
+
+  // 本机覆盖：模拟某个版本号 → 走正式版口径
+  if (ov && ov.version) {
+    return loadRaw(db).then(raw => applyVersionRule(raw, ov.version));
+  }
+  // 本机覆盖：强制审核态 / 强制完整态
+  if (ov && typeof ov.review === "boolean") {
+    return Promise.resolve({ review: ov.review });
+  }
+  // 开发者工具：永远完整态
+  if (envName() === "devtools") return Promise.resolve({ review: false });
+
+  return loadRaw(db).then(raw => applyVersionRule(raw));
+}
+
+// 取展示开关，永远 resolve 一个对象（任何失败都兜底 review:false）
+async function getConfig(opts) {
   const force = !!(opts && opts.force);
   const db = (opts && opts.db) || null;
-  const raw = await getConfig(force, db);
-  const review = applyVersionRule(raw || {});
-  writeResolved(review);
-  return review;
+  if (force) {
+    await refreshRemote(db);
+  }
+  const c = await resolveConfig(db);
+  writeResolved(c && c.review);
+  return c;
 }
 
-// 面板用：把现场信息原样吐出来，不做任何判定
+// 异步判定（页面用）
+async function isReview(opts) {
+  const c = await getConfig(opts);
+  return !!(c && c.review);
+}
+
+/**
+ * 开发者面板用：一次性给出现场信息，不做任何判定。
+ * 面板要能回答三件事 —— 现在是什么环境、真实版本号多少、远程白名单是什么。
+ */
 function getDebugInfo() {
+  let envVersion = "unknown";
+  let version = "";
+  try {
+    const info = wx.getAccountInfoSync();
+    envVersion = (info && info.miniProgram && info.miniProgram.envVersion) || "unknown";
+    version = String((info && info.miniProgram && info.miniProgram.version) || "").trim();
+  } catch (e) {
+    // 拿不到就留空
+  }
+  const ov = readOverride();
   return {
-    envVersion: envName(),
-    version: runtimeVersion(),
-    onlineVersion: onlineVersion(),
+    envVersion,
+    version,
+    packagedVersion: packagedVersion(),
+    override: ov ? (ov.version ? { version: ov.version } : { review: ov.review }) : null,
   };
 }
 
@@ -199,9 +348,9 @@ async function blockInReview(tip) {
     review = isReviewSync();
   }
   if (!review) return false;
-  wx.showToast({ title: tip || '当前不可用', icon: 'none' });
+  wx.showToast({ title: tip || "当前不可用", icon: "none" });
   setTimeout(() => {
-    wx.navigateBack({ fail() { } });
+    wx.navigateBack({ fail() {} });
   }, 1200);
   return true;
 }
@@ -209,8 +358,11 @@ async function blockInReview(tip) {
 module.exports = {
   envName,
   runtimeVersion,
-  onlineVersion,
+  packagedVersion,
   applyVersionRule,
+  readOverride,
+  setOverride,
+  refreshRemote,
   getDebugInfo,
   getConfig,
   isReview,

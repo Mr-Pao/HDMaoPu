@@ -1,7 +1,7 @@
 import { getGlobalSettings, getCurrentPath } from "../utils/page";
 import { sleep } from "../utils/utils";
 import { checkCanFullTabBar } from "../utils/user";
-import { isReview, isReviewSync } from "../utils/review";
+import { isReviewSync, getConfig } from "../utils/review";
 import tab from "./tab";
 
 function getTabBarList() {
@@ -25,24 +25,29 @@ Component({
   data: {
     list: getTabBarList(),
     activePath: null,
-    // 审核态：整条 tabBar 不显示（保持 DOM 在，只做 opacity 隐藏，
-    // 因为 wx:if 会让 attached 里量高度的那次查询拿不到节点）
-    reviewMode: false
+    // 审核态：整条 tabBar 完全不渲染（wxml 里 wx:if="{{!review}}"）。
+    // 与 SpaceLaunch 一致 —— 不用 opacity 隐藏，避免透明按钮还能被点到跳 tab。
+    review: false
+  },
+  lifetimes: {
+    attached() {
+      // 三级回退（照搬 SpaceLaunch 的 custom-tab-bar）：
+      //   1. 上次算好的判定结论（5 分钟内有效）→ 直接用，绝不闪
+      //   2. 远端原文缓存还在 → 现场重算一次
+      //   3. 啥都没有 → 先按完整态渲染，同时拉一次远端再校正
+      const cached = isReviewSync();
+      if (cached) {
+        this.setData({ review: true });
+      } else {
+        getConfig()
+          .then(c => {
+            if (c && c.review) this.setData({ review: true });
+          })
+          .catch(() => {});
+      }
+    }
   },
   async created() {
-    // 先用上次的判定结论顶上，避免正常用户看到 tabBar 闪一下
-    if (isReviewSync()) {
-      this.setData({ reviewMode: true });
-    }
-    // 再拉一次远端开关（5 分钟缓存），拿到后校正
-    try {
-      const review = await isReview();
-      if (review !== this.data.reviewMode) {
-        this.setData({ reviewMode: review });
-      }
-    } catch (e) {
-      // 判定失败按完整态处理，绝不因为开关挂掉而影响使用
-    }
     const currentPath = getCurrentPath();
     if (!currentPath) {
       await sleep(100);
@@ -57,7 +62,7 @@ Component({
         });
         return;
       }
-      
+
       this.setData({
         list: tab,
         showTabBar: true,
@@ -100,7 +105,7 @@ Component({
 
     // 存起来其他地方可以查看
     wx.setStorageSync('tabBarOrder', order)
-    
+
     // 重新排序list
     var newList = [];
     for (const key of order) {
@@ -116,11 +121,12 @@ Component({
     });
   },
   attached() {
+    // 审核态下 wxml 不渲染 .tab-bar，量不到高度；正常态才量。
+    if (this.data.review) return;
     var obj = this.createSelectorQuery();
     obj.select('.tab-bar').boundingClientRect(function (rect) {
-      // 审核态下 .tab-bar 是 display:none，rect.height 会是 0。
-      // 这时绝不能把 0 写进缓存，否则「清除覆盖」回到正常态后
-      // 底部占位会一直是 0，直到小程序重启。
+      // rect.height 会是 0 的情况（还没布局完）绝不能写进缓存，
+      // 否则底部占位会一直是 0，直到小程序重启。
       if (rect && rect.height > 0) {
         wx.setStorageSync('tabBarHeight', rect.height)     // 将获取到的高度设置缓存，以便之后使用
       }
@@ -136,7 +142,7 @@ Component({
       const url = `/${path}`;
       wx.switchTab({url});
     },
-    
+
     // 带有重试机制的读取设置
     async getSettings() {
       let maxTry = 3;

@@ -1,10 +1,10 @@
 {
-  "version": "1793800000000",
+  "version": "1793900000000",
   "items": [
     {
       "_id": "app-config",
-      "normalVersions": ["v4.0.72"],
-      "note": "审核态门禁：normalVersions = 允许「正常显示」的版本号（只放已经过审发布的版本）。包内 app_version 不在这个列表里 = 审核态（只留首页、去掉 tabBar、隐藏详情页所有上传入口）。提审新版本时这里保持上一个已发布版本，审核员拿到的新包自然对不上 → 审核态；过审发布后再把新版本号写进来。"
+      "reviewVersions": [],
+      "note": "审核期总开关（与 SpaceLaunch 同一套逻辑）：reviewVersions 非空 = 审核中（只留首页、去掉 tabBar、隐藏详情页全部上传入口）；空数组 = 正常期。提审前写入任意版本号（如 [\"4.0.73\"]），过审发布后清回 []。改完 push cos，sync-data.yml 自动传到 COS data/app-config.json。"
     }
   ]
 }

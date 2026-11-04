@@ -18,7 +18,7 @@
 - `miniprogram/utils/writeback.js`：COS inbox 写入通道（客户端零密钥）
 - `data/`：19 个 JSON，即"数据库"（删徽章三件套后从 22 降下来）
 - `scripts/`：Actions 专用脚本，**独立 `package.json`**（只依赖 `cos-nodejs-sdk-v5 ^3.0.0`）
-- `tests/`：`datasource` / `cache` / `process-inbox` / `review` 四个测试文件，共 **66 例**
+- `tests/`：`datasource` / `cache` / `process-inbox` / `review` 四个测试文件，共 **65 例**
 - `.github/workflows/`：7 个（aggregate、bundle-size、process-inbox、review、set-inbox-policy、sync-assets、sync-data）
 - `functionsEMAS/`、`initDatabase/`、`initStorage/`：上游遗留，EMAS 空间已删，**基本是死代码**
 
@@ -28,7 +28,7 @@
 ```bash
 NODE="C:/Users/yzx49/Program/HBuilderX/plugins/node/node.exe"
 ```
-- 单测（66 例）：`"$NODE" --test tests/datasource.test.js tests/cache.test.js tests/process-inbox.test.js tests/review.test.js`
+- 单测（65 例）：`"$NODE" --test tests/datasource.test.js tests/cache.test.js tests/process-inbox.test.js tests/review.test.js`
   - **必须显式列文件**；`node --test tests/` 会把目录当单个测试文件跑并报 fail
   - 用 `plugins/node18/node.exe`（v18.20.0）会挂 1 例：`mock.timers.enable` 不支持 `Date` → `ERR_INVALID_ARG_VALUE`
 - 数据端到端校验（70 项，真实数据不变量口径）：`"$NODE" scripts/verify-demo-data.js`
@@ -163,21 +163,22 @@ cos-version  从上游错误派生，废弃
 
 ### 当前状态（2026-11-03）
 - `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.73`
-- **v4.0.72：真实版本号门禁（审核态）+ 管理暗门迁到首页（2026-11-03/04）** — 照搬 SpaceLaunch 的核心机制，但**不是模拟、不是「白名单非空=审核中」**，而是硬门禁。
-  - **语义（一句话）**：**包内 `config.js` 的 `app_version` 与 COS 上 `data/app-config.json` 的 `normalVersions` 对得上 → 正常态；其它任何情况 → 审核态。**
-  - **开关文件 `data/app-config.json`**（新）：`{"version":"1793800000000","items":[{"_id":"app-config","normalVersions":["v4.0.72"]}]}`。**必须是 `{version, items:[]}` 信封**（`datasource._requestCollection` 只认这个格式），不能照抄 SpaceLaunch 的裸对象。`scripts/upload-data.js` 自动扫 `data/*.json`，不用改白名单。
-  - **提审/发布流程（只改两处）**：① 提审前把 `config.js` 的 `app_version` 升到新版本（如 `v4.0.73`），**COS 的 `normalVersions` 保持上一版已发布的 `["v4.0.72"]`** → 审核员拿到的新包对不上 → 审核态；② 过审发布后把 `normalVersions` 改成 `["v4.0.73"]` → 恢复正常。⚠️ **改了 `app_version` 就必须同步 `normalVersions`**，否则新版一上线就是审核态。
-  - **判定模块 `miniprogram/utils/review.js`**（新）：导出 `envName/runtimeVersion/onlineVersion/applyVersionRule/getDebugInfo/getConfig/isReview/isReviewSync/blockInReview`。⚠️ **文件里必须写 `const config = require("../config")` 而不是 `import`** —— 它被 `tests/review.test.js` 直接 `require`，ESM 会 `ERR_MODULE_NOT_FOUND`。
-  - **判定口径**（`applyVersionRule(raw)`，纯函数）：没有 `normalVersions` 数组时兼容老配置（`reviewVersions` 非空=审核态 / 布尔 `review`）；`normalVersions` 为空数组 → 正常（门禁未启用）；`envName()==='devtools'` → 正常（本机开发不受影响）；否则 `v = runtimeVersion() = config.app_version`，`return !(v && list.indexOf(v) !== -1)`。
-  - **为什么用包内 `app_version` 而不是 `wx.getAccountInfoSync().miniProgram.version`**：审核员跑 develop（开发版）、体验版也拿不到版本号，`version` 恒空 → 若用它判定，永远是「拿不到版本号」这一种结果，区分不出新包。用编译进包的 `app_version` 才在任何环境都可判定，且测的就是真包。`onlineVersion()` 保留但**只用于暗门面板展示**。
-  - **缓存两键**：`appReviewConfig`（`{ts,data}` 远端原文，TTL 5 分钟，`getConfig(true)` 可强制刷）、`appReviewResolved`（`{review,ts}` 判定结论，给 `isReviewSync()` 这类**同步**读者用 —— `showTab` 与 tabBar 的 `created()` 都靠它）。远端拉不到/解析失败 → 正常态兜底。
-  - **审核态表现**：① `custom-tab-bar` 加 `reviewMode`，`index.wxml` 根节点多一个 `review-hidden`，wxss 用 `display:none`（**不是 `.hidden` 的 opacity**，否则透明按钮还能点到跳 tab）；② `utils/page.js` 的 `showTab(page)` 改 `isReviewSync() ? 0 : (wx.getStorageSync('tabBarHeight') || 80)` —— 原 `|| 80` 会把 0 吞掉；③ 首页隐藏「数据看板」hero 入口与识猫入口；④ 详情页 5 个 UGC 入口 `wx:if='{{!reviewMode}}'`（便利贴数 / 申请领养 tag / 信息纠错 / 我要评分 / 上传喵照）；⑤ 5 个 UGC 页 `onLoad` 首行 `if (await blockInReview(tip)) return;`（addPhoto/commentBoard/ratingDetail/feedbackDetail/applyAdoption），防深链与历史栈。
-  - ⚠️ **`attached()` 量 tabBar 高度必须判 `rect && rect.height > 0` 再写缓存**：审核态 DOM 是 `display:none`，高度 0 一旦写进 `tabBarHeight`，回到正常态后所有页底部占位会永远变 0，直到重启小程序。
-  - **暗门迁到首页**：`genealogy.wxml:9` 的 `.nav-t` 加 `catchtap='onTitleTap'`（**catchtap 不是 bindtap**，防冒泡）；连击 5 次（`TAP_WINDOW=800` 超时重置）→ 已解锁直接开面板，否则读 `data/gate.json` 的 code 弹口令 → 通过后开「审核态自检」面板（`genealogy.wxml` 末尾 `.dbg-mask` z-index **8800**，口令弹层是 9000）。面板**只读**：四行显示 运行环境 / 包内版本 / 线上版本 / COS 白名单，一行结论「当前 = 审核态 / 正常态」，一个「重新拉取配置并刷新」按钮（`getConfig(true)` + `wx.reLaunch`），一个「去管理后台 ›」。**没有任何模拟/强制开关——门禁只能靠真版本号。**
-  - **关于页那套已整体删除**：`info.js` 删掉 `TAP_TO_UNLOCK`/`TAP_WINDOW`/`setUnlocked`/`loadGateCode`/`onTitleTap`/`askAdminPasscode`/`refreshManagerNums`（105 行），只留 `isUnlocked()`；`info.wxml` 的 `.title` 去掉 `catchtap`，末尾 `<passcode-modal />` 删除。**现在 `<passcode-modal />` 全站唯一挂载点是 `genealogy.wxml` 末尾**。
-  - 文案同步：`utils/user.js:204` 与 `utils/passcode.js`、`pages/manage/admin/admin.js` 注释里的「关于页连击」统一改成「首页连击『火大猫谱』标题」。
-  - 测试：`tests/review.test.js`（21 例，覆盖 release 命中/不命中、多版本、develop、trial、devtools、空白名单、老 `reviewVersions`、老布尔 `review`、`normalVersions` 优先、非法 raw、数字项、`getAccountInfoSync` 抛错、`runtimeVersion`/`onlineVersion`/`getDebugInfo`），**单测 47 → 66 例**；`package.json` 的 `scripts.test` 已加该文件；`scripts/verify-demo-data.js` 新增「【审核态门禁 / app-config】」4 项（存在可查询 / 是数组 / 元素非空字符串 / 形如 `vX.Y.Z` 且非空），**66 → 70 项**。
-  - 本机验证方式：开发者工具里在首页标题连击 5 次 → 输入口令（`data/gate.json` 的 code，当前 `0000`）→ 面板直接显示「包内版本 / COS 白名单 / 当前状态」，对不上就是审核态。**想验证审核态，只能真改版本号**（改 `config.js` 的 `app_version` 但不改 COS 白名单，或反过来改 COS 白名单）。开发者工具本身永远正常态（devtools 放行），所以审核态要在真机/开发版上看。
+- **v4.0.73：审核态照搬 SpaceLaunch 的 `reviewVersions`（2026-11-04）** — 用户明确要求「把 spacelaunch 这套逻辑一模一样的弄过来」，v4.0.72 那版自创的 `normalVersions` 反转门禁已被整体废弃。
+  - **语义（一句话）**：**`reviewVersions` 非空 = 审核中；空数组 = 正常期。** 与版本号对不对得上无关 —— 它就是个审核期总开关。
+  - **开关文件 `data/app-config.json`**：`{"version":"1793900000000","items":[{"_id":"app-config","reviewVersions":[],"note":"..."}]}`。⚠️ **必须保留 `{version, items:[...]}` 信封**（`datasource._requestCollection` 只认这个格式），SpaceLaunch 那个裸对象不能直接抄；`scripts/upload-data.js` 自动扫 `data/*.json`，不用改白名单。
+  - **提审/发布流程（只改一处）**：① 提审前写 `{"reviewVersions":["4.0.73"]}`（版本号写什么都行，关键是**不能为空**）→ push `cos`；② 过审发布后清回 `[]` → push `cos`。⚠️ **本地源文件要保持与线上一致**（SpaceLaunch 的 commit `ec93826` 就是为此把本地清空），否则下次 push 会把审核态又推回去。
+  - **判定模块 `miniprogram/utils/review.js`**（重写）：照抄 SpaceLaunch `utils/config.js`。常量 `CONFIG_KEY='appReviewConfig'`、`RESOLVED_KEY='appReviewResolved'`、`OVERRIDE_KEY='appReviewConfigOverride'`、`TTL=5*60*1000`，模块级 `mem`/`inflight` 共享一次请求。导出 `envName/runtimeVersion/packagedVersion/applyVersionRule/readOverride/setOverride/refreshRemote/getDebugInfo/getConfig/isReview/isReviewSync/blockInReview`。⚠️ **必须 `const config = require("../config")` 而非 `import`** —— `tests/review.test.js` 直接 require 它。
+  - **判定口径（`applyVersionRule(raw, simulated)`）**：给了 `simulated` → 用它当版本号；否则 `envName()==='devtools'` → `review=false`（本机开发放行）；`reviewVersions` 不是数组 → 回落 `Boolean(cfg.review)`；空数组 → `false`；否则 `v = sim || runtimeVersion()`，`review = v ? list.indexOf(v) !== -1 : true`（**拿不到版本号 = 审核态**）。
+  - **为什么这条兜底能拦住审核员**：审核员跑 develop（开发版），`wx.getAccountInfoSync().miniProgram.version` 恒为空 → 白名单非空时命中「拿不到版本号」分支 → 审核态。正式版用户有版本号，白名单为空时 `review=false` 正常使用。⚠️ **请求失败一律按正常态兜底**，绝不影响真实用户。
+  - **`getConfig(opts)` 是对象参数**（`{force, db}`），不是位置参数。`app.js` 的 `onLaunch` 早于 `getApp()` 可用，那里必须显式传 `db`（`this.mpServerless.db`）。
+  - **缓存两键**：`appReviewConfig`（`{ts,data}` 只存远端原文，判定每次现算 —— 同一份缓存要能被真实/模拟两种口径分别解释）、`appReviewResolved`（`{review,ts}` 判定结论，给 `isReviewSync()`/tabBar/`showTab` 这类**同步**读者用）。
+  - **本机覆盖暗门**（`readOverride`/`setOverride`）：storage `appReviewConfigOverride`，形态 `{version:'4.0.73'}` 或 `{review:true|false}`；`setOverride(null)` 清除。只影响本机，审核员设备拿不到 —— 这是「在开发者工具里看审核态」的唯一办法，因为 devtools 永远放行。
+  - **审核态表现（5 处）**：① `custom-tab-bar/index.wxml` 根节点改 `wx:if="{{!review}}"`（**整条不渲染**，比 v4.0.72 的 `display:none` 更彻底）；② `custom-tab-bar/index.js` 的 `lifetimes.attached()` 三级回退（resolved 结论 → `getConfig()` 异步校正），`attached()` 量高度前若 `review` 为真直接 return；③ `utils/page.js` 的 `showTab(page)` 用 `isReviewSync() ? 0 : (wx.getStorageSync('tabBarHeight') || 80)`（**原 `|| 80` 会把 0 吞掉**）；④ 首页隐藏 hero 数据看板入口与识猫入口；⑤ 详情页 4 个 UGC 入口 `wx:if='{{!reviewMode}}'`（便利贴数 / 申请领养 tag / 信息纠错 / 我要评分）+ 上传喵照靠 `canUpload`；6 个 UGC 页 `onLoad` 首行 `if (await blockInReview(tip)) return;`（addPhoto/commentBoard/ratingDetail/feedbackDetail/applyAdoption），防深链与历史栈。
+  - ⚠️ **`attached()` 量 tabBar 高度必须判 `rect && rect.height > 0`**：审核态量不到高度，0 写进 `tabBarHeight` 会让「清除覆盖」后所有页底部占位永远是 0，直到重启小程序。
+  - **暗门面板（首页 `genealogy.wxml` 末尾）**：连击「火大猫谱」标题 5 次（`TAP_WINDOW=800` 超时重置）→ **直接开面板，不弹口令**（用户 2026-11-04 明确要求「填写版本号放在管理员密码外面」）。面板含：运行环境 / 线上版本 / COS 白名单 / 本机覆盖 四行信息、结论条、`input` 填版本号 + 「模拟版本」（`setOverride(v)` + reLaunch）、「强制审核态」/「强制正常态」/「清除覆盖」、`.dbg-go`「去管理后台 ›」。**只有「去管理后台」这一步才 `askAdminPasscode()` 弹口令**（`data/gate.json` 的 code，当前 `0000`），通过后 `setUnlocked(true)` + `setToken` + `wx.switchTab` 到关于页。`.dbg-mask` z-index **8800**（口令弹层 9000）。
+  - **关于页的连击/口令已整体删除**：`info.js` 只剩 `isUnlocked()`；`info.wxml` 的 `.title` 无事件，`<passcode-modal />` 已删。**全站唯一挂载点是 `genealogy.wxml` 末尾**。
+  - 测试：`tests/review.test.js`（18 例，覆盖 release 命中/不命中、多版本、develop、trial、devtools、空白名单、模拟版本号、老布尔 `review`、非法 raw、数字项、`getAccountInfoSync` 抛错、`readOverride`/`setOverride` 四形态、`runtimeVersion`/`packagedVersion`/`getDebugInfo`），**单测 65 例**；`scripts/verify-demo-data.js` 的段名改「【审核期开关 / app-config】」4 项（存在可查询 / 是数组 / 元素非空字符串 / 形如 `X.Y.Z`），**70 项**。
+  - 本机验证：开发者工具连击 5 次 → 面板里填 `4.0.73` 点「模拟版本」→ 若 COS 的 `reviewVersions` 是 `["4.0.73"]` 就是审核态；点「清除覆盖」回正常态。真机开发版（develop）+ 白名单非空 → 必然是审核态（那条兜底）。
 - **v4.0.71：反馈链路打通（2026-11-03）** — 起因：用户问「反馈处理还有用吗」，实测答案是**没用，那个页面永远 0 条**。根因不是没提交，而是提交走错了通道：
   - `pages/genealogy/feedbackDetail/feedbackDetail.js` 原来先 `api.curdOp add feedback`（写本地覆盖层，假写，永不落 `data/feedback.json`），真正发出去的是 `putInbox('comment',{...,type:'feedback'})` —— 走**评论**通道。
   - 而 `scripts/process-inbox.js` 的 `handleComment` 只取 `cat_id`/`content`/`nickname`，**`type:'feedback'` 被直接丢弃**，入队 `kind:'comment'`；`handleDecision` 对 comment approve 只落 `data/comment.json`。所以反馈内容要么被当便利贴，要么石沉大海，`feedback.json` 永远是 `items: []`。
@@ -307,6 +308,6 @@ cos-version  从上游错误派生，废弃
 1. 改了什么数据？→ 是否需要同步 `data/` + 推 `cos`（触发 `sync-data.yml`）
 2. 新页面/组件？→ `app.json` 注册 **且** 从 `packOptions.ignore` 移除
 3. 改样式？→ 只动 hex，别动颜色关键字；`app.wxss` 排除
-4. 改完跑：单测 66 例 + `verify-demo-data.js` 70 项（真实数据不变量口径；一次就够，不要来回验）
+4. 改完跑：单测 65 例 + `verify-demo-data.js` 70 项（真实数据不变量口径；一次就够，不要来回验）
 5. 升 `config.js` 的 `app_version`，commit message 带版本号
 6. 有持久价值的新结论 → 追加到本文件（不要写 `.workbuddy/memory/`）

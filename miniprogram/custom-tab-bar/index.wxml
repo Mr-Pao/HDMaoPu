@@ -1,6 +1,6 @@
 <!--miniprogram/custom-tab-bar/index.wxml-->
 
-<view class="tab-bar {{showTabBar ? '' : 'hidden'}} {{reviewMode ? 'review-hidden' : ''}}">
+<view wx:if="{{!review}}" class="tab-bar {{showTabBar ? '' : 'hidden'}}">
   <view class="tab-bar-inner">
     <view wx:for="{{list}}" wx:key="index" class="tab-bar-item {{activePath === item.pagePath ? 'active' : ''}}" data-path="{{item.pagePath}}" bindtap="switchTab">
       <image class="tab-bar-img" src="{{activePath === item.pagePath ? item.selectedIconPath : item.iconPath}}"></image>

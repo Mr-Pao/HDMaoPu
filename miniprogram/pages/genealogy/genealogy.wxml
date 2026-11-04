@@ -169,30 +169,38 @@
 <!-- 审核态面板：标题连击 5 次 + 口令通过后出现（只读，不做模拟） -->
 <view class='dbg-mask' wx:if='{{debug_show}}' bindtap='closeDebugPanel' catchtouchmove='voidMove'>
   <view class='dbg-panel' catchtap='voidMove'>
-    <view class='dbg-title'>审核态自检</view>
+    <view class='dbg-title'>版本切换</view>
     <view class='dbg-info'>
       <text class='dbg-k'>运行环境</text>
       <text class='dbg-v'>{{debug_env}}</text>
     </view>
     <view class='dbg-info'>
-      <text class='dbg-k'>包内版本</text>
-      <text class='dbg-v'>{{debug_version}}</text>
-    </view>
-    <view class='dbg-info'>
       <text class='dbg-k'>线上版本</text>
-      <text class='dbg-v'>{{debug_online}}</text>
+      <text class='dbg-v'>{{debug_version}}</text>
     </view>
     <view class='dbg-info'>
       <text class='dbg-k'>COS 白名单</text>
       <text class='dbg-v'>{{debug_normal}}</text>
     </view>
+    <view class='dbg-info' wx:if='{{debug_override}}'>
+      <text class='dbg-k'>本机覆盖</text>
+      <text class='dbg-v'>{{debug_override}}</text>
+    </view>
     <view class='dbg-state {{debug_review ? "dbg-state--review" : "dbg-state--normal"}}'>
       {{debug_review ? '当前 = 审核态（只留首页）' : '当前 = 正常态'}}
     </view>
+    <input class='dbg-input' type='text' value='{{debug_input}}' placeholder='填版本号，如 4.0.72' placeholder-class='dbg-ph' confirm-type='done' bindinput='onDebugInput' bindconfirm='applySimVersion' />
     <view class='dbg-btns'>
-      <view class='dbg-btn dbg-btn--main' bindtap='reloadForDebug'>重新拉取配置并刷新</view>
+      <view class='dbg-btn dbg-btn--main' bindtap='applySimVersion'>模拟版本</view>
+      <view class='dbg-btn' bindtap='forceReview'>强制审核态</view>
+    </view>
+    <view class='dbg-btns'>
+      <view class='dbg-btn' bindtap='forceNormal'>强制正常态</view>
+      <view class='dbg-btn' bindtap='clearOverride'>清除覆盖</view>
     </view>
     <view class='dbg-go' bindtap='goManage'>去管理后台 ›</view>
-    <view class='dbg-tip'>判定规则：包内版本号在 COS 的 normalVersions 里才显示正常态，否则一律审核态。改 COS 后点上面按钮即可生效，不用等 5 分钟缓存。</view>
+    <view class='dbg-tip'>覆盖只在本机生效，重进小程序仍保留。审核开关在 COS 的 data/app-config.json：reviewVersions 非空 = 审核中，空 = 正常期。</view>
+  </view>
+</view>
   </view>
 </view>
