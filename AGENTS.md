@@ -3,7 +3,17 @@
 > **回复格式硬规矩（用户 2026-11-03 明确要求，m00131）**：任何回答的**第一句话必须是结论**，不许先铺垫、先报进度、先解释过程。分析类请求尤其如此——用户已经因此不满两次。
 >
 > DSH 每个新会话自动加载本文件。`.workbuddy/memory/` 是旧工具 WorkBuddy 的目录，**DSH 完全不读**，别再往那里写新记忆。
-> ⚠️ **本文件有 65536 字节的 workspace instruction budget**，超出部分会被截断丢内容。2026-11-02 二次精简：72KB → 51KB → **当前 ~35.7KB**，v4.0.15–v4.0.56 的历史版本条目完整原文全部搬进项目根的 `AGENTS-archive.md`（主文件只留「当前仍生效的结论」索引）。**新增内容前先看这个预算**；要写长文就写进 `AGENTS-archive.md` 并在本文件留一行索引。
+> ⚠️ **本文件有 65536 字节的 workspace instruction budget**，超出部分会被截断丢内容。2026-11-04 三次精简：64.5KB → **~42KB**，v4.0.15–v4.0.71 的版本条目正文全部搬进项目根的 `AGENTS-archive.md`（主文件只留一行索引，`v4.0.72+` 仍在正文）。**新增内容前先看这个预算**；要写长文就写进 `AGENTS-archive.md` 并在本文件留一行索引。
+
+## 工作方式硬规矩（用户 2026-11-04 明确不满，m01813/m01827）
+
+> 起因：用户问「为什么反复思考，为什么反复调用工具」。我为了改 4 个文件，读了 60+ 次文件、翻了整个 SpaceLaunch 源码、反复验证，还触发多次上下文压缩。
+
+1. **一次取证，立刻动手**。同一个事实只查一次；本文件已有结论的，不再重读源码。
+2. **改完只验一次**：`node --check` + 单测一次 + `verify-demo-data.js` 一次，通过就提交。禁止「改一行→跑一次」的循环。
+3. **不许为了「确保正确」反复重读同一批文件**。写之前读一次、写完 `--check` 即可。
+4. **用户催促（「墨迹」「你再思考就滚」）出现时，立即停止所有工具调用，只输出结论。**
+5. 需要的结论本题答不出，直接问用户一句话，别自己探。
 
 ## 一句话定位
 
@@ -184,75 +194,20 @@ cos-version  从上游错误派生，废弃
   - **暗门面板（首页 `genealogy.wxml` 末尾）**：连击「火大猫谱」5 次（`TAP_WINDOW=800`）→ **直接开面板不弹口令**；两行 `input` + 各自按钮（版本号+「模拟」、口令+「确定」）。**只有「去管理后台」要口令**（`data/gate.json` 的 code，当前 `0000`）。`.dbg-mask` z-index **8800**（口令弹层 9000）。
   - **关于页的连击/口令已整体删除**：`info.js` 只剩 `isUnlocked()`，`info.wxml` 的 `.title` 无事件、`<passcode-modal />` 已删。全站唯一挂载点是 `genealogy.wxml` 末尾。
   - 测试：`tests/review.test.js` 18 例，**单测合计 65 例**；`verify-demo-data.js` 段名「【审核期开关 / app-config】」4 项，**70 项**。
-- **v4.0.71：反馈链路打通（2026-11-03）** — 原来反馈走的是 `putInbox('comment',{type:'feedback'})`，`process-inbox.js` 的 `handleComment` 把 `type` 丢掉当便利贴，`data/feedback.json` 永远是空。
-  - 修法：`VALID_KINDS` 加 `feedback`（现 10 个）+ 新增 `handleFeedback(p)`（`feedbackInfo` 为空 drop；入队 `kind:'feedback'`，**不要求 cat_id**）；`handleDecision` approve 分支加 `else if (kind==='feedback')` 落 `data/feedback.json`（`_id=genId('fb',ts)`、`openid`/`_openid` 都写、`dealed:false`）。
-  - `FEEDBACK_PATCH_FIELDS` 扩为 `['status','handled_by','replyInfo','replyDate']`（原来回复内容会被 `drop:bad-patch-field` 丢掉）；`manageFeedback` 里 `patch.status` 后同步 `item.dealed`，并新增 `replyInfo`(≤500)/`replyDate`(ISO)。
-  - `feedbackDetail.js` 删假写分支与 `askNotice()`，改 `putInbox('feedback')`；`review.js` 的 `KIND_LABEL` 加 `feedback:"信息纠错"`。
-  - ⚠️ `checkFeedbacks.js` 的 `count()` 返回 `{result:n}` 不是 `{total}`，页头计数一直空，已修。
-- **v4.0.70：审核队列 UI 重排（2026-11-03）** — 用户真机截图反馈「UI 布局调羹一下」，实测有三处硬伤：
-  - **页面被压成中间一条**：`app.wxss:211` 有个全局 `.container{display:flex;flex-direction:column;align-items:center}`，`review.wxml` 的根节点就叫 `.container`，于是卡片被压成内容宽度并居中。本页 wxss 必须显式 `display:block;width:100%` 覆盖（**以后任何新页用 `.container` 作根节点都要检查这条**）。
-  - 头部只有一行「待审核 4 条」，改成「待审核 + 大号计数」+ 右上「刷新」胶囊（新增 `onRefreshTap()`）。
-  - 照片 `mode="aspectFill"` 会裁掉横图两侧（年会背景那类横幅图最明显）→ 改 `aspectFit` 并加 `.photo-wrap` 容器；新增点图 `wx.previewImage` 看大图（`previewPhoto`）。
-  - 信息区合并成单行 `.info`（评论显示「来自 X」，照片显示「摄影师 / 拍摄」），不再出现空行；按钮等高 76rpx 胶囊，提交中通过 `decidingId` 让两个按钮同时 `opacity:0.5` 置灰防连点。
-  - 顺带修 `decide()` 里的锁：原来用 `this.deciding`（非 data，无法驱动 UI），改 `this.decidingId` + `data.decidingId` 双写。
-- **v4.0.69：审核队列白图的最后一层兜底（2026-11-03）** — v4.0.68 上线后用户真机截图仍是白图，原因不是服务端没写 `preview_url`（线上 `data/pending.json` 已带），而是**小程序端 `datasource` 是 SWR**：`_load(name)` 先返回 `ds_cache_pending` 旧快照（那时还没有 `preview_url` 字段），10 分钟内不会重新拉，`photoUrlOf` 拿到的 `previewUrl` 是 `undefined` → 退回拼 `pending/` 地址 → 403。
-  - 修法：`miniprogram/pages/manage/review/review.js` 的 `photoUrlOf` 加中间一级兜底——`previewUrl` 缺失时**按确定性规则自己推** `preview/pending/<photo_key 的 basename>`（常量 `PREVIEW_PREFIX = "preview/pending/"`），不再退回 `pending/` 原地址。因为 `process-inbox.js` 的 `previewKeyOf()` 就是取 basename，两边规则一致，所以缓存还没刷到也能拼对。
-  - 三级顺序：`preview_url` → 自推 `preview/pending/<basename>` → 原始 `photo_key`（理论上到不了）。单测四种输入全对（实测两条推导 URL 均 GET 200 / 61935B、127155B）。
-  - 另一个好处：以后即使快照里 `preview_url` 缺字段（例如聚合失败只 warn），页面也不会白图。
-- **v4.0.68：待审照片改用公开预览副本（2026-11-03）** — v4.0.67 上线后实测发现审核队列里**照片会白图**：`pending/*` 被**桶策略显式 Deny 匿名 GetObject**（`Deny` 语句 `deny-anon-read-private-prefixes`，Resource 覆盖 `inbox/*`、`pending/*`、`rejected/*`），所以拼公开 URL 的 `<image src>` 必然 403。
-  - ⚠️ **踩坑记录**：用 `curl -I` / `Invoke-WebRequest -Method Head` 测 `pending/xxx.png` 会返回 **200**，但 `GET` 返回 **403** —— COS 的 Deny 只拦 `GetObject`，`HeadObject` 不在其中，**以后判断"能不能访问"必须用 GET，不能信 HEAD**。
-  - 修法（**改了两版，第一版被 GitHub 拒收**，务必记住）：v1 打算给待审图签 7 天临时链写进快照 —— `cos.getObjectUrl({Sign:true})` 的 URL 里带 `q-ak=<SecretId>`，`git push` 被 **GH013 push protection** 判成「泄露腾讯云 Secret ID」直接拒收（报错定位到 `data/pending.json:21` / `:46`）。**任何写进仓库 JSON 的 URL 都不许带签名参数**。
-  - v2 最终方案：聚合时把待审图**复制一份到 `preview/pending/<basename>` 并给对象级 `public-read`**（`PENDING_PREVIEW_PREFIX = 'preview/pending/'`），快照里 `preview_url` 只写 `publicUrlOf(toKey)` —— 不带任何密钥。新增 `ensurePendingPreview(cos, photoKey)`（源存在才复制、幂等、失败只 warn 返回空串）与 `prunePendingPreviews(cos, keepKeys)`（列出 `preview/pending/` 下已不再待审的副本并删掉，审核完的图不会继续公开挂着）。`writePendingSnapshot` 因此改成 **async 且必须传 cos**（`main()` 两处调用都改成 `await`），DRY 时仍直接 `return 0`。
-  - ⚠️ `preview/pending/` 是**新增公开前缀**（需对象级 ACL `public-read`，桶策略没动），只放「正在待审」的副本，审核完即删。
-  - `module.exports` 增加 `writePendingSnapshot`（便于本地 `require` 单跑重签快照，不必等 cron）。
-- **v4.0.67：小程序端审核能力恢复（2026-11-03）** — 起因：用户问「小程序端不能审核吗」，实测发现小程序审核页读的 `review_queue.json` 永不传 COS，而 COS 又不允许匿名列举 `pending/`，所以「看不到有哪些要审」。方案是聚合端另发一份**脱敏待审快照**。
-  - `scripts/process-inbox.js` 新增 `writePendingSnapshot()`：把 `review_queue.items` 里 `status === 'pending'` 的项按 `ts` 倒序导出成 `data/pending.json`（只留 `{_id, kind, ts, create_time, data}`，**剥掉 openid / status / applied_comment_id**），tmp+rename 原子写。`main()` 里两处调用（正常分支 `flushData()` 之后、以及「本轮没有新提交」的早退分支——上一轮被通过/驳回的项也要从审核页消失）。DRY 时直接返回 0 不写文件。
-  - **`data/pending.json` 会被正常公开上传**（`scripts/upload-data.js:38` 的 `UPLOAD_DENYLIST` 只有 `inbox_log.json`/`review_queue.json`）——这正是设计：审核页要读它。
-  - 重建 `miniprogram/pages/manage/review/`（4 文件）：读 `collection("pending").get()`，照片用 `data.photo_key` 拼 `${data_base_url}/${key}` 预览，便利贴显示 `content`/`nickname`；通过/驳回发 `putInbox("decision",{item_id,action,token})`并本地移除该项。`deciding` 锁防重复点。**旧版（v4.0.65 删掉的那份）把 `data.url` 当图片地址，而 photo 的 `data` 里其实叫 `photo_key`，所以旧页照片永远不显示**——这是重写的理由之一。
-  - `miniprogram/app.json` 重新注册 -> **28 页**；`info.js` menuList 首项加回「审核队列」（`num:"numPending"`，两处统计各加 `collection('pending').count({})`）。管理菜单现为 **6 项**。
-  - **修 `approvePhoto` 的序号覆盖 bug**：原来 `const nnn = '000';` 硬编码，同一只猫通过多张会全部写到 `catimg/<区域>/<猫>/000.<ext>` 互相覆盖。新增 `nextPhotoSeq(catId, areaSlug, catSlug)`：从 `loadData('photo')` 里扫该猫已有 URL，取 `catimg/<area>/<cat>/` 之后 `^(\d+)\.` 的最大编号 +1，3 位补零。纯内存推导，不请求 COS。
-  - 验证：`node --check` 全过、`app.json` 注册 28 页 × 4 文件 `missing=0`、47 单测全过、66 项数据校验全过、`DRY_RUN=1` 输出符合预期。
-- **v4.0.66：去掉「操作手册」菜单（2026-11-03）** — 该项只是 `info.js` 的 `guide()` 弹一个「文档请查看 github 仓库文档链接」的 modal，没有任何实际功能，用户要求去掉。已删 `menuList` 里的条目、`clickbtn()` 的 `actionMap`（原本只有 guide 一个分支，整块删掉，直接 `wx.navigateTo`）、`guide()` 方法；`info.wxml:72` 的 `{{item.dot}}` 小红点节点与 `info.wxss` 的 `.dot` 规则一并删除（只有操作手册用过 `dot:true`）。管理菜单现为 **5 项**：猫猫管理 / 反馈处理 / 猫抓板公告 / 位置区域花色 / 友情链接。
-- **v4.0.65：管理后台按「一个对象一个入口」重组（2026-11-03）** — 起因：用户问「猫资料编辑和猫猫管理不重复吗」。结论是**确实重复**，且照片操作有一半是假写。判据：**一个对象只留一个入口；凡服务端没有 action 的按钮一律删掉，不再假装能点**。
-  - 删 `pages/manage/admin` 的 cat tab（与 catManage 改同一批 cat 字段，且 patch 只覆盖 14/19 白名单字段）和 photo tab（下架/恢复搬进 catInfoTab 照片卡）。`admin` 现在**只剩友情链接**：`admin.js` 552→约 300 行，`admin.wxml` 170→约 62 行，`TAB_META`/`data.tab`/`loadCurrentTab`/`loadCats`/`submitToast`/`GENDER_OPTIONS`/`ADOPT_OPTIONS`/`formatDate` 与 wxss 的 `.picker-row`/`.photo-*` 段全部删除；`onLoad()` 改无参、标题固定「友情链接」。菜单路径同步去掉 `?tab=link`。
-  - **删 `pages/manage/review/` 整个目录**（页面+app.json 注册+`utils/msg.js` 引用）。原因：`review_queue.json` 永不传 COS（`upload-data.js:38` 的 `UPLOAD_DENYLIST`），小程序端读到的恒为空 → 这条「审核队列」入口名不副实。真实审核在 GitHub Issue 里评论 `/ok`。⚠️ 以后要恢复审核能力，必须先改上传白名单（会公开未审数据）或另做服务端接口。
-  - `catInfoTab` 照片按钮重做：删 `deletePhoto`/`doDelectPhoto`（`api.managePhoto({type:'delete'})` 假写）/`inputPher`/`updatePher`（假写且 wxml 无绑定）。新增 `photoMore(e)`（ActionSheet：下架/恢复 + 移动到其他猫猫）与 `togglePhotoHidden()`（真写 `managePhoto`），`reverseBest()` 改真写 `setBestPhoto` 并在成功后 `reloadPhotos()` 整表刷新（否则同猫另一张的精选角标残留）。wxml 加 `.hidden-badge`「已下架」角标，按钮文案「删除/转移」→「下架/转移」。
-  - **服务端新增 `setBestPhoto` action**（`scripts/process-inbox.js` 的 `handleManage` 现支持 9 个 action）：`manageSetBestPhoto()` 会先把同猫其它 `best` 置 false、再置这一张，并调 `recalcPhotoCountBest()` 重算 `cat.photo_count_best` —— 否则破 `scripts/verify-demo-data.js` 的「每猫最多 1 张 best」「photo_count_best 与 best 张数一致」两条不变量。自测已补 3 条用例（正常/错 token/照片不存在）。
-  - `catManage` 修正：`activeTab` 默认 `'relation'` → **`'info'`**；删 `handleCreateNewCat`/`onCatCreated`/`onInfoTabModeChange`/`isNewMode`/`hasShownInfoModal`（聚合端没有新建猫 action，点了也是死路）；`onLoad` 不再在 `wx:if` 未渲染时 `selectComponent('#catInfoTab')`（原来恒 null）；无选中猫时统一 toast「先搜索并选择一只猫猫」。位置展示改 `area ? campus + ' ' + area : campus`（真实数据 area 全空串）。
-  - `info.js` 管理菜单 **9 项 → 6 项**：操作手册 / 猫猫管理（新增 `num:"numChkPhotos"` 角标）/ 反馈处理 / 猫抓板公告 / 位置区域花色 / 友情链接。
-  - 验证：改动 JS 全过 `node --check`、`app.json` 注册 26 页 × 4 文件齐全、47 单测全过、66 项数据校验全过、`DRY_RUN=1 node scripts/process-inbox.js` 输出含 `ok:photo-best-set` 且各项 drop 原因符合预期。
-- **v4.0.64：提交后自动返回，防重复提交（2026-11-03）** — 新增统一收尾函数 `utils/syncTip.js` 的 `backAfterSubmit(content, opts)`：`wx.showToast` + `setTimeout(wx.navigateBack, delay)`，模块级 `backing` 布尔防重入（`navigateBack` 的 `complete` 里复位，避免旧锁让下一次提交毫无反应）。
-  - 表单型页提交成功即返回：`pages/news/createNews`（另加 `data.submitting` 锁 + 按钮 `disabled="{{submitting}}"`）、`pages/genealogy/detailCat/ratingDetail`、`pages/genealogy/feedbackDetail`（成功返回、失败留在页上）、`pages/genealogy/addPhoto`（只在待上传列表清空时返回）、`components/catInfoTab`、`components/relationTab`、`pages/manage/admin` 的 cat/link 两个 tab。
-  - **列表型/容器型不返回**，只加防重锁：`pages/manage/review`（靠 `showLoading mask`）、`pages/manage/checkFeedbacks`（新增 `this.checking`）、`pages/manage/newsAdmin`（新增 `this.removing`）、`pages/manage/replyFeedback`（新增 `this.replying`）、`pages/genealogy/commentBoard`、`pages/manage/admin` 的 photo tab。
-  - `pages/manage/filters` 的 `uploadFilters(e)` 用 `isFinal = !!(e && e.currentTarget)` 区分「页面内静默保存」与「底部确定上传」（后者才返回）；并补上原来缺失的 `putInbox` 返回值判断、失败 toast 与 `wx.hideLoading()`；`doUploadCampus` 只 toast 不返回（页内中间步骤）。
-  - **修真实 bug**：`pages/manage/replyFeedback` 原来 `bindReply` 提交后再调 `bindCheck()` 又发一次 `manageFeedback`（只带 `status`），等于同一件事提交两遍 —— 已删 `bindCheck`，改为一次 patch 带 `status+replyInfo+replyDate`。
-  - **catInfoTab 假写转真写**：`saveCat()` 原来走 `api.updateCat` → `datasource.function.invoke` 未实现 → `{ok:true,data:null}` 假成功；现改 `passcode.ensureToken()` + `putInbox('manage',{action:'updateCat',patch})`，`patch` 只收 `MANAGE_CAT_PATCH_FIELDS` 白名单 19 字段（聚合端白名单外的键会让整条 drop）。**聚合端没有新建猫的 action**，所以无 `cat_id` 时直接提示「暂时只能修改已有猫猫，新建暂未开放」。
-  - 验证：14 个改动 JS `node --check` 全过、47 单测全过、66 项数据校验全过。
-- **v4.0.63：管理后台重构，删掉 19 个无用目录（2026-11-03）** — 判据：页面是否有真实 `putInbox` 写链路（走 `api.curdOp`/`api.adoptionOp`/`api.vaccineOp` 的全是**本地假写**，因为 `datasource.js:1332-1360` 的 `function.invoke` 只实现 6 个 action，其余返回 `{result:{ok:true,data:null}}`）。
-  - 已删目录：`pages/manage/{addCat,addRelations,checkComment,checkPhotos,checkAdoption,imProcess,managers,medicalManage,photoManagement,rewards,pageSettings}`、`pages/tools/{inviteUser,updateUserRole}`（`pages/tools` 空目录一并删）、`pages/info/{myFootprint,myAchievement}`、`pages/genealogy/applyMapAccess`、`pages/genealogy/detailCat/relationGraph`、`pages/map`、`packages/tencentcloud`、`components/vaccineTab`；文件：`utils/achievement.js`、`utils/cloudAccess.js`（`cloudAccess`+`tencentcloud`+`addCat`/`addRelations` 曾是闭环引用，一起删）。
-  - `info.js` 管理菜单 15 项 → **9 项**：操作手册(guide)/审核队列/猫资料编辑(?tab=cat)/照片审核(?tab=photo)/友情链接(?tab=link)/反馈处理(**去掉 disabled，已可用**)/猫抓板公告/位置区域花色/猫猫管理(catManage，新增入口)。`loadAdminNums` 与 `refreshManagerNums` 同步删掉 `numChkComments`/`numImProcess` 统计。
-  - `catManage` 去掉疫苗 tab（`.json` 删 `vaccine-tab` 组件声明、`.wxml` 删 tab 按钮 + `<vaccine-tab>` + `.vaccine-options` 浮层、`.js` 删 6 个 handler、`.wxss` 删 `.vaccine-*`/`.option-*` 块）。
-  - `project.config.json`：`packOptions.ignore` 18 条 → **只剩 `images/markers`**；`condition.miniprogram.list` 清掉 9 个已删页，`pages/science/sciDetail` 路径修正为现存 `pages/news/sciDetail/sciDetail`。
-  - `config.js` 删 `inviteUser` 配置块；`utils/page.js` 的 `toSettings()` 改 toast（目标页已删，该函数零调用者）；`utils/msg.js` 两处订阅消息 page 从 `checkPhotos` 改指 `admin?tab=photo` 与 `review`。
-  - **修真实 bug**：`scripts/process-inbox.js` 的 `MANAGE_CAT_PATCH_TYPES` 少了 `relations: 'array'`，导致 `patchValueOk()` 首行 `if (!type) return false` 直接拒 → `relationTab.js` 保存猫际关系**永远 `drop:bad-patch-type` 静默失败**。已补。
-  - 验证：27×4 页面文件齐全 missing:0、`node --check` 全过、47 单测全过、66 项数据校验全过、22 个已删关键词全仓扫描零命中。
-- **v4.0.62：口令全站只输一次（2026-11-03）** — 原来是「解锁（连击 5 次）输一次 + 每个管理页提交前再 ensureToken 各输一次」，共 12 处 `promptToken` + 5 份重复 `ensureToken` + 15 页 `checkAuth(level)` 二次拦人。现统一为：**只在关于页连击输一次**（`info.js` `askAdminPasscode()` 校验 `data/gate.json` 的 code 后同时写 `passcode.setToken` 与 `setUnlocked(true)`），下游一律 `passcode.ensureToken()` 直接读已存 token（取不到只弹「回关于页重新解锁」提示，绝不弹输入框）。
-  - `utils/passcode.js` 新增导出 `ensureToken()`；`utils/user.js` 的 `isManagerAsync()` 简化为 `return passcode.isUnlocked();`（**不再比对 `user.manager` 等级**），`checkAuth(page, level)` 只看解锁标记，失败文案改为提示回关于页解锁。
-  - 删掉 admin / review / newsAdmin 三页的「口令」按钮（`.head-lock`）、`.token-tip` 提示条及对应 wxss；`<passcode-modal />` 只保留 `info.wxml:104` 一处（其余 5 页删除）。
-  - 修 bug：`replyFeedback.js:25` 的 `if (checkAuth(this, 1))` 漏 `await`（Promise 恒真 → 权限判断失效）已补上。
-  - ⚠️ 语义变化：**解锁即管理员**，`user.manager` 等级不再参与门禁；`data/user.json` 空表时首个访客仍是 `manager=99`，但已不影响入口。真正提交校验仍在服务端 `scripts/process-inbox.js` 的 `tokenOk()`。
-- **v4.0.56：拍照识猫改接 MeowID 开放平台（2026-11-02，v4.0.58 已上线）** — 完整细节见 `AGENTS-archive.md` 的「v4.0.56」一节，这里只留当前仍生效的事实：
-  - **project_id 不可推导，必须用户给**：API key 形如 `mk_live_<16位十六进制>_<secret>`，但那 16 位**不是** project UUID；用各种变体/前缀/数字/穿越探 21 次全返 `403 project_mismatch`，且服务端**只比对 key 绑定项目、不查存在性**（不存在的 pid 也是同一个 403）→ 枚举不可行。假 key 返 `401 invalid_api_key`（可判真伪）。鉴权头**只认 `Authorization: Bearer <key>`**。
-  - **识猫端点** `POST {apiBase}/v1/projects/{projectId}/search?top_k=N&threshold=T`，multipart 单字段 **`image`**（`wx.uploadFile` 的 `name:'image'`，微信自造 boundary，不能自定义 Content-Type）；响应 `{candidates:[{index,route,face_detected,unknown,matches:[{cat_id,cat_name,score,support}]}]}`，单猫可能退化为扁平对象；**`matches[].score` 才是相似度**（`candidates[].score` 是检测分）；**响应无 bbox/face_box** → 旧的「画框+点框切猫」已整体删除。
-  - **已灌库（v4.0.58）**：UUID `0627e727-c9c1-4194-a896-545c5106b676` 已验通；**21 只猫 212 张参考图全部入库**（向量已提取），`data/cat.json` 21 条 `meowid_id` 齐全；`data/setting.json` 的 `recognize` 块已填 `apiBase/projectId/apiKey/topK=3`；平台原有「奶盖」`326496d1-9402-489e-b9e3-fedc5df70282`（22 图 / meta demo-cat-12）经真实照片 search 命中 score=0.35、support=19，确认为本地 `cat-naigai` 同一只，**已复用未重复建档**。灌库脚本 `scripts/meowid-enroll.js` 可重跑补漏（state 文件不保证全持久化，以平台计数为权威）。**剩余：真机自测**。
-  - **计费**：按「猫咪向量提取」计次（注册+识别都算），没检测到猫不计费；一次多猫识别只扣 1 次；图片上限 15 MiB。
-  - **入口隐藏的坑（必记）**：`genealogy.js` 里 `__wxConfig.envVersion === 'release'` 在开发者工具里是 `'develop'`，读不存在的 `recognize_test` → `settings` 空 → `showRecognize=false`，入口不显示。已改成 `=== 'release' || === 'develop'`。
-- **v4.0.53：全量代码审计优化落地（2026-11-01）** — 9 类改动，逐条清单见 `AGENTS-archive.md` 的「v4.0.53」一节。要点：
-  - 下架照片露出面全站清理（B1）：`cat.js`(getBestPhoto/getLatestPhoto)、`datasource.js`(_getCatLocations)、`gallery.js`、`detailCat.js` 相册均过滤 `hidden`/`deleted`；`detailCat.js` 点赞改 async + `await putInbox('like',…)`；服务端照片审核通过改为真复制 pending→catimg 并 append `photo.json`（`approvePhoto`，`photo_count_total+1`）。
-  - 6 处 `api.curdOp` 假写改真 `putInbox`（inter / relationTab / checkFeedbacks / replyFeedback / pageSettings / filters / catInfoTab 的 movePhoto），服务端新增 `deleteComment`/`approvePhoto`/`manageFeedback`/`managePageSettings`/`saveFilter`/`movePhoto` 等 action（白名单 + 永不 throw + `markTouched`）。
-  - 删 `pages/leaderboard/`、`components/photoRank`、`components/achievementRank` 死页与孤儿组件；删 252 处调试 `console.log`；新建 `utils/nickname.js`（`NICKNAME_MAX=20`）应用到 commentBoard/feedbackDetail/modifyNews 3 页（addPhoto 已匿名直传无昵称）。验收 47 单测 + 66 verify + DRY_RUN 全过，提交 `1e48b71`。⚠️ 用户自有改动 `app_logo.png`/`图片.pptx` 未纳入审计提交。
-- **v4.0.54：五维评分雷达图（2026-11-02）** — 详情页「猫友评价」**展开详情**里，原 5 行 `star-rating` 换成 canvas-2d 五维雷达图：`detailCat.js` 新增 `drawRatingRadar()`（按 `cat.rating.dimAvg` 的 `{name,score}` 画五边形，`#0C5F03` 描点 / `#14801F` 描边 / `rgba(20,128,31,0.18)` 填充、4 圈同心网格 + 维度标签），`bindDetailRating` 展开时与 `onShow` 各重绘一次，`count===0` 显示「暂无评分，快来当第一个～」。**只动视觉、不碰数据结构、不引依赖、主题色不变**。完整原文见 `AGENTS-archive.md` 的「v4.0.54」一节。
-- **v4.0.55：数据看板加「近半年趋势」+「成长时间轴」（2026-11-02）** — `_getCatStats()` 扩 `trend/trendMax/timeline`；`dashboard` 新增趋势柱状卡与时间轴卡。⚠️ 「为什么不用 `stats.events`」「`mphoto` 是毫秒时间戳」等要点见 `AGENTS-archive.md` 的「v4.0.55」一节。
+- **v4.0.71**：反馈链路打通（2026-11-03）
+- **v4.0.70**：审核队列 UI 重排（2026-11-03）
+- **v4.0.69**：审核队列白图的最后一层兜底（2026-11-03）
+- **v4.0.68**：待审照片改用公开预览副本（2026-11-03）
+- **v4.0.67**：小程序端审核能力恢复（2026-11-03）
+- **v4.0.66**：去掉「操作手册」菜单（2026-11-03）
+- **v4.0.65**：管理后台按「一个对象一个入口」重组（2026-11-03）
+- **v4.0.64**：提交后自动返回，防重复提交（2026-11-03）
+- **v4.0.63**：管理后台重构，删掉 19 个无用目录（2026-11-03）
+- **v4.0.62**：口令全站只输一次（2026-11-03）
+- **v4.0.56**：拍照识猫改接 MeowID 开放平台（2026-11-02，v4.0.58 已上线）
+- **v4.0.53**：全量代码审计优化落地（2026-11-01）
+- **v4.0.54**：五维评分雷达图（2026-11-02）
+- **v4.0.55**：数据看板加「近半年趋势」+「成长时间轴」（2026-11-02）
 - **更早的已上线条目（原文全在 `AGENTS-archive.md`，按节名查；这里只留当前仍生效的结论）**：
   - **v4.0.42 管理口令收敛为 `data/gate.json` 一处**：`process-inbox.js` 的 `currentGateCode()` 读 `data/gate.json` 的 `code`，`tokenOk()` = `currentGateCode() || REVIEW_PASSCODE || ''`；**`REVIEW_PASSCODE` 降级为兜底**，新部署完全不用配 secret；自测用 `SELFTEST_TOKEN`。改 gate code 一处同时决定「界面能不能进」和「提交能不能过」，口令不对仍是 `drop:bad-token` 静默丢弃。提交 `9d11c92`。
   - **v4.0.36 关于页按参考图重构**：只改 `info.wxml`/`info.wxss`/`config.js`（**`info.js` 一字未动**）；连击位置从 `.nav-title` 迁到 `.title`（「火大猫谱」），**必须 `catchtap` 不是 `bindtap`**（防冒泡）；`showCond[menu.show]` 在 wxml 里**必须是 2 处**（工具组 + 管理后台组，别合并）；**故意不加「清理缓存」行**——`info.js` 里 `this.clearCache()` 根本不存在，调用必报错，别去实现。提交 `090bb1b`。
