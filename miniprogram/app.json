@@ -1,7 +1,6 @@
 {
   "pages": [
     "pages/genealogy/genealogy",
-    "pages/genealogy/addPhoto/addPhoto",
     "pages/genealogy/detailCat/detailCat",
     "pages/genealogy/commentBoard/commentBoard",
     "pages/genealogy/feedbackDetail/feedbackDetail",

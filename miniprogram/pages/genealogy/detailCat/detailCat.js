@@ -3,7 +3,8 @@ import {
   shareTo,
   getCurrentPath,
   formatDate,
-  deepcopy
+  deepcopy,
+  compressImage
 } from "../../../utils/utils";
 import {
   checkCanUpload,
@@ -22,10 +23,10 @@ import {
   getGlobalSettings
 } from "../../../utils/page";
 import { convertRatingList, genDefaultRating } from "../../../utils/rating";
-import { signCosUrl, signPhotoUrls } from "../../../utils/common";
+import { signCosUrl, signPhotoUrls, getCurrentUserOpenid } from "../../../utils/common";
 import api from "../../../utils/cloudApi";
 import { putInbox } from "../../../utils/writeback";
-import { getPendingCount, pendingText } from "../../../utils/syncTip";
+import { getPendingCount, pendingText, markPending, submittedModal } from "../../../utils/syncTip";
 import { isReview, isReviewSync } from "../../../utils/review";
 
 const app = getApp();
@@ -427,14 +428,100 @@ Page({
     });
   },
 
-  bindAddPhoto() {
+  // 上传喵照：不再跳 addPhoto 页，直接在详情页选图 → 压缩 → 匿名直传 COS pending/ → 写 inbox
+  // （v4.0.81：用户要求去掉单独的「添加照片」页，点一下直接弹系统选图）
+  async bindAddPhoto() {
     if (!config.photo_upload_enabled) {
       wx.showToast({ title: '上传功能正在改造，暂未开放', icon: 'none', duration: 2000 });
       return;
     }
-    wx.navigateTo({
-      url: '/pages/genealogy/addPhoto/addPhoto?cat_id=' + this.data.cat._id,
-    });
+    if (this.jsData.uploadingPhoto) return;
+
+    let chosen;
+    try {
+      chosen = await wx.chooseMedia({
+        count: 20,
+        mediaType: ['image'],
+        sizeType: ['compressed'],
+        sourceType: ['album', 'camera'],
+      });
+    } catch (e) {
+      return; // 用户取消选图
+    }
+    const files = (chosen && chosen.tempFiles) || [];
+    if (!files.length) return;
+
+    const cat = this.data.cat || {};
+    const baseUrl = String(config.data_base_url || '').replace(/\/+$/, '');
+    if (!baseUrl) {
+      wx.showToast({ title: '数据源未配置', icon: 'none' });
+      return;
+    }
+
+    this.jsData.uploadingPhoto = true;
+    let okCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      wx.showLoading({ title: '正在上传(' + (files.length - i) + ')', mask: true });
+      try {
+        let path = files[i].tempFilePath || files[i].path;
+        let size = Number(files[i].size || 0);
+        if (size > 512 * 1024) {
+          path = await compressImage(path, 30);
+        }
+        const dot = String(path).lastIndexOf('.');
+        let ext = dot >= 0 ? String(path).substr(dot + 1) : 'jpg';
+        ext = (ext || 'jpg').toLowerCase();
+        if (ext === 'jpeg') ext = 'jpg';
+
+        const openid = (await getCurrentUserOpenid()) || 'anon';
+        const key = 'pending/' + openid + '-' + Date.now() + '-' + i + '.' + ext;
+
+        const arrayBuffer = await new Promise((resolve, reject) => {
+          wx.getFileSystemManager().readFile({ filePath: path, success: r => resolve(r.data), fail: reject });
+        });
+        await new Promise((resolve, reject) => {
+          wx.request({
+            url: baseUrl + '/' + key,
+            method: 'PUT',
+            data: arrayBuffer,
+            header: {
+              'Content-Type': ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg',
+            },
+            success: res => {
+              if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(res);
+              else reject(new Error('PUT 返回 ' + (res && res.statusCode)));
+            },
+            fail: reject,
+          });
+        });
+
+        const ok = await putInbox('photo', {
+          photo_key: key,
+          cat_id: cat._id,
+          photographer: '',
+          shooting_date: '',
+        });
+        if (ok) okCount++; else failCount++;
+      } catch (e) {
+        failCount++;
+      }
+    }
+
+    wx.hideLoading();
+    this.jsData.uploadingPhoto = false;
+
+    if (okCount > 0) {
+      markPending('photo', { cat_id: cat._id, label: '照片' });
+      submittedModal(
+        failCount > 0
+          ? '已提交 ' + okCount + ' 张，' + failCount + ' 张失败'
+          : config.text.sync.received_tip
+      );
+    } else {
+      submittedModal(failCount > 0 ? config.text.sync.offline_tip : '没有可上传的照片');
+    }
   },
 
   bindRating() {
