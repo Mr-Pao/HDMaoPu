@@ -760,8 +760,16 @@ Page({
 
   // 单行的查询条件；onlyIndex 指定时只看该选项（用于算每颗胶囊的数字）
   _rowConditions: function (row, onlyIndex) {
+    // 算单颗胶囊的数字时，即便这一行正处在「全部」，也必须只按该选项自身条件过滤，
+    // 否则每颗胶囊都会数出「全部猫」的总数（v4.0.82 修的 bug：全是 21）
+    if (onlyIndex !== undefined) {
+      const only = row.options[onlyIndex];
+      if (!only) return [];
+      if (row.key === 'state') return [only.cond];
+      return [{ [row.key]: { $in: [only.name] } }];
+    }
     if (row.all_active) return [];
-    const picked = row.options.filter((o, i) => o.active && (onlyIndex === undefined || i === onlyIndex));
+    const picked = row.options.filter((o, i) => o.active);
     if (!picked.length) return [];
     // 状态行每颗胶囊自带完整条件，多选时语义互斥（已绝育 vs 待绝育），取并集
     if (row.key === 'state') {
