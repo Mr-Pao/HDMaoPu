@@ -166,14 +166,16 @@
 <!-- 口令弹层（首页是唯一挂载点，管理后台各页共用已存 token） -->
 <passcode-modal />
 
-<!-- 版本切换面板：连击标题 5 次打开；第一行版本号，第二行管理口令 -->
+<!-- 版本切换面板：连击标题 5 次打开；版本号与口令各自一行、各自一个按钮 -->
 <view class='dbg-mask' wx:if='{{debug_show}}' bindtap='closeDebugPanel' catchtouchmove='voidMove'>
   <view class='dbg-panel' catchtap='voidMove'>
-    <input class='dbg-input' type='text' value='{{debug_input}}' placeholder-class='dbg-ph' placeholder='版本号，如 4.0.72' confirm-type='next' bindinput='onDebugInput' />
-    <input class='dbg-input' password='{{true}}' value='{{debug_pass}}' placeholder-class='dbg-ph' placeholder='管理口令' confirm-type='done' bindinput='onDebugPass' bindconfirm='confirmDebug' />
-    <view class='dbg-btns'>
-      <view class='dbg-btn dbg-btn--main' bindtap='confirmDebug'>确定</view>
-      <view class='dbg-btn' bindtap='clearOverride'>清除</view>
+    <view class='dbg-row'>
+      <input class='dbg-input' type='text' value='{{debug_input}}' placeholder-class='dbg-ph' placeholder='版本号，如 4.0.72' confirm-type='done' bindinput='onDebugInput' bindconfirm='applySimVersion' />
+      <view class='dbg-btn dbg-btn--main' bindtap='applySimVersion'>模拟</view>
+    </view>
+    <view class='dbg-row'>
+      <input class='dbg-input' password='{{true}}' value='{{debug_pass}}' placeholder-class='dbg-ph' placeholder='管理口令' confirm-type='done' bindinput='onDebugPass' bindconfirm='confirmDebug' />
+      <view class='dbg-btn' bindtap='confirmDebug'>确定</view>
     </view>
   </view>
 </view>

@@ -1432,14 +1432,24 @@ page {
 
 .dbg-panel {
   width: 620rpx;
-  padding: 40rpx 36rpx 32rpx;
+  padding: 36rpx 32rpx 32rpx;
   border-radius: 28rpx;
   background-color: #FFFFFF;
   box-shadow: 0 24rpx 60rpx rgba(12, 95, 3, 0.18);
 }
 
+.dbg-row {
+  display: flex;
+  align-items: center;
+}
+
+.dbg-row + .dbg-row {
+  margin-top: 20rpx;
+}
+
 .dbg-input {
-  height: 84rpx;
+  flex: 1;
+  height: 82rpx;
   padding: 0 24rpx;
   border-radius: 18rpx;
   background-color: #F5F7F5;
@@ -1448,24 +1458,15 @@ page {
   color: #10160F;
 }
 
-.dbg-input + .dbg-input {
-  margin-top: 20rpx;
-}
-
 .dbg-ph {
   color: #B4BCB7;
 }
 
-.dbg-btns {
-  display: flex;
-  align-items: center;
-  margin-top: 24rpx;
-}
-
 .dbg-btn {
-  flex: 1;
+  width: 132rpx;
   height: 82rpx;
   line-height: 82rpx;
+  margin-left: 20rpx;
   text-align: center;
   border-radius: 999rpx;
   font-size: 28rpx;
@@ -1474,25 +1475,8 @@ page {
   border: 1rpx solid rgba(12, 95, 3, 0.10);
 }
 
-.dbg-btn + .dbg-btn {
-  margin-left: 20rpx;
-}
-
 .dbg-btn--main {
   color: #FFFFFF;
   background-color: #14801F;
   border-color: #14801F;
-}
-
-.dbg-btn--danger {
-  color: #C0392B;
-  background-color: #FBEDEB;
-  border-color: rgba(192, 57, 43, 0.16);
-}
-
-.dbg-go {
-  margin-top: 28rpx;
-  text-align: center;
-  font-size: 26rpx;
-  color: #8A948E;
 }

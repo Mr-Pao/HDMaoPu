@@ -690,7 +690,18 @@ Page({
     this.setData({ debug_pass: e.detail.value });
   },
 
-  // 确定：先校验管理口令，通过后写入口令、可选地写入模拟版本号，再重载
+  // 第一行「模拟」：只写本机模拟版本号，不需要口令
+  applySimVersion() {
+    const v = String(this.data.debug_input || '').trim();
+    if (!v) {
+      wx.showToast({ title: '请填版本号，如 4.0.72', icon: 'none' });
+      return;
+    }
+    setOverride(v);
+    this.reloadForDebug();
+  },
+
+  // 第二行「确定」：校验管理口令，通过后解锁并写入模拟版本号（空则清除覆盖）
   async confirmDebug() {
     const code = await this.loadGateCode();
     if (!code) {
