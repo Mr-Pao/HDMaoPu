@@ -156,7 +156,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.82`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.83`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -173,7 +173,8 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-03）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.82`
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.83`
+- **v4.0.83：新版本自动重启更新（2026-11-04）** — 用户问「有没有新版本自动重启更新的功能」。`utils/utils.js` 的 `checkUpdateVersion()`（`app.js` 的 `onLaunch` 末尾调用）原先是 `onUpdateReady` 弹 `wx.showModal`「新版本已就绪，是否重启应用？」，用户点取消就不更新。现改为**直接 `wx.showToast('正在更新…')` + 1.2s 后 `updateManager.applyUpdate()` 自动重启**。微信小程序没有「静默后台热更」，这是能做到的最自动形态：新包下载完（下次冷启动时触发）自动重启到新版。`onUpdateFailed` 仍留空（失败无副作用，下次启动再试）。
 - **v4.0.82：修筛选胶囊数字全是 21（2026-11-04）** — `genealogy.js` 的 `_rowConditions(row, onlyIndex)` 原来先判 `if (row.all_active) return []`，导致某行处于「全部」时算每颗胶囊数字拿到空条件 → 每颗都数出全表总数（21 只猫全显示 21）。修法：把 `onlyIndex !== undefined` 分支提到 `all_active` 判断之前，只按该选项自身条件过滤（`state` 行直接用 `only.cond`，其它行 `{[row.key]:{$in:[only.name]}}`）。
 - **v4.0.81：去掉「添加照片」页，详情页点一下直接弹选图（2026-11-04）** — 用户要求「去掉这一页，点击上传喵照直接弹出」。`pages/genealogy/addPhoto/` 整目录删除、`app.json` 28→**27 页**；`detailCat.js` 的 `bindAddPhoto()` 改成页内直接 `wx.chooseMedia`（count 20、compressed）→ 逐张 `compressImage`（>512KB）→ `readFile` 取 ArrayBuffer → `wx.request PUT {data_base_url}/pending/...` → `putInbox('photo',{photo_key,cat_id})`，成功后 `markPending` + `submittedModal`，`jsData.uploadingPhoto` 防重入。imports 新增 `compressImage`、`getCurrentUserOpenid`、`markPending`、`submittedModal`。⚠️ 上传仍是**匿名直传 COS**，桶策略要求 `pending/*` 允许匿名 PUT 且单对象 ≤512KB。
 - **v4.0.80：补 4 个 TS 组件的 JS 实现，修便利贴墙空白（2026-11-04）** — 现象：详情页显示「便利贴 1」但便利贴墙只有输入框、列表全空。根因不是数据/查询，而是 `project.config.json` 的 `setting.useCompilerPlugins` 为 `false`（没开 TS 编译插件），`components/{comment-list,cat-card,star-rating,genealogy-tree}` 只有 `.ts` 没有编译产物 → 组件不存在，列表项与顶部猫卡都渲染不出来。修法：给这 4 个组件各补一份等价 `.js`（`.js` 优先于 `.ts`），逻辑与原 TS 完全一致（`comment-list` 的 `onDelete` 触发 `delete` 事件；`cat-card` 的 `cat,title` observer 算 `cover/metaShow/displayName`；`star-rating` 的 `value,max` observer 生成 `stars`；`genealogy-tree` 的 `cat,parents,children` observer 算 `hasData` + `onTapNode`）。⚠️ **以后新增 `.ts` 组件必须同时给 `.js`**，否则编译后组件不存在；`pages/manage/` 下 3 个 `.ts` 页面已有 `.js` 双胞胎，不用管。

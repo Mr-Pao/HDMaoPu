@@ -114,16 +114,12 @@ function checkUpdateVersion() {
   })
 
   updateManager.onUpdateReady(function () {
-    wx.showModal({
-      title: '更新提示',
-      content: '新版本已就绪，是否重启应用？',
-      success: function (res) {
-        if (res.confirm) {
-          // 新的版本已经下载好，调用 applyUpdate 应用新版本并重启
-          updateManager.applyUpdate()
-        }
-      }
-    })
+    // v4.0.83：新版本下载完直接应用并重启，不再弹窗问用户
+    // （弹窗模式下绝大多数用户会点「取消」，线上长期停留在旧包）
+    wx.showToast({ title: '正在更新…', icon: 'none', duration: 1200 })
+    setTimeout(function () {
+      updateManager.applyUpdate()
+    }, 1200)
   })
 
   updateManager.onUpdateFailed(function () {
