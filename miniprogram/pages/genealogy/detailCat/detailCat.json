@@ -3,7 +3,6 @@
   "usingComponents": {
     "mp-gallery": "/packages/weui/gallery/gallery",
     "popup": "/components/popup/popup",
-    "poster": "/components/poster/poster",
     "star-rating": "/components/star-rating/star-rating",
     "genealogy-tree": "/components/genealogy-tree/genealogy-tree"
   },

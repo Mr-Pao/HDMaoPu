@@ -807,14 +807,6 @@ Page({
     }
   },
 
-  // 展示分享海报
-  async showPoster() {
-    let posterComponent = this.selectComponent('#posterComponent');
-    if (posterComponent) {
-      posterComponent.startDrawing();
-    }
-  },
-
   // 从详情页进入领养申请。app.json 里已经注册了 applyAdoption，
   // 之前没有入口，所以页面存在但永远打不开。
   bindApplyAdoption() {

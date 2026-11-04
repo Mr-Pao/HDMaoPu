@@ -187,14 +187,10 @@
         <view class='count'>共{{albumMax}}张照片</view>
       </view>
 
-      <view class='album-tools'>
-        <view class='tool' hover-class='tool-hover' wx:if="{{canUpload}}" bindtap="bindAddPhoto">
+      <view class='album-tools' wx:if="{{canUpload}}">
+        <view class='tool' hover-class='tool-hover' bindtap="bindAddPhoto">
           <image class='tool-icon' mode='aspectFit' src='/pages/public/images/button/addPhoto.svg'></image>
           <view class='tool-text'>上传喵照</view>
-        </view>
-        <view class='tool' hover-class='tool-hover' bindtap="showPoster">
-          <image class='tool-icon' mode='aspectFit' src='/pages/public/images/button/shareMeowId.svg'></image>
-          <view class='tool-text'>分享喵ID</view>
         </view>
       </view>
 
@@ -267,5 +263,3 @@
   </view>
 </popup>
 
-<!-- 海报图弹窗组件 -->
-<poster id="posterComponent" cat="{{cat}}" coverImg="{{cat.avatar}}" zindex="3"></poster>

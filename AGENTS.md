@@ -146,7 +146,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.74`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.75`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -163,7 +163,8 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-03）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.74`
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.75`
+- **v4.0.75：详情页去掉「分享喵ID」（2026-11-04）** — 用户要求删掉相册区的分享海报入口。改动：`detailCat.wxml` 删 `.album-tools` 里的第二个 `.tool`（`bindtap="showPoster"` + `shareMeowId.svg` + 文案「分享喵ID」）与文件末尾的 `<poster id="posterComponent" ...>`；`.album-tools` 整体加 `wx:if='{{canUpload}}'`（否则只剩一个按钮时仍会渲染出一条空工具条），内层 `.tool` 的 `wx:if` 去掉（外层已判）；`detailCat.js` 删 `showPoster()`；`detailCat.json` 的 `usingComponents` 删 `"poster": "/components/poster/poster"`。**`components/poster/` 组件本身保留**，`packages/weui/gallery/gallery.wxml:28` 仍在用它（图库大图页的海报），别整目录删。`shareMeowId.svg` 已无引用但文件保留。
 - **v4.0.74：审核开关改成「直接改 COS」，不再走仓库（2026-11-04）** — 起因：用户指出「spacelaunch 我是直接改 cos 里的就行了」，而 v4.0.73 的开关放在 `data/app-config.json`，会被 `sync-data.yml` 每次覆盖。
   - **`scripts/upload-data.js` 的 `UPLOAD_DENYLIST` 加 `app-config.json`**（现三条：`inbox_log.json` / `review_queue.json` / `app-config.json`）。这是让「直接改 COS」成立的关键：聚合 job 每 5 分钟就可能写 `data/*.json` 触发上传，若开关也在上传列表里，线上手改的值会被刷回仓库旧值。
   - **`utils/review.js` 的 `request()` 改走 `wx.request` GET `{config.data_base_url}/data/app-config.json`**，不再经 `datasource` 集合层。**同时兼容两种格式**：裸对象 `{"reviewVersions":[]}`（SpaceLaunch 写法，COS 上现在就是这种）与 `{version, items:[{_id:'app-config'}]}` 信封（取 `items` 里 `_id==='app-config'` 那条）。所以 COS 上直接手改不会因格式不符而失效。
@@ -281,7 +282,7 @@ cos-version  从上游错误派生，废弃
 - **徽章（勋章）功能已全站删除**（v4.0.17）：10 个页面 40 个文件、`components/badgeModal`、`components/badgeRank`（只有死页 leaderboard 引用）、`utils/badge.js`、`cloudApi.js` 的 `getBadge/giveBadge/genBadgeCode/loadBadgeCode`、`data/{badge,badge_def,badge_rank}.json`、11 张图片、`config.badge_rank_*_img` 常量、`gen-demo-data.js` 的 BADGE_DEFS 段、`verify-demo-data.js` 的 8 个校验项全部清除。`app.json` 页面 38→34、分包 3→1。`info` 页删「徽章口袋」card 与「徽章管理」菜单。`ratingDetail.wxss` 原有 `@import "../badgeDetail/badgeDetail.wxss"`，已内联所需的 `.bd-block`/`.bd-title`；`app.wxss` 里零引用的 `--color-badge-A/B/C` 三个 token 也已删（文件其余 token 不动）
 - **「猫际关系」卡按数据显隐**（v4.0.18）：外层条件改为 `{{cat.relations && cat.relations.length}}`（不再对管理员单向开放），没有关系时整张卡不显示；卡内「+ 添加关系」入口删除，`detailCat.js` 的 `toAddRelation()` 一并删除，**改到「猫咪信息纠错」页**（`feedbackDetail`）——仅管理员可见（`isManagerAsync(3)`），`.adminEntry` 块在 `.userInfo` 之后
 - 详情页整体信息架构（v4.0.17 重构）：猫猫档案卡（去绿条 label-block、扁平两列）→ 猫友评价卡 → 疫苗卡 → 猫际关系卡 → 相册；卡片间距统一 24rpx
-- **详情页「+」悬浮弹窗已移除**（v4.0.15 移除，v4.0.16 起改为就地挂载）：`detailCat` 的 7 个操作不再集中成卡片，而是**逐个挂到页面本来就对应的位置**——便利贴数 count → `toComment`；粉丝量 count → `followCat`（已关注时 `.tap-on` 变绿）；档案卡（`icon-newspaper-o`）header 右上「猫咪信息纠错」→ `bindTapFeedback`；评分行右侧「我要评分」→ `bindRating`（与「展开详情」并列）；相册 `.big-header` 右侧 `.album-tools`（`上传喵照` `bindAddPhoto` 受 `canUpload` 控制 + `分享喵ID` `showPoster`）；领养状态 tag（`cat.adopt == 1`）→ 文案改成「{状态} · 申请领养」并 `bindtap="bindApplyAdoption"`。`showFunction`/`closeFunction`/`showFunc` 与 `.action-card/.action-grid/.action-item` 样式已彻底删除
+- **详情页「+」悬浮弹窗已移除**（v4.0.15 移除，v4.0.16 起改为就地挂载）：`detailCat` 的 7 个操作不再集中成卡片，而是**逐个挂到页面本来就对应的位置**——便利贴数 count → `toComment`；粉丝量 count → `followCat`（已关注时 `.tap-on` 变绿）；档案卡（`icon-newspaper-o`）header 右上「猫咪信息纠错」→ `bindTapFeedback`；评分行右侧「我要评分」→ `bindRating`（与「展开详情」并列）；相册 `.big-header` 右侧 `.album-tools`（`上传喵照` `bindAddPhoto` 受 `canUpload` 控制；`分享喵ID` `showPoster` **v4.0.75 已删**）；领养状态 tag（`cat.adopt == 1`）→ 文案改成「{状态} · 申请领养」并 `bindtap="bindApplyAdoption"`。`showFunction`/`closeFunction`/`showFunc` 与 `.action-card/.action-grid/.action-item` 样式已彻底删除
 
 ## 已知限制
 
