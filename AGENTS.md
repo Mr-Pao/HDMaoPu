@@ -146,7 +146,7 @@ cos-version  从上游错误派生，废弃
 - `data/` 之外没有数据库；`_id` 缺失会让 upload 整批中止
 
 ### 版本号制度
-以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.76`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
+以 `miniprogram/config.js` 的 `app_version` 为准（当前 `v4.0.77`），commit message 末尾带版本号。⚠️ 本文件历史段落里的版本号（v4.0.42 等）是当时写入时的快照，实际版本号一律看 `config.js`。
 历史上出现过 v4.x 与 v5.x 并存（v5.0.0 改版后回退命名为 v4.7.1 / v4.0.8），**别信 commit message 里的 v5.x，只信 `app_version`**。
 
 ### 设计系统（`miniprogram/app.wxss`，376 行）
@@ -163,8 +163,9 @@ cos-version  从上游错误派生，废弃
 `bundle-size.yml` 用 3MB 主包预算做回归护栏（平台硬上限 2MB，3MB 只是粗筛）。
 
 ### 当前状态（2026-11-03）
-- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.76`
-- **v4.0.76：版本记录独立成页（2026-11-04）** — 用户要求把「程序开发」页里的更新日志拿出来，补一条 `v4.0.0 / 2026/11/04`，统一放进版本页。新建 `pages/info/versionLog/`（4 文件，`navigationBarTitleText: 版本记录`，wxss `@import '../reward/reward.wxss'` 复用 `.block/.title/.desc`），`update_log` 数组从 `devTeam.js` 整体搬来并置顶 v4.0.0 条目；`app.json` 注册 → **28 页**；关于页「版本」行从纯文本改成 `bindtap='clickbtn' data-to='/pages/info/versionLog/versionLog'`（右值后加 `›`）。`devTeam.js` 删 `update_log`（-81 行）、`devTeam.wxml` 删「更新日志」整块，该页只剩本校开发 + 开源代码团队。
+- `config.demo_mode: false`、`writeback_enabled: true`、`photo_upload_enabled: **true**`（2026-11-01 改为匿名直传 COS，见"已知限制"）、`app_version: v4.0.77`
+- **v4.0.77：身份只有「用户 / 管理员」两种，修便利贴被关（2026-11-04）** — 用户指出「没有游客这种身份」。`utils/user.js` 的 `UserTypes` 由 `{manager, invited, guest}` 改为 `{manager, invited, user}`；`_checkFuncEnable()` 里人群判定改为 `ctrlList`（trim + 去空 + `guest` 兼容旧配置当普通用户），`hitUser = !isManager && !isInvited && (ctrlList.includes('user') || ctrlList.includes('guest'))`。`data/setting.json` 的 `accessCtrl` 改 `{ctrlUser:"user", ctrlVersion:"*", disabledFunc:"", limitedFunc:""}`（原 `ctrlUser:"guest"` + `limitedFunc:"reward,feedback,comment"` 导致所有人发不了便利贴），`version` 同步递增。⚠️ `limitedFunc` 现在为空，要再限制就填 `reward`/`feedback`/`comment`；`ctrlUser` 填 `user` 表示普通用户、`manager` 表示管理员。
+- **v4.0.76：版本记录独立成页（2026-11-04）** — 更新日志从「程序开发」页搬进新页 `pages/info/versionLog/`（4 文件，wxss `@import '../reward/reward.wxss'` 复用 `.block/.title`），`update_log` 置顶新增 `v4.0.0 / 2026/11/04`；`app.json` 27→**28 页**；关于页「版本」行改成 `bindtap='clickbtn' data-to='/pages/info/versionLog/versionLog'`；`devTeam.js` 删 `update_log`（-81 行）、`devTeam.wxml` 删「更新日志」块。
 - **v4.0.75：详情页去掉「分享喵ID」（2026-11-04）** — 用户要求删掉相册区的分享海报入口。改动：`detailCat.wxml` 删 `.album-tools` 里的第二个 `.tool`（`bindtap="showPoster"` + `shareMeowId.svg` + 文案「分享喵ID」）与文件末尾的 `<poster id="posterComponent" ...>`；`.album-tools` 整体加 `wx:if='{{canUpload}}'`（否则只剩一个按钮时仍会渲染出一条空工具条），内层 `.tool` 的 `wx:if` 去掉（外层已判）；`detailCat.js` 删 `showPoster()`；`detailCat.json` 的 `usingComponents` 删 `"poster": "/components/poster/poster"`。**`components/poster/` 组件本身保留**，`packages/weui/gallery/gallery.wxml:28` 仍在用它（图库大图页的海报），别整目录删。`shareMeowId.svg` 已无引用但文件保留。
 - **v4.0.74：审核开关改成「直接改 COS」，不再走仓库（2026-11-04）** — 起因：用户指出「spacelaunch 我是直接改 cos 里的就行了」，而 v4.0.73 的开关放在 `data/app-config.json`，会被 `sync-data.yml` 每次覆盖。
   - **`scripts/upload-data.js` 的 `UPLOAD_DENYLIST` 加 `app-config.json`**（现三条：`inbox_log.json` / `review_queue.json` / `app-config.json`）。这是让「直接改 COS」成立的关键：聚合 job 每 5 分钟就可能写 `data/*.json` 触发上传，若开关也在上传列表里，线上手改的值会被刷回仓库旧值。
@@ -183,17 +184,11 @@ cos-version  从上游错误派生，废弃
   - **暗门面板（首页 `genealogy.wxml` 末尾）**：连击「火大猫谱」5 次（`TAP_WINDOW=800`）→ **直接开面板不弹口令**；两行 `input` + 各自按钮（版本号+「模拟」、口令+「确定」）。**只有「去管理后台」要口令**（`data/gate.json` 的 code，当前 `0000`）。`.dbg-mask` z-index **8800**（口令弹层 9000）。
   - **关于页的连击/口令已整体删除**：`info.js` 只剩 `isUnlocked()`，`info.wxml` 的 `.title` 无事件、`<passcode-modal />` 已删。全站唯一挂载点是 `genealogy.wxml` 末尾。
   - 测试：`tests/review.test.js` 18 例，**单测合计 65 例**；`verify-demo-data.js` 段名「【审核期开关 / app-config】」4 项，**70 项**。
-- **v4.0.71：反馈链路打通（2026-11-03）** — 起因：用户问「反馈处理还有用吗」，实测答案是**没用，那个页面永远 0 条**。根因不是没提交，而是提交走错了通道：
-  - `pages/genealogy/feedbackDetail/feedbackDetail.js` 原来先 `api.curdOp add feedback`（写本地覆盖层，假写，永不落 `data/feedback.json`），真正发出去的是 `putInbox('comment',{...,type:'feedback'})` —— 走**评论**通道。
-  - 而 `scripts/process-inbox.js` 的 `handleComment` 只取 `cat_id`/`content`/`nickname`，**`type:'feedback'` 被直接丢弃**，入队 `kind:'comment'`；`handleDecision` 对 comment approve 只落 `data/comment.json`。所以反馈内容要么被当便利贴，要么石沉大海，`feedback.json` 永远是 `items: []`。
-  - 修法（反馈独立成一个 kind）：
-    - `VALID_KINDS`（`:76`）加 `'feedback'`（现 10 个）；新增 `handleFeedback(p)`：`feedbackInfo` trim 后为空 → `drop:no-content`，否则入 `review_queue`（`kind:'feedback'`，字段 `cat_id/cat_name/feedbackInfo/contactInfo/nickname/repliable`，字符串各自限长），**不要求 cat_id**（关于页的信息反馈没有关联猫）。
-    - `handleDecision` 的 approve 分支新增 `else if (item.kind === 'feedback')`：落 `data/feedback.json`（`_id=genId('fb',item.ts)`、`openid` 与 `_openid` 都写、`openDate`、`repliable` 布尔、`dealed:false`），回写 `item.applied_feedback_id`。字段形状对齐 `verify-demo-data.js` 的三条校验。
-    - `FEEDBACK_PATCH_FIELDS` 由 `['status','handled_by']` 扩为 **`['status','handled_by','replyInfo','replyDate']`** —— 原来 `replyFeedback` 一次提交带的 `replyInfo`/`replyDate` 会被整条 `drop:bad-patch-field` 丢掉，回复永远存不上。
-    - `manageFeedback` 里 `patch.status` 赋值后同步 `item.dealed = patch.status === 'done'`（`checkFeedbacks` 用 `find({dealed:false})` 拉列表，不同步会导致标了已处理还留在列表）；新增 `replyInfo`（≤500）与 `replyDate`（ISO 字符串，非法则 `drop:bad-patch-type`）。
-    - `feedbackDetail.js` 删掉假写分支与整个 `askNotice()`，改为 `putInbox('feedback', {...})`，订阅意愿在 `wx.showLoading` 之后立刻 `await requestNotice('feedback')` 问（必须用户手势后）。
-    - 审核队列支持新 kind：`review.js` 的 `KIND_LABEL` 加 `feedback:"信息纠错"`，映射 `contactInfo`/`repliable`，`content` 回落 `feedbackInfo`，无 `cat_id` 时猫名显示「信息反馈」；`review.wxml` 多一行「联系方式」与「可回复/无法回复」；`review.wxss` 加 `.tag-feedback`、`.content.sub`。
-  - ⚠️ **顺带修的坑**：`checkFeedbacks.js` 的 `total` 原来写 `fbRes.total`，但 `datasource` 的 `count()` 返回的是**数字** `{ result: n }`（不是 mpserverless 的 `{ total }`），所以页头「共有 N 条」一直是空的。现改 `typeof fbRes === 'number' ? fbRes : (fbRes && fbRes.total) || 0`。
+- **v4.0.71：反馈链路打通（2026-11-03）** — 原来反馈走的是 `putInbox('comment',{type:'feedback'})`，`process-inbox.js` 的 `handleComment` 把 `type` 丢掉当便利贴，`data/feedback.json` 永远是空。
+  - 修法：`VALID_KINDS` 加 `feedback`（现 10 个）+ 新增 `handleFeedback(p)`（`feedbackInfo` 为空 drop；入队 `kind:'feedback'`，**不要求 cat_id**）；`handleDecision` approve 分支加 `else if (kind==='feedback')` 落 `data/feedback.json`（`_id=genId('fb',ts)`、`openid`/`_openid` 都写、`dealed:false`）。
+  - `FEEDBACK_PATCH_FIELDS` 扩为 `['status','handled_by','replyInfo','replyDate']`（原来回复内容会被 `drop:bad-patch-field` 丢掉）；`manageFeedback` 里 `patch.status` 后同步 `item.dealed`，并新增 `replyInfo`(≤500)/`replyDate`(ISO)。
+  - `feedbackDetail.js` 删假写分支与 `askNotice()`，改 `putInbox('feedback')`；`review.js` 的 `KIND_LABEL` 加 `feedback:"信息纠错"`。
+  - ⚠️ `checkFeedbacks.js` 的 `count()` 返回 `{result:n}` 不是 `{total}`，页头计数一直空，已修。
 - **v4.0.70：审核队列 UI 重排（2026-11-03）** — 用户真机截图反馈「UI 布局调羹一下」，实测有三处硬伤：
   - **页面被压成中间一条**：`app.wxss:211` 有个全局 `.container{display:flex;flex-direction:column;align-items:center}`，`review.wxml` 的根节点就叫 `.container`，于是卡片被压成内容宽度并居中。本页 wxss 必须显式 `display:block;width:100%` 覆盖（**以后任何新页用 `.container` 作根节点都要检查这条**）。
   - 头部只有一行「待审核 4 条」，改成「待审核 + 大号计数」+ 右上「刷新」胶囊（新增 `onRefreshTap()`）。
@@ -263,7 +258,7 @@ cos-version  从上游错误派生，废弃
   - **v4.0.36 关于页按参考图重构**：只改 `info.wxml`/`info.wxss`/`config.js`（**`info.js` 一字未动**）；连击位置从 `.nav-title` 迁到 `.title`（「火大猫谱」），**必须 `catchtap` 不是 `bindtap`**（防冒泡）；`showCond[menu.show]` 在 wxml 里**必须是 2 处**（工具组 + 管理后台组，别合并）；**故意不加「清理缓存」行**——`info.js` 里 `this.clearCache()` 根本不存在，调用必报错，别去实现。提交 `090bb1b`。
   - **v4.0.35 公告管理独立入口 + 普通页零权限判断**：新建 `pages/manage/newsAdmin/`，公告写入改走 `putInbox('manage',{action:'manageNews',op:add|update|remove})` → `process-inbox.js` 的 `manageNews()`（**永不 throw**，`markTouched('news')`）；`detailNews` 退化为纯展示页（删「删除/修改」按钮，那曾是「公告谁都能改」的病根）；`passcode.js` 扩到 6 个导出（加 `UNLOCK_KEY/isUnlocked/setUnlocked`）；`isManagerAsync` 必须先判 `passcode.isUnlocked()`（否则 `remoteConfirmedEmpty` 分支让人人 manager=99）。⚠️ `MAX_OBJECT_BYTES` 从 4096 放宽到 `16384`（公告正文 + 9 图 URL 会顶破），`pending/*` 的 512KB 闸门不变。提交 `42556b6`。
   - **v4.0.34 连击 5 次 + 口令解锁**：口令**明文**存 `data/gate.json` 的 `code`（**废弃 SHA-256 哈希版**），`TAP_TO_UNLOCK=5`、`TAP_WINDOW=800`（超时重新计数，「连击」不是「累计」）；`loadGateCode()` **故意不缓存**，改完 gate.json 下次连击即生效；⚠️ `data/` 是公开 CDN → 口令等于公开，只是「别让普通用户误入」的 UX 门；`data/gate.json` 必须真传到 COS，否则「管理入口未启用」（`datasource` 对 404 有 10 分钟冷却）。提交 `34d1634` + `2908f0f`。
-  - 其余：v5.4 主题色强化（`#0C5F03` 不改、大面积填充换 `#14801F`；hero 选中格改整格浅绿胶囊；`e9689bf` 的 commit message 没提它，**别再重复提交那 2 个文件**）｜v4.0.31 管理后台拆 `?tab=cat|photo|link` 三入口（无页内 tab）｜v4.0.30 友情链接可增删（`saveFriendLinks` 整体替换，`APPID_RE=/^wx[0-9a-zA-Z]{16}$/`）｜v4.0.30+32 提交后「延迟生效」提示（`utils/syncTip.js` + `text.sync` 6 键，`received_tip` 是唯一成功文案）｜v4.0.29 四页标题 52rpx + tab 改名「猫片」（只改 `custom-tab-bar/tab.js:12`）｜v4.0.27 「校区」→「位置」+ 配置缓存版本失效（`_migrateConfigCache()`）+ 抽屉骨架回退原版（**绝不能做成底部弹层**；`hidden` 会被 CSS `display` 顶掉，开关一律用 `wx:if`）｜v4.0.26 筛选抽屉三行胶囊 + 位置三分类 + 花色七类（状态 7 值互斥，多选要包 `$or`）｜v4.0.24+25 首页 hero 数据卡（**必须 `catchtap`**，`bindtap` 会冒泡跳看板）｜v4.0.23 用户档案体系整体放弃（`fake_openid` 与微信账号无关；**每个提交场景当场填昵称**，`ratingDetail` 不加昵称框）
+  - 其余：v5.4 主题色强化（`#0C5F03` 不改、大面积填充换 `#14801F`；`e9689bf` 的 commit message 没提它，**别再重复提交那 2 个文件**）｜v4.0.31 管理后台拆 `?tab=cat|photo|link`｜v4.0.30 友情链接可增删｜v4.0.30+32 提交后「延迟生效」提示（`utils/syncTip.js`）｜v4.0.29 四页标题 52rpx + tab 改名「猫片」｜v4.0.27「校区」→「位置」+ `_migrateConfigCache()`（抽屉**绝不能做成底部弹层**；开关一律 `wx:if`）｜v4.0.26 筛选抽屉三行胶囊 + 位置三分类 + 花色七类｜v4.0.24+25 首页 hero 数据卡（**必须 `catchtap`**）｜v4.0.23 用户档案体系整体放弃（每个提交场景当场填昵称）
 - **COS 上传踩坑（2026-11-01 定位，务必按此操作）**：`C:\Users\yzx49\tmp\cosprobe\putpub.js` 的 `put(key, body, acl)` 实测可用，但**必须用 `node -e` 内联调用**（`require('./putpub').put('/data/x.json', fs.readFileSync(...), 'public-read')`）。走命令行 `node putpub.js <key> <file> public-read` 会稳定返回 **nginx 400 Bad Request**（`<html>…<center>400 Bad Request</center>…nginx`），**即使 key 已带前导斜杠**，成因未明（与 shell 传参/编码有关），别再在这上面耗时间。`cos.js` 的 `request('PUT', '/path', {}, body)` 可写但**不能带 ACL**（会变私有）。上传后必须 `curl -s -o /dev/null -w "%{http_code}"` 验证匿名 200。
 - 数据源：`https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com`，微信后台已加 request 合法域名
 - **2026-11-01 起 `data/` 已是真实数据（演示数据全清）**：`cat` **21 只真猫**、`photo` **278 张**，`comment`/`rating`/`feedback`/`news`/`adoption`/`inter`/`achievement`/`reward`/`photo_rank`/`inbox_log`/`review_queue`/`user` **共 12 张表已清空为 `items: []`**。旧的 demo 数据备份在 `C:/Users/yzx49/tmp/catid/data-bak-demo/`（仓库外），要回滚从那里取。

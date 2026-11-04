@@ -1,5 +1,5 @@
 {
-  "version": "v1793698834938",
+  "version": "v1793800000000",
   "items": [
     {
       "_id": "pages",
@@ -23,10 +23,10 @@
         "topK": 3
       },
       "accessCtrl": {
-        "ctrlUser": "guest",
+        "ctrlUser": "user",
         "ctrlVersion": "*",
         "disabledFunc": "",
-        "limitedFunc": "reward,feedback,comment"
+        "limitedFunc": ""
       },
       "tabBarCtrl": {
         "ctrlTab": "news",

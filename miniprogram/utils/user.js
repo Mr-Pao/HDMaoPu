@@ -8,10 +8,11 @@ import config from "../config";
 
 const app = getApp();
 
+// 身份只有两种：普通用户 / 管理员（特邀用户为历史遗留，保留兼容）
 const UserTypes = {
   manager: "manager",
   invited: "invited",
-  guest: "guest"
+  user: "user"
 }
 
 const FuncTypes = {
@@ -121,10 +122,13 @@ async function _checkFuncEnable(funcName) {
   const user = await getUser();
   const isManager = await isManagerAsync();
   const isInvited = user.role == 1;
-  ctrlUser = ctrlUser.split(",");
-  if ((isManager && ctrlUser.includes(UserTypes.manager))      // 管理员
-    || (isInvited && ctrlUser.includes(UserTypes.invited))     // 特邀用户
-    || (!isManager && !isInvited && ctrlUser.includes(UserTypes.guest))) {   // 游客
+  // 兼容旧配置：guest 就是现在的普通用户
+  const ctrlList = ctrlUser.split(",").map(x => x.trim()).filter(x => x);
+  const hitManager = isManager && ctrlList.includes(UserTypes.manager);
+  const hitInvited = !isManager && isInvited && ctrlList.includes(UserTypes.invited);
+  const hitUser = !isManager && !isInvited
+    && (ctrlList.includes(UserTypes.user) || ctrlList.includes("guest"));
+  if (hitManager || hitInvited || hitUser) {
     // 满足人群限制，返回功能是否受限
     return !limitedFunc.split(',').includes(funcName);
   }
