@@ -72,6 +72,17 @@ Page({
       this.loadCat(),
       this.loadMoreComment(),
     ]);
+    // 总数有、列表空：多半是 datasource 的 10 分钟 SWR 缓存还停在空快照，绕过缓存再拉一次
+    if (this.data.comments.length === 0 && this.data.comment_count > 0) {
+      try {
+        await app.mpServerless.db.collection('comment').find(
+          { deleted: { $ne: true }, cat_id: this.jsData.cat_id },
+          { sort: { create_date: -1 }, limit: 10 }
+        );
+      } catch (e) {}
+      this.setData({ loadNoMore: false });
+      await this.loadMoreComment();
+    }
   },
 
   /**

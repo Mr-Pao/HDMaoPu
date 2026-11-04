@@ -338,3 +338,54 @@ swiper image {
   letter-spacing: -1.6rpx;
   margin-top: 10rpx;
 }
+
+/* =========================================================
+   v4.0.78 分类胶囊精修：统一为等高胶囊，图标与文字同行居中，
+   选中态实心绿、未选中态细描边，去掉图标底下的浅色方块
+   ========================================================= */
+.button_container {
+  height: auto;
+  margin: 16rpx 24rpx 4rpx 24rpx;
+  padding: 2rpx 0;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 14rpx;
+}
+.normal_button,
+.checked_button {
+  flex: 0 0 auto;
+  flex-direction: row;
+  width: auto;
+  height: 64rpx;
+  padding: 0 26rpx;
+  box-sizing: border-box;
+  border-radius: 999rpx;
+  border: 1rpx solid var(--dk-line);
+  background-color: transparent;
+  border-bottom-width: 1rpx;
+  gap: 8rpx;
+}
+.normal_button .tab-text,
+.checked_button .tab-text {
+  font-size: 26rpx;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--dk-text-2);
+}
+.checked_button {
+  background-color: var(--dk-accent);
+  border-color: var(--dk-accent);
+}
+.checked_button .tab-text {
+  color: #FFFFFF;
+  font-weight: 600;
+}
+.tab-logo,
+.checked_button .tab-logo {
+  height: 28rpx;
+  width: 28rpx;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  background-color: transparent;
+}

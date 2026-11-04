@@ -22,7 +22,6 @@ import {
   getGlobalSettings
 } from "../../../utils/page";
 import { convertRatingList, genDefaultRating } from "../../../utils/rating";
-import { showMpcode } from "../../../utils/mpcode";
 import { signCosUrl, signPhotoUrls } from "../../../utils/common";
 import api from "../../../utils/cloudApi";
 import { putInbox } from "../../../utils/writeback";
@@ -724,11 +723,6 @@ Page({
         });
       }
     }
-  },
-
-  // 展示mpcode
-  async bingMpTap() {
-    await showMpcode(this.data.cat);
   },
 
   toComment() {

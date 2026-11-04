@@ -132,7 +132,8 @@ swiper-item image {
 .tags {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
 }
 
 .tags .tag {
@@ -155,12 +156,6 @@ swiper-item image {
 .tags .tag-link {
   border: 1rpx solid var(--color-primary);
   font-weight: 600;
-}
-
-.tags .mpcode {
-  font-size: 40rpx;
-  margin-left: auto;
-  color: var(--color-primary);
 }
 
 .fb-button, .badge-all {
@@ -1198,4 +1193,46 @@ swiper-item image {
   margin: 20rpx 0 0 0;
   padding: 18rpx 22rpx;
   border-radius: var(--dk-radius);
+}
+
+/* =========================================================
+   v5.6 信息头重排：名字/性别在左，便利贴+点赞在右，图标与数字同行；移除二维码入口
+   ========================================================= */
+.info .identity {
+  align-items: center;
+  justify-content: space-between;
+}
+.info .identity-left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-width: 0;
+}
+.info .identity-right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+.info .identity .count,
+.info .identity-right .count {
+  flex-direction: row;
+  align-items: center;
+  order: 0;
+  margin-left: 14rpx;
+  padding: 6rpx 18rpx;
+}
+.info .identity-right .count .count-num {
+  margin-left: 6rpx;
+  font-size: 24rpx;
+  line-height: 1;
+}
+.info .identity .name {
+  padding-bottom: 0;
+  height: auto;
+  line-height: 1.1;
+}
+.info .identity image.gender {
+  padding-bottom: 0;
 }
