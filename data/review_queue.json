@@ -1,5 +1,5 @@
 {
-  "version": "v1793747706761",
+  "version": "v1793930015021",
   "items": [
     {
       "_id": "rv-1793523110816-mvxn89c2ujk8cp",
@@ -94,6 +94,20 @@
         "repliable": false
       },
       "decide_time": "2026-11-03T23:15:06.761Z"
+    },
+    {
+      "_id": "rv-1793929354576-mw4bm2hm8hzniz",
+      "kind": "photo",
+      "openid": "guest_25d3c276",
+      "ts": 1793929354576,
+      "status": "pending",
+      "create_time": "2026-11-06T01:42:34.576Z",
+      "data": {
+        "photo_key": "pending/guest_25d3c276-1793929354212-0.jpg",
+        "cat_id": "cat-naigai",
+        "photographer": "",
+        "shooting_date": ""
+      }
     }
   ]
 }
