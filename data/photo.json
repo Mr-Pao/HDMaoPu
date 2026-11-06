@@ -1,5 +1,5 @@
 {
-  "version": "v1793973735433",
+  "version": "v1793996647806",
   "items": [
     {
       "_id": "photo-huihui-001",
@@ -1812,7 +1812,7 @@
       "shooting_date": "2026-01-01",
       "create_date": "2026-11-01T00:00:00.000Z",
       "mdate": "2026-11-01T00:00:00.000Z",
-      "like_count": 0,
+      "like_count": 1,
       "latitude": null,
       "longitude": null,
       "marker_type": "blue",

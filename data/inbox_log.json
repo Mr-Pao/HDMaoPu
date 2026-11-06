@@ -1,5 +1,5 @@
 {
-  "version": "v1793973735432",
+  "version": "v1793996647806",
   "items": [
     {
       "_id": "follow|guest_908baf6f|cat-jinbeiyinchuang",
@@ -765,6 +765,15 @@
         "r4": 4,
         "r5": 4
       }
+    },
+    {
+      "_id": "like|guest_44f43ea5|photo-naigai-031",
+      "k": "like|guest_44f43ea5|photo-naigai-031",
+      "kind": "like",
+      "openid": "guest_44f43ea5",
+      "target": "photo-naigai-031",
+      "state": true,
+      "ts": 1793976648382
     }
   ]
 }
