@@ -1,5 +1,5 @@
 {
-  "version": "v1793698834936",
+  "version": "v1793944725313",
   "items": [
     {
       "_id": "photo-huihui-001",
@@ -6412,6 +6412,29 @@
       "shooting_date": "2026-02",
       "create_date": "2026-11-03T09:40:34.935Z",
       "mdate": "2026-11-03T09:40:34.935Z",
+      "like_count": 0,
+      "latitude": null,
+      "longitude": null,
+      "marker_type": "blue",
+      "deleted": 0
+    },
+    {
+      "_id": "ph-1793929354576-mw4kdd1dootu2v",
+      "cat_id": "cat-naigai",
+      "_openid": "system",
+      "userInfo": {
+        "nickName": "猫谱管理员",
+        "avatarUrl": "/pages/public/images/info/default_avatar.png"
+      },
+      "photo_id": "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/naigai/071.jpg",
+      "photo_compressed": "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/naigai/071.jpg",
+      "photo_watermark": "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/naigai/071.jpg",
+      "verified": true,
+      "best": false,
+      "photographer": "",
+      "shooting_date": "2026-01-01",
+      "create_date": "2026-11-06T05:58:45.313Z",
+      "mdate": "2026-11-06T05:58:45.313Z",
       "like_count": 0,
       "latitude": null,
       "longitude": null,

@@ -1,5 +1,5 @@
 {
-  "version": "v1793930015021",
+  "version": "v1793944725315",
   "items": [
     {
       "_id": "rv-1793523110816-mvxn89c2ujk8cp",
@@ -100,14 +100,15 @@
       "kind": "photo",
       "openid": "guest_25d3c276",
       "ts": 1793929354576,
-      "status": "pending",
+      "status": "approved",
       "create_time": "2026-11-06T01:42:34.576Z",
       "data": {
         "photo_key": "pending/guest_25d3c276-1793929354212-0.jpg",
         "cat_id": "cat-naigai",
         "photographer": "",
         "shooting_date": ""
-      }
+      },
+      "decide_time": "2026-11-06T05:58:44.659Z"
     }
   ]
 }

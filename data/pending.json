@@ -1,18 +1,4 @@
 {
-  "version": "v1793930016217",
-  "items": [
-    {
-      "_id": "rv-1793929354576-mw4bm2hm8hzniz",
-      "kind": "photo",
-      "ts": 1793929354576,
-      "create_time": "2026-11-06T01:42:34.576Z",
-      "preview_url": "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/preview/pending/guest_25d3c276-1793929354212-0.jpg",
-      "data": {
-        "photo_key": "pending/guest_25d3c276-1793929354212-0.jpg",
-        "cat_id": "cat-naigai",
-        "photographer": "",
-        "shooting_date": ""
-      }
-    }
-  ]
+  "version": "v1793944725784",
+  "items": []
 }
