@@ -1,5 +1,5 @@
 {
-  "version": "v1793944725313",
+  "version": "v1793973735433",
   "items": [
     {
       "_id": "photo-huihui-001",
@@ -1117,7 +1117,7 @@
       "photo_compressed": "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/naigai/001.jpg",
       "photo_watermark": "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/naigai/001.jpg",
       "verified": true,
-      "best": true,
+      "best": false,
       "photographer": "",
       "shooting_date": "2026-01-01",
       "create_date": "2026-11-01T00:00:00.000Z",
@@ -6407,7 +6407,7 @@
       "photo_compressed": "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/naigai/070.png",
       "photo_watermark": "https://maopu-1258113633.cos.ap-guangzhou.myqcloud.com/catimg/xiaowai/naigai/070.png",
       "verified": true,
-      "best": false,
+      "best": true,
       "photographer": "一只狍",
       "shooting_date": "2026-02",
       "create_date": "2026-11-03T09:40:34.935Z",
