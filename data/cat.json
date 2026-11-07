@@ -1,5 +1,5 @@
 {
-  "version": "v1793973735432",
+  "version": "v1794010285593",
   "items": [
     {
       "_id": "cat-huihui",
@@ -96,43 +96,43 @@
       "relations": [],
       "haunts": [],
       "rating": {
-        "count": 0,
+        "count": 1,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
           "r4": 0,
-          "r5": 0
+          "r5": 1
         },
-        "avgScore": 0,
-        "avgScoreDisp": "0.0",
+        "avgScore": 5,
+        "avgScoreDisp": "5.0",
         "dimSums": {
-          "r1": 0,
-          "r2": 0,
-          "r3": 0,
-          "r4": 0,
-          "r5": 0
+          "r1": 5,
+          "r2": 5,
+          "r3": 5,
+          "r4": 5,
+          "r5": 5
         },
         "dimCounts": {
-          "r1": 0,
-          "r2": 0,
-          "r3": 0,
-          "r4": 0,
-          "r5": 0
+          "r1": 1,
+          "r2": 1,
+          "r3": 1,
+          "r4": 1,
+          "r5": 1
         },
         "dimAvg": {
-          "r1": 0,
-          "r2": 0,
-          "r3": 0,
-          "r4": 0,
-          "r5": 0
+          "r1": 5,
+          "r2": 5,
+          "r3": 5,
+          "r4": 5,
+          "r5": 5
         }
       },
       "photo_count_best": 1,
       "photo_count_total": 9,
       "comment_count": 0,
       "follow_count": 0,
-      "like_count": 1,
+      "like_count": 2,
       "latitude": null,
       "longitude": null,
       "mphoto": 1790899200000,
@@ -516,29 +516,29 @@
       "relations": [],
       "haunts": [],
       "rating": {
-        "count": 1,
+        "count": 3,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
           "r4": 0,
-          "r5": 1
+          "r5": 3
         },
         "avgScore": 5,
         "avgScoreDisp": "5.0",
         "dimSums": {
-          "r1": 5,
-          "r2": 5,
-          "r3": 5,
-          "r4": 5,
-          "r5": 5
+          "r1": 15,
+          "r2": 15,
+          "r3": 15,
+          "r4": 15,
+          "r5": 15
         },
         "dimCounts": {
-          "r1": 1,
-          "r2": 1,
-          "r3": 1,
-          "r4": 1,
-          "r5": 1
+          "r1": 3,
+          "r2": 3,
+          "r3": 3,
+          "r4": 3,
+          "r5": 3
         },
         "dimAvg": {
           "r1": 5,
@@ -552,7 +552,7 @@
       "photo_count_total": 71,
       "comment_count": 0,
       "follow_count": 0,
-      "like_count": 3,
+      "like_count": 5,
       "latitude": null,
       "longitude": null,
       "mphoto": 1791417600000,
@@ -796,43 +796,43 @@
       "relations": [],
       "haunts": [],
       "rating": {
-        "count": 1,
+        "count": 2,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
           "r4": 0,
-          "r5": 1
+          "r5": 2
         },
         "avgScore": 5,
         "avgScoreDisp": "5.0",
         "dimSums": {
-          "r1": 5,
-          "r2": 5,
-          "r3": 5,
-          "r4": 5,
-          "r5": 4
+          "r1": 10,
+          "r2": 10,
+          "r3": 10,
+          "r4": 10,
+          "r5": 9
         },
         "dimCounts": {
-          "r1": 1,
-          "r2": 1,
-          "r3": 1,
-          "r4": 1,
-          "r5": 1
+          "r1": 2,
+          "r2": 2,
+          "r3": 2,
+          "r4": 2,
+          "r5": 2
         },
         "dimAvg": {
           "r1": 5,
           "r2": 5,
           "r3": 5,
           "r4": 5,
-          "r5": 4
+          "r5": 4.5
         }
       },
       "photo_count_best": 1,
       "photo_count_total": 3,
       "comment_count": 0,
       "follow_count": 0,
-      "like_count": 2,
+      "like_count": 3,
       "latitude": null,
       "longitude": null,
       "mphoto": 1791763200000,
@@ -866,43 +866,43 @@
       "relations": [],
       "haunts": [],
       "rating": {
-        "count": 0,
+        "count": 1,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
           "r4": 0,
-          "r5": 0
+          "r5": 1
         },
-        "avgScore": 0,
-        "avgScoreDisp": "0.0",
+        "avgScore": 5,
+        "avgScoreDisp": "5.0",
         "dimSums": {
-          "r1": 0,
-          "r2": 0,
-          "r3": 0,
-          "r4": 0,
-          "r5": 0
+          "r1": 5,
+          "r2": 5,
+          "r3": 5,
+          "r4": 5,
+          "r5": 5
         },
         "dimCounts": {
-          "r1": 0,
-          "r2": 0,
-          "r3": 0,
-          "r4": 0,
-          "r5": 0
+          "r1": 1,
+          "r2": 1,
+          "r3": 1,
+          "r4": 1,
+          "r5": 1
         },
         "dimAvg": {
-          "r1": 0,
-          "r2": 0,
-          "r3": 0,
-          "r4": 0,
-          "r5": 0
+          "r1": 5,
+          "r2": 5,
+          "r3": 5,
+          "r4": 5,
+          "r5": 5
         }
       },
       "photo_count_best": 1,
       "photo_count_total": 5,
       "comment_count": 0,
       "follow_count": 0,
-      "like_count": 2,
+      "like_count": 3,
       "latitude": null,
       "longitude": null,
       "mphoto": 1791849600000,
@@ -1112,7 +1112,7 @@
       "photo_count_total": 10,
       "comment_count": 0,
       "follow_count": 0,
-      "like_count": 1,
+      "like_count": 2,
       "latitude": null,
       "longitude": null,
       "mphoto": 1792108800000,
@@ -1146,43 +1146,43 @@
       "relations": [],
       "haunts": [],
       "rating": {
-        "count": 1,
+        "count": 2,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
           "r4": 1,
-          "r5": 0
-        },
-        "avgScore": 4,
-        "avgScoreDisp": "4.0",
-        "dimSums": {
-          "r1": 4,
-          "r2": 4,
-          "r3": 4,
-          "r4": 4,
-          "r5": 4
-        },
-        "dimCounts": {
-          "r1": 1,
-          "r2": 1,
-          "r3": 1,
-          "r4": 1,
           "r5": 1
         },
+        "avgScore": 4.5,
+        "avgScoreDisp": "4.5",
+        "dimSums": {
+          "r1": 9,
+          "r2": 9,
+          "r3": 9,
+          "r4": 9,
+          "r5": 9
+        },
+        "dimCounts": {
+          "r1": 2,
+          "r2": 2,
+          "r3": 2,
+          "r4": 2,
+          "r5": 2
+        },
         "dimAvg": {
-          "r1": 4,
-          "r2": 4,
-          "r3": 4,
-          "r4": 4,
-          "r5": 4
+          "r1": 4.5,
+          "r2": 4.5,
+          "r3": 4.5,
+          "r4": 4.5,
+          "r5": 4.5
         }
       },
       "photo_count_best": 1,
       "photo_count_total": 5,
       "comment_count": 0,
       "follow_count": 1,
-      "like_count": 5,
+      "like_count": 6,
       "latitude": null,
       "longitude": null,
       "mphoto": 1792195200000,
@@ -1216,43 +1216,43 @@
       "relations": [],
       "haunts": [],
       "rating": {
-        "count": 0,
+        "count": 2,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
           "r4": 0,
-          "r5": 0
+          "r5": 2
         },
-        "avgScore": 0,
-        "avgScoreDisp": "0.0",
+        "avgScore": 5,
+        "avgScoreDisp": "5.0",
         "dimSums": {
-          "r1": 0,
-          "r2": 0,
-          "r3": 0,
-          "r4": 0,
-          "r5": 0
+          "r1": 10,
+          "r2": 10,
+          "r3": 10,
+          "r4": 10,
+          "r5": 10
         },
         "dimCounts": {
-          "r1": 0,
-          "r2": 0,
-          "r3": 0,
-          "r4": 0,
-          "r5": 0
+          "r1": 2,
+          "r2": 2,
+          "r3": 2,
+          "r4": 2,
+          "r5": 2
         },
         "dimAvg": {
-          "r1": 0,
-          "r2": 0,
-          "r3": 0,
-          "r4": 0,
-          "r5": 0
+          "r1": 5,
+          "r2": 5,
+          "r3": 5,
+          "r4": 5,
+          "r5": 5
         }
       },
       "photo_count_best": 1,
       "photo_count_total": 7,
       "comment_count": 0,
       "follow_count": 1,
-      "like_count": 5,
+      "like_count": 7,
       "latitude": null,
       "longitude": null,
       "mphoto": 1792281600000,
@@ -1286,29 +1286,29 @@
       "relations": [],
       "haunts": [],
       "rating": {
-        "count": 1,
+        "count": 2,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
           "r4": 0,
-          "r5": 1
+          "r5": 2
         },
         "avgScore": 5,
         "avgScoreDisp": "5.0",
         "dimSums": {
-          "r1": 5,
-          "r2": 5,
-          "r3": 5,
-          "r4": 5,
-          "r5": 5
+          "r1": 10,
+          "r2": 10,
+          "r3": 10,
+          "r4": 10,
+          "r5": 10
         },
         "dimCounts": {
-          "r1": 1,
-          "r2": 1,
-          "r3": 1,
-          "r4": 1,
-          "r5": 1
+          "r1": 2,
+          "r2": 2,
+          "r3": 2,
+          "r4": 2,
+          "r5": 2
         },
         "dimAvg": {
           "r1": 5,
@@ -1322,7 +1322,7 @@
       "photo_count_total": 15,
       "comment_count": 0,
       "follow_count": 1,
-      "like_count": 4,
+      "like_count": 5,
       "latitude": null,
       "longitude": null,
       "mphoto": 1792368000000,
@@ -1356,43 +1356,43 @@
       "relations": [],
       "haunts": [],
       "rating": {
-        "count": 1,
+        "count": 3,
         "scores": {
           "r1": 0,
           "r2": 0,
           "r3": 0,
           "r4": 1,
-          "r5": 0
+          "r5": 2
         },
-        "avgScore": 4,
-        "avgScoreDisp": "4.0",
+        "avgScore": 4.666666666666667,
+        "avgScoreDisp": "4.7",
         "dimSums": {
-          "r1": 5,
-          "r2": 5,
-          "r3": 4,
-          "r4": 3,
-          "r5": 3
+          "r1": 15,
+          "r2": 15,
+          "r3": 14,
+          "r4": 13,
+          "r5": 13
         },
         "dimCounts": {
-          "r1": 1,
-          "r2": 1,
-          "r3": 1,
-          "r4": 1,
-          "r5": 1
+          "r1": 3,
+          "r2": 3,
+          "r3": 3,
+          "r4": 3,
+          "r5": 3
         },
         "dimAvg": {
           "r1": 5,
           "r2": 5,
-          "r3": 4,
-          "r4": 3,
-          "r5": 3
+          "r3": 4.67,
+          "r4": 4.33,
+          "r5": 4.33
         }
       },
       "photo_count_best": 1,
       "photo_count_total": 14,
       "comment_count": 0,
       "follow_count": 0,
-      "like_count": 4,
+      "like_count": 6,
       "latitude": null,
       "longitude": null,
       "mphoto": 1792454400000,
